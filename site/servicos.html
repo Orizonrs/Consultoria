@@ -6408,75 +6408,60 @@ const CHIP_ACOES = {
   return blocos.join('');
 }
 
+
 function escapeHtml(t) {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
+// ============= MODO IA (Llama via Edge Function Supabase) =============
+let modoIA = false;
+const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
 
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '🤖 Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato']), 300);
+function toggleModoIA() {
+  modoIA = !modoIA;
+  const wrap = document.getElementById('aiToggleWrap');
+  const statusText = document.getElementById('chatbotStatusText');
+  
+  wrap.classList.toggle('ai-on', modoIA);
+  
+  if (modoIA) {
+    statusText.textContent = '🤖 Modo IA ativo';
+    adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
+  } else {
+    statusText.textContent = '● Assistente Orizon';
+    adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
+    setTimeout(() => adicionarChips(['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato']), 300);
+  }
+}
+
+async function responderComIA(texto) {
+  mostrarTyping(async () => {
+    try {
+      const resp = await fetch(EDGE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // ATENÇÃO: Evite expor chaves sensíveis diretamente no front-end!
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
+        },
+        body: JSON.stringify({ mensagem: texto })
+      });
+      
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.erro || `Erro ${resp.status}`);
       }
+      
+      const data = await resp.json();
+      const resposta = data.resposta || 'Não consegui gerar uma resposta.';
+      
+      adicionarBubbleBot(markdownParaHTML(resposta));
+      setTimeout(() => adicionarChips(['💬 Continuar', '📞 Falar com humano', '↩️ Voltar ao início']), 300);
+    } catch (e) {
+      adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}\n\nTente novamente em instantes.`));
     }
-
-    async function responderComIA(texto) {
-      mostrarTyping(async () => {
-        try {
-          const resp = await fetch(EDGE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
-            },
-            body: JSON.stringify({ mensagem: texto })
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.erro || `Erro ${resp.status}`);
-          }
-          const data = await resp.json();
-          const resposta = data.resposta || 'Não consegui gerar uma resposta.';
-          adicionarBubbleBot(markdownParaHTML(resposta));
-          setTimeout(() => adicionarChips(['💬 Continuar','📞 Falar com humano','↩️ Voltar ao início']), 300);
-        } catch (e) {
-          adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}
-
-Tente novamente em instantes.`));
-        }
-      }, 1000);
-    }
-    // FIM CHATBOT INTELIGENTE
-
-    // ============= MODO IA (Llama via Edge Function Supabase) =============
-    let modoIA = false;
-
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
-
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '\u{1F916} Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('\u{1F916} **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('\u{1F4AC} Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['\u{1F464} Sou candidato','\u{1F3E2} Sou empresa','\u{1F50D} Ver vagas','\u{1F4DE} Contato']), 300);
-      }
-    }
+  }, 1000);
+}
 
     async function responderComIA(texto) {
       mostrarTyping(async () => {
