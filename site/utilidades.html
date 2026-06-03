@@ -375,13 +375,11 @@ body.dark-mode .filter-box {
 
     body.menu-open .top-left-buttons,
     body.menu-open .top-right-buttons,
-    body.menu-open .menu-toggle,
     body.menu-open .theme-toggle,
-    body.menu-open .acesso-wrap,
-    body.menu-open .back-button {
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
+    body.menu-open .acesso-wrap {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
 </style>
 
@@ -544,8 +542,6 @@ html.dark-mode body {
   body.chat-open .back-button,
   body.chat-open .menu-toggle { display: none !important; }
 
-  body.menu-open .back-button,
-  body.menu-open .menu-toggle,
   body.menu-open .theme-toggle { display: none !important; pointer-events: none !important; }
 
   /* nav hide/show handled by nav-hidden (LinkedIn behavior) */
@@ -1552,8 +1548,7 @@ body:not(.dark-mode) .theme-toggle {
     }
     .top-row { display: flex; flex-direction: row; gap: 8px; align-items: center; }
 
-    body.chat-open .top-left-buttons,
-    body.menu-open .top-left-buttons { display: none !important; }
+    body.chat-open .top-left-buttons { display: none !important; }
     /* nav hide/show handled by nav-hidden (LinkedIn behavior) */
 
     .topics-toggle {
@@ -1958,8 +1953,7 @@ body:not(.dark-mode) .theme-toggle {
       .vt-lang-row select { padding: 10px 12px; font-size: 0.8rem; }
     }
 
-    body.chat-open .top-right-buttons,
-    body.menu-open .top-right-buttons { display: none !important; }
+    body.chat-open .top-right-buttons { display: none !important; }
     /* nav hide/show handled by nav-hidden (LinkedIn behavior) */
 
     /* ══════════════════════════════════════════
@@ -2326,9 +2320,6 @@ body:not(.dark-mode) .theme-toggle {
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
-        <!-- Top line decoration -->
-        <line x1="80" y1="8" x2="420" y2="8" stroke="#00c8ff" stroke-width="0.6" opacity="0.3"/>
-        <!-- Subtitle top -->
         <text x="250" y="20" text-anchor="middle" fill="#00c8ff" font-family="'Courier New', monospace" font-size="9" letter-spacing="4" opacity="0.7" filter="url(#glow-d)">// SISTEMA DE GESTÃO //</text>
         <!-- Main title ORIZON -->
         <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black', 'Impact', sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#glow-strong-d)">ORIZON</text>
@@ -2353,8 +2344,6 @@ body:not(.dark-mode) .theme-toggle {
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
-        <!-- Top line -->
-        <line x1="20" y1="6" x2="280" y2="6" stroke="#00c8ff" stroke-width="0.5" opacity="0.3"/>
         <text x="150" y="17" text-anchor="middle" fill="#00c8ff" font-family="'Courier New', monospace" font-size="7" letter-spacing="3" opacity="0.7" filter="url(#glow-m)">// SISTEMA DE GESTÃO //</text>
         <text x="150" y="67" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black', 'Impact', sans-serif" font-size="42" font-weight="900" letter-spacing="8" filter="url(#glow-strong-m)">ORIZON</text>
         <line x1="20" y1="76" x2="120" y2="76" stroke="#00c8ff" stroke-width="0.7" opacity="0.4"/>
@@ -3833,49 +3822,67 @@ const CHIP_ACOES = {
       '📊 Cases de sucesso':               () => processarTexto('resultados taxa de sucesso'),
       '↩️ Início':                         () => mostrarBemVindo(),
       '↩️ Voltar ao início':               () => mostrarBemVindo(),
+ 
     };
-    
-    let aberto = false;
-    let digitando = false;
+  // --- 1. DECLARAÇÃO DE VARIÁVEIS GLOBAIS ---
+let aberto = false;
+let digitando = false;
+let modoIA = false; // Corrigido: Declarando a variável que faltava (mude para true se quiser IA por padrão)
 
-    function toggleChatbot() {
-      aberto = !aberto;
-      document.getElementById('chatbotBtn').classList.toggle('active', aberto);
-      document.getElementById('chatbotWindow').classList.toggle('active', aberto);
-      document.body.classList.toggle('chat-open', aberto);
-      if (aberto && !document.getElementById('chatbotMessages').children.length) {
-        setTimeout(() => mostrarBemVindo(), 300);
-      }
-    }
+// --- 2. FUNÇÕES DO CHATBOT ---
 
-    function mostrarBemVindo() {
-      document.getElementById('chatbotMessages').innerHTML = '';
-      mostrarSequencia([
-        'Olá! 👋 Sou o assistente virtual da **Orizon**!',
-        'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
-      ], ['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato'], 0);
-    }
+function toggleChatbot() {
+  aberto = !aberto;
+  document.getElementById('chatbotBtn').classList.toggle('active', aberto);
+  document.getElementById('chatbotWindow').classList.toggle('active', aberto);
+  document.body.classList.toggle('chat-open', aberto);
+  
+  if (aberto && !document.getElementById('chatbotMessages').children.length) {
+    setTimeout(() => mostrarBemVindo(), 300);
+  }
+}
 
-    function mostrarSequencia(textos, chips, index) {
-      if (index >= textos.length) { adicionarChips(chips); return; }
-      mostrarTyping(() => {
-        adicionarBubbleBot(markdownParaHTML(textos[index]));
-        setTimeout(() => mostrarSequencia(textos, chips, index + 1), 400);
-      }, index === 0 ? 800 : 600);
-    }
+function mostrarBemVindo() {
+  document.getElementById('chatbotMessages').innerHTML = '';
+  mostrarSequencia([
+    'Olá! 👋 Sou o assistente virtual da **Orizon**!',
+    'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
+  ], ['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato'], 0);
+}
 
-    function enviarMensagem() {
-      const input = document.getElementById('chatbotInput');
-      const texto = input.value.trim();
-      if (!texto || digitando) return;
-      input.value = '';
-      adicionarBubbleUser(texto);
-      if (modoIA) {
-        responderComIA(texto);
-      } else {
-        setTimeout(() => processarTexto(texto), 300);
-      }
-    }
+function mostrarSequencia(textos, chips, index) {
+  if (index >= textos.length) { 
+    adicionarChips(chips); 
+    return; 
+  }
+  
+  mostrarTyping(() => {
+    adicionarBubbleBot(markdownParaHTML(textos[index]));
+    setTimeout(() => mostrarSequencia(textos, chips, index + 1), 400);
+  }, index === 0 ? 800 : 600);
+}
+
+function enviarMensagem() {
+  const input = document.getElementById('chatbotInput');
+  const texto = input.value.trim();
+  
+  // Evita o envio de mensagens vazias ou se o bot já estiver digitando
+  if (!texto || digitando) return; 
+  
+  input.value = '';
+  adicionarBubbleUser(texto);
+  
+  // Agora o modoIA existe e a validação funciona perfeitamente
+  if (modoIA) {
+    responderComIA(texto);
+  } else {
+    setTimeout(() => processarTexto(texto), 300);
+  }
+}
+
+// --- 3. DICA ADICIONAL ---
+// Lembre-se de garantir que as funções auxiliares (como 'mostrarTyping', 
+// 'adicionarBubbleUser', 'markdownParaHTML', etc.) estejam criadas no seu script!
 
     function processarTexto(texto) {
       const lower = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -4000,8 +4007,7 @@ function escapeHtml(t) {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
+    modoIA = false;
 
     function toggleModoIA() {
       modoIA = !modoIA;
@@ -4044,85 +4050,117 @@ Tente novamente em instantes.`));
         }
       }, 1000);
     }
-    // FIM CHATBOT INTELIGENTE
+   // ============= CONFIGURAÇÕES E ESTADOS GLOBAIS =============
+
+const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
+
+// ============= INTERFACE E COMPORTAMENTO PADRÃO =============
+
+function toggleChatbot() {
+  aberto = !aberto;
+  document.getElementById('chatbotBtn').classList.toggle('active', aberto);
+  document.getElementById('chatbotWindow').classList.toggle('active', aberto);
+  document.body.classList.toggle('chat-open', aberto);
+  
+  if (aberto && !document.getElementById('chatbotMessages').children.length) {
+    setTimeout(() => mostrarBemVindo(), 300);
+  }
+}
+
+function mostrarBemVindo() {
+  document.getElementById('chatbotMessages').innerHTML = '';
+  mostrarSequencia([
+    'Olá! 👋 Sou o assistente virtual da **Orizon**!',
+    'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
+  ], ['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato'], 0);
+}
+
+function mostrarSequencia(textos, chips, index) {
+  if (index >= textos.length) {
+    adicionarChips(chips);
+    return;
+  }
+  mostrarTyping(() => {
+    adicionarBubbleBot(markdownParaHTML(textos[index]));
+    setTimeout(() => mostrarSequencia(textos, chips, index + 1), 400);
+  }, index === 0 ? 800 : 600);
+}
+
+function enviarMensagem() {
+  const input = document.getElementById('chatbotInput');
+  const texto = input.value.trim();
+  
+  if (!texto || digitando) return;
+  
+  input.value = '';
+  adicionarBubbleUser(texto);
+  
+  if (modoIA) {
+    responderComIA(texto);
+  } else {
+    setTimeout(() => processarTexto(texto), 300);
+  }
+}
+
+// ============= MODO IA (Llama via Edge Function Supabase) =============
+
+function toggleModoIA() {
+  modoIA = !modoIA;
+  const wrap = document.getElementById('aiToggleWrap');
+  const statusText = document.getElementById('chatbotStatusText');
+  wrap.classList.toggle('ai-on', modoIA);
+  
+  if (modoIA) {
+    statusText.textContent = '🤖 Modo IA ativo';
+    adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
+  } else {
+    statusText.textContent = '● Assistente Orizon';
+    adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
+    setTimeout(() => adicionarChips(['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato']), 300);
+  }
+}
+
+// CORREÇÃO: O fluxo do typing agora espera a requisição assíncrona terminar de verdade
+async function responderComIA(texto) {
+  // Ativa o estado de digitando para bloquear novos envios
+  digitando = true; 
+  
+  // Exibe o balão visual de digitação (certifique-se de que sua mostrarTyping() dê suporte ou use essa estrutura)
+  if (typeof exibirElementoTyping === 'function') exibirElementoTyping(); 
+
+  try {
+    const resp = await fetch(EDGE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // ATENÇÃO: Idealmente, configure sua Edge Function para não exigir esse token publicamente no client-side
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
+      },
+      body: JSON.stringify({ mensagem: texto })
+    });
+
+    // Remove o elemento visual de digitação antes de renderizar a resposta
+    if (typeof removerElementoTyping === 'function') removerElementoTyping();
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.erro || `Erro ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const resposta = data.resposta || 'Não consegui gerar uma resposta.';
     
-    let aberto=false, digitando=false;
-    function toggleChatbot() {
-      aberto=!aberto;
-      document.getElementById('chatbotBtn').classList.toggle('active', aberto);
-      document.getElementById('chatbotWindow').classList.toggle('active', aberto);
-      document.body.classList.toggle('chat-open', aberto);
-      if(aberto && !document.getElementById('chatbotMessages').children.length) setTimeout(()=>mostrarBemVindo(),300);
-    }
+    adicionarBubbleBot(markdownParaHTML(resposta));
+    setTimeout(() => adicionarChips(['💬 Continuar', '📞 Falar com humano', '↩️ Voltar ao início']), 300);
 
-    function mostrarBemVindo() {
-      document.getElementById('chatbotMessages').innerHTML = '';
-      mostrarSequencia([
-        'Olá! 👋 Sou o assistente virtual da **Orizon**!',
-        'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
-      ], ['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato'], 0);
-    }
-
-    function mostrarSequencia(textos,chips,index) {
-      if(index>=textos.length){adicionarChips(chips);return;}
-      mostrarTyping(()=>{ adicionarBubbleBot(markdownParaHTML(textos[index])); setTimeout(()=>mostrarSequencia(textos,chips,index+1),400); }, index===0?800:600);
-    }
-        function enviarMensagem() {
-      const input = document.getElementById('chatbotInput');
-      const texto = input.value.trim();
-      if (!texto || digitando) return;
-      input.value = '';
-      adicionarBubbleUser(texto);
-      if (modoIA) {
-        responderComIA(texto);
-      } else {
-        setTimeout(() => processarTexto(texto), 300);
-      }
-    }
-    // ============= MODO IA (Llama via Edge Function Supabase) =============
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
-
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '🤖 Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato']), 300);
-      }
-    }
-
-    async function responderComIA(texto) {
-      mostrarTyping(async () => {
-        try {
-          const resp = await fetch(EDGE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
-            },
-            body: JSON.stringify({ mensagem: texto })
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.erro || `Erro ${resp.status}`);
-          }
-          const data = await resp.json();
-          const resposta = data.resposta || 'Não consegui gerar uma resposta.';
-          adicionarBubbleBot(markdownParaHTML(resposta));
-          setTimeout(() => adicionarChips(['💬 Continuar','📞 Falar com humano','↩️ Voltar ao início']), 300);
-        } catch (e) {
-          adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}\n\nTente novamente em instantes.`));
-        }
-      }, 1000);
-    }
-    // FIM MODO IA
+  } catch (e) {
+    if (typeof removerElementoTyping === 'function') removerElementoTyping();
+    adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}\n\nTente novamente em instantes.`));
+  } finally {
+    // Libera o chat para novas mensagens
+    digitando = false; 
+  }
+}
     function processarTexto(texto) {
       const lower = texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       let melhorCategoria = null, melhorPontuacao = 0;
