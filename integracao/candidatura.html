@@ -1615,7 +1615,7 @@ let DISC_OK       = up.get('disc_ok')      === '1';
 let ENTREVISTA_OK = up.get('entrevista_ok') === '1';
 
 let CANAIS_URL = null;
-try { const raw = up.get('canais'); if (raw) CANAIS_URL = JSON.parse(raw); } catch(e)
+try { const raw = up.get('canais'); if (raw) CANAIS_URL = JSON.parse(raw); } catch(e){}
 
 function resolverConfigCanais() {
   if (CANAIS_URL && CANAIS_URL.length > 0) return { canais: CANAIS_URL, assunto: 'Candidatura — ' + VAGA };
@@ -1651,7 +1651,7 @@ async function init() {
       const obj = JSON.parse(raw);
       if (obj.id && obj.ts && (Date.now() - obj.ts) < LS_TTL) candidaturaId = obj.id;
     }
-  } catch(e)
+  } catch(e){}
 
   try {
     const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
@@ -1678,7 +1678,7 @@ async function init() {
     if (dados.bairro)          { const el = document.getElementById('inBairro'); if(el) el.value = dados.bairro; }
     if (dados.idade)           { const el = document.getElementById('inIdade'); if(el) el.value = dados.idade; }
     if (dados.disponibilidade) { const el = document.getElementById('inDisponibilidade'); if(el) el.value = dados.disponibilidade; }
-  } catch(e)
+  } catch(e){}
 
   verificarDiscLS();
 
@@ -1693,7 +1693,7 @@ async function init() {
         ts: Date.now(),
       };
       localStorage.setItem('disc_resultado', JSON.stringify(discResultado));
-    } catch(e)
+    } catch(e){}
   }
 
   try {
@@ -1708,7 +1708,7 @@ async function init() {
       if (_tUrl) dadosLS.tel   = _tUrl;
       localStorage.setItem('candidatura_dados', JSON.stringify(dadosLS));
     }
-  } catch(e)
+  } catch(e){}
 
   if (DISC_OK && STEP_PARAM >= 2) { await handleDiscReturn(); navigateTo(2); return; }
   if (ENTREVISTA_OK && STEP_PARAM >= 3) { handleEntrevistaReturn(); navigateTo(3); return; }
@@ -1727,13 +1727,13 @@ function verificarDiscLS() {
         try {
           const dadosLS = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
           if (!dadosLS.mae) { dadosLS.mae = obj.maeCandidate; localStorage.setItem(LS_CAND_DATA, JSON.stringify(dadosLS)); }
-        } catch(e)
+        } catch(e){}
       }
     } else {
       localStorage.removeItem(LS_DISC_RES);
       discResultado = null;
     }
-  } catch(e)
+  } catch(e){}
 }
 
 // ──────────────────────────────────────────────
@@ -2015,7 +2015,7 @@ async function salvarEtapa1() {
                 pct: { D: parseFloat(reg.pct_d||0), I: parseFloat(reg.pct_i||0), S: parseFloat(reg.pct_s||0), C: parseFloat(reg.pct_c||0) },
                 ts: Date.now(),
               };
-              try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e)
+              try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e){}
             }
           }
         }
@@ -2188,7 +2188,7 @@ async function handleDiscReturn() {
             candidaturaId = registro.id;
             localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
           }
-          try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e)
+          try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e){}
         }
       }
     } catch(e) { console.warn('handleDiscReturn:', e); }
@@ -2217,8 +2217,8 @@ function confirmarRefazerDisc() {
   const btn = event.currentTarget;
   if (btn.dataset.confirmando === '1') {
     discResultado = null;
-    try { localStorage.removeItem(LS_DISC_RES); } catch(e)
-    try { localStorage.removeItem('disc_prog_' + (VAGA||'geral')); } catch(e)
+    try { localStorage.removeItem(LS_DISC_RES); } catch(e){}
+    try { localStorage.removeItem('disc_prog_' + (VAGA||'geral')); } catch(e){}
     document.getElementById('discConcluido').style.display = 'none';
     document.getElementById('discSummary').classList.remove('visible');
     document.getElementById('discGateway').style.display = '';
@@ -2265,7 +2265,7 @@ function atualizarTTLDisplay() {
         ? `(expira em ${dias} dia${dias !== 1 ? 's' : ''}${horas > 0 ? ' e ' + horas + 'h' : ''})`
         : `(expira em ${horas}h)`;
     }
-  } catch(e)
+  } catch(e){}
 }
 
 function selecionarTipoDisc(tipo) {
@@ -2328,7 +2328,7 @@ function renderStep3() {
 function handleEntrevistaReturn() {
   localStorage.setItem('entrevista_ok', '1');
   ENTREVISTA_OK = true;
-  try { entrevistaId = localStorage.getItem('entrevista_id') || null; } catch(e)
+  try { entrevistaId = localStorage.getItem('entrevista_id') || null; } catch(e){}
   (async function(){
     let _id = candidaturaId;
     if (!_id) {
@@ -2359,7 +2359,7 @@ function handleEntrevistaReturn() {
 function iniciarEntrevista() {
   const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
   const nome  = dados.nome  || '', email = dados.email || '', tel = dados.tel || '';
-  const r = discResultado || , pct = r.pct || ;
+  const r = discResultado || {}, pct = r.pct || {};
   const base = window.location.href.replace(/candidatura\.html.*$/, '');
   const canaisParam = CANAIS_URL ? '&canais=' + encodeURIComponent(JSON.stringify(CANAIS_URL)) : '';
   const retornoUrl = window.location.origin + window.location.pathname + '?vaga=' + encodeURIComponent(VAGA) + '&step=3&entrevista_ok=1' + canaisParam;
@@ -2391,7 +2391,7 @@ function mostrarCanaisInline() {
 
   const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
   const nome  = dados.nome  || '—', email = dados.email || '', tel = dados.tel || '';
-  const r = discResultado || , dim = r.dominante || r.dom || '?', sec = r.secundario || r.sec || '';
+  const r = discResultado || {}, dim = r.dominante || r.dom || '?', sec = r.secundario || r.sec || '';
   const perfilNome = r.nome || r.perfil?.nome || dim;
 
   const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -2423,7 +2423,7 @@ function mostrarCanaisInline() {
 function abrirModalFinal() {
   const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
   const nome  = dados.nome  || '—', email = dados.email || '', tel = dados.tel || '';
-  const r = discResultado || , dim = r.dominante || r.dom || '?', sec = r.secundario || r.sec || '';
+  const r = discResultado || {}, dim = r.dominante || r.dom || '?', sec = r.secundario || r.sec || '';
   const perfilNome = r.nome || r.perfil?.nome || dim;
 
   document.getElementById('sumNome').textContent = nome;
@@ -2524,7 +2524,7 @@ async function executarCanal(c) {
       localStorage.removeItem(LS_CAND_ID);
       localStorage.removeItem(LS_CAND_DATA);
       localStorage.removeItem('entrevista_ok');
-    } catch(e)
+    } catch(e){}
   }, 1500);
   window.location.href = c.url;
 }
