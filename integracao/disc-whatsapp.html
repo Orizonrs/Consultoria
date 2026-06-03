@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Teste DISC · Via WhatsApp | Agência Nexus</title>
+  <meta name="robots" content="noindex, nofollow"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#080c14; --cyan:#00e5ff; --blue:#2979ff; --amber:#ffab00;
+      --card:rgba(255,255,255,0.032); --card-b:rgba(0,229,255,0.10);
+      --border:rgba(0,229,255,0.13); --border2:rgba(0,229,255,0.28);
+      --text:#e8eaf6; --text2:#9fa8da; --muted:#5c6bc0; --muted2:rgba(255,255,255,0.08);
+      --D:#ff1744; --I:#ffab00; --S:#00e676; --C:#2979ff;
+      --glow-cyan:0 0 22px rgba(0,229,255,0.35);
+      --radius-sm:10px; --radius:16px; --radius-lg:22px;
+      --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+      --primary:#2979ff; --accent:#00e5ff;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;opacity:0.55;}
+    body::after{content:'';position:fixed;top:-10%;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(0,229,255,0.055) 0%,rgba(41,121,255,0.03) 40%,transparent 70%);pointer-events:none;z-index:0;}
+
+    .nexus-logo-wrap{text-align:center;background:#0d1117;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:40px 40px;border-bottom:1px solid rgba(0,200,255,0.15);position:relative;overflow:hidden;width:100%;padding:2.5rem 2rem;}
+    .nexus-logo-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 80% at 50% 50%,rgba(0,180,255,0.08) 0%,transparent 70%);pointer-events:none;}
+    .nexus-logo-svg{display:block;margin:0 auto;max-width:500px;position:relative;z-index:1;}
+    .nexus-logo-svg.mobile{display:none;}
+
+    /* BADGE WHATSAPP */
+    .wpp-banner{position:relative;z-index:1;background:linear-gradient(135deg,rgba(37,211,102,0.13),rgba(18,140,126,0.10));border:1px solid rgba(37,211,102,0.35);border-radius:var(--radius);margin:1.5rem auto 0;max-width:600px;padding:0.85rem 1.2rem;display:flex;align-items:center;gap:0.9rem;}
+    .wpp-icon{font-size:1.6rem;flex-shrink:0;}
+    .wpp-banner-text{font-size:0.82rem;color:#a5f3c0;line-height:1.5;}
+    .wpp-banner-text strong{color:#25d366;font-size:0.88rem;}
+
+    .wrapper{position:relative;z-index:1;width:100%;max-width:760px;margin:0 auto;padding:2rem 2rem 6rem;}
+    .header{margin-bottom:2rem;}
+    .header-eyebrow{font-family:var(--mono);font-size:0.6rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:0.85;margin-bottom:0.4rem;}
+    .header-title{font-size:1.75rem;font-weight:700;line-height:1.15;margin-bottom:0.3rem;display:flex;align-items:center;flex-wrap:wrap;gap:0.35rem;}
+    .header-title span.hl{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .header-title .badge{font-size:0.7rem;font-weight:800;background:rgba(37,211,102,0.12);border:1px solid rgba(37,211,102,0.35);border-radius:99px;padding:0.18rem 0.65rem;letter-spacing:1.5px;color:#25d366;-webkit-text-fill-color:#25d366;line-height:1;align-self:center;}
+    .header-sub{font-size:0.8rem;color:var(--text2);}
+
+    .progress-bar-wrap{background:rgba(255,255,255,0.06);border-radius:99px;height:6px;margin:1.5rem 0 0.5rem;overflow:hidden;}
+    .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:99px;transition:width 0.4s ease;}
+    .progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+    .progress-label{font-size:0.78rem;color:var(--muted);}
+    .timer-display{font-size:0.78rem;font-weight:700;color:var(--cyan);letter-spacing:1px;font-family:var(--mono);}
+
+    .intro-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;margin-bottom:2rem;backdrop-filter:blur(12px);}
+    .intro-card h2{font-size:1.1rem;font-weight:700;color:var(--cyan);margin-bottom:1rem;}
+    .intro-card p{font-size:0.88rem;color:var(--text2);line-height:1.7;margin-bottom:1rem;}
+    .disc-pills{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1rem;}
+    @media(max-width:768px){.disc-pills{display:grid;grid-template-columns:1fr 1fr;}}
+    .disc-pill{padding:0.4rem 1rem;border-radius:99px;font-size:0.8rem;font-weight:700;display:flex;align-items:center;gap:0.4rem;}
+    .pill-D{background:rgba(255,23,68,0.12);color:var(--D);border:1px solid rgba(255,23,68,0.3);}
+    .pill-I{background:rgba(255,171,0,0.12);color:var(--I);border:1px solid rgba(255,171,0,0.3);}
+    .pill-S{background:rgba(0,230,118,0.12);color:var(--S);border:1px solid rgba(0,230,118,0.3);}
+    .pill-C{background:rgba(41,121,255,0.12);color:var(--C);border:1px solid rgba(41,121,255,0.3);}
+
+    .name-section{margin-bottom:1.2rem;}
+    .name-section label{display:block;font-size:0.85rem;font-weight:600;color:var(--cyan);margin-bottom:0.5rem;}
+    .name-section input{width:100%;padding:0.9rem 1.2rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:0.95rem;outline:none;transition:border-color 0.3s;backdrop-filter:blur(8px);}
+    .name-section input:focus{border-color:var(--cyan);}
+    .name-section input::placeholder{color:var(--muted);}
+    .name-section input:read-only{opacity:0.7;cursor:default;border-color:rgba(0,229,255,0.08);}
+
+    .prefilled-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.2);border-radius:99px;padding:0.2rem 0.7rem;font-size:0.72rem;color:#25d366;font-family:var(--mono);margin-bottom:1.2rem;}
+
+    .question-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.8rem;margin-bottom:1.2rem;animation:fadeUp 0.35s ease both;backdrop-filter:blur(12px);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+    .q-number{font-size:0.72rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.6rem;font-family:var(--mono);}
+    .q-text{font-size:1rem;font-weight:600;margin-bottom:1.2rem;line-height:1.5;}
+    .q-options{display:flex;flex-direction:column;gap:0.6rem;}
+    .q-option{display:flex;align-items:center;gap:0.9rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:0.85rem 1.1rem;cursor:pointer;transition:all 0.2s ease;font-size:0.9rem;}
+    .q-option:hover{border-color:var(--cyan);background:rgba(0,229,255,0.06);}
+    .q-option.selected{border-color:var(--cyan);background:rgba(0,229,255,0.10);color:var(--cyan);font-weight:600;}
+    .q-option-dot{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);flex-shrink:0;transition:all 0.2s;}
+    .q-option.selected .q-option-dot{background:var(--cyan);border-color:var(--cyan);}
+
+    .nav-buttons{display:flex;gap:1rem;margin-top:1.5rem;justify-content:flex-end;flex-wrap:wrap;}
+    @media(max-width:400px){.nav-buttons{flex-direction:column;}.btn-prev,.btn-next{width:100%;justify-content:center;}}
+    .btn-prev{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:var(--radius);padding:0.8rem 1.8rem;font-family:inherit;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+    .btn-prev:hover{border-color:var(--cyan);color:var(--cyan);}
+    .btn-next{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:var(--radius);padding:0.8rem 2rem;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .btn-next:hover{opacity:0.88;transform:translateY(-2px);}
+    .btn-next:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
+
+    .lgpd-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius);padding:0.9rem 1.1rem;margin-top:1rem;margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:0.8rem;}
+    .lgpd-box input[type=checkbox]{width:18px;height:18px;accent-color:var(--cyan);flex-shrink:0;margin-top:2px;cursor:pointer;}
+    .lgpd-box label{font-size:0.78rem;color:var(--text2);line-height:1.6;cursor:pointer;}
+
+    #resultSection{display:none;animation:fadeUp 0.5s ease both;}
+    .result-header{text-align:center;padding:2rem 0 1.5rem;}
+    .result-header h2{font-size:1.6rem;font-weight:800;margin-bottom:0.4rem;}
+    .result-header p{color:var(--text2);font-size:0.9rem;}
+    .result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;margin-bottom:1.2rem;backdrop-filter:blur(12px);}
+    .result-card h4{font-size:0.78rem;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:1.2rem;font-family:var(--mono);}
+    .profile-badge{display:flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;font-size:2rem;font-weight:900;margin:0 auto 1rem;}
+    .dim-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:0.9rem;}
+    .dim-bar-label{width:130px;font-size:0.82rem;font-weight:700;flex-shrink:0;}
+    .dim-bar-track{flex:1;height:10px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;}
+    .dim-bar-fill{height:100%;border-radius:99px;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);}
+    .dim-bar-pct{width:38px;font-size:0.8rem;font-weight:700;text-align:right;flex-shrink:0;}
+
+    .sending-state{text-align:center;padding:3rem 2rem;}
+    .sending-state .spinner{width:48px;height:48px;border:4px solid rgba(0,229,255,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1.2rem;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .success-badge{display:inline-flex;align-items:center;gap:0.6rem;background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);border-radius:99px;padding:0.5rem 1.2rem;font-size:0.82rem;color:var(--S);font-weight:600;margin-bottom:1.2rem;}
+
+    .wpp-finish-card{background:linear-gradient(135deg,rgba(37,211,102,0.10),rgba(18,140,126,0.08));border:2px solid rgba(37,211,102,0.35);border-radius:var(--radius-lg);padding:2rem 1.5rem;text-align:center;margin-top:1.5rem;}
+    .wpp-finish-card h3{font-size:1.15rem;font-weight:800;color:#fff;margin-bottom:0.4rem;}
+    .wpp-finish-card p{font-size:0.88rem;color:#bbb;margin-bottom:0;line-height:1.6;}
+
+    @media(max-width:680px){
+      .wrapper{padding:1.5rem 1rem 5rem;}
+      .nexus-logo-wrap{padding:2rem 1rem;}
+      .header-title{font-size:1.4rem;}
+      .nexus-logo-svg.desktop{display:none;}
+      .nexus-logo-svg.mobile{display:block;}
+    }
+  </style>
+</head>
+<body>
+
+<div class="nexus-logo-wrap">
+  <svg class="nexus-logo-svg desktop" width="500" height="100" preserveAspectRatio="xMidYMid meet" viewBox="0 0 500 100" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glow-d"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glow-strong-d"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <text x="250" y="18" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="9.5" letter-spacing="4" opacity="0.8" filter="url(#glow-d)">// SISTEMA DE GESTÃO //</text>
+    <text x="250" y="65" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="58" font-weight="900" letter-spacing="10" filter="url(#glow-strong-d)">NEXUS</text>
+    <line x1="80" y1="76" x2="190" y2="76" stroke="#00c8ff" stroke-width="0.8" opacity="0.45"/>
+    <line x1="310" y1="76" x2="420" y2="76" stroke="#00c8ff" stroke-width="0.8" opacity="0.45"/>
+    <polygon points="250,73 255,78 250,83 245,78" fill="#00c8ff" opacity="0.9" filter="url(#glow-d)"/>
+    <text x="250" y="95" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="10" letter-spacing="4" opacity="0.85" filter="url(#glow-d)">RECRUTAMENTO  ✦  SELEÇÃO</text>
+  </svg>
+  <svg class="nexus-logo-svg mobile" width="280" height="78" preserveAspectRatio="xMidYMid meet" viewBox="0 0 280 78" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="glow-m"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glow-strong-m"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <text x="140" y="14" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="7" letter-spacing="3" opacity="0.8" filter="url(#glow-m)">// SISTEMA DE GESTÃO //</text>
+    <text x="140" y="52" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="40" font-weight="900" letter-spacing="7" filter="url(#glow-strong-m)">NEXUS</text>
+    <line x1="30" y1="61" x2="115" y2="61" stroke="#00c8ff" stroke-width="0.7" opacity="0.45"/>
+    <line x1="165" y1="61" x2="250" y2="61" stroke="#00c8ff" stroke-width="0.7" opacity="0.45"/>
+    <polygon points="140,58 144,62 140,66 136,62" fill="#00c8ff" opacity="0.9" filter="url(#glow-m)"/>
+    <text x="140" y="75" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="7.5" letter-spacing="3" opacity="0.85" filter="url(#glow-m)">RECRUTAMENTO  ✦  SELEÇÃO</text>
+  </svg>
+  <div class="wpp-banner">
+    <span class="wpp-icon">💬</span>
+    <div class="wpp-banner-text">
+      <strong>Processo seletivo via WhatsApp</strong><br>
+      Você foi encaminhado por nosso assistente. Seus dados já estão preenchidos — responda as 20 perguntas abaixo para concluir sua candidatura.
+    </div>
+  </div>
+</div>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="header-eyebrow">Avaliação Comportamental · Via WhatsApp</div>
+    <div class="header-title">Teste de Perfil <span class="hl">DISC</span> <span class="badge">📱 WHATSAPP</span></div>
+    <div class="header-sub">20 perguntas · leva cerca de 5 a 8 minutos · não existe resposta certa ou errada.</div>
+  </div>
+
+  <div id="testSection">
+    <div class="intro-card">
+      <h2>Como funciona?</h2>
+      <p>O modelo DISC identifica quatro dimensões do comportamento humano. Para cada pergunta, escolha a opção que melhor descreve como você <strong>realmente age</strong> no dia a dia — não como gostaria de ser.</p>
+      <p style="background:rgba(37,211,102,0.07);border-left:3px solid #25d366;border-radius:0 8px 8px 0;padding:0.7rem 1rem;margin-top:0.5rem;"><strong style="color:#25d366;">📱 Via WhatsApp:</strong> versão otimizada com 20 perguntas. Seus dados foram preenchidos automaticamente pelo nosso assistente.</p>
+      <div class="disc-pills">
+        <span class="disc-pill pill-D">🔴 D — Dominância</span>
+        <span class="disc-pill pill-I">🟡 I — Influência</span>
+        <span class="disc-pill pill-S">🟢 S — Estabilidade</span>
+        <span class="disc-pill pill-C">🔵 C — Conformidade</span>
+      </div>
+    </div>
+
+    <div id="prefillBadge" style="display:none;" class="prefilled-badge">✅ Dados preenchidos via WhatsApp</div>
+
+    <div class="name-section">
+      <label for="nomeDisc">Nome completo *</label>
+      <input type="text" id="nomeDisc" placeholder="Ex: Carlos Eduardo da Silva"/>
+    </div>
+    <div class="name-section">
+      <label for="telefoneDisc">WhatsApp *</label>
+      <input type="tel" id="telefoneDisc" placeholder="Ex: (51) 99999-9999"/>
+    </div>
+    <div class="name-section">
+      <label for="emailDisc">E-mail *</label>
+      <input type="email" id="emailDisc" placeholder="Ex: carlos@email.com"/>
+    </div>
+
+    <div class="lgpd-box">
+      <input type="checkbox" id="lgpdConsent"/>
+      <label for="lgpdConsent">Li e concordo com a coleta dos meus dados para fins de recrutamento e seleção, conforme a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/18). Os dados serão utilizados exclusivamente pela Agência Nexus.</label>
+    </div>
+
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-meta">
+      <span class="progress-label" id="progressLabel">Pergunta 1 de 20</span>
+      <span class="timer-display" id="timerDisplay">⏱ 00:00</span>
+    </div>
+
+    <div id="questionsContainer"></div>
+
+    <div class="nav-buttons">
+      <button class="btn-prev" id="btnPrev" onclick="prevQ()" style="display:none">← Anterior</button>
+      <button class="btn-next" id="btnNext" onclick="nextQ()" disabled>Próxima →</button>
+    </div>
+  </div>
+
+  <div id="resultSection">
+    <div class="result-header">
+      <h2>Seu Perfil DISC</h2>
+      <p id="resultSubtitle">Análise gerada com base nas suas 20 respostas</p>
+    </div>
+    <div class="result-card" id="cardPerfil"></div>
+    <div class="result-card" id="cardEscala"></div>
+
+    <div id="sendingState" class="sending-state" style="display:none">
+      <div class="spinner"></div>
+      <p style="color:var(--muted);font-size:0.9rem;">Salvando seu resultado...</p>
+    </div>
+    <div id="successState" style="display:none;text-align:center;padding:1rem 0;">
+      <div class="success-badge">✅ Resultado salvo com sucesso!</div>
+    </div>
+
+    <div class="wpp-finish-card" id="finishCard" style="display:none;">
+      <div style="font-size:2rem;margin-bottom:0.7rem;">🎉</div>
+      <h3>Avaliação concluída!</h3>
+      <p>Seu perfil comportamental foi registrado.<br>Nossa equipe analisará sua candidatura e entrará em contato em breve pelo WhatsApp.<br><br><strong style="color:#25d366;">Boa sorte! 🍀</strong></p>
+      <button onclick="fecharPagina()" style="margin-top:1.4rem;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border:none;border-radius:12px;padding:0.85rem 2.2rem;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;">
+        ✅ Fechar e voltar ao WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── PARÂMETROS DA URL ───────────────────────────────────────
+const urlParams   = new URLSearchParams(window.location.search);
+const nomeUrl     = urlParams.get('nome')  || '';
+const telUrl      = urlParams.get('tel')   || '';
+const emailUrl    = urlParams.get('email') || '';
+const vagaUrl     = urlParams.get('vaga')  || '';
+
+// ─── SUPABASE ────────────────────────────────────────────────
+const SB_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
+const SB_TABLE = 'disc_historico';
+function sbHeaders() {
+  return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
+}
+
+// ─── 20 PERGUNTAS BALANCEADAS (5D + 5I + 5S + 5C) ───────────
+const PERGUNTAS = [
+  // DOMINÂNCIA
+  { id:'W_D1', texto:'Quando precisa tomar uma decisão importante, você:', fator:'D', opcoes:[
+    {t:'Decido rapidamente e sigo em frente.',f:'D'},
+    {t:'Consulto outros antes de decidir.',f:'I'},
+    {t:'Penso bem e aguardo o momento certo.',f:'S'},
+    {t:'Analiso todos os dados disponíveis.',f:'C'}
+  ]},
+  { id:'W_D2', texto:'Diante de um novo desafio, sua primeira reação é:', fator:'D', opcoes:[
+    {t:'Partir para a ação imediatamente.',f:'D'},
+    {t:'Comentar com a equipe e engajar todos.',f:'I'},
+    {t:'Planejar com calma antes de agir.',f:'S'},
+    {t:'Pesquisar e entender tudo antes de começar.',f:'C'}
+  ]},
+  { id:'W_D3', texto:'Quando alguém discorda de você no trabalho, você:', fator:'D', opcoes:[
+    {t:'Defendo minha posição com firmeza.',f:'D'},
+    {t:'Busco um consenso conversando.',f:'I'},
+    {t:'Cedo para evitar conflito.',f:'S'},
+    {t:'Apresento argumentos e dados para embasar minha posição.',f:'C'}
+  ]},
+  { id:'W_D4', texto:'Sua postura geral frente a metas é:', fator:'D', opcoes:[
+    {t:'Gosto de metas ambiciosas e vou atrás delas.',f:'D'},
+    {t:'Prefiro metas que posso celebrar com o time.',f:'I'},
+    {t:'Gosto de metas estáveis e alcançáveis.',f:'S'},
+    {t:'Prefiro metas claras e bem definidas.',f:'C'}
+  ]},
+  { id:'W_D5', texto:'Quando um projeto está atrasado, você:', fator:'D', opcoes:[
+    {t:'Assumo o controle e cobro o que é necessário.',f:'D'},
+    {t:'Motivo a equipe para acelerar o ritmo.',f:'I'},
+    {t:'Mantenho a calma e ajudo onde for possível.',f:'S'},
+    {t:'Identifico a causa raiz e proponho um plano de ação.',f:'C'}
+  ]},
+  // INFLUÊNCIA
+  { id:'W_I1', texto:'Em um ambiente novo, você:', fator:'I', opcoes:[
+    {t:'Tomo iniciativa rapidamente.',f:'D'},
+    {t:'Faço amizades e me integro logo.',f:'I'},
+    {t:'Observo e me adapto ao ritmo do grupo.',f:'S'},
+    {t:'Entendo as regras antes de agir.',f:'C'}
+  ]},
+  { id:'W_I2', texto:'Ao apresentar uma ideia, você:', fator:'I', opcoes:[
+    {t:'Vou direto ao ponto e defendo com firmeza.',f:'D'},
+    {t:'Uso entusiasmo e exemplos para engajar.',f:'I'},
+    {t:'Apresento com cuidado para não gerar resistência.',f:'S'},
+    {t:'Organizo bem os dados e apresento de forma estruturada.',f:'C'}
+  ]},
+  { id:'W_I3', texto:'Como você lida com conflitos na equipe?', fator:'I', opcoes:[
+    {t:'Resolvo direto e rápido.',f:'D'},
+    {t:'Converso com as partes e busco harmonia.',f:'I'},
+    {t:'Evito me envolver e espero acalmar.',f:'S'},
+    {t:'Analiso a situação antes de intervir.',f:'C'}
+  ]},
+  { id:'W_I4', texto:'Você se sente mais motivado quando:', fator:'I', opcoes:[
+    {t:'Supera desafios e alcança resultados.',f:'D'},
+    {t:'Trabalha em equipe e é reconhecido.',f:'I'},
+    {t:'Tem estabilidade e rotina organizada.',f:'S'},
+    {t:'Entrega um trabalho de alta qualidade.',f:'C'}
+  ]},
+  { id:'W_I5', texto:'Ao receber um elogio, você:', fator:'I', opcoes:[
+    {t:'Agradeço e já penso no próximo desafio.',f:'D'},
+    {t:'Fico muito feliz e compartilho com o time.',f:'I'},
+    {t:'Agradeço com simplicidade.',f:'S'},
+    {t:'Analiso se realmente mereci e o que melhorar.',f:'C'}
+  ]},
+  // ESTABILIDADE
+  { id:'W_S1', texto:'Em relação à rotina de trabalho, você:', fator:'S', opcoes:[
+    {t:'Prefiro variedade e novos desafios sempre.',f:'D'},
+    {t:'Gosto quando tem interação com pessoas.',f:'I'},
+    {t:'Me sinto bem com processos estáveis.',f:'S'},
+    {t:'Prefiro quando tudo segue um padrão definido.',f:'C'}
+  ]},
+  { id:'W_S2', texto:'Quando a empresa passa por uma mudança grande, você:', fator:'S', opcoes:[
+    {t:'Me adapto rápido e busco liderar a transição.',f:'D'},
+    {t:'Apoio o time e ajudo a manter o ânimo.',f:'I'},
+    {t:'Prefiro entender bem antes de mudar.',f:'S'},
+    {t:'Verifico os riscos e impactos com cuidado.',f:'C'}
+  ]},
+  { id:'W_S3', texto:'Como você lida com pressão no trabalho?', fator:'S', opcoes:[
+    {t:'Me energizo — pressão me faz render mais.',f:'D'},
+    {t:'Busco apoio da equipe para passar juntos.',f:'I'},
+    {t:'Mantenho a calma e foco no que posso controlar.',f:'S'},
+    {t:'Organizo as prioridades e trabalho metodicamente.',f:'C'}
+  ]},
+  { id:'W_S4', texto:'Para você, um bom ambiente de trabalho é:', fator:'S', opcoes:[
+    {t:'Dinâmico, competitivo e desafiador.',f:'D'},
+    {t:'Colaborativo, animado e com boas relações.',f:'I'},
+    {t:'Estável, previsível e sem conflitos.',f:'S'},
+    {t:'Organizado, com processos claros e bem definidos.',f:'C'}
+  ]},
+  { id:'W_S5', texto:'Quando precisa ajudar um colega com dificuldade, você:', fator:'S', opcoes:[
+    {t:'Resolvo rápido e sigo para o próximo ponto.',f:'D'},
+    {t:'Ofereço ajuda com entusiasmo e apoio emocional.',f:'I'},
+    {t:'Ajudo com paciência, no ritmo da pessoa.',f:'S'},
+    {t:'Explico de forma detalhada e estruturada.',f:'C'}
+  ]},
+  // CONFORMIDADE
+  { id:'W_C1', texto:'Ao receber uma tarefa, você:', fator:'C', opcoes:[
+    {t:'Começo logo e ajusto no caminho.',f:'D'},
+    {t:'Alinho com o time antes de começar.',f:'I'},
+    {t:'Faço perguntas para entender bem.',f:'S'},
+    {t:'Leio todas as instruções antes de agir.',f:'C'}
+  ]},
+  { id:'W_C2', texto:'Em relação a regras e processos, você:', fator:'C', opcoes:[
+    {t:'Sigo o que faz sentido; ignoro o que atrapalha.',f:'D'},
+    {t:'Sigo quando o time também segue.',f:'I'},
+    {t:'Sigo com cuidado para não gerar problemas.',f:'S'},
+    {t:'Sigo rigorosamente — regras existem por uma razão.',f:'C'}
+  ]},
+  { id:'W_C3', texto:'Como você entrega um trabalho?', fator:'C', opcoes:[
+    {t:'Rápido e objetivo, focado no resultado.',f:'D'},
+    {t:'Com boa apresentação para impactar bem.',f:'I'},
+    {t:'Cuidadoso e dentro do prazo combinado.',f:'S'},
+    {t:'Revisado várias vezes até ter certeza da qualidade.',f:'C'}
+  ]},
+  { id:'W_C4', texto:'Quando percebe um erro no trabalho, você:', fator:'C', opcoes:[
+    {t:'Corrijo na hora e sigo.',f:'D'},
+    {t:'Comunico ao time para resolver junto.',f:'I'},
+    {t:'Verifico com cautela antes de concluir que é erro.',f:'S'},
+    {t:'Analiso a causa, documento e proponho correção formal.',f:'C'}
+  ]},
+  { id:'W_C5', texto:'Ao final de um projeto, você costuma:', fator:'C', opcoes:[
+    {t:'Já estar pensando no próximo desafio.',f:'D'},
+    {t:'Celebrar com o time e reconhecer cada um.',f:'I'},
+    {t:'Sentir alívio com a estabilidade retomada.',f:'S'},
+    {t:'Fazer uma análise do que funcionou e o que melhorar.',f:'C'}
+  ]},
+];
+
+// ─── PERFIS ──────────────────────────────────────────────────
+const PERFIS = {
+  D:{nome:'Dominante',emoji:'🔴',cor:'var(--D)',desc:'Orientado a resultados, direto e assertivo. Age com rapidez, gosta de desafios e não teme decisões difíceis.'},
+  I:{nome:'Influente',emoji:'🟡',cor:'var(--I)',desc:'Comunicativo, entusiasta e focado em pessoas. Cria conexões facilmente e inspira o time ao redor.'},
+  S:{nome:'Estável',emoji:'🟢',cor:'var(--S)',desc:'Paciente, confiável e consistente. Valoriza harmonia, estabilidade e é um pilar de suporte para a equipe.'},
+  C:{nome:'Consciencioso',emoji:'🔵',cor:'var(--C)',desc:'Analítico, criterioso e orientado à qualidade. Pensa antes de agir e garante precisão nas entregas.'},
+};
+
+// ─── ESTADO ──────────────────────────────────────────────────
+let atual = 0;
+const respostas = new Array(PERGUNTAS.length).fill(null);
+let timerInterval = null;
+let segundos = 0;
+
+// ─── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  // Preencher campos com dados da URL
+  if (nomeUrl)  { const el = document.getElementById('nomeDisc');     if(el) { el.value = nomeUrl;  el.readOnly = true; } }
+  if (telUrl)   { const el = document.getElementById('telefoneDisc'); if(el) { el.value = telUrl;   el.readOnly = true; } }
+  if (emailUrl) { const el = document.getElementById('emailDisc');    if(el) { el.value = emailUrl; el.readOnly = true; } }
+  if (nomeUrl || telUrl || emailUrl) {
+    document.getElementById('prefillBadge').style.display = 'inline-flex';
+  }
+  renderQ(0);
+  iniciarTimer();
+});
+
+// ─── TIMER ───────────────────────────────────────────────────
+function iniciarTimer() {
+  timerInterval = setInterval(() => {
+    segundos++;
+    const m = String(Math.floor(segundos/60)).padStart(2,'0');
+    const s = String(segundos%60).padStart(2,'0');
+    document.getElementById('timerDisplay').textContent = `⏱ ${m}:${s}`;
+  }, 1000);
+}
+
+// ─── RENDER PERGUNTA ─────────────────────────────────────────
+function renderQ(idx) {
+  const q = PERGUNTAS[idx];
+  const container = document.getElementById('questionsContainer');
+  const pct = Math.round(((idx) / PERGUNTAS.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `Pergunta ${idx+1} de ${PERGUNTAS.length}`;
+  document.getElementById('btnPrev').style.display = idx > 0 ? 'inline-flex' : 'none';
+  document.getElementById('btnNext').disabled = respostas[idx] === null;
+
+  const isUltima = idx === PERGUNTAS.length - 1;
+  document.getElementById('btnNext').textContent = isUltima ? '✅ Finalizar' : 'Próxima →';
+
+  container.innerHTML = `
+    <div class="question-card">
+      <div class="q-number">Pergunta ${idx+1} / ${PERGUNTAS.length}</div>
+      <div class="q-text">${q.texto}</div>
+      <div class="q-options">
+        ${q.opcoes.map((op,i) => `
+          <label class="q-option${respostas[idx]===i?' selected':''}" onclick="selecionarOpcao(${idx},${i})">
+            <div class="q-option-dot"></div>
+            <span>${op.t}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function selecionarOpcao(qIdx, opIdx) {
+  respostas[qIdx] = opIdx;
+  renderQ(qIdx);
+}
+
+function nextQ() {
+  if (respostas[atual] === null) return;
+  if (atual === PERGUNTAS.length - 1) {
+    if (!validarCampos()) return;
+    calcularResultado();
+    return;
+  }
+  atual++;
+  renderQ(atual);
+  
+}
+
+function prevQ() {
+  if (atual > 0) { atual--; renderQ(atual);  }
+}
+
+// ─── VALIDAÇÃO ───────────────────────────────────────────────
+function validarCampos() {
+  const nome  = document.getElementById('nomeDisc').value.trim();
+  const tel   = document.getElementById('telefoneDisc').value.trim();
+  const email = document.getElementById('emailDisc').value.trim();
+  const lgpd  = document.getElementById('lgpdConsent').checked;
+  if (!nome)  { alert('Por favor, informe seu nome completo.'); return false; }
+  if (!tel)   { alert('Por favor, informe seu telefone/WhatsApp.'); return false; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Por favor, informe um e-mail válido.'); return false; }
+  if (!lgpd)  { alert('Por favor, aceite os termos da LGPD para continuar.'); return false; }
+  return true;
+}
+
+// ─── CÁLCULO ─────────────────────────────────────────────────
+function calcularResultado() {
+  clearInterval(timerInterval);
+  const pontos = {D:0, I:0, S:0, C:0};
+  respostas.forEach((opIdx, qIdx) => {
+    if (opIdx !== null) {
+      const fator = PERGUNTAS[qIdx].opcoes[opIdx].f;
+      pontos[fator]++;
+    }
+  });
+  const total = Object.values(pontos).reduce((a,b)=>a+b, 0) || 1;
+  const pct   = {D: Math.round(pontos.D/total*100), I: Math.round(pontos.I/total*100), S: Math.round(pontos.S/total*100), C: Math.round(pontos.C/total*100)};
+  const sorted = Object.entries(pct).sort((a,b)=>b[1]-a[1]);
+  const dominante  = sorted[0][0];
+  const secundario = sorted[1][0];
+  mostrarResultado(dominante, secundario, pct);
+}
+
+// ─── RESULTADO ───────────────────────────────────────────────
+function mostrarResultado(dom, sec, pct) {
+  document.getElementById('testSection').style.display = 'none';
+  document.getElementById('resultSection').style.display = 'block';
+  
+
+  const p = PERFIS[dom];
+  const ps = PERFIS[sec];
+
+  // Card perfil
+  document.getElementById('cardPerfil').innerHTML = `
+    <h4>🎯 Perfil Dominante</h4>
+    <div style="text-align:center;padding:1rem 0;">
+      <div class="profile-badge" style="background:${p.cor}22;color:${p.cor};">${p.emoji}</div>
+      <div style="font-size:1.5rem;font-weight:900;margin-bottom:0.3rem;">${p.nome}</div>
+      <div style="font-size:0.85rem;color:var(--text2);margin-bottom:0.8rem;">Secundário: ${ps.emoji} ${ps.nome}</div>
+      <div style="font-size:0.9rem;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto;">${p.desc}</div>
+    </div>
+  `;
+
+  // Card escala
+  const cores = {D:'var(--D)',I:'var(--I)',S:'var(--S)',C:'var(--C)'};
+  const nomes = {D:'Dominância',I:'Influência',S:'Estabilidade',C:'Conformidade'};
+  document.getElementById('cardEscala').innerHTML = `
+    <h4>📊 Intensidade por Dimensão</h4>
+    ${['D','I','S','C'].map(f => `
+      <div class="dim-bar-row">
+        <div class="dim-bar-label" style="color:${cores[f]}">${nomes[f]}</div>
+        <div class="dim-bar-track"><div class="dim-bar-fill" style="width:${pct[f]}%;background:${cores[f]};"></div></div>
+        <div class="dim-bar-pct" style="color:${cores[f]}">${pct[f]}%</div>
+      </div>
+    `).join('')}
+  `;
+
+  salvarNoSupabase(dom, sec, pct);
+}
+
+// ─── FECHAR PÁGINA ───────────────────────────────────────────
+function fecharPagina() {
+  // Tenta fechar a aba (funciona quando aberta pelo bot)
+  window.close();
+  // Fallback: redireciona para o WhatsApp com mensagem automática
+  setTimeout(() => {
+    const tel = '5551996976579'; // número do bot/atendimento
+    const msg = encodeURIComponent('DISC_CONCLUIDO');
+    window.location.href = `https://wa.me/${tel}?text=${msg}`;
+  }, 300);
+}
+
+// ─── SALVAR SUPABASE ─────────────────────────────────────────
+async function salvarNoSupabase(dom, sec, pct) {
+  document.getElementById('sendingState').style.display = 'block';
+
+  const nomeC  = document.getElementById('nomeDisc').value.trim();
+  const telC   = document.getElementById('telefoneDisc').value.trim().replace(/\D/g,'');
+  const emailC = document.getElementById('emailDisc').value.trim().toLowerCase();
+
+  const patchData = {
+    disc_perfil:       dom,
+    sec:               sec,
+    pct_d:             pct.D,
+    pct_i:             pct.I,
+    pct_s:             pct.S,
+    pct_c:             pct.C,
+    disc_atualizado_em: new Date().toISOString(),
+    origem:            'WhatsApp',
+  };
+
+  try {
+    let idAlvo = null;
+
+    // 1. Buscar por email
+    if (emailC) {
+      const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?email_externo=eq.${encodeURIComponent(emailC)}&select=id&order=criado_em.desc&limit=5`, { headers: sbHeaders() });
+      const d = await r.json();
+      if (Array.isArray(d) && d.length > 0) idAlvo = d[0].id;
+    }
+
+    // 2. Buscar por telefone
+    if (!idAlvo && telC) {
+      const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?tel_externo=eq.${encodeURIComponent(telC)}&select=id&order=criado_em.desc&limit=5`, { headers: sbHeaders() });
+      const d = await r.json();
+      if (Array.isArray(d) && d.length > 0) idAlvo = d[0].id;
+    }
+
+    // 3. Buscar por nome
+    if (!idAlvo && nomeC) {
+      const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?nome=ilike.${encodeURIComponent(nomeC)}&select=id&order=criado_em.desc&limit=5`, { headers: sbHeaders() });
+      const d = await r.json();
+      if (Array.isArray(d) && d.length > 0) idAlvo = d[0].id;
+    }
+
+    if (idAlvo) {
+      // Atualiza registro existente
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?id=eq.${idAlvo}`, {
+        method: 'PATCH',
+        headers: { ...sbHeaders(), 'Prefer': 'return=minimal' },
+        body: JSON.stringify(patchData),
+      });
+    } else {
+      // Cria novo registro
+      await fetch(`${SB_URL}/rest/v1/${SB_TABLE}`, {
+        method: 'POST',
+        headers: { ...sbHeaders(), 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          nome:          nomeC || 'Candidato WhatsApp',
+          email_externo: emailC || null,
+          tel_externo:   telC   || null,
+          vaga:          vagaUrl || 'Não informada',
+          ...patchData,
+          criado_em: new Date().toISOString(),
+        }),
+      });
+    }
+
+    document.getElementById('sendingState').style.display = 'none';
+    document.getElementById('successState').style.display = 'block';
+    document.getElementById('finishCard').style.display = 'block';
+
+  } catch(err) {
+    console.warn('Erro ao salvar no Supabase:', err);
+    document.getElementById('sendingState').style.display = 'none';
+    document.getElementById('finishCard').style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
