@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Histórico DISC | Agência Nexus</title>
+  <title>Histórico DISC | Orizon — Consultoria RH & Gestão</title>
   <link rel="icon" type="image/png" href="icone.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
   <style>
     :root{--primary:#1d4ed8;--accent:#3b82f6;--bg:#0d0d0d;--card:#161616;--border:rgba(59,130,246,0.18);--text:#f0f0f0;--muted:#888;}
     *{margin:0;padding:0;box-sizing:border-box;}
-    html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;}
-    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+    html,body{
+  background:#0d1117;min-height:100vh;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;}
+    
     .wrapper{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:2rem 1.2rem 4rem;}
     .top-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;}
     .logo-area{display:flex;align-items:center;gap:0.8rem;}
@@ -105,17 +106,17 @@
   <link rel="apple-touch-icon" href="../imagens/icone.png" />
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="Agência Nexus - Recrutamento e Seleção especializada. Conectamos talentos com oportunidades reais. Processo seletivo eficiente e humanizado em Guaíba, RS." />
-  <meta name="keywords" content="recrutamento, seleção, vagas de emprego, agência nexus, guaíba, rio grande do sul, recursos humanos, talentos" />
-  <meta name="author" content="Agência Nexus" />
+  <meta name="description" content="Orizon — Consultoria RH & Gestão - Recrutamento e Seleção especializada. Conectamos talentos com oportunidades reais. Processo seletivo eficiente e humanizado em Guaíba, RS." />
+  <meta name="keywords" content="recrutamento, seleção, vagas de emprego, Orizon — Consultoria RH & Gestão, guaíba, rio grande do sul, recursos humanos, talentos" />
+  <meta name="author" content="Orizon — Consultoria RH & Gestão" />
   <meta name="robots" content="index, follow" />
-  <meta property="og:title" content="Agência Nexus - Recrutamento e Seleção" />
+  <meta property="og:title" content="Orizon — Consultoria RH & Gestão - Recrutamento e Seleção" />
   <meta property="og:description" content="Conectamos candidatos e empresas com oportunidades reais e processos seletivos eficientes." />
-  <meta property="og:url" content="https://agencia-nexus.github.io/AgenciaNexus/" />
+  <meta property="og:url" content="https://orizonrs.github.io/Consultoria/site/" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://agencia-nexus.github.io/AgenciaNexus/imagens/favicon-192x192.png" />
+  <meta property="og:image" content="https://orizonrs.github.io/Consultoria/site/imagens/favicon-192x192.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Agência Nexus - Recrutamento e Seleção" />
+  <meta name="twitter:title" content="Orizon — Consultoria RH & Gestão - Recrutamento e Seleção" />
   <meta name="twitter:description" content="Vagas de emprego em Guaíba. Processo seletivo humanizado e eficiente." />
 
 </head>
@@ -124,8 +125,8 @@
 <div class="wrapper">
   <div class="top-bar">
     <div class="logo-area">
-      <img src="fundo.png" alt="Agência Nexus"/>
-      <span>Uso interno — Agência Nexus</span>
+      <img src="fundo.png" alt="Orizon — Consultoria RH & Gestão"/>
+      <span>Uso interno — Orizon — Consultoria RH & Gestão</span>
     </div>
     <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
       <span class="sync-badge" id="syncBadge"><span class="dot"></span> Conectando...</span>
@@ -205,10 +206,10 @@ const SUPABASE_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_fTW4FWKGvZsNe1o8DR4EOg_EhZ7uHTq';
 const TABELA = 'disc_historico';
 
-async function sbFetch(path, options={}){
+async function sbFetch(path, options=){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     ...options,
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':options.prefer||'return=representation',...(options.headers||{})}
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':options.prefer||'return=representation',...(options.headers||)}
   });
   if(!res.ok){const err=await res.text();throw new Error(err);}
   const text=await res.text();
@@ -298,7 +299,7 @@ function setSyncBadge(status){
 function renderStats(hist){
   if(!hist.length){document.getElementById('statsBar').style.display='none';return;}
   document.getElementById('statsBar').style.display='flex';
-  const perfis=hist.reduce((acc,h)=>{acc[h.dom]=(acc[h.dom]||0)+1;return acc;},{});
+  const perfis=hist.reduce((acc,h)=>{acc[h.dom]=(acc[h.dom]||0)+1;return acc;},);
   const top=Object.entries(perfis).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById('statsBar').innerHTML=`
     <div class="stat-item"><label>Total de candidatos</label><strong>${hist.length}</strong></div>
@@ -432,7 +433,7 @@ function exportarCSV(){
   const url=URL.createObjectURL(blob);
   const hoje=new Date();
   const d=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
-  const a=document.createElement('a');a.href=url;a.download=`historico-disc-nexus-${d}.csv`;a.click();
+  const a=document.createElement('a');a.href=url;a.download=`historico-disc-orizon-${d}.csv`;a.click();
   URL.revokeObjectURL(url);
   mostrarToast(`✅ ${todosOsCandidatos.length} candidato(s) exportado(s)!`);
 }
