@@ -3286,6 +3286,7 @@ body.dark-mode .content-section::before {
             <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
+        <text x="150" y="17" text-anchor="middle" fill="#00c8ff" font-family="'Courier New', monospace" font-size="7" letter-spacing="3" opacity="0.7" filter="url(#glow-m)">// SISTEMA DE GESTÃO //</text>
         <text x="150" y="67" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black', 'Impact', sans-serif" font-size="42" font-weight="900" letter-spacing="8" filter="url(#glow-strong-m)">ORIZON</text>
         <line x1="20" y1="76" x2="120" y2="76" stroke="#00c8ff" stroke-width="0.7" opacity="0.4"/>
         <line x1="180" y1="76" x2="280" y2="76" stroke="#00c8ff" stroke-width="0.7" opacity="0.4"/>
@@ -4124,27 +4125,6 @@ Tente novamente em instantes.`));
       }, 1000);
     }
     // FIM CHATBOT INTELIGENTE
-    
-    let aberto = false;
-    let digitando = false;
-
-    function toggleChatbot() {
-      aberto = !aberto;
-      document.getElementById('chatbotBtn').classList.toggle('active', aberto);
-      document.getElementById('chatbotWindow').classList.toggle('active', aberto);
-      document.body.classList.toggle('chat-open', aberto);
-      if (aberto && !document.getElementById('chatbotMessages').children.length) {
-        setTimeout(() => mostrarBemVindo(), 300);
-      }
-    }
-
-    function mostrarBemVindo() {
-      document.getElementById('chatbotMessages').innerHTML = '';
-      mostrarSequencia([
-        'Olá! 👋 Sou o assistente virtual da **Orizon**!',
-        'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
-      ], ['👤 Sou profissional','🏢 Sou empresa','🔍 Ver oportunidades','📞 Contato'], 0);
-    }
 
     function mostrarSequencia(textos, chips, index) {
       if (index >= textos.length) { adicionarChips(chips); return; }
@@ -4263,49 +4243,6 @@ Tente novamente em instantes.`));
     }
 
     // ============= MODO IA (Llama via Edge Function Supabase) =============
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
-
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '🤖 Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['👤 Sou profissional','🏢 Sou empresa','🔍 Ver oportunidades','📞 Contato']), 300);
-      }
-    }
-
-    async function responderComIA(texto) {
-      mostrarTyping(async () => {
-        try {
-          const resp = await fetch(EDGE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
-            },
-            body: JSON.stringify({ mensagem: texto })
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.erro || `Erro ${resp.status}`);
-          }
-          const data = await resp.json();
-          const resposta = data.resposta || 'Não consegui gerar uma resposta.';
-          adicionarBubbleBot(markdownParaHTML(resposta));
-          setTimeout(() => adicionarChips(['💬 Continuar','📞 Falar com humano','↩️ Voltar ao início']), 300);
-        } catch (e) {
-          adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}\n\nTente novamente em instantes.`));
-        }
-      }, 1000);
-    }
-
     // Fechar menu ao clicar fora
     document.addEventListener('click', (e) => {
       const menu = document.getElementById('menuContent');
