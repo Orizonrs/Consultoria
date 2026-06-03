@@ -1986,8 +1986,7 @@ async function carregarDadosVaga() {
       exibirVagaInfo(vagaData, badge);
       return;
     }
-  } catch(e) 
-
+  } catch(e){}
   // 2. Supabase — busca flexível ilike
   try {
     const palavras = VAGA.split(' ').filter(w=>w.length>2).slice(0,3).join('%');
@@ -2000,8 +1999,7 @@ async function carregarDadosVaga() {
       exibirVagaInfo(vagaData, badge);
       return;
     }
-  } catch(e) 
-
+  } catch(e){}
   // 3. vagas.html — fonte de verdade local (parse dinâmico do HTML)
   try {
     const vagasUrl = window.location.href.replace(/entrevista\.html.*$/, 'vagas.html');
@@ -2199,7 +2197,7 @@ function salvarRascunho() {
       snap.conquistas = [...conquistas];
       snap._ts = Date.now();
       localStorage.setItem(_RASCUNHO_KEY, JSON.stringify(snap));
-    } catch(e) 
+    } catch(e){}
   }, 800);
 }
 
@@ -2251,7 +2249,7 @@ function restaurarRascunho() {
         }
       });
     }
-  } catch(e) 
+  } catch(e){}
 }
 
 // Restaurar rascunho após carregamento completo
@@ -2899,7 +2897,7 @@ function exibirFeedbackCurriculoFit(res) {
     else container.querySelector('.navb')?.insertAdjacentElement('beforebegin', painel);
   }
 
-  const dims = res.notas_dimensoes || ;
+  const dims = res.notas_dimensoes || {};
   const dimLabels = {
     impacto_quantificavel: '📊 Impacto com métricas',
     verbos_protagonismo: '💪 Verbos de ação',
@@ -3470,8 +3468,8 @@ function limparEtapa0() {
   habilidades.length = 0;
   idiomas.length = 0;
   renderHabil();
-  try { localStorage.removeItem('orizon_rascunho_' + (VAGA||'geral').slice(0,20)); } catch(e) 
-  try { localStorage.removeItem(_RASCUNHO_KEY); } catch(e) 
+  try { localStorage.removeItem('orizon_rascunho_' + (VAGA||'geral').slice(0,20)); } catch(e){}
+  try { localStorage.removeItem(_RASCUNHO_KEY); } catch(e){}
   limparPdf();
   atualizarCompletude();
   toast('🗑 Formulário limpo — pode começar do zero', '');
@@ -4579,7 +4577,7 @@ function calcularFitLocal(dados, vd) {
   // Avalia qualidade das respostas por competência
   // Saturação: volume sem conteúdo não inflaciona
   // ══════════════════════════════════════════════════
-  const comp = dados.entrevista.competencias || ;
+  const comp = dados.entrevista.competencias || {};
   function notaComp(txt) {
     if (!txt || txt.trim().length === 0) return 0;
     const words = txt.trim().split(/\s+/).length;
@@ -4618,8 +4616,8 @@ function calcularFitLocal(dados, vd) {
     resiliencia:    notaComp(comp.resiliencia),
     equipe:         notaComp(comp.equipe),
     resultados:     notaComp(comp.resultados),
-    ...(comp.proatividade   ? { proatividade:   notaComp(comp.proatividade)   } : ),
-    ...(comp.adaptabilidade ? { adaptabilidade: notaComp(comp.adaptabilidade) } : ),
+    ...(comp.proatividade   ? { proatividade:   notaComp(comp.proatividade)   } : {}),
+    ...(comp.adaptabilidade ? { adaptabilidade: notaComp(comp.adaptabilidade) } : {}),
   };
   // "Me fale sobre você" → nota base obrigatória (0–10)
   // Opcionais → bônus puro: cada uma preenchida eleva a nota base, limitado a 10 no total
@@ -5357,7 +5355,7 @@ Retorne APENAS este JSON:
   mostrarResultado(dados, ia);
   window._entrevistaSalvarPromise = salvar(dados, ia).catch(e => console.warn('salvar:', e));
   // Limpa rascunho após envio bem-sucedido
-  try { localStorage.removeItem(_RASCUNHO_KEY); } catch(e) 
+  try { localStorage.removeItem(_RASCUNHO_KEY); } catch(e){}
 }
 
 // ── COLETAR ──
@@ -5435,10 +5433,10 @@ async function salvar(dados, ia) {
     +'&nivelE='+encodeURIComponent(ia.nivel||'');
 
   // ── helpers para serializar os campos novos com segurança ──
-  const _bd  = ia.score_breakdown        || ;
-  const _nc  = ia.notas_competencias     || ;
-  const _sa  = ia.star_analysis          || ;
-  const _fl  = ia.flags                  || ;
+  const _bd  = ia.score_breakdown        || {};
+  const _nc  = ia.notas_competencias     || {};
+  const _sa  = ia.star_analysis          || {};
+  const _fl  = ia.flags                  || {};
   const _pen = ia.penalidades_aplicadas  || [];
 
   const payload = {
@@ -5587,13 +5585,12 @@ async function salvar(dados, ia) {
       );
     }
   } catch(e) { console.warn('Supabase entrevista erro:', e); }
-  try { localStorage.setItem(`entrevista_${NOME}_${VAGA}`, JSON.stringify({ ...dados, analise: ia, ts: Date.now() })); } catch(e) 
-
+  try { localStorage.setItem(`entrevista_${NOME}_${VAGA}`, JSON.stringify({ ...dados, analise: ia, ts: Date.now() })); } catch(e){}
   // ── Supabase é a fonte única de verdade — email removido ──
   console.log('✅ Dados salvos no Supabase — email desativado');
 
-  try { localStorage.removeItem('entrevista_concluida'); } catch(e) 
-  setTimeout(()=>{ try { localStorage.setItem('entrevista_concluida','1'); } catch(e)  },300);
+  try { localStorage.removeItem('entrevista_concluida'); } catch(e){}
+  setTimeout(()=>{ try { localStorage.setItem('entrevista_concluida','1'); } catch(e){} },300);
 }
 
 // ── RESULTADO ──
@@ -5638,8 +5635,8 @@ function mostrarResultado(dados, ia) {
   }
 
   // ── BREAKDOWN DO SCORE — oculto do candidato, apenas pontos fortes e resumo ──
-  const bd = ia.score_breakdown || ;
-  const nc = ia.notas_competencias || ;
+  const bd = ia.score_breakdown || {};
+  const nc = ia.notas_competencias || {};
   // Esconde o card de breakdown numérico completamente
   const bkCard = document.getElementById('breakdownCard');
   if (bkCard) bkCard.style.display = 'none';
@@ -5680,10 +5677,10 @@ function mostrarResultado(dados, ia) {
         pontos_atencao:      ia.pontos_atencao      || [],
         requisitos_atendidos:ia.requisitos_atendidos|| [],
         requisitos_ausentes: ia.requisitos_ausentes || [],
-        score_breakdown:     ia.score_breakdown     || ,
-        notas_competencias:  ia.notas_competencias  || ,
-        star_analysis:       ia.star_analysis       || ,
-        flags:               ia.flags               || ,
+        score_breakdown:     ia.score_breakdown     || {},
+        notas_competencias:  ia.notas_competencias  || {},
+        star_analysis:       ia.star_analysis       || {},
+        flags:               ia.flags               || {},
         penalidades_aplicadas: ia.penalidades_aplicadas || [],
         disc_insight:        ia.disc_insight        || '',
         // ── scores por etapa ─────────────────────────────────────────────
@@ -5774,10 +5771,10 @@ async function enviarEmailUnificado(dados, ia) {
         pontos_atencao:      ia.pontos_atencao      || [],
         requisitos_atendidos:ia.requisitos_atendidos|| [],
         requisitos_ausentes: ia.requisitos_ausentes || [],
-        score_breakdown:     ia.score_breakdown     || ,
-        notas_competencias:  ia.notas_competencias  || ,
-        star_analysis:       ia.star_analysis       || ,
-        flags:               ia.flags               || ,
+        score_breakdown:     ia.score_breakdown     || {},
+        notas_competencias:  ia.notas_competencias  || {},
+        star_analysis:       ia.star_analysis       || {},
+        flags:               ia.flags               || {},
         penalidades_aplicadas: ia.penalidades_aplicadas || [],
         disc_insight:        ia.disc_insight        || '',
       }));
@@ -6101,9 +6098,8 @@ function fechar(){
 
 // Sinaliza conclusão total e volta para vagas.html para abrir modal de currículo
 async function _concluirERedirecionarParaVagas(){
-  try{ localStorage.removeItem('entrevista_concluida'); }catch(e)
-  try{ localStorage.setItem('entrevista_concluida','1'); }catch(e)
-
+  try{ localStorage.removeItem('entrevista_concluida'); }catch(e){}
+  try{ localStorage.setItem('entrevista_concluida','1'); }catch(e){}
   const up2   = new URLSearchParams(window.location.search);
   const canal  = up2.get('canal')  || '';
   const vaga   = up2.get('vaga')   || VAGA;
@@ -6114,7 +6110,7 @@ async function _concluirERedirecionarParaVagas(){
   // Se retorno já é absoluto usa direto, senão concatena com base
   const retorno = retornoRaw.startsWith('http') ? retornoRaw : base + retornoRaw;
 
-  try{ await window._entrevistaSalvarPromise; }catch(e)
+  try{ await window._entrevistaSalvarPromise; }catch(e){}
   window.location.href = retorno
     + (retorno.includes('?') ? '&' : '?')
     + `abrir_modal=1&canal=${encodeURIComponent(canal)}&vaga=${encodeURIComponent(vaga)}`;
@@ -6260,7 +6256,7 @@ function toast(msg, tipo='ok') {
     activeRec = null;
     if (activeMicBtn) { resetMicBtn(activeMicBtn); activeMicBtn = null; }
     if (recToKill) {
-      try { recToKill.abort(); } catch(e) 
+      try { recToKill.abort(); } catch(e){}
     }
   }
 
@@ -6682,8 +6678,8 @@ async function analisarSemantico(dados, ia) {
     const expV  = dados?.entrevista?.exp_vaga || '';
     const escol = dados?.entrevista?.escolaridade || '';
     const expT  = dados?.entrevista?.exp_total || '';
-    const comp  = dados?.entrevista?.competencias || ;
-    const vagaD = dados?.vaga_dados || ;
+    const comp  = dados?.entrevista?.competencias || {};
+    const vagaD = dados?.vaga_dados || {};
 
     const promptSemantico = `Você é um especialista em recrutamento. Avalie semanticamente a aderência do candidato à vaga.
 
@@ -6864,7 +6860,7 @@ window.verDetalhe = async function(id) {
     const sc  = cf.score_curriculo || 0;
     const nv  = cf.nivel_curriculo || 'Médio';
     const cc  = sc >= 80 ? '#2ecc71' : sc >= 65 ? '#3b82f6' : sc >= 40 ? '#f39c12' : '#e74c3c';
-    const dims = cf.notas_dimensoes || ;
+    const dims = cf.notas_dimensoes || {};
     const dimLbs = { impacto_quantificavel:'📊 Impacto/Métricas', verbos_protagonismo:'💪 Verbos de ação', progressao_trajetoria:'📈 Progressão', profundidade_especificidade:'🔍 Profundidade', alinhamento_vaga:'🎯 Alinhamento vaga' };
     const dimRows = Object.entries(dims).filter(([,v]) => v != null).map(([k,v]) => {
       const bc = v>=8?'#2ecc71':v>=6?'#3b82f6':v>=4?'#f39c12':'#e74c3c';
