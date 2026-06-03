@@ -3991,108 +3991,103 @@ const CHIP_ACOES = {
   fecharLista();
   return blocos.join('');
 }
-
 function escapeHtml(t) {
   return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
+// Configurações do Modo IA
+let modoIA = false;
+const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
 
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '🤖 Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato']), 300);
+function toggleModoIA() {
+  modoIA = !modoIA;
+  const wrap = document.getElementById('aiToggleWrap');
+  const statusText = document.getElementById('chatbotStatusText');
+  wrap.classList.toggle('ai-on', modoIA);
+  
+  if (modoIA) {
+    statusText.textContent = '🤖 Modo IA ativo';
+    adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
+  } else {
+    statusText.textContent = '● Assistente Orizon';
+    adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
+    setTimeout(() => adicionarChips(['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato']), 300);
+  }
+}
+
+async function responderComIA(texto) {
+  mostrarTyping(async () => {
+    try {
+      const resp = await fetch(EDGE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Alerta de Segurança: Idealmente, este token não deveria estar exposto no front-end
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
+        },
+        body: JSON.stringify({ mensagem: texto })
+      });
+      
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.erro || `Erro ${resp.status}`);
       }
+      
+      const data = await resp.json();
+      const resposta = data.resposta || 'Não consegui gerar uma resposta.';
+      adicionarBubbleBot(markdownParaHTML(resposta));
+      setTimeout(() => adicionarChips(['💬 Continuar', '📞 Falar com humano', '↩️ Voltar ao início']), 300);
+    } catch (e) {
+      adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}\n\nTente novamente em instantes.`));
     }
+  }, 1000);
+}
+// FIM CHATBOT INTELIGENTE
 
-    async function responderComIA(texto) {
-      mostrarTyping(async () => {
-        try {
-          const resp = await fetch(EDGE_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms'
-            },
-            body: JSON.stringify({ mensagem: texto })
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            throw new Error(err.erro || `Erro ${resp.status}`);
-          }
-          const data = await resp.json();
-          const resposta = data.resposta || 'Não consegui gerar uma resposta.';
-          adicionarBubbleBot(markdownParaHTML(resposta));
-          setTimeout(() => adicionarChips(['💬 Continuar','📞 Falar com humano','↩️ Voltar ao início']), 300);
-        } catch (e) {
-          adicionarBubbleBot(markdownParaHTML(`❌ **Erro na IA:** ${e.message}
+let aberto = false, digitando = false;
 
-Tente novamente em instantes.`));
-        }
-      }, 1000);
-    }
-    // FIM CHATBOT INTELIGENTE
-    
-    let aberto=false, digitando=false;
-    function toggleChatbot() {
-      aberto=!aberto;
-      document.getElementById('chatbotBtn').classList.toggle('active', aberto);
-      document.getElementById('chatbotWindow').classList.toggle('active', aberto);
-      document.body.classList.toggle('chat-open', aberto);
-      if(aberto && !document.getElementById('chatbotMessages').children.length) setTimeout(()=>mostrarBemVindo(),300);
-    }
+function toggleChatbot() {
+  aberto = !aberto;
+  document.getElementById('chatbotBtn').classList.toggle('active', aberto);
+  document.getElementById('chatbotWindow').classList.toggle('active', aberto);
+  document.body.classList.toggle('chat-open', aberto);
+  if (aberto && !document.getElementById('chatbotMessages').children.length) {
+    setTimeout(() => mostrarBemVindo(), 300);
+  }
+}
 
-    function mostrarBemVindo() {
-      document.getElementById('chatbotMessages').innerHTML = '';
-      mostrarSequencia([
-        'Olá! 👋 Sou o assistente virtual da **Orizon**!',
-        'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
-      ], ['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato'], 0);
-    }
+function mostrarBemVindo() {
+  document.getElementById('chatbotMessages').innerHTML = '';
+  mostrarSequencia([
+    'Olá! 👋 Sou o assistente virtual da **Orizon**!',
+    'Pode me perguntar qualquer coisa — vagas, processo seletivo, dicas, contato... Estou aqui pra ajudar! 😊'
+  ], ['👤 Sou candidato', '🏢 Sou empresa', '🔍 Ver vagas', '📞 Contato'], 0);
+}
 
-    function mostrarSequencia(textos,chips,index) {
-      if(index>=textos.length){adicionarChips(chips);return;}
-      mostrarTyping(()=>{ adicionarBubbleBot(markdownParaHTML(textos[index])); setTimeout(()=>mostrarSequencia(textos,chips,index+1),400); }, index===0?800:600);
-    }
-        function enviarMensagem() {
-      const input = document.getElementById('chatbotInput');
-      const texto = input.value.trim();
-      if (!texto || digitando) return;
-      input.value = '';
-      adicionarBubbleUser(texto);
-      if (modoIA) {
-        responderComIA(texto);
-      } else {
-        setTimeout(() => processarTexto(texto), 300);
-      }
-    }
-    // ============= MODO IA (Llama via Edge Function Supabase) =============
-    let modoIA = false;
-    const EDGE_URL = 'https://yunoxkembhskpnprffoi.supabase.co/functions/v1/chatbot-groq';
+function mostrarSequencia(textos, chips, index) {
+  if (index >= textos.length) {
+    adicionarChips(chips);
+    return;
+  }
+  mostrarTyping(() => { 
+    adicionarBubbleBot(markdownParaHTML(textos[index])); 
+    setTimeout(() => mostrarSequencia(textos, chips, index + 1), 400); 
+  }, index === 0 ? 800 : 600);
+}
 
-    function toggleModoIA() {
-      modoIA = !modoIA;
-      const wrap = document.getElementById('aiToggleWrap');
-      const statusText = document.getElementById('chatbotStatusText');
-      wrap.classList.toggle('ai-on', modoIA);
-      if (modoIA) {
-        statusText.textContent = '🤖 Modo IA ativo';
-        adicionarBubbleBot(markdownParaHTML('🤖 **Modo IA ativado!** Agora uso inteligência artificial para responder suas dúvidas. Como posso ajudar?'));
-      } else {
-        statusText.textContent = '● Assistente Orizon';
-        adicionarBubbleBot(markdownParaHTML('💬 Voltei ao modo padrão. Posso ajudar com vagas, processo seletivo e muito mais!'));
-        setTimeout(() => adicionarChips(['👤 Sou candidato','🏢 Sou empresa','🔍 Ver vagas','📞 Contato']), 300);
-      }
-    }
+function enviarMensagem() {
+  const input = document.getElementById('chatbotInput');
+  const texto = input.value.trim();
+  if (!texto || digitando) return;
+  input.value = '';
+  adicionarBubbleUser(texto);
+  
+  if (modoIA) {
+    responderComIA(texto);
+  } else {
+    setTimeout(() => processarTexto(texto), 300);
+  }
+}
 
     async function responderComIA(texto) {
       mostrarTyping(async () => {
