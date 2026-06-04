@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="icon" type="image/png" href="../imagens/logo123.jpeg"/>
+<title>Entrar — DP · Orizon Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1d4ed8;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#080808;--bg2:#0d0d0d;--card:#111111;--card2:#161616;
+  --border:rgba(59,130,246,0.12);--border2:rgba(59,130,246,0.28);
+  --text:#f0f0f0;--muted:#666;--muted2:#333;
+  --red:#e74c3c;--orange:#f39c12;--green:#2ecc71;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;}
+
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.025) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);
+  width:800px;height:600px;background:radial-gradient(ellipse,rgba(59,130,246,0.05) 0%,transparent 68%);
+  pointer-events:none;z-index:0;}
+
+#loginScreen{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);overflow:hidden;
+}
+#loginScreen::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(79,114,20,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 60% 10%, rgba(59,130,246,0.04) 0%, transparent 40%);
+  animation:lbg 8s ease-in-out infinite alternate;pointer-events:none;
+}
+@keyframes lbg{0%{opacity:0.7;transform:scale(1);}100%{opacity:1;transform:scale(1.05);}}
+
+.login-wrap{
+  position:relative;z-index:1;width:100%;max-width:860px;
+  display:grid;grid-template-columns:1fr 1fr;
+  background:rgba(13,13,13,0.97);
+  border:1px solid var(--border2);border-radius:28px;
+  overflow:hidden;backdrop-filter:blur(24px);
+  box-shadow:0 40px 80px rgba(0,0,0,0.6);
+  margin:1rem;
+}
+@media(max-width:680px){.login-wrap{grid-template-columns:1fr;}.login-brand{display:none!important;}}
+
+.login-brand{
+  background:linear-gradient(160deg,rgba(20,35,8,0.98) 0%,rgba(10,18,4,0.99) 100%);
+  padding:2.8rem 2.2rem;display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid rgba(59,130,246,0.12);position:relative;overflow:hidden;
+}
+.login-brand::before{
+  content:'';position:absolute;top:-40%;right:-30%;width:400px;height:400px;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.08) 0%,transparent 65%);pointer-events:none;
+}
+.login-brand::after{
+  content:'';position:absolute;bottom:-20%;left:-10%;width:250px;height:250px;
+  background:radial-gradient(ellipse,rgba(79,114,20,0.12) 0%,transparent 65%);pointer-events:none;
+}
+.lb-logo{width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(79,114,20,0.4),rgba(59,130,246,0.15));
+  border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;
+  overflow:hidden;margin-bottom:1.8rem;box-shadow:0 4px 20px rgba(59,130,246,0.15);}
+.lb-logo img{width:46px;height:46px;object-fit:contain;}
+.lb-tag{font-size:0.55rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);opacity:0.65;margin-bottom:0.6rem;}
+.lb-title{font-size:2rem;font-weight:900;line-height:1.15;margin-bottom:0.5rem;letter-spacing:-0.5px;}
+.lb-title span{color:var(--accent);}
+.lb-sub{font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:1.7;margin-bottom:2rem;}
+.lb-features{display:flex;flex-direction:column;gap:0.6rem;}
+.lb-feat{display:flex;align-items:center;gap:0.65rem;font-size:0.73rem;color:rgba(255,255,255,0.5);}
+.lb-feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0.7;flex-shrink:0;}
+.lb-footer{font-size:0.6rem;color:rgba(255,255,255,0.2);margin-top:auto;}
+.lb-secure{display:flex;align-items:center;gap:0.45rem;margin-top:1.5rem;}
+.lb-secure-ico{font-size:0.9rem;opacity:0.4;}
+.lb-secure-txt{font-size:0.62rem;color:rgba(255,255,255,0.28);}
+
+.login-form-side{padding:2.8rem 2.4rem;display:flex;flex-direction:column;justify-content:center;}
+.lf-eyebrow{font-size:0.58rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--accent);opacity:0.7;margin-bottom:0.45rem;}
+.lf-title{font-size:1.4rem;font-weight:900;margin-bottom:0.25rem;}
+.lf-sub{font-size:0.76rem;color:var(--muted);margin-bottom:2rem;line-height:1.55;}
+
+.f-label{font-size:0.65rem;font-weight:700;color:var(--muted);display:block;margin-bottom:0.3rem;letter-spacing:0.4px;text-transform:uppercase;}
+.f-wrap{position:relative;margin-bottom:0.85rem;}
+.f-icon{position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-size:0.85rem;opacity:0.35;pointer-events:none;}
+.f-eye{position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);font-size:0.88rem;opacity:0.35;cursor:pointer;user-select:none;transition:opacity 0.15s;}
+.f-eye:hover{opacity:0.7;}
+.f-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);
+  border-radius:12px;padding:0.82rem 2.5rem 0.82rem 2.6rem;color:var(--text);
+  font-family:inherit;font-size:0.86rem;transition:all 0.2s;outline:none;}
+.f-input:focus{border-color:var(--accent);background:rgba(59,130,246,0.04);box-shadow:0 0 0 3px rgba(59,130,246,0.08);}
+.f-input.err{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(231,76,60,0.1)!important;animation:shake 0.35s ease;}
+.f-input::placeholder{color:var(--muted2);font-size:0.82rem;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+
+.login-attempts{display:flex;align-items:center;gap:0.45rem;margin-bottom:0.7rem;min-height:1.2rem;}
+.att-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.1);transition:all 0.2s;flex-shrink:0;}
+.att-dot.used{background:var(--red);}
+.att-dot.warn{background:var(--orange);}
+.att-txt{font-size:0.62rem;color:var(--muted);}
+
+.check-human{display:flex;align-items:center;gap:0.7rem;
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px;padding:0.75rem 1rem;margin-bottom:0.85rem;cursor:pointer;
+  user-select:none;transition:all 0.2s;}
+.check-human:hover{background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.18);}
+.check-human.on{background:rgba(59,130,246,0.07);border-color:rgba(59,130,246,0.28);}
+.ch-box{width:20px;height:20px;border-radius:5px;border:2px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all 0.18s;}
+.check-human.on .ch-box{background:var(--accent);border-color:var(--accent);}
+.ch-tick{opacity:0;transform:scale(0.4);transition:all 0.15s;font-size:0.72rem;color:#fff;}
+.check-human.on .ch-tick{opacity:1;transform:scale(1);}
+.ch-txt{font-size:0.78rem;color:var(--muted);font-weight:600;flex:1;}
+.check-human.on .ch-txt{color:var(--text);}
+.ch-ico{font-size:0.9rem;opacity:0.3;transition:opacity 0.18s;margin-left:auto;}
+.check-human.on .ch-ico{opacity:1;}
+
+.login-btn{
+  width:100%;background:linear-gradient(135deg,var(--primary),var(--accent));
+  color:#fff;border:none;border-radius:12px;padding:0.92rem;font-family:inherit;
+  font-size:0.9rem;font-weight:800;cursor:pointer;transition:all 0.22s;
+  letter-spacing:0.2px;margin-top:0.1rem;position:relative;overflow:hidden;
+}
+.login-btn::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.08),transparent);opacity:0;transition:opacity 0.2s;}
+.login-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(59,130,246,0.28);}
+.login-btn:hover:not(:disabled)::after{opacity:1;}
+.login-btn:active:not(:disabled){transform:translateY(0);}
+.login-btn:disabled{opacity:0.28;cursor:not-allowed;filter:grayscale(0.3);}
+
+.login-blocked{
+  background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);
+  border-radius:10px;padding:0.75rem 1rem;font-size:0.75rem;color:var(--red);
+  text-align:center;margin-bottom:0.8rem;display:none;line-height:1.55;
+}
+.login-blocked.show{display:block;}
+
+.login-err{font-size:0.73rem;color:var(--red);text-align:center;margin-top:0.65rem;min-height:1rem;font-weight:600;}
+.login-footer{margin-top:1.6rem;font-size:0.6rem;color:var(--muted2);text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:0.4rem;}
+.lf-sep{opacity:0.3;}
+
+@media(max-width:680px){
+  #loginScreen{
+    align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .login-wrap{
+    grid-template-columns:1fr;width:100%;max-width:100%;
+    margin:0;border-radius:0;border:none;min-height:100svh;
+  }
+  .login-brand{display:none;}
+  .login-form-side{padding:3rem 1.4rem 2.5rem;justify-content:flex-start;}
+  .lf-title{font-size:1.3rem;}
+  .f-input{font-size:16px;}
+  .login-btn{min-height:48px;font-size:0.95rem;}
+  .check-human{min-height:52px;touch-action:manipulation;}
+}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-wrap">
+
+    <!-- LADO ESQUERDO: Branding -->
+    <div class="login-brand">
+      <div>
+        <div class="lb-logo">
+          <img src="imagens/logo123.jpeg" alt="Orizon" onerror="this.style.display='none'"/>
+        </div>
+        <div class="lb-tag">Sistema DP</div>
+        <div class="lb-title"><span>Orizon</span><br/>DP</div>
+        <div class="lb-sub">Painel de Departamento Pessoal da Orizon Consultoria.</div>
+        <div class="lb-features">
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Gestão de admissões e demissões</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Controle de férias e afastamentos</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Folha de pagamento e holerites</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Documentos e contratos digitais</div>
+        </div>
+      </div>
+      <div>
+        <div class="lb-secure">
+          <span class="lb-secure-ico">🔒</span>
+          <span class="lb-secure-txt">Acesso protegido · Sessão expira em 8h · Bloqueio por tentativas</span>
+        </div>
+        <div class="lb-footer" style="margin-top:0.6rem;">Orizon Consultoria · Guaíba/RS · v1.0</div>
+      </div>
+    </div>
+
+    <!-- LADO DIREITO: Formulário -->
+    <div class="login-form-side">
+      <div class="lf-eyebrow">Acesso restrito</div>
+      <div class="lf-title">Bem-vindo de volta</div>
+      <div class="lf-sub">Faça login para acessar o painel de DP.</div>
+
+      <label class="f-label">E-mail</label>
+      <div class="f-wrap">
+        <span class="f-icon">✉️</span>
+        <input class="f-input" id="lEmail" type="email" placeholder="seu@email.com"
+          autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('lSenha').focus()"/>
+      </div>
+
+      <label class="f-label">Senha</label>
+      <div class="f-wrap">
+        <span class="f-icon">🔒</span>
+        <input class="f-input" id="lSenha" type="password" placeholder="••••••••"
+          autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')loginTentar()"/>
+        <span class="f-eye" id="eyeToggle" onclick="toggleSenhaVis()" title="Mostrar senha">👁</span>
+      </div>
+
+      <div class="login-attempts" id="attemptsRow" style="display:none;">
+        <div class="att-dot" id="att1"></div>
+        <div class="att-dot" id="att2"></div>
+        <div class="att-dot" id="att3"></div>
+        <div class="att-dot" id="att4"></div>
+        <div class="att-dot" id="att5"></div>
+        <span class="att-txt" id="attTxt"></span>
+      </div>
+
+      <div class="login-blocked" id="loginBlocked"></div>
+
+      <div class="check-human" id="chHuman" onclick="toggleHuman()">
+        <div class="ch-box"><span class="ch-tick">✓</span></div>
+        <span class="ch-txt">Não sou um robô</span>
+        <span class="ch-ico">🛡️</span>
+      </div>
+
+      <button class="login-btn" id="loginBtn" disabled onclick="loginTentar()"
+        title="Marque 'Não sou um robô' para continuar">
+        Entrar no painel
+      </button>
+      <div class="login-err" id="loginErr"></div>
+
+      <div class="login-footer">
+        <span>🔐</span><span class="lf-sep">·</span>
+        <span>Sessão segura · 8h de validade</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
+const SESSION_KEY  = 'orizon_dp_session_v1';
+
+const ROLES_MAP = {
+  'adm@orizon.com.br':              { nome:'Admin',     role:'admin' },
+  'curriculos.orizon@gmail.com': { nome:'Currículos', role:'admin' },
+};
+
+let _sessao  = null;
+let _humanOk = false;
+
+const MAX_TENTATIVAS = 5;
+const BLOQUEIO_KEY   = 'orizon_dp_lockout_v1';
+const DELAY_BASE_MS  = 1500;
+
+function lerLockout(){try{return JSON.parse(localStorage.getItem(BLOQUEIO_KEY)||'null');}catch(e){return null;}}
+function salvarLockout(obj){try{localStorage.setItem(BLOQUEIO_KEY,JSON.stringify(obj));}catch(e){}}
+function limparLockout(){try{localStorage.removeItem(BLOQUEIO_KEY);}catch(e){}}
+
+function toggleSenhaVis(){
+  const inp = document.getElementById('lSenha');
+  const eye = document.getElementById('eyeToggle');
+  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+  else{inp.type='password';eye.textContent='👁';}
+}
+
+function toggleHuman(){
+  const lk = lerLockout();
+  if(lk && lk.bloqueado && Date.now() < lk.ate) return;
+  _humanOk = !_humanOk;
+  document.getElementById('chHuman').classList.toggle('on', _humanOk);
+  document.getElementById('loginBtn').disabled = !_humanOk;
+}
+
+function atualizarIndicadorTentativas(tentativas){
+  const row = document.getElementById('attemptsRow');
+  const txt = document.getElementById('attTxt');
+  if(tentativas===0){row.style.display='none';return;}
+  row.style.display='flex';
+  const restantes = MAX_TENTATIVAS - tentativas;
+  txt.textContent = restantes>0
+    ? `${restantes} tentativa${restantes!==1?'s':''} restante${restantes!==1?'s':''}`
+    : 'Conta bloqueada';
+  for(let i=1;i<=MAX_TENTATIVAS;i++){
+    const dot = document.getElementById('att'+i);
+    if(!dot) continue;
+    dot.className = i<=tentativas ? 'att-dot '+(tentativas>=MAX_TENTATIVAS-1?'used':'warn') : 'att-dot';
+  }
+}
+
+function mostrarBloqueio(segundos){
+  const el = document.getElementById('loginBlocked');
+  const min = Math.ceil(segundos/60);
+  el.innerHTML = `🔒 Acesso temporariamente bloqueado após ${MAX_TENTATIVAS} tentativas incorretas.<br/>
+    Aguarde <strong id="cntDown">${segundos}s</strong> ou tente novamente em ${min} minuto${min!==1?'s':''}.`;
+  el.classList.add('show');
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('chHuman').style.pointerEvents = 'none';
+  document.getElementById('chHuman').style.opacity = '0.4';
+  const iv = setInterval(()=>{
+    segundos--;
+    const cd = document.getElementById('cntDown');
+    if(cd) cd.textContent = segundos+'s';
+    if(segundos<=0){
+      clearInterval(iv);
+      el.classList.remove('show');
+      limparLockout();
+      atualizarIndicadorTentativas(0);
+      document.getElementById('chHuman').style.pointerEvents='';
+      document.getElementById('chHuman').style.opacity='';
+      document.getElementById('loginBtn').disabled = !_humanOk;
+      document.getElementById('loginErr').textContent='';
+    }
+  },1000);
+}
+
+function verificarBloqueioInicial(){
+  const lk = lerLockout();
+  if(!lk) return;
+  if(lk.bloqueado && Date.now()<lk.ate){
+    const restam = Math.ceil((lk.ate-Date.now())/1000);
+    atualizarIndicadorTentativas(MAX_TENTATIVAS);
+    mostrarBloqueio(restam);
+  } else if(lk.bloqueado){
+    limparLockout();
+  } else {
+    atualizarIndicadorTentativas(lk.tentativas||0);
+  }
+}
+
+async function loginTentar(){
+  if(!_humanOk) return;
+  const lk = lerLockout();
+  if(lk && lk.bloqueado && Date.now()<lk.ate) return;
+  const btn   = document.getElementById('loginBtn');
+  const email = document.getElementById('lEmail').value.trim().toLowerCase();
+  const senha = document.getElementById('lSenha').value;
+  const err   = document.getElementById('loginErr');
+
+  btn.disabled = true;
+  err.textContent = '⏳ Verificando...';
+
+  try{
+    const res = await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:senha})
+    });
+    const data = await res.json();
+
+    if(!res.ok || !data.access_token){
+      const atual = lk ? lk.tentativas : 0;
+      const novas = atual+1;
+      if(novas>=MAX_TENTATIVAS){
+        const duracaoS = 120;
+        salvarLockout({tentativas:novas,bloqueado:true,ate:Date.now()+duracaoS*1000});
+        atualizarIndicadorTentativas(novas);
+        mostrarBloqueio(duracaoS);
+        err.textContent='';
+      } else {
+        salvarLockout({tentativas:novas,bloqueado:false,ate:null});
+        atualizarIndicadorTentativas(novas);
+        btn.disabled=false;
+        const delay = DELAY_BASE_MS*novas;
+        err.textContent='❌ E-mail ou senha incorretos · aguarde '+(delay/1000).toFixed(1)+'s';
+        ['lEmail','lSenha'].forEach(id=>{
+          const el2=document.getElementById(id);
+          el2.classList.add('err');
+          setTimeout(()=>el2.classList.remove('err'),600);
+        });
+        setTimeout(()=>{btn.disabled=!_humanOk;err.textContent='❌ E-mail ou senha incorretos';},delay);
+      }
+      return;
+    }
+
+    // Sucesso
+    const metaRole = data.user?.user_metadata?.role||null;
+    const roleInfo = ROLES_MAP[email]||{nome:email,role:metaRole||'admin'};
+    if(!ROLES_MAP[email]&&metaRole) roleInfo.role=metaRole;
+    limparLockout();
+    atualizarIndicadorTentativas(0);
+    err.textContent='';
+    _sessao={nome:roleInfo.nome,email,role:roleInfo.role,ts:Date.now(),access_token:data.access_token};
+    try{localStorage.setItem(SESSION_KEY,JSON.stringify(_sessao));}catch(e){}
+
+    const params = new URLSearchParams(window.location.search);
+    const next   = params.get('next');
+    window.location.href = (next&&!next.includes('login'))?next:'index.html';
+
+  }catch(e){
+    err.textContent='❌ Erro de conexão. Tente novamente.';
+    btn.disabled=false;
+  }
+}
+
+window.addEventListener('load',()=>{
+  verificarBloqueioInicial();
+  try{
+    const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+    if(s&&s.ts&&(Date.now()-s.ts)<8*60*60*1000){
+      const params=new URLSearchParams(window.location.search);
+      const next=params.get('next');
+      window.location.href=(next&&!next.includes('login'))?next:'index.html';
+    }
+  }catch(e){}
+});
+</script>
+</body>
+</html>
