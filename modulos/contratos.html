@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ORIZON — Contratos</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{
+  --bg:#060608;--bg2:#0c0c10;--card:#101014;--card2:#141418;
+  --accent:#3b82f6;--accent2:#2563eb;--accent-dim:rgba(59,130,246,0.10);--accent-border:rgba(59,130,246,0.25);
+  --blue:#4f8ef7;--blue-dim:rgba(79,142,247,0.10);
+  --text:#f2f2f0;--muted:#6b6b70;--muted2:#2e2e34;--border:rgba(255,255,255,0.065);--border2:rgba(255,255,255,0.11);
+  --green:#39d98a;--yellow:#f5c518;--red:#ff4757;--purple:#b69fff;--r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:200px;pointer-events:none;}
+body::after{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.018) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;}
+
+.wrap{position:relative;z-index:1;max-width:1020px;margin:0 auto;padding-bottom:6rem;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2rem;border-bottom:1px solid var(--border);background:rgba(6,6,8,0.92);backdrop-filter:blur(24px);position:sticky;top:0;z-index:200;}
+.logo{display:flex;align-items:center;gap:0.85rem;}
+.logo-box{width:44px;height:44px;background:var(--accent);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo-box svg{display:block;}
+.logo-txts{display:flex;flex-direction:column;}
+.logo-name{font-family:'Sora',sans-serif;font-size:1.65rem;letter-spacing:2.5px;line-height:1;color:var(--text);}
+.logo-sub{font-size:0.55rem;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;color:var(--muted);}
+.topbar-right{display:flex;gap:0.45rem;align-items:center;}
+
+/* ── HERO ── */
+.hero{padding:2.2rem 2rem 1.4rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.hero-label{font-size:0.58rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem;}
+.hero-label::before{content:'';display:block;width:18px;height:1px;background:var(--accent);}
+.hero h1{font-family:'Sora',sans-serif;font-size:2.8rem;letter-spacing:2px;line-height:1;}
+.hero h1 span{color:var(--accent);}
+.hero p{font-size:0.78rem;color:var(--muted);margin-top:0.3rem;}
+.rpa-badge{display:inline-flex;align-items:center;gap:0.4rem;background:var(--blue-dim);border:1px solid rgba(79,142,247,0.22);border-radius:9px;padding:0.35rem 0.85rem;font-size:0.68rem;font-weight:700;color:var(--blue);white-space:nowrap;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;padding:0 2rem;margin-bottom:1.6rem;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1.1rem;}
+.stat-lbl{font-size:0.58rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem;}
+.stat-val{font-family:'Sora',sans-serif;font-size:1.7rem;letter-spacing:1px;line-height:1;}
+.c-acc{color:var(--accent);}.c-grn{color:var(--green);}.c-yel{color:var(--yellow);}.c-blu{color:var(--blue);}
+
+/* ── TABS ── */
+.tabs-row{padding:0 2rem;margin-bottom:1.6rem;}
+.tabs{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.28rem;overflow-x:auto;}
+.tab{font-family:'Sora',sans-serif;font-size:0.72rem;font-weight:700;padding:0.42rem 0.95rem;border:none;border-radius:8px;cursor:pointer;transition:all 0.15s;background:transparent;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:0.35rem;}
+.tab.on{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);}
+.tab:hover:not(.on){color:var(--text);}
+
+/* ── SECTIONS ── */
+.sec{display:none;padding:0 2rem;}.sec.on{display:block;}
+
+/* ── BUTTONS ── */
+.btn{font-family:'Sora',sans-serif;font-size:0.77rem;font-weight:700;border-radius:10px;padding:0.48rem 1.05rem;border:1px solid transparent;cursor:pointer;transition:all 0.16s;display:inline-flex;align-items:center;gap:0.38rem;text-decoration:none;white-space:nowrap;}
+.btn-acc{background:var(--accent);color:#fff;border-color:var(--accent);}.btn-acc:hover{background:var(--accent2);}
+.btn-grn{background:rgba(57,217,138,0.09);color:var(--green);border-color:rgba(57,217,138,0.22);}.btn-grn:hover{background:rgba(57,217,138,0.16);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:var(--border2);}.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);}
+.btn-red{background:rgba(255,71,87,0.08);color:var(--red);border-color:rgba(255,71,87,0.18);}.btn-red:hover{background:rgba(255,71,87,0.14);}
+.btn-blue{background:var(--blue-dim);color:var(--blue);border-color:rgba(79,142,247,0.22);}.btn-blue:hover{background:rgba(79,142,247,0.16);}
+.btn-purple{background:rgba(182,159,255,0.09);color:var(--purple);border-color:rgba(182,159,255,0.22);}.btn-purple:hover{background:rgba(182,159,255,0.16);}
+.btn-sm{font-size:0.69rem;padding:0.3rem 0.7rem;}
+.btn-lg{font-size:0.84rem;padding:0.6rem 1.4rem;}
+
+/* ── FORM CARDS ── */
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem 1.5rem;margin-bottom:0.9rem;}
+.fcard-hdr{display:flex;align-items:center;gap:0.7rem;margin-bottom:1.2rem;}
+.fcard-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:0.88rem;flex-shrink:0;}
+.ico-acc{background:var(--accent-dim);border:1px solid var(--accent-border);}
+.ico-grn{background:rgba(57,217,138,0.09);border:1px solid rgba(57,217,138,0.2);}
+.ico-blu{background:rgba(79,142,247,0.09);border:1px solid rgba(79,142,247,0.2);}
+.ico-pur{background:rgba(182,159,255,0.09);border:1px solid rgba(182,159,255,0.2);}
+.ico-yel{background:rgba(245,197,24,0.09);border:1px solid rgba(245,197,24,0.2);}
+.fcard-title{font-size:0.76rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.fcard-sub{font-size:0.66rem;color:var(--muted);margin-top:0.08rem;}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+.grid3{grid-template-columns:1fr 1fr 1fr;}
+.grid4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.grid1{grid-template-columns:1fr;}
+.fg{display:flex;flex-direction:column;gap:0.28rem;}
+.fg.s2{grid-column:span 2;}
+.fg.s3{grid-column:span 3;}
+.fg label{font-size:0.6rem;font-weight:700;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:0.52rem 0.82rem;color:var(--text);font-family:'Sora',sans-serif;font-size:0.81rem;outline:none;transition:border-color 0.18s,box-shadow 0.18s;resize:vertical;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(200,255,0,0.07);}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--muted2);}
+.fg select{cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.8rem center;padding-right:2rem;}
+.fg select option{background:#111;}
+.fg textarea{min-height:82px;}
+.divr{height:1px;background:var(--border);margin:0.9rem 0;}
+
+/* TYPE SELECTOR */
+.type-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;margin-bottom:1.2rem;}
+.type-btn{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:1rem 0.8rem;cursor:pointer;transition:all 0.18s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.4rem;}
+.type-btn:hover{border-color:var(--accent-border);}
+.type-btn.on{background:var(--accent-dim);border-color:var(--accent-border);}
+.type-btn .tipo-ico{font-size:1.4rem;}
+.type-btn .tipo-nome{font-size:0.68rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);}
+.type-btn.on .tipo-nome{color:var(--accent);}
+
+/* DOC TOGGLE */
+.dtoggle{display:flex;gap:0.35rem;margin-bottom:0.4rem;}
+.dtoggle-btn{font-size:0.68rem;font-weight:700;padding:0.28rem 0.7rem;border-radius:7px;border:1px solid var(--border2);background:var(--bg2);color:var(--muted);cursor:pointer;transition:all 0.14s;}
+.dtoggle-btn.on{background:var(--accent-dim);color:var(--accent);border-color:var(--accent-border);}
+
+/* CONTRACT LIST */
+.ct-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:0.55rem;display:flex;align-items:center;gap:1rem;transition:border-color 0.18s,transform 0.18s,box-shadow 0.18s;cursor:pointer;}
+.ct-card:hover{border-color:var(--accent-border);transform:translateY(-1px);box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+.ct-ico{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;}
+.ct-ico-ps{background:var(--accent-dim);border:1px solid var(--accent-border);}
+.ct-ico-ex{background:rgba(245,197,24,0.09);border:1px solid rgba(245,197,24,0.2);}
+.ct-ico-pa{background:rgba(79,142,247,0.09);border:1px solid rgba(79,142,247,0.2);}
+.ct-ico-hu{background:rgba(182,159,255,0.09);border:1px solid rgba(182,159,255,0.2);}
+.ct-info{flex:1;min-width:0;}
+.ct-titulo{font-size:0.87rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ct-vaga{font-size:0.69rem;color:var(--accent);font-weight:600;margin-top:0.1rem;}
+.ct-meta{font-size:0.66rem;color:var(--muted);margin-top:0.18rem;display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;}
+.ct-acts{display:flex;gap:0.35rem;flex-shrink:0;}
+
+/* CHIPS */
+.chip{font-size:0.58rem;font-weight:700;padding:0.14rem 0.5rem;border-radius:99px;border:1px solid;}
+.chip-ativo{background:rgba(57,217,138,0.07);border-color:rgba(57,217,138,0.22);color:var(--green);}
+.chip-rascunho{background:rgba(245,197,24,0.07);border-color:rgba(245,197,24,0.22);color:var(--yellow);}
+.chip-enc{background:rgba(255,255,255,0.03);border-color:var(--border2);color:var(--muted);}
+.chip-rpa{background:var(--blue-dim);border-color:rgba(79,142,247,0.22);color:var(--blue);}
+.chip-tipo{background:rgba(200,255,0,0.06);border-color:var(--accent-border);color:var(--accent);}
+
+/* PREVIEW */
+.prev-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;}
+.prev-toolbar{display:flex;gap:0.45rem;margin-bottom:1.1rem;flex-wrap:wrap;align-items:center;}
+.prev-toolbar-sep{width:1px;height:24px;background:var(--border2);margin:0 0.2rem;}
+.prev-paper{background:#fff;color:#0a0a0a;border-radius:8px;padding:3cm 2.5cm;font-family:'Times New Roman',serif;font-size:11pt;line-height:1.9;box-shadow:0 10px 50px rgba(0,0,0,0.7);max-width:900px;margin:0 auto;}
+#previewDoc h1{font-size:13pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin:1rem 0 0.2rem;color:#000;}
+#previewDoc h2{font-size:10pt;font-weight:700;text-transform:uppercase;margin:1.3rem 0 0.4rem;color:#000;border-left:3px solid #3b82f6;padding-left:0.5rem;letter-spacing:0.4px;}
+#previewDoc p{margin-bottom:0.55rem;text-align:justify;color:#0a0a0a;}
+#previewDoc .doc-sub{text-align:center;font-size:9pt;color:#222;margin-bottom:1.4rem;border:1px solid #ccc;padding:0.35rem;border-radius:4px;display:block;}
+#previewDoc .hbox{background:#f4f4ec;border:1px solid #d8d8c8;border-radius:4px;padding:0.65rem;margin:0.45rem 0;font-size:10.5pt;color:#0a0a0a;}
+#previewDoc .hbox strong{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:0.5px;color:#333;margin-bottom:0.2rem;}
+#previewDoc .sigs{margin-top:3.5rem;display:grid;grid-template-columns:1fr 1fr;gap:2rem;}
+#previewDoc .sig-blk{text-align:center;border-top:1.5px solid #555;padding-top:0.5rem;font-size:9.5pt;color:#111;}
+#previewDoc .sig-blk strong{display:block;margin-bottom:0.15rem;color:#000;}
+#previewDoc .sig-blk span{display:block;font-size:8.5pt;color:#222;}
+#previewDoc .rodape{margin-top:2rem;border-top:1px solid #bbb;padding-top:0.6rem;font-size:7.5pt;color:#555;display:flex;justify-content:space-between;align-items:center;}
+#previewDoc .doc-logo-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;padding-bottom:0.9rem;border-bottom:2px solid #000;}
+#previewDoc .doc-logo-left{display:flex;align-items:center;gap:0.7rem;}
+#previewDoc .doc-logo-box{width:36px;height:36px;background:#3b82f6;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+#previewDoc .doc-logo-nome{font-family:'Sora',sans-serif;font-size:1.5rem;letter-spacing:2px;color:#000;line-height:1;}
+#previewDoc .doc-logo-tag{font-size:0.52rem;letter-spacing:2px;color:#333;text-transform:uppercase;}
+#previewDoc .doc-info{text-align:right;font-size:0.68rem;color:#333;line-height:1.5;}
+
+/* SIGN MODAL */
+.overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.96);backdrop-filter:blur(20px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.overlay.on{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;}
+.modal-hdr{padding:1.3rem 1.5rem 1rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:2;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:rgba(255,255,255,0.06);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:0.9rem;display:flex;align-items:center;justify-content:center;transition:all 0.14s;}
+.modal-close:hover{background:rgba(255,255,255,0.12);color:var(--text);}
+.modal-body{padding:1.3rem 1.5rem 1.5rem;}
+
+/* SIGN PLATFORMS */
+.platforms-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:1.2rem;}
+.platform-card{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:1rem 1.1rem;cursor:pointer;transition:all 0.16s;display:flex;align-items:center;gap:0.8rem;text-decoration:none;}
+.platform-card:hover{border-color:var(--accent-border);background:var(--accent-dim);}
+.platform-ico{font-size:1.4rem;flex-shrink:0;}
+.platform-info{flex:1;}
+.platform-name{font-size:0.78rem;font-weight:800;color:var(--text);}
+.platform-desc{font-size:0.62rem;color:var(--muted);margin-top:0.05rem;}
+.platform-badge{font-size:0.55rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:99px;border:1px solid;margin-top:0.2rem;display:inline-block;}
+.pb-free{background:rgba(57,217,138,0.07);border-color:rgba(57,217,138,0.22);color:var(--green);}
+.pb-gov{background:rgba(79,142,247,0.07);border-color:rgba(79,142,247,0.22);color:var(--blue);}
+.pb-pay{background:rgba(245,197,24,0.07);border-color:rgba(245,197,24,0.22);color:var(--yellow);}
+
+/* SEND OPTIONS */
+.send-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;}
+.send-btn{background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:0.85rem 0.8rem;cursor:pointer;transition:all 0.15s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.35rem;}
+.send-btn:hover{border-color:var(--border2);background:rgba(255,255,255,0.04);}
+.send-ico{font-size:1.3rem;}
+.send-lbl{font-size:0.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+
+/* MODAL CONTRATO VIEW */
+.detail-row{display:flex;gap:0.5rem;margin-bottom:0.5rem;align-items:flex-start;}
+.detail-key{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);min-width:110px;padding-top:0.1rem;}
+.detail-val{font-size:0.8rem;color:var(--text);}
+.detail-sec{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin:1rem 0 0.5rem;display:flex;align-items:center;gap:0.4rem;}
+.detail-sec::after{content:'';flex:1;height:1px;background:var(--accent-border);}
+
+/* VAGAS PAGE */
+.vaga-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.1rem 1.3rem;margin-bottom:0.55rem;display:flex;align-items:center;gap:1rem;}
+.vaga-ico{width:40px;height:40px;border-radius:10px;background:var(--accent-dim);border:1px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;}
+.vaga-info{flex:1;min-width:0;}
+.vaga-nome{font-size:0.87rem;font-weight:800;}
+.vaga-meta{font-size:0.66rem;color:var(--muted);margin-top:0.18rem;display:flex;gap:0.5rem;flex-wrap:wrap;}
+.vaga-acts{display:flex;gap:0.35rem;}
+
+/* HONORARIOS PAGE */
+.hon-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:0.7rem;}
+.hon-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.7rem;}
+.hon-nome{font-size:0.87rem;font-weight:800;}
+.hon-valor{font-family:'Sora',sans-serif;font-size:1.4rem;color:var(--accent);letter-spacing:1px;}
+.hon-meta{font-size:0.66rem;color:var(--muted);display:flex;gap:0.6rem;flex-wrap:wrap;}
+.hon-bar{height:5px;background:var(--muted2);border-radius:99px;margin-top:0.7rem;overflow:hidden;}
+.hon-fill{height:100%;border-radius:99px;background:var(--accent);transition:width 0.6s ease;}
+
+/* EMPTY */
+.empty{text-align:center;padding:4rem 1rem;}
+.empty-ico{font-size:3rem;margin-bottom:0.7rem;opacity:0.4;}
+.empty-msg{font-size:0.8rem;color:var(--muted);margin-bottom:1.1rem;}
+
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;}
+.sec-lbl{font-size:0.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:99999;background:var(--card2);border:1px solid var(--accent-border);border-radius:12px;padding:0.7rem 1.2rem;font-size:0.79rem;color:var(--text);box-shadow:0 8px 30px rgba(0,0,0,0.6);animation:toastIn 0.25s ease;display:none;}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+@media(max-width:640px){
+  .topbar{padding:1rem;}
+  .hero,.sec{padding-left:1rem;padding-right:1rem;}
+  .stats{grid-template-columns:1fr 1fr;padding:0 1rem;}
+  .tabs-row{padding:0 1rem;}
+  .grid{grid-template-columns:1fr;}
+  .grid3,.grid4{grid-template-columns:1fr 1fr;}
+  .fg.s2,.fg.s3{grid-column:span 1;}
+  .type-grid{grid-template-columns:1fr 1fr;}
+  .platforms-grid{grid-template-columns:1fr;}
+  .send-grid{grid-template-columns:1fr 1fr;}
+  .prev-paper{padding:1.5rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-box">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect x="3" y="3" width="20" height="20" rx="5" fill="white" opacity="0.15"/>
+        <text x="13" y="19" text-anchor="middle" font-family="Sora,sans-serif" font-weight="900" font-size="14" fill="white">N</text>
+      </svg>
+    </div>
+    <div class="logo-txts">
+      <div class="logo-name">ORIZON</div>
+      <div class="logo-sub">Orizon Recrutamento</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="ir('configuracoes')">⚙️ Meus Dados</button>
+    <button class="btn btn-acc btn-sm" onclick="novoContrato()">＋ Novo Contrato</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-label">Sistema Jurídico</div>
+      <h1>Gestão de <span>Contratos</span></h1>
+      <p>Prestação · Exclusividade · Parceria · Hunting — Autônomo RPA</p>
+    </div>
+    <div class="rpa-badge">📋 Modalidade: RPA · Sem CNPJ</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats" id="statsRow">
+    <div class="stat"><div class="stat-lbl">Total</div><div class="stat-val c-acc" id="st-total">0</div></div>
+    <div class="stat"><div class="stat-lbl">Ativos</div><div class="stat-val c-grn" id="st-ativos">0</div></div>
+    <div class="stat"><div class="stat-lbl">Rascunhos</div><div class="stat-val c-yel" id="st-rasc">0</div></div>
+    <div class="stat"><div class="stat-lbl">Valor Total</div><div class="stat-val c-blu" id="st-valor">R$0</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-row">
+    <div class="tabs">
+      <button class="tab on" onclick="ir('lista')" id="tab-lista">📋 Contratos</button>
+      <button class="tab" onclick="ir('novo')" id="tab-novo">✏️ Novo / Editar</button>
+      <button class="tab" onclick="ir('preview')" id="tab-preview">👁️ Documento</button>
+      <button class="tab" onclick="ir('vagas')" id="tab-vagas">🎯 Vagas</button>
+      <button class="tab" onclick="ir('honorarios')" id="tab-honorarios">💰 Honorários</button>
+      <button class="tab" onclick="ir('configuracoes')" id="tab-configuracoes">⚙️ Meus Dados</button>
+    </div>
+  </div>
+
+  <!-- ═══ LISTA ═══ -->
+  <div class="sec on" id="sec-lista">
+    <div class="sec-hdr">
+      <span class="sec-lbl">Contratos salvos</span>
+      <button class="btn btn-acc btn-sm" onclick="novoContrato()">＋ Novo Contrato</button>
+    </div>
+    <div id="listaContratos"></div>
+  </div>
+
+  <!-- ═══ FORMULÁRIO ═══ -->
+  <div class="sec" id="sec-novo">
+
+    <!-- TIPO DE CONTRATO -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-acc">📄</div>
+        <div><div class="fcard-title">Tipo de Contrato</div><div class="fcard-sub">Escolha o modelo que será gerado</div></div>
+      </div>
+      <div class="type-grid" id="typeGrid">
+        <div class="type-btn on" onclick="selecionarTipo('prestacao',this)">
+          <div class="tipo-ico">🤝</div>
+          <div class="tipo-nome">Prestação de Serviços</div>
+        </div>
+        <div class="type-btn" onclick="selecionarTipo('exclusividade',this)">
+          <div class="tipo-ico">🔒</div>
+          <div class="tipo-nome">Exclusividade de Vaga</div>
+        </div>
+        <div class="type-btn" onclick="selecionarTipo('parceria',this)">
+          <div class="tipo-ico">🏢</div>
+          <div class="tipo-nome">Parceria Empresarial</div>
+        </div>
+        <div class="type-btn" onclick="selecionarTipo('hunting',this)">
+          <div class="tipo-ico">🎯</div>
+          <div class="tipo-nome">Hunting / Intermediação</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VAGA / PROCESSO -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-acc">🎯</div>
+        <div><div class="fcard-title">Identificação da Vaga / Processo</div><div class="fcard-sub">Dados da posição contratada</div></div>
+      </div>
+      <div class="grid grid3">
+        <div class="fg s2">
+          <label>Nome da Vaga / Cargo</label>
+          <input id="f_vaga_nome" type="text" placeholder="Ex: Analista de RH Sênior"/>
+        </div>
+        <div class="fg">
+          <label>Tipo de Contratação</label>
+          <select id="f_vaga_tipo">
+            <option value="">Selecione...</option>
+            <option value="CLT">CLT</option>
+            <option value="PJ">PJ</option>
+            <option value="Freelancer">Freelancer</option>
+            <option value="Estágio">Estágio</option>
+            <option value="Temporário">Temporário</option>
+            <option value="Aprendiz">Aprendiz</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Área / Departamento</label>
+          <input id="f_vaga_area" type="text" placeholder="Ex: Recursos Humanos"/>
+        </div>
+        <div class="fg">
+          <label>Nível</label>
+          <select id="f_vaga_nivel">
+            <option value="">Selecione...</option>
+            <option>Estágio</option><option>Júnior</option><option>Pleno</option>
+            <option>Sênior</option><option>Especialista</option><option>Coordenador</option>
+            <option>Gerente</option><option>Diretor</option><option>C-Level</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Modalidade</label>
+          <select id="f_vaga_mod">
+            <option value="">Selecione...</option>
+            <option>Presencial</option><option>Remoto</option><option>Híbrido</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Nº de Vagas</label>
+          <input id="f_vaga_qtd" type="number" placeholder="1" min="1" value="1"/>
+        </div>
+        <div class="fg s3">
+          <label>Salário / Remuneração prevista (R$)</label>
+          <input id="f_vaga_salario" type="text" placeholder="Ex: 5.000,00 a 7.000,00" />
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESTADOR (VOCÊ) -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-grn">👤</div>
+        <div><div class="fcard-title">Prestador de Serviços (Você — ORIZON)</div><div class="fcard-sub">Seus dados como autônomo/RPA</div></div>
+      </div>
+      <div class="grid">
+        <div class="fg s2">
+          <label>Nome completo</label>
+          <input id="f_prest_nome" type="text" placeholder="Seu nome completo"/>
+        </div>
+        <div class="fg">
+          <div class="dtoggle">
+            <button class="dtoggle-btn on" id="dtgl-cpf" onclick="toggleDoc('cpf')">CPF</button>
+            <button class="dtoggle-btn" id="dtgl-rg" onclick="toggleDoc('rg')">RG</button>
+            <button class="dtoggle-btn" id="dtgl-ambos" onclick="toggleDoc('ambos')">CPF + RG</button>
+          </div>
+          <div id="wrap-cpf"><input id="f_prest_cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"/></div>
+        </div>
+        <div id="wrap-rg" style="display:none;" class="fg">
+          <label>RG</label>
+          <input id="f_prest_rg" type="text" placeholder="00.000.000-0"/>
+        </div>
+        <div class="fg">
+          <label>E-mail</label>
+          <input id="f_prest_email" type="email" placeholder="seu@email.com"/>
+        </div>
+        <div class="fg">
+          <label>Telefone</label>
+          <input id="f_prest_tel" type="text" placeholder="(00) 00000-0000" maxlength="15" oninput="maskTel(this)"/>
+        </div>
+        <div class="fg s2">
+          <label>Endereço completo</label>
+          <input id="f_prest_end" type="text" placeholder="Rua, número, bairro, cidade - UF, CEP"/>
+        </div>
+        <div class="fg">
+          <label>Profissão / Área de atuação</label>
+          <input id="f_prest_prof" type="text" placeholder="Ex: Consultora de Recrutamento e Seleção"/>
+        </div>
+        <div class="fg">
+          <label>PIX / Dados bancários</label>
+          <input id="f_prest_pix" type="text" placeholder="Chave PIX ou banco/agência/conta"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRATANTE -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-blu">🏢</div>
+        <div><div class="fcard-title">Contratante (Empresa / Cliente)</div><div class="fcard-sub">Dados de quem está contratando</div></div>
+      </div>
+      <div class="grid">
+        <div class="fg s2">
+          <label>Razão Social / Nome</label>
+          <input id="f_cont_nome" type="text" placeholder="Ex: Empresa ABC Ltda. ou João da Silva"/>
+        </div>
+        <div class="fg">
+          <label>CNPJ ou CPF</label>
+          <input id="f_cont_doc" type="text" placeholder="00.000.000/0001-00"/>
+        </div>
+        <div class="fg">
+          <label>Representante Legal</label>
+          <input id="f_cont_rep" type="text" placeholder="Nome do responsável pela assinatura"/>
+        </div>
+        <div class="fg">
+          <label>Cargo do Representante</label>
+          <input id="f_cont_cargo" type="text" placeholder="Ex: Diretor, Sócio-Administrador"/>
+        </div>
+        <div class="fg">
+          <label>E-mail</label>
+          <input id="f_cont_email" type="email" placeholder="empresa@email.com"/>
+        </div>
+        <div class="fg">
+          <label>Telefone</label>
+          <input id="f_cont_tel" type="text" placeholder="(00) 00000-0000" maxlength="15" oninput="maskTel(this)"/>
+        </div>
+        <div class="fg s2">
+          <label>Endereço completo</label>
+          <input id="f_cont_end" type="text" placeholder="Rua, número, bairro, cidade - UF, CEP"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- OBJETO / SERVIÇO -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-acc">📝</div>
+        <div><div class="fcard-title">Objeto do Contrato</div><div class="fcard-sub">Serviços e entregáveis</div></div>
+      </div>
+      <div class="grid grid1">
+        <div class="fg">
+          <label>Título do Contrato</label>
+          <input id="f_titulo" type="text" placeholder="Ex: Contrato de Prestação de Serviços de Recrutamento — Analista de RH Sênior"/>
+        </div>
+        <div class="fg">
+          <label>Descrição detalhada dos serviços</label>
+          <textarea id="f_servico" style="min-height:90px;" placeholder="Descreva o escopo completo: condução do processo seletivo, triagem de currículos, entrevistas, testes, apresentação de shortlist, acompanhamento até a admissão..."></textarea>
+        </div>
+        <div class="fg">
+          <label>Entregáveis / Resultados esperados</label>
+          <textarea id="f_entregaveis" placeholder="Ex: Shortlist com até 3 candidatos por vaga, relatório de perfil, acompanhamento pós-contratação por 30 dias..."></textarea>
+        </div>
+      </div>
+      <!-- Vagas -->
+      <div class="grid grid3" style="margin-top:0.9rem;">
+        <div class="fg">
+          <label>Vagas solicitadas pelo cliente</label>
+          <input id="f_vagas_solicitadas" type="number" placeholder="Ex: 30" min="1" oninput="calcHonorarios()"/>
+        </div>
+        <div class="fg">
+          <label>Vagas previstas para fechar</label>
+          <input id="f_vagas_fechadas" type="number" placeholder="Ex: 3" min="0" oninput="calcHonorarios()"/>
+        </div>
+        <div class="fg">
+          <label>Prazo para pagamento</label>
+          <input id="f_prazo_pag" type="text" placeholder="Ex: 5 dias úteis após admissão" value="5 dias úteis após a admissão do candidato"/>
+        </div>
+      </div>
+      <input type="hidden" id="f_moeda" value="BRL"/>
+      <input type="hidden" id="f_pagamento" value="admissao"/>
+      <input type="hidden" id="f_valor_total" value=""/>
+      <input type="hidden" id="f_valor_total_manual" value=""/>
+      <input type="hidden" id="f_valor_vaga" value=""/>
+      <input type="hidden" id="f_vagas_minimas" value=""/>
+      <input type="hidden" id="f_retainer" value=""/>
+      <input type="hidden" id="f_val_ent" value=""/>
+      <input type="hidden" id="f_val_sal" value=""/>
+      <input type="hidden" id="f_cond_sal" value=""/>
+      <input type="hidden" id="f_pag_custom" value=""/>
+    </div>
+
+    <!-- CALCULADORA DE HONORÁRIOS -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-yel">💰</div>
+        <div><div class="fcard-title">Honorários</div><div class="fcard-sub">Escolha a modalidade — calculadora automática</div></div>
+      </div>
+
+      <!-- MODALIDADE TOGGLE -->
+      <div style="display:flex;gap:0;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:0.22rem;margin-bottom:1.2rem;">
+        <button id="hon-tab-clt" class="tab on" style="flex:1;" onclick="honAba('clt')">🤝 CLT / PJ / Outros</button>
+        <button id="hon-tab-estagio" class="tab" style="flex:1;" onclick="honAba('estagio')">🎓 Estágio</button>
+      </div>
+
+      <!-- ABA CLT/PJ -->
+      <div id="hon-painel-clt">
+        <p style="font-size:0.74rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Honorário único cobrado na admissão do candidato — percentual sobre <strong style="color:var(--text)">1 salário mensal bruto</strong> da vaga, pago uma única vez.</p>
+
+        <!-- FAIXAS -->
+        <div style="font-size:0.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Faixa de honorário</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1rem;">
+          <div class="type-btn" onclick="selecionarFaixa(30,this)" id="faixa-30">
+            <div class="tipo-ico" style="font-size:1.6rem;font-weight:900;font-family:'DM Mono',monospace;">30%</div>
+            <div class="tipo-nome">Padrão</div>
+            <div style="font-size:0.6rem;color:var(--muted);margin-top:0.15rem;">Vagas mais simples</div>
+          </div>
+          <div class="type-btn on" onclick="selecionarFaixa(40,this)" id="faixa-40">
+            <div class="tipo-ico" style="font-size:1.6rem;font-weight:900;font-family:'DM Mono',monospace;">40%</div>
+            <div class="tipo-nome">Recomendado</div>
+            <div style="font-size:0.6rem;color:var(--muted);margin-top:0.15rem;">Pleno / Sênior</div>
+          </div>
+          <div class="type-btn" onclick="selecionarFaixa(50,this)" id="faixa-50">
+            <div class="tipo-ico" style="font-size:1.6rem;font-weight:900;font-family:'DM Mono',monospace;">50%</div>
+            <div class="tipo-nome">Premium</div>
+            <div style="font-size:0.6rem;color:var(--muted);margin-top:0.15rem;">Especialista / C-Level</div>
+          </div>
+        </div>
+
+        <div class="grid grid3" style="margin-bottom:0.8rem;">
+          <div class="fg">
+            <label>% do honorário (editável)</label>
+            <input id="f_pct_hon" type="number" min="1" max="100" value="40" oninput="calcHonorarios()" style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--accent);"/>
+          </div>
+          <div class="fg">
+            <label>Salário mensal bruto da vaga (R$)</label>
+            <input id="f_salario_vaga" type="text" placeholder="Ex: 5.000,00" oninput="maskMoney(this);calcHonorarios();"/>
+          </div>
+          <div class="fg">
+            <label>Honorário por vaga (calculado)</label>
+            <input id="f_hon_por_vaga_display" type="text" readonly placeholder="—" style="color:var(--green);font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;"/>
+          </div>
+        </div>
+
+        <!-- RESULTADO CLT -->
+        <div id="hon-resultado-clt" style="display:none;padding:1rem;background:rgba(57,217,138,0.05);border:1px solid rgba(57,217,138,0.2);border-radius:10px;">
+          <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:0.6rem;">Resumo do Honorário</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;">
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Por vaga</div><div id="hon-r-por-vaga" style="font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--green);font-weight:700;">—</div></div>
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Vagas previstas</div><div id="hon-r-vagas" style="font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--text);font-weight:700;">—</div></div>
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Total estimado</div><div id="hon-r-total" style="font-family:'DM Mono',monospace;font-size:1.2rem;color:var(--accent);font-weight:700;">—</div></div>
+          </div>
+          <div style="margin-top:0.6rem;font-size:0.65rem;color:var(--muted);">Pagamento na admissão · RPA (autônomo sem CNPJ) · Sujeito a retenção de IR na fonte conforme tabela progressiva</div>
+        </div>
+      </div>
+
+      <!-- ABA ESTÁGIO -->
+      <div id="hon-painel-estagio" style="display:none;">
+        <p style="font-size:0.74rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">Para estágio, o honorário é cobrado <strong style="color:var(--text)">mensalmente</strong> sobre o valor da bolsa/auxílio do estagiário, pelo período contratado — <strong style="color:var(--text)">máximo 24 meses.</strong></p>
+
+        <!-- FAIXAS ESTÁGIO -->
+        <div style="font-size:0.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Percentual mensal sobre a bolsa</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.4rem;margin-bottom:1rem;">
+          <div class="type-btn" onclick="selecionarFaixaEst(11,this)" id="efaixa-11">
+            <div class="tipo-ico" style="font-size:1.4rem;font-weight:900;font-family:'DM Mono',monospace;">11%</div>
+            <div class="tipo-nome" style="font-size:0.6rem;">Básico</div>
+          </div>
+          <div class="type-btn" onclick="selecionarFaixaEst(12,this)" id="efaixa-12">
+            <div class="tipo-ico" style="font-size:1.4rem;font-weight:900;font-family:'DM Mono',monospace;">12%</div>
+            <div class="tipo-nome" style="font-size:0.6rem;">Padrão</div>
+          </div>
+          <div class="type-btn on" onclick="selecionarFaixaEst(13,this)" id="efaixa-13">
+            <div class="tipo-ico" style="font-size:1.4rem;font-weight:900;font-family:'DM Mono',monospace;">13%</div>
+            <div class="tipo-nome" style="font-size:0.6rem;">Recomendado</div>
+          </div>
+          <div class="type-btn" onclick="selecionarFaixaEst(14,this)" id="efaixa-14">
+            <div class="tipo-ico" style="font-size:1.4rem;font-weight:900;font-family:'DM Mono',monospace;">14%</div>
+            <div class="tipo-nome" style="font-size:0.6rem;">Plus</div>
+          </div>
+          <div class="type-btn" onclick="selecionarFaixaEst(15,this)" id="efaixa-15">
+            <div class="tipo-ico" style="font-size:1.4rem;font-weight:900;font-family:'DM Mono',monospace;">15%</div>
+            <div class="tipo-nome" style="font-size:0.6rem;">Premium</div>
+          </div>
+        </div>
+
+        <div class="grid grid4">
+          <div class="fg">
+            <label>% mensal (editável)</label>
+            <input id="f_pct_est" type="number" min="1" max="30" value="13" oninput="calcHonorarios()" style="font-family:'DM Mono',monospace;font-size:1rem;color:var(--purple);"/>
+          </div>
+          <div class="fg">
+            <label>Bolsa mensal do estagiário (R$)</label>
+            <input id="f_bolsa_est" type="text" placeholder="Ex: 1.200,00" oninput="maskMoney(this);calcHonorarios();"/>
+          </div>
+          <div class="fg">
+            <label>Duração do estágio (meses)</label>
+            <input id="f_dur_est" type="number" min="1" max="24" value="12" oninput="calcHonorarios()"/>
+          </div>
+          <div class="fg">
+            <label>Mensalidade (calculada)</label>
+            <input id="f_hon_est_mensal_display" type="text" readonly placeholder="—" style="color:var(--purple);font-family:'DM Mono',monospace;font-size:1rem;font-weight:700;"/>
+          </div>
+        </div>
+
+        <!-- RESULTADO ESTÁGIO -->
+        <div id="hon-resultado-est" style="display:none;margin-top:0.8rem;padding:1rem;background:rgba(182,159,255,0.05);border:1px solid rgba(182,159,255,0.2);border-radius:10px;">
+          <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:0.6rem;">Resumo do Honorário — Estágio</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.6rem;">
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Bolsa</div><div id="hon-e-bolsa" style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--text);font-weight:700;">—</div></div>
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Mensalidade</div><div id="hon-e-mensal" style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--purple);font-weight:700;">—</div></div>
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Duração</div><div id="hon-e-dur" style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--text);font-weight:700;">—</div></div>
+            <div><div style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Total (estimado)</div><div id="hon-e-total" style="font-family:'DM Mono',monospace;font-size:1.1rem;color:var(--accent);font-weight:700;">—</div></div>
+          </div>
+          <div style="margin-top:0.6rem;font-size:0.65rem;color:var(--muted);">Cobrado mensalmente · RPA sem CNPJ · Vigência máxima de 24 meses conforme Lei de Estágios (Lei 11.788/2008)</div>
+        </div>
+      </div>
+
+      <!-- MÍNIMO GARANTIDO -->
+      <div style="margin-top:1rem;padding:0.9rem;background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.15);border-radius:9px;">
+        <div style="font-size:0.62rem;color:var(--yellow);margin-bottom:0.6rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">⚠️ Proteção Financeira</div>
+        <div class="grid grid3">
+          <div class="fg">
+            <label>Vagas mínimas garantidas</label>
+            <input id="f_vagas_minimas" type="number" placeholder="Ex: 2" min="0" title="Se o cliente fechar menos que isso, cobra como se tivesse fechado esse mínimo"/>
+          </div>
+          <div class="fg">
+            <label>Honorário mínimo (R$)</label>
+            <input id="f_honorario_minimo" type="text" placeholder="Calculado automaticamente" oninput="maskMoney(this);" style="color:var(--yellow);"/>
+          </div>
+          <div class="fg">
+            <label>Prazo p/ pagamento (dias úteis)</label>
+            <input id="f_prazo_pag_dias" type="number" placeholder="5" min="1" value="5"/>
+          </div>
+        </div>
+        <div style="font-size:0.6rem;color:var(--muted);margin-top:0.4rem;">ℹ️ Ex: cliente pediu 30 vagas mas fechou 1 → você cobra como se tivesse fechado o mínimo que definir aqui.</div>
+      </div>
+
+      <!-- campos hidden para compatibilidade -->
+      <input type="hidden" id="f_hon_modalidade" value="clt"/>
+      <input type="hidden" id="f_pct_hon_final" value="40"/>
+      <input type="hidden" id="f_hon_por_vaga" value=""/>
+      <input type="hidden" id="f_hon_est_mensal" value=""/>
+      <input type="hidden" id="f_hon_total_estimado" value=""/>
+    </div>
+
+    <!-- ATIVIDADES -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-grn">✅</div>
+        <div><div class="fcard-title">Atividades Incluídas no Processo</div><div class="fcard-sub">Marque o que está incluso — aparece no contrato</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;margin-bottom:0.8rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_triagem" checked style="accent-color:var(--accent);width:14px;height:14px;"> Triagem e análise de currículos</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_entrevista" checked style="accent-color:var(--accent);width:14px;height:14px;"> Entrevistas de mapeamento comportamental</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_testes" style="accent-color:var(--accent);width:14px;height:14px;"> Aplicação de testes técnicos/comportamentais</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_shortlist" checked style="accent-color:var(--accent);width:14px;height:14px;"> Apresentação de shortlist com relatório de perfil</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_alinhamento" checked style="accent-color:var(--accent);width:14px;height:14px;"> Alinhamentos periódicos com o cliente</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_hunting" style="accent-color:var(--accent);width:14px;height:14px;"> Busca ativa (hunting) em redes e banco de talentos</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_divulgacao" style="accent-color:var(--accent);width:14px;height:14px;"> Divulgação da vaga em portais e redes</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="atv_poscontrat" checked style="accent-color:var(--accent);width:14px;height:14px;"> Acompanhamento pós-contratação</label>
+      </div>
+    </div>
+
+    <!-- DIFICULDADES / CONTEXTO DA VAGA -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-yel">⚠️</div>
+        <div><div class="fcard-title">Condicionantes e Contexto da Vaga</div><div class="fcard-sub">Fatores que podem impactar o processo — transparência com o cliente</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1.5rem;margin-bottom:0.8rem;">
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_perfil_escasso" style="accent-color:var(--yellow);width:14px;height:14px;"> Perfil com alta demanda e baixa oferta no mercado</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_salario" style="accent-color:var(--yellow);width:14px;height:14px;"> Faixa salarial abaixo da média de mercado</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_urgencia" style="accent-color:var(--yellow);width:14px;height:14px;"> Urgência elevada que pode limitar o shortlist</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_geo" style="accent-color:var(--yellow);width:14px;height:14px;"> Restrição geográfica / presencialidade obrigatória</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_req_acumulados" style="accent-color:var(--yellow);width:14px;height:14px;"> Requisitos excessivos para o nível da vaga</label>
+        <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.76rem;color:var(--text);cursor:pointer;"><input type="checkbox" id="dif_volume" style="accent-color:var(--yellow);width:14px;height:14px;"> Volume elevado de vagas simultâneas</label>
+      </div>
+      <div class="fg">
+        <label>Observações sobre o contexto (aparece no contrato)</label>
+        <textarea id="f_dificuldades" style="min-height:72px;" placeholder="Ex: Considerando o perfil técnico específico requerido e a faixa salarial praticada, o processo pode demandar prazo estendido e o número de candidatos apresentados pode ser inferior à média de mercado..."></textarea>
+      </div>
+      <div style="margin-top:0.7rem;padding:0.7rem;background:rgba(245,197,24,0.05);border:1px solid rgba(245,197,24,0.15);border-radius:8px;font-size:0.67rem;color:var(--muted);line-height:1.6;">
+        ⚠️ <strong style="color:var(--yellow)">Por que isso importa:</strong> Documentar as dificuldades protege você juridicamente se o cliente questionar o número de candidatos apresentados ou o prazo. Gerencia expectativas desde o início.
+      </div>
+    </div>
+
+    <!-- GARANTIA E SUBSTITUIÇÃO -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-blu">🛡️</div>
+        <div><div class="fcard-title">Garantia e Substituição</div><div class="fcard-sub">Política de reposição caso o candidato não se adapte</div></div>
+      </div>
+      <div class="grid grid3">
+        <div class="fg">
+          <label>Período de garantia (dias)</label>
+          <select id="f_garantia_dias">
+            <option value="0">Sem garantia</option>
+            <option value="30" selected>30 dias</option>
+            <option value="45">45 dias</option>
+            <option value="60">60 dias</option>
+            <option value="90">90 dias</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Condição da substituição</label>
+          <select id="f_garantia_cond">
+            <option value="gratuita">Gratuita (sem custo adicional)</option>
+            <option value="desconto">Com desconto nos honorários</option>
+            <option value="novo_contrato">Novo contrato com valor reduzido</option>
+            <option value="sem_substituicao">Sem substituição</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Exceções à garantia</label>
+          <select id="f_garantia_excecao">
+            <option value="sim">Exclui demissão sem justa causa pelo cliente</option>
+            <option value="ambas">Exclui também fechamento da vaga</option>
+            <option value="nao">Sem exceções</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIGÊNCIA -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-pur">📅</div>
+        <div><div class="fcard-title">Vigência e Condições</div><div class="fcard-sub">Prazos, rescisão e foro</div></div>
+      </div>
+      <div class="grid grid4">
+        <div class="fg"><label>Início</label><input id="f_inicio" type="date"/></div>
+        <div class="fg"><label>Término</label><input id="f_fim" type="date"/></div>
+        <div class="fg"><label>Aviso prévio (dias)</label><input id="f_aviso" type="number" placeholder="15" min="0"/></div>
+        <div class="fg">
+          <label>Testemunhas obrigatórias?</label>
+          <select id="f_testemunhas" onchange="toggleTestemunhas()">
+            <option value="nao">❌ Não incluir</option>
+            <option value="sim">✅ Incluir (opcional)</option>
+          </select>
+        </div>
+        <div class="fg s2"><label>Cidade / Local de assinatura</label><input id="f_cidade" type="text" placeholder="Ex: Porto Alegre - RS"/></div>
+        <div class="fg s2"><label>Foro de eleição</label><input id="f_foro" type="text" placeholder="Ex: Comarca de Porto Alegre - RS"/></div>
+      </div>
+      <div class="divr"></div>
+      <!-- TESTEMUNHAS -->
+      <div id="div-testemunhas" style="display:none;">
+        <div style="font-size:0.65rem;color:var(--muted);margin-bottom:0.6rem;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">👥 Testemunhas (Opcional)</div>
+        <div class="grid grid2">
+          <div class="fg">
+            <label>Testemunha 1 — Nome</label>
+            <input id="f_test1_nome" type="text" placeholder="Nome completo"/>
+          </div>
+          <div class="fg">
+            <label>Testemunha 1 — CPF</label>
+            <input id="f_test1_cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"/>
+          </div>
+          <div class="fg">
+            <label>Testemunha 2 — Nome</label>
+            <input id="f_test2_nome" type="text" placeholder="Nome completo"/>
+          </div>
+          <div class="fg">
+            <label>Testemunha 2 — CPF</label>
+            <input id="f_test2_cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"/>
+          </div>
+        </div>
+      </div>
+      <div class="divr"></div>
+        <div class="fg"><label>Cláusulas adicionais (opcional)</label><textarea id="f_clausulas" placeholder="Cláusulas específicas, condições especiais ou restrições relevantes para este contrato..."></textarea></div>
+        <div class="fg"><label>Confidencialidade / NDA</label>
+          <select id="f_nda">
+            <option value="sim">✅ Incluir cláusula de confidencialidade (padrão)</option>
+            <option value="nao">❌ Não incluir NDA</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS -->
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-yel">⚡</div>
+        <div><div class="fcard-title">Status e Referência</div></div>
+      </div>
+      <div class="grid grid3">
+        <div class="fg">
+          <label>Status</label>
+          <select id="f_status">
+            <option value="rascunho">📝 Rascunho</option>
+            <option value="ativo">✅ Ativo / Assinado</option>
+            <option value="encerrado">🔒 Encerrado</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Número / Referência interna</label>
+          <input id="f_numero" type="text" placeholder="Ex: FND-2025-001"/>
+        </div>
+        <div class="fg">
+          <label>Observações internas (não aparecem no PDF)</label>
+          <input id="f_obs" type="text" placeholder="Anotação privada..."/>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.55rem;flex-wrap:wrap;margin-bottom:2rem;">
+      <button class="btn btn-acc btn-lg" onclick="salvar()">💾 Salvar Contrato</button>
+      <button class="btn btn-grn btn-lg" onclick="previewing()">👁️ Gerar Documento</button>
+      <button class="btn btn-ghost" onclick="limpar()">🗑️ Limpar Tudo</button>
+    </div>
+  </div>
+
+  <!-- ═══ PREVIEW ═══ -->
+  <div class="sec" id="sec-preview">
+    <div class="prev-wrap">
+      <div class="prev-toolbar">
+        <button class="btn btn-acc" onclick="baixarPDF()">⬇️ Baixar PDF</button>
+        <button class="btn btn-grn" onclick="imprimirDoc()">🖨️ Imprimir</button>
+        <div class="prev-toolbar-sep"></div>
+        <button class="btn btn-blue" onclick="abrirModalAssinar()">✍️ Assinar Digitalmente</button>
+        <button class="btn btn-purple" onclick="abrirModalEnviar()">📤 Enviar</button>
+        <div class="prev-toolbar-sep"></div>
+        <button class="btn btn-ghost btn-sm" onclick="ir('novo')">✏️ Editar</button>
+      </div>
+      <div class="prev-paper" id="previewDoc">
+        <div style="text-align:center;color:#999;font-family:'Sora',sans-serif;padding:3rem;font-size:0.85rem;">Preencha os dados e clique em "Gerar Documento"</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ VAGAS ═══ -->
+  <div class="sec" id="sec-vagas">
+    <div class="sec-hdr">
+      <span class="sec-lbl">Vagas registradas</span>
+      <button class="btn btn-acc btn-sm" onclick="abrirNovaVaga()">＋ Nova Vaga</button>
+    </div>
+    <div id="listaVagas"></div>
+  </div>
+
+  <!-- ═══ HONORÁRIOS ═══ -->
+  <div class="sec" id="sec-honorarios">
+    <div class="sec-hdr">
+      <span class="sec-lbl">Pipeline financeiro</span>
+      <span id="hon-total" style="font-family:'Sora';font-size:1.4rem;color:var(--accent);letter-spacing:1px;">R$ 0,00</span>
+    </div>
+    <div id="listaHonorarios"></div>
+  </div>
+
+  <!-- ═══ CONFIGURAÇÕES ═══ -->
+  <div class="sec" id="sec-configuracoes">
+    <div class="fcard">
+      <div class="fcard-hdr">
+        <div class="fcard-ico ico-grn">👤</div>
+        <div><div class="fcard-title">Meus Dados — Padrão</div><div class="fcard-sub">Preenchidos automaticamente em novos contratos</div></div>
+      </div>
+      <div class="grid">
+        <div class="fg s2"><label>Nome completo</label><input id="cfg_nome" type="text" placeholder="Seu nome"/></div>
+        <div class="fg"><label>CPF</label><input id="cfg_cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)"/></div>
+        <div class="fg"><label>RG</label><input id="cfg_rg" type="text" placeholder="00.000.000-0"/></div>
+        <div class="fg"><label>E-mail</label><input id="cfg_email" type="email" placeholder="seu@email.com"/></div>
+        <div class="fg"><label>Telefone</label><input id="cfg_tel" type="text" placeholder="(00) 00000-0000" maxlength="15" oninput="maskTel(this)"/></div>
+        <div class="fg s2"><label>Endereço</label><input id="cfg_end" type="text" placeholder="Rua, nº, bairro, cidade - UF, CEP"/></div>
+        <div class="fg"><label>Profissão</label><input id="cfg_prof" type="text" placeholder="Ex: Consultora de Recrutamento e Seleção"/></div>
+        <div class="fg"><label>PIX / Dados bancários</label><input id="cfg_pix" type="text" placeholder="Chave PIX"/></div>
+        <div class="fg"><label>Cidade padrão</label><input id="cfg_cidade" type="text" placeholder="Ex: Porto Alegre - RS"/></div>
+        <div class="fg"><label>Foro padrão</label><input id="cfg_foro" type="text" placeholder="Ex: Comarca de Porto Alegre - RS"/></div>
+      </div>
+      <div style="margin-top:1rem;"><button class="btn btn-acc" onclick="salvarCfg()">💾 Salvar Dados</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL DETALHES ══ -->
+<div class="overlay" id="modalDetalhe" onclick="if(event.target===this)fecharModal('modalDetalhe')">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:0.53rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.12rem;">ORIZON — Contrato</div>
+        <div style="font-size:1rem;font-weight:800;" id="mdTitulo">—</div>
+      </div>
+      <div style="display:flex;gap:0.4rem;align-items:center;">
+        <button class="btn btn-ghost btn-sm" onclick="editarDoModal()">✏️ Editar</button>
+        <button class="btn btn-grn btn-sm" onclick="previewDoModal()">👁️ Documento</button>
+        <button class="btn btn-blue btn-sm" onclick="fecharModal('modalDetalhe');abrirModalAssinar()">✍️ Assinar</button>
+        <button class="modal-close" onclick="fecharModal('modalDetalhe')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="mdBody"></div>
+  </div>
+</div>
+
+<!-- ══ MODAL ASSINATURA ══ -->
+<div class="overlay" id="modalAssinar" onclick="if(event.target===this)fecharModal('modalAssinar')">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:0.53rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.12rem;">ORIZON — Assinatura Digital</div>
+        <div style="font-size:1rem;font-weight:800;">Assinar Contrato</div>
+      </div>
+      <button class="modal-close" onclick="fecharModal('modalAssinar')">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ABAS INTERNAS -->
+      <div style="display:flex;gap:0;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:0.22rem;margin-bottom:1.2rem;">
+        <button id="asn-tab-digital" class="tab on" style="flex:1;" onclick="asnAba('digital')">✍️ Assinatura Digital (Teclado)</button>
+        <button id="asn-tab-plataforma" class="tab" style="flex:1;" onclick="asnAba('plataforma')">🔗 Plataformas Externas</button>
+      </div>
+
+      <!-- ABA: ASSINATURA DIGITAL POR TECLADO -->
+      <div id="asn-painel-digital">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
+          Assine digitalmente pelo teclado. Será gerado um <strong style="color:var(--text)">token único</strong>, <strong style="color:var(--text)">hash SHA-256</strong>, <strong style="color:var(--text)">IP</strong> e <strong style="color:var(--text)">data/hora</strong> conforme regulamentação de assinatura eletrônica (Lei 14.063/2020 e MP 2.200-2/2001).
+        </div>
+        <div class="grid" style="margin-bottom:0.9rem;">
+          <div class="fg">
+            <label>Seu nome completo</label>
+            <input id="asn_nome" type="text" placeholder="Nome como no contrato"/>
+          </div>
+          <div class="fg">
+            <label>CPF / RG</label>
+            <input id="asn_doc" type="text" placeholder="000.000.000-00"/>
+          </div>
+          <div class="fg">
+            <label>E-mail</label>
+            <input id="asn_email" type="email" placeholder="seu@email.com"/>
+          </div>
+          <div class="fg">
+            <label>Parte</label>
+            <select id="asn_parte">
+              <option value="prestador">Prestador de Serviços (ORIZON)</option>
+              <option value="contratante">Contratante</option>
+              <option value="testemunha1">Testemunha 1</option>
+              <option value="testemunha2">Testemunha 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" style="margin-bottom:1rem;">
+          <label>Assinatura digital (digite seu nome completo)</label>
+          <input id="asn_assinatura" type="text" placeholder="Digite seu nome completo para assinar" style="font-size:1.1rem;font-style:italic;letter-spacing:1px;font-family:'DM Mono',monospace;"/>
+        </div>
+        <div style="background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:0.9rem;margin-bottom:1rem;font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--muted);line-height:1.8;">
+          <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Dados de Autenticação — Gerados Automaticamente</div>
+          <div>🕐 Data/Hora: <span id="asn_datetime" style="color:var(--text);">—</span></div>
+          <div>🌐 Endereço IP: <span id="asn_ip" style="color:var(--text);">Carregando...</span></div>
+          <div>🔑 Token: <span id="asn_token" style="color:var(--text);">—</span></div>
+          <div style="word-break:break-all;">🔒 Hash SHA-256: <span id="asn_hash" style="color:var(--text);">—</span></div>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-acc" onclick="confirmarAssinaturaDigital()">✅ Confirmar Assinatura</button>
+          <button class="btn btn-ghost btn-sm" onclick="gerarDadosAssinatura()">🔄 Regenerar Dados</button>
+          <button class="btn btn-ghost btn-sm" onclick="baixarPDF();fecharModal('modalAssinar')">⬇️ Baixar PDF</button>
+        </div>
+        <!-- RESULTADO -->
+        <div id="asn_resultado" style="display:none;margin-top:1rem;background:rgba(57,217,138,0.06);border:1px solid rgba(57,217,138,0.2);border-radius:10px;padding:1rem;">
+          <div style="font-size:0.68rem;font-weight:700;color:var(--green);margin-bottom:0.5rem;">✅ Assinatura Registrada com Sucesso</div>
+          <div id="asn_resultado_body" style="font-size:0.66rem;font-family:'DM Mono',monospace;color:var(--muted);line-height:1.7;word-break:break-all;"></div>
+        </div>
+      </div>
+
+      <!-- ABA: PLATAFORMAS EXTERNAS -->
+      <div id="asn-painel-plataforma" style="display:none;">
+        <p style="font-size:0.76rem;color:var(--muted);margin-bottom:1.2rem;">Salve o PDF primeiro, depois faça upload na plataforma para coletar assinaturas com validade jurídica certificada.</p>
+        <div class="platforms-grid">
+          <a href="https://app.clicksign.com" target="_blank" class="platform-card">
+            <div class="platform-ico">✍️</div>
+            <div class="platform-info">
+              <div class="platform-name">Clicksign</div>
+              <div class="platform-desc">Líder brasileiro, aceito em todo o país</div>
+              <div class="platform-badge pb-pay">Pago — plano básico</div>
+            </div>
+          </a>
+          <a href="https://www.gov.br/governodigital/pt-br/assinatura-eletronica" target="_blank" class="platform-card">
+            <div class="platform-ico">🇧🇷</div>
+            <div class="platform-info">
+              <div class="platform-name">Gov.br</div>
+              <div class="platform-desc">Assinatura com login Gov.br — validade legal</div>
+              <div class="platform-badge pb-free">Gratuito</div>
+            </div>
+          </a>
+          <a href="https://www.docusign.com/pt-br" target="_blank" class="platform-card">
+            <div class="platform-ico">📋</div>
+            <div class="platform-info">
+              <div class="platform-name">DocuSign</div>
+              <div class="platform-desc">Padrão internacional, amplamente aceito</div>
+              <div class="platform-badge pb-pay">Pago — trial grátis</div>
+            </div>
+          </a>
+          <a href="https://d4sign.com.br" target="_blank" class="platform-card">
+            <div class="platform-ico">🔐</div>
+            <div class="platform-info">
+              <div class="platform-name">D4Sign</div>
+              <div class="platform-desc">Brasileira, acessível e com plano gratuito</div>
+              <div class="platform-badge pb-free">Plano gratuito disponível</div>
+            </div>
+          </a>
+          <a href="https://www.autentique.com.br" target="_blank" class="platform-card">
+            <div class="platform-ico">📝</div>
+            <div class="platform-info">
+              <div class="platform-name">Autentique</div>
+              <div class="platform-desc">Simples, grátis para volume pequeno</div>
+              <div class="platform-badge pb-free">Gratuito até 5 docs/mês</div>
+            </div>
+          </a>
+          <a href="https://zapsign.com.br" target="_blank" class="platform-card">
+            <div class="platform-ico">⚡</div>
+            <div class="platform-info">
+              <div class="platform-name">ZapSign</div>
+              <div class="platform-desc">Integra com WhatsApp, ideal para envio rápido</div>
+              <div class="platform-badge pb-free">Plano gratuito disponível</div>
+            </div>
+          </a>
+        </div>
+        <div style="margin-top:0.8rem;">
+          <button class="btn btn-acc" onclick="baixarPDF();fecharModal('modalAssinar')">⬇️ Baixar PDF para upload</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL ENVIAR ══ -->
+<div class="overlay" id="modalEnviar" onclick="if(event.target===this)fecharModal('modalEnviar')">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:0.53rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.12rem;">Enviar Contrato</div>
+        <div style="font-size:1rem;font-weight:800;">Como deseja enviar?</div>
+      </div>
+      <button class="modal-close" onclick="fecharModal('modalEnviar')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- ENVIO POR EMAIL -->
+      <div style="background:var(--card2);border:1px solid var(--accent-border);border-radius:12px;padding:1.1rem;margin-bottom:1rem;">
+        <div style="font-size:0.68rem;font-weight:800;color:var(--accent);margin-bottom:0.7rem;letter-spacing:0.5px;text-transform:uppercase;">📧 Enviar por E-mail para a outra parte assinar</div>
+        <div class="grid" style="gap:0.6rem;margin-bottom:0.7rem;">
+          <div class="fg">
+            <label>E-mail do destinatário</label>
+            <input id="env_email" type="email" placeholder="email@empresa.com" style="background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:0.45rem 0.8rem;color:var(--text);font-family:'Sora',sans-serif;font-size:0.81rem;outline:none;width:100%;"/>
+          </div>
+          <div class="fg">
+            <label>Nome do destinatário</label>
+            <input id="env_nome" type="text" placeholder="Nome da pessoa ou empresa" style="background:var(--bg2);border:1px solid var(--border2);border-radius:9px;padding:0.45rem 0.8rem;color:var(--text);font-family:'Sora',sans-serif;font-size:0.81rem;outline:none;width:100%;"/>
+          </div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.7rem;line-height:1.6;background:rgba(59,130,246,0.05);border-radius:8px;padding:0.6rem;">
+          <strong style="color:var(--text);">📎 Importante:</strong> Primeiro baixe o PDF (botão abaixo), depois envie o e-mail — o PDF ficará como anexo no seu cliente de e-mail.
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-acc" onclick="enviarEmailCompostoModal()">📤 Abrir E-mail para Enviar</button>
+          <button class="btn btn-ghost btn-sm" onclick="baixarPDF()">⬇️ Baixar PDF primeiro</button>
+        </div>
+      </div>
+      <!-- OUTROS CANAIS -->
+      <div style="font-size:0.6rem;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:0.6rem;">Outros canais</div>
+      <div class="send-grid">
+        <div class="send-btn" onclick="enviarWhatsApp()">
+          <div class="send-ico">💬</div>
+          <div class="send-lbl">WhatsApp</div>
+        </div>
+        <div class="send-btn" onclick="baixarPDF()">
+          <div class="send-ico">⬇️</div>
+          <div class="send-lbl">Baixar PDF</div>
+        </div>
+        <div class="send-btn" onclick="imprimirDoc()">
+          <div class="send-ico">🖨️</div>
+          <div class="send-lbl">Imprimir</div>
+        </div>
+        <div class="send-btn" onclick="fecharModal('modalEnviar');abrirModalAssinar()">
+          <div class="send-ico">✍️</div>
+          <div class="send-lbl">Assinar Digital</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL NOVA VAGA ══ -->
+<div class="overlay" id="modalVaga" onclick="if(event.target===this)fecharModal('modalVaga')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div><div style="font-size:0.53rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.12rem;">ORIZON</div><div style="font-size:1rem;font-weight:800;" id="vagaModalTitulo">Nova Vaga</div></div>
+      <button class="modal-close" onclick="fecharModal('modalVaga')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid" style="margin-bottom:0.8rem;">
+        <div class="fg s2"><label>Nome da vaga / cargo</label><input id="mv_nome" type="text" placeholder="Ex: Analista de Marketing"/></div>
+        <div class="fg"><label>Empresa cliente</label><input id="mv_empresa" type="text" placeholder="Nome da empresa"/></div>
+        <div class="fg"><label>Tipo de contratação</label>
+          <select id="mv_tipo"><option value="">Selecione...</option><option>CLT</option><option>PJ</option><option>Freelancer</option><option>Estágio</option><option>Temporário</option></select>
+        </div>
+        <div class="fg"><label>Área</label><input id="mv_area" type="text" placeholder="Ex: Marketing Digital"/></div>
+        <div class="fg"><label>Nível</label>
+          <select id="mv_nivel"><option value="">Selecione...</option><option>Estágio</option><option>Júnior</option><option>Pleno</option><option>Sênior</option><option>Especialista</option><option>Gerente</option><option>Diretor</option></select>
+        </div>
+        <div class="fg"><label>Salário previsto</label><input id="mv_salario" type="text" placeholder="R$ 0,00"/></div>
+        <div class="fg"><label>Status da vaga</label>
+          <select id="mv_status"><option value="aberta">🟢 Aberta</option><option value="em_andamento">🔄 Em andamento</option><option value="fechada">✅ Fechada</option><option value="cancelada">❌ Cancelada</option></select>
+        </div>
+        <div class="fg s2"><label>Observações</label><textarea id="mv_obs" style="min-height:60px;" placeholder="Informações adicionais sobre a vaga..."></textarea></div>
+      </div>
+      <div style="display:flex;gap:0.5rem;">
+        <button class="btn btn-acc" onclick="salvarVaga()">💾 Salvar Vaga</button>
+        <button class="btn btn-ghost" onclick="fecharModal('modalVaga')">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ──────────────────────────────────────────
+let _contratos = JSON.parse(localStorage.getItem('orizon_contratos') || '[]');
+let _vagas     = JSON.parse(localStorage.getItem('orizon_vagas')     || '[]');
+let _cfg       = JSON.parse(localStorage.getItem('orizon_cfg')       || '{}');
+let _editIdx   = null;
+let _mdIdx     = null;
+let _docMode   = 'cpf';
+let _tipoAtual = 'prestacao';
+let _editVagaIdx = null;
+
+// ─── INIT ────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  carregarCfg();
+  renderLista();
+  renderVagas();
+  renderHonorarios();
+  atualizarStats();
+});
+
+// ─── NAVEGAÇÃO ───────────────────────────────────────
+function ir(tab) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
+  document.getElementById('sec-' + tab).classList.add('on');
+  document.getElementById('tab-' + tab).classList.add('on');
+  if (tab === 'honorarios') renderHonorarios();
+}
+
+// ─── TIPO ────────────────────────────────────────────
+function selecionarTipo(tipo, el) {
+  _tipoAtual = tipo;
+  document.querySelectorAll('#typeGrid .type-btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ─── DOC TOGGLE ─────────────────────────────────────
+function toggleDoc(mode) {
+  _docMode = mode;
+  ['cpf','rg','ambos'].forEach(m => document.getElementById('dtgl-'+m).classList.remove('on'));
+  document.getElementById('dtgl-'+mode).classList.add('on');
+  document.getElementById('wrap-cpf').style.display = (mode==='cpf'||mode==='ambos') ? 'block' : 'none';
+  document.getElementById('wrap-rg').style.display  = (mode==='rg'||mode==='ambos')  ? 'block' : 'none';
+}
+
+// ─── HONORÁRIOS — ABA ────────────────────────────────
+let _honModalidade = 'clt';
+let _pctClt = 40;
+let _pctEst = 13;
+
+function honAba(aba) {
+  _honModalidade = aba;
+  document.getElementById('hon-tab-clt').classList.toggle('on', aba==='clt');
+  document.getElementById('hon-tab-estagio').classList.toggle('on', aba==='estagio');
+  document.getElementById('hon-painel-clt').style.display   = aba==='clt'     ? 'block' : 'none';
+  document.getElementById('hon-painel-estagio').style.display = aba==='estagio' ? 'block' : 'none';
+  setVal('f_hon_modalidade', aba);
+  calcHonorarios();
+}
+
+function selecionarFaixa(pct, el) {
+  _pctClt = pct;
+  [30,40,50].forEach(p => document.getElementById('faixa-'+p)?.classList.remove('on'));
+  el.classList.add('on');
+  setVal('f_pct_hon', pct);
+  calcHonorarios();
+}
+
+function selecionarFaixaEst(pct, el) {
+  _pctEst = pct;
+  [11,12,13,14,15].forEach(p => document.getElementById('efaixa-'+p)?.classList.remove('on'));
+  el.classList.add('on');
+  setVal('f_pct_est', pct);
+  calcHonorarios();
+}
+
+function fmtR(val) {
+  return 'R$ ' + val.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function calcHonorarios() {
+  const vagas_fechadas = parseInt(v('f_vagas_fechadas')||'0',10)||0;
+  const vagas_min = parseInt(v('f_vagas_minimas')||'0',10)||0;
+
+  if (_honModalidade === 'clt') {
+    const pct = parseFloat(v('f_pct_hon')||'40')||40;
+    _pctClt = pct;
+    // sync faixa buttons
+    [30,40,50].forEach(p => document.getElementById('faixa-'+p)?.classList.toggle('on', p===Math.round(pct)));
+    const salario = parseMoney(v('f_salario_vaga')||'0');
+    const honVaga = salario > 0 ? salario * pct / 100 : 0;
+    const vagsEfet = vagas_fechadas || 1;
+    const total = honVaga * vagsEfet;
+    const minHon = vagas_min > 0 && honVaga > 0 ? honVaga * vagas_min : 0;
+
+    // update displays
+    setVal('f_hon_por_vaga_display', honVaga > 0 ? fmtR(honVaga) : '');
+    const res = document.getElementById('hon-resultado-clt');
+    if (honVaga > 0) {
+      res.style.display = 'block';
+      document.getElementById('hon-r-por-vaga').textContent = fmtR(honVaga);
+      document.getElementById('hon-r-vagas').textContent = vagas_fechadas || '—';
+      document.getElementById('hon-r-total').textContent = vagas_fechadas > 0 ? fmtR(total) : '—';
+    } else { res.style.display = 'none'; }
+
+    // store hiddens
+    setVal('f_hon_por_vaga', honVaga > 0 ? honVaga.toFixed(2) : '');
+    setVal('f_hon_total_estimado', total > 0 ? total.toFixed(2) : '');
+    setVal('f_valor_total', total > 0 ? total.toFixed(2) : '');
+    setVal('f_valor_vaga', honVaga > 0 ? fmtMoney(honVaga) : '');
+    setVal('f_pct_hon_final', pct);
+    if (minHon > 0) setVal('f_honorario_minimo', fmtMoney(minHon));
+
+  } else {
+    const pct = parseFloat(v('f_pct_est')||'13')||13;
+    _pctEst = pct;
+    [11,12,13,14,15].forEach(p => document.getElementById('efaixa-'+p)?.classList.toggle('on', p===Math.round(pct)));
+    const bolsa = parseMoney(v('f_bolsa_est')||'0');
+    const dur = parseInt(v('f_dur_est')||'12',10)||12;
+    const mensal = bolsa > 0 ? bolsa * pct / 100 : 0;
+    const total = mensal * dur;
+
+    setVal('f_hon_est_mensal_display', mensal > 0 ? fmtR(mensal) : '');
+    const res = document.getElementById('hon-resultado-est');
+    if (mensal > 0) {
+      res.style.display = 'block';
+      document.getElementById('hon-e-bolsa').textContent = fmtR(bolsa);
+      document.getElementById('hon-e-mensal').textContent = fmtR(mensal);
+      document.getElementById('hon-e-dur').textContent = dur + ' meses';
+      document.getElementById('hon-e-total').textContent = fmtR(total);
+    } else { res.style.display = 'none'; }
+
+    setVal('f_hon_est_mensal', mensal > 0 ? mensal.toFixed(2) : '');
+    setVal('f_hon_total_estimado', total > 0 ? total.toFixed(2) : '');
+    setVal('f_valor_total', total > 0 ? total.toFixed(2) : '');
+    setVal('f_valor_vaga', mensal > 0 ? fmtMoney(mensal) : '');
+    setVal('f_pct_hon_final', pct);
+  }
+}
+
+// stubs para compatibilidade
+function togglePag() {}
+function calcParcelas() {}
+function calcValorTotal() { calcHonorarios(); }
+function syncValorTotal(val) {}
+
+
+function toggleTestemunhas() {
+  const hasTest = v('f_testemunhas') === 'sim';
+  document.getElementById('div-testemunhas').style.display = hasTest ? 'block' : 'none';
+}
+
+// ─── SALVAR ──────────────────────────────────────────
+function salvar() {
+  const pg = v('f_pagamento');
+  const pgLabels = {
+    avista:'À vista',
+    '40_60':'40% entrada + 60% na conclusão',
+    '40_60e':'40% entrada + 60% na efetivação',
+    '40_30_30':'40% + 30% + 30% (três parcelas)',
+    '50_50':'50% entrada + 50% conclusão',
+    parcelas:'Parcelado mensalmente',
+    efetivacao:'Apenas após contratação efetivada',
+    custom: v('f_pag_custom')
+  };
+
+  const d = {
+    tipo: _tipoAtual,
+    titulo: v('f_titulo') || 'Contrato sem título',
+    numero: v('f_numero'),
+    status: v('f_status') || 'rascunho',
+    vaga: { nome:v('f_vaga_nome'), tipo:v('f_vaga_tipo'), area:v('f_vaga_area'), nivel:v('f_vaga_nivel'), mod:v('f_vaga_mod'), qtd:v('f_vaga_qtd')||'1', salario:v('f_vaga_salario') },
+    prest: { nome:v('f_prest_nome'), cpf:v('f_prest_cpf'), rg:v('f_prest_rg'), docMode:_docMode, email:v('f_prest_email'), tel:v('f_prest_tel'), end:v('f_prest_end'), prof:v('f_prest_prof'), pix:v('f_prest_pix') },
+    cont: { nome:v('f_cont_nome'), doc:v('f_cont_doc'), rep:v('f_cont_rep'), cargo:v('f_cont_cargo'), email:v('f_cont_email'), tel:v('f_cont_tel'), end:v('f_cont_end') },
+    servico: v('f_servico'),
+    entregaveis: v('f_entregaveis'),
+    vagas_solicitadas: v('f_vagas_solicitadas'),
+    vagas_fechadas: v('f_vagas_fechadas'),
+    valor_vaga: v('f_valor_vaga'),
+    moeda: 'BRL',
+    hon_modalidade: v('f_hon_modalidade') || _honModalidade,
+    hon_pct: parseFloat(v('f_pct_hon_final')) || _pctClt,
+    hon_por_vaga: v('f_hon_por_vaga'),
+    hon_est_mensal: v('f_hon_est_mensal'),
+    hon_total_estimado: v('f_hon_total_estimado'),
+    salario_vaga: v('f_salario_vaga'),
+    bolsa_est: v('f_bolsa_est'),
+    dur_est: v('f_dur_est'),
+    pct_est: parseFloat(v('f_pct_est')) || _pctEst,
+    honorario_minimo: v('f_honorario_minimo'),
+    vagas_minimas: v('f_vagas_minimas'),
+    retainer: v('f_retainer'),
+    dificuldades: v('f_dificuldades'),
+    dif_flags: {
+      perfil_escasso: document.getElementById('dif_perfil_escasso')?.checked,
+      salario: document.getElementById('dif_salario')?.checked,
+      urgencia: document.getElementById('dif_urgencia')?.checked,
+      geo: document.getElementById('dif_geo')?.checked,
+      req_acumulados: document.getElementById('dif_req_acumulados')?.checked,
+      volume: document.getElementById('dif_volume')?.checked,
+    },
+    atividades: {
+      triagem: document.getElementById('atv_triagem')?.checked,
+      entrevista: document.getElementById('atv_entrevista')?.checked,
+      testes: document.getElementById('atv_testes')?.checked,
+      shortlist: document.getElementById('atv_shortlist')?.checked,
+      alinhamento: document.getElementById('atv_alinhamento')?.checked,
+      hunting: document.getElementById('atv_hunting')?.checked,
+      divulgacao: document.getElementById('atv_divulgacao')?.checked,
+      poscontrat: document.getElementById('atv_poscontrat')?.checked,
+    },
+    garantia_dias: v('f_garantia_dias'),
+    garantia_cond: v('f_garantia_cond'),
+    garantia_excecao: v('f_garantia_excecao'),
+    valor_total: v('f_valor_total'),
+    valor: v('f_valor_total'),
+    valorNum: parseFloat(v('f_valor_total')) || 0,
+    pagamento: _honModalidade === 'estagio' ? 'Mensalidade por estagiário admitido' : 'Por vaga fechada — na admissão do candidato',
+    pagKey: _honModalidade === 'estagio' ? 'estagio' : 'admissao',
+    prazoPag: v('f_prazo_pag') || '5 dias úteis após a admissão do candidato',
+    inicio: v('f_inicio'),
+    fim: v('f_fim'),
+    cidade: v('f_cidade'),
+    foro: v('f_foro'),
+    aviso: v('f_aviso') || '15',
+    testemunhas: v('f_testemunhas'),
+    test1_nome: v('f_test1_nome'),
+    test1_cpf: v('f_test1_cpf'),
+    test2_nome: v('f_test2_nome'),
+    test2_cpf: v('f_test2_cpf'),
+    nda: v('f_nda'),
+    clausulas: v('f_clausulas'),
+    obs: v('f_obs'),
+    criadoEm: _editIdx !== null ? _contratos[_editIdx].criadoEm : new Date().toISOString(),
+    atualizadoEm: new Date().toISOString(),
+  };
+
+  if (_editIdx !== null) { _contratos[_editIdx] = d; toast('✅ Contrato atualizado!'); }
+  else { _contratos.unshift(d); toast('✅ Contrato salvo!'); }
+
+  localStorage.setItem('orizon_contratos', JSON.stringify(_contratos));
+  _editIdx = null;
+  renderLista(); atualizarStats(); ir('lista');
+}
+
+// ─── RENDER LISTA ────────────────────────────────────
+const tipoIcos = { prestacao:'ct-ico-ps', exclusividade:'ct-ico-ex', parceria:'ct-ico-pa', hunting:'ct-ico-hu' };
+const tipoEmojis = { prestacao:'🤝', exclusividade:'🔒', parceria:'🏢', hunting:'🎯' };
+const tipoLabels = { prestacao:'Prestação', exclusividade:'Exclusividade', parceria:'Parceria', hunting:'Hunting' };
+
+function renderLista() {
+  const el = document.getElementById('listaContratos');
+  if (!_contratos.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">📂</div><div class="empty-msg">Nenhum contrato ainda.<br>Clique em "+ Novo Contrato" para começar.</div></div>`;
+    return;
+  }
+  el.innerHTML = _contratos.map((c,i) => {
+    const chip = {ativo:'chip-ativo',rascunho:'chip-rascunho',encerrado:'chip-enc'}[c.status]||'chip-rascunho';
+    const lbl  = {ativo:'✅ Ativo',rascunho:'📝 Rascunho',encerrado:'🔒 Encerrado'}[c.status]||c.status;
+    const ico  = tipoIcos[c.tipo] || 'ct-ico-ps';
+    const em   = tipoEmojis[c.tipo] || '📄';
+    const tl   = tipoLabels[c.tipo] || c.tipo;
+    return `
+    <div class="ct-card" onclick="abrirModal(${i})">
+      <div class="ct-ico ${ico}">${em}</div>
+      <div class="ct-info">
+        <div class="ct-titulo">${c.titulo}</div>
+        ${c.vaga?.nome?`<div class="ct-vaga">🎯 ${c.vaga.nome}${c.vaga.tipo?' · '+c.vaga.tipo:''}</div>`:''}
+        <div class="ct-meta">
+          <span class="chip ${chip}">${lbl}</span>
+          <span class="chip chip-tipo">${tl}</span>
+          <span class="chip chip-rpa">RPA</span>
+          ${c.prest?.nome?`<span>${c.prest.nome}</span>`:''}
+          ${c.cont?.nome?`→ <span>${c.cont.nome}</span>`:''}
+          ${c.valor?`· <span>R$ ${c.valor}</span>`:''}
+          · <span>${new Date(c.criadoEm).toLocaleDateString('pt-BR')}</span>
+        </div>
+      </div>
+      <div class="ct-acts">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editar(${i})">✏️</button>
+        <button class="btn btn-blue btn-sm"  onclick="event.stopPropagation();gerarPreviewIdx(${i})">👁️</button>
+        <button class="btn btn-red btn-sm"   onclick="event.stopPropagation();excluir(${i})">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── STATS ───────────────────────────────────────────
+function atualizarStats() {
+  const total = _contratos.length;
+  const ativos = _contratos.filter(c=>c.status==='ativo').length;
+  const rasc = _contratos.filter(c=>c.status==='rascunho').length;
+  const valorTotal = _contratos.reduce((s,c)=>s+(c.valorNum||0),0);
+  setVal('st-total', total, true);
+  setVal('st-ativos', ativos, true);
+  setVal('st-rasc', rasc, true);
+  setVal('st-valor', valorTotal>=1000 ? 'R$'+Math.round(valorTotal/1000)+'k' : 'R$'+valorTotal.toFixed(0), true);
+}
+
+// ─── EDITAR / EXCLUIR ────────────────────────────────
+function editar(i) {
+  _editIdx = i;
+  const d = _contratos[i];
+  _tipoAtual = d.tipo || 'prestacao';
+  document.querySelectorAll('.type-btn').forEach((b,idx) => {
+    const tipos = ['prestacao','exclusividade','parceria','hunting'];
+    b.classList.toggle('on', tipos[idx] === _tipoAtual);
+  });
+  setVal('f_titulo',d.titulo); setVal('f_numero',d.numero); setVal('f_status',d.status);
+  setVal('f_vaga_nome',d.vaga?.nome); setVal('f_vaga_tipo',d.vaga?.tipo); setVal('f_vaga_area',d.vaga?.area);
+  setVal('f_vaga_nivel',d.vaga?.nivel); setVal('f_vaga_mod',d.vaga?.mod); setVal('f_vaga_qtd',d.vaga?.qtd);
+  setVal('f_vaga_salario',d.vaga?.salario);
+  setVal('f_prest_nome',d.prest?.nome); setVal('f_prest_cpf',d.prest?.cpf); setVal('f_prest_rg',d.prest?.rg);
+  setVal('f_prest_email',d.prest?.email); setVal('f_prest_tel',d.prest?.tel); setVal('f_prest_end',d.prest?.end);
+  setVal('f_prest_prof',d.prest?.prof); setVal('f_prest_pix',d.prest?.pix);
+  setVal('f_cont_nome',d.cont?.nome); setVal('f_cont_doc',d.cont?.doc); setVal('f_cont_rep',d.cont?.rep);
+  setVal('f_cont_cargo',d.cont?.cargo); setVal('f_cont_email',d.cont?.email); setVal('f_cont_tel',d.cont?.tel);
+  setVal('f_cont_end',d.cont?.end);
+  setVal('f_servico',d.servico); setVal('f_entregaveis',d.entregaveis); setVal('f_valor',d.valor);
+  setVal('f_pagamento', d.pagKey||'admissao'); setVal('f_prazo_pag',d.prazoPag);
+  setVal('f_vagas_solicitadas',d.vagas_solicitadas); setVal('f_vagas_fechadas',d.vagas_fechadas);
+  // Restaurar honorários
+  const mod = d.hon_modalidade || 'clt';
+  honAba(mod);
+  if (mod === 'clt') {
+    setVal('f_pct_hon', d.hon_pct||40);
+    setVal('f_salario_vaga', d.salario_vaga||'');
+    selecionarFaixa(Math.round(d.hon_pct||40), document.getElementById('faixa-'+Math.round(d.hon_pct||40)) || document.getElementById('faixa-40'));
+  } else {
+    setVal('f_pct_est', d.pct_est||13);
+    setVal('f_bolsa_est', d.bolsa_est||'');
+    setVal('f_dur_est', d.dur_est||12);
+    selecionarFaixaEst(Math.round(d.pct_est||13), document.getElementById('efaixa-'+Math.round(d.pct_est||13)) || document.getElementById('efaixa-13'));
+  }
+  setVal('f_honorario_minimo',d.honorario_minimo); setVal('f_vagas_minimas',d.vagas_minimas);
+  setVal('f_retainer',d.retainer); setVal('f_dificuldades',d.dificuldades);
+  setVal('f_garantia_dias',d.garantia_dias||'30'); setVal('f_garantia_cond',d.garantia_cond||'gratuita');
+  setVal('f_garantia_excecao',d.garantia_excecao||'sim');
+  if (d.dif_flags) { Object.entries(d.dif_flags).forEach(([k,v]) => { const el=document.getElementById('dif_'+k); if(el) el.checked=v; }); }
+  if (d.atividades) { Object.entries(d.atividades).forEach(([k,v]) => { const el=document.getElementById('atv_'+k); if(el) el.checked=v; }); }
+  calcHonorarios();
+  setVal('f_inicio',d.inicio); setVal('f_fim',d.fim); setVal('f_cidade',d.cidade); setVal('f_foro',d.foro);
+  setVal('f_multa',d.multa); setVal('f_aviso',d.aviso); setVal('f_nda',d.nda); setVal('f_clausulas',d.clausulas);
+  setVal('f_obs',d.obs);
+  if (d.prest?.docMode) toggleDoc(d.prest.docMode);
+  togglePag();
+  ir('novo');
+}
+
+function excluir(i) {
+  if (!confirm('Excluir este contrato?')) return;
+  _contratos.splice(i,1);
+  localStorage.setItem('orizon_contratos', JSON.stringify(_contratos));
+  renderLista(); atualizarStats(); toast('🗑️ Excluído.');
+}
+
+// ─── NOVO ────────────────────────────────────────────
+function novoContrato() {
+  _editIdx = null;
+  limpar();
+  carregarCfgNoForm();
+  ir('novo');
+}
+
+function limpar() {
+  document.querySelectorAll('#sec-novo input:not([type=hidden]):not([type=checkbox]), #sec-novo select, #sec-novo textarea').forEach(el => {
+    if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = '';
+  });
+  document.querySelectorAll('#sec-novo input[type=checkbox]').forEach(el => el.checked = el.defaultChecked);
+  honAba('clt');
+  selecionarFaixa(40, document.getElementById('faixa-40'));
+}
+
+// ─── MODAL DETALHES ──────────────────────────────────
+function abrirModal(i) {
+  _mdIdx = i;
+  const d = _contratos[i];
+  document.getElementById('mdTitulo').textContent = d.titulo;
+  const chip = {ativo:'chip-ativo',rascunho:'chip-rascunho',encerrado:'chip-enc'}[d.status]||'chip-rascunho';
+  const lbl  = {ativo:'✅ Ativo',rascunho:'📝 Rascunho',encerrado:'🔒 Encerrado'}[d.status]||d.status;
+  document.getElementById('mdBody').innerHTML = `
+    <div class="detail-sec">Vaga / Processo</div>
+    ${dr('Cargo', d.vaga?.nome)} ${dr('Tipo', d.vaga?.tipo)} ${dr('Área', d.vaga?.area)}
+    ${dr('Nível', d.vaga?.nivel)} ${dr('Modalidade', d.vaga?.mod)} ${dr('Salário', d.vaga?.salario)}
+    <div class="detail-sec">Prestador (Você)</div>
+    ${dr('Nome', d.prest?.nome)} ${dr('CPF', d.prest?.cpf)} ${dr('RG', d.prest?.rg)}
+    ${dr('Profissão', d.prest?.prof)} ${dr('E-mail', d.prest?.email)} ${dr('Tel', d.prest?.tel)}
+    <div class="detail-sec">Contratante</div>
+    ${dr('Empresa', d.cont?.nome)} ${dr('CNPJ/CPF', d.cont?.doc)} ${dr('Representante', d.cont?.rep)}
+    ${dr('E-mail', d.cont?.email)}
+    <div class="detail-sec">Financeiro</div>
+    ${dr('Valor', d.valor ? 'R$ '+d.valor : '—')} ${dr('Pagamento', d.pagamento)} ${dr('Prazo', d.prazoPag)}
+    <div class="detail-sec">Vigência</div>
+    ${dr('Início', fmtData(d.inicio))} ${dr('Fim', fmtData(d.fim))} ${dr('Cidade', d.cidade)}
+    <div class="detail-sec">Status</div>
+    <div class="detail-row"><span class="detail-key">Status</span><span class="chip ${chip}">${lbl}</span></div>
+    ${dr('Referência', d.numero)} ${dr('Tipo', tipoLabels[d.tipo]||d.tipo)}
+    ${d.obs ? `<div class="detail-sec">Obs. interna</div>${dr('',d.obs)}` : ''}
+  `;
+  document.getElementById('modalDetalhe').classList.add('on');
+}
+
+function dr(k, v) {
+  if (!v) return '';
+  return `<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`;
+}
+
+function editarDoModal() { fecharModal('modalDetalhe'); editar(_mdIdx); }
+function previewDoModal() { fecharModal('modalDetalhe'); gerarPreviewIdx(_mdIdx); }
+
+function fecharModal(id) { document.getElementById(id).classList.remove('on'); }
+function abrirModalAssinar() { document.getElementById('modalAssinar').classList.add('on'); }
+function abrirModalEnviar()  { document.getElementById('modalEnviar').classList.add('on'); }
+
+// ─── PREVIEW / DOCUMENTO ─────────────────────────────
+function previewing() {
+  // Salva dados atuais temporariamente
+  const d = coletarDados();
+  gerarDoc(d);
+  ir('preview');
+}
+
+function gerarPreviewIdx(i) {
+  gerarDoc(_contratos[i]);
+  ir('preview');
+}
+
+function coletarDados() {
+  const pg = v('f_pagamento');
+  const pgLabels = {
+    avista:'À vista','40_60':'40% entrada + 60% na conclusão','40_60e':'40% entrada + 60% na efetivação',
+    '40_30_30':'40% + 30% + 30%','50_50':'50% entrada + 50% conclusão',
+    parcelas:'Parcelado mensalmente',efetivacao:'Apenas após contratação efetivada',custom:v('f_pag_custom'),
+    por_vaga:'Pagamento por vaga fechada'
+  };
+  return {
+    tipo:_tipoAtual, titulo:v('f_titulo')||'Contrato de Prestação de Serviços', numero:v('f_numero'), status:v('f_status'),
+    vaga:{nome:v('f_vaga_nome'),tipo:v('f_vaga_tipo'),area:v('f_vaga_area'),nivel:v('f_vaga_nivel'),mod:v('f_vaga_mod'),qtd:v('f_vaga_qtd'),salario:v('f_vaga_salario')},
+    prest:{nome:v('f_prest_nome'),cpf:v('f_prest_cpf'),rg:v('f_prest_rg'),docMode:_docMode,email:v('f_prest_email'),tel:v('f_prest_tel'),end:v('f_prest_end'),prof:v('f_prest_prof'),pix:v('f_prest_pix')},
+    cont:{nome:v('f_cont_nome'),doc:v('f_cont_doc'),rep:v('f_cont_rep'),cargo:v('f_cont_cargo'),email:v('f_cont_email'),tel:v('f_cont_tel'),end:v('f_cont_end')},
+    servico:v('f_servico'),entregaveis:v('f_entregaveis'),
+    vagas_solicitadas:v('f_vagas_solicitadas'),vagas_fechadas:v('f_vagas_fechadas'),valor_vaga:v('f_valor_vaga'),moeda:'BRL',
+    hon_modalidade:v('f_hon_modalidade')||_honModalidade,
+    hon_pct:parseFloat(v('f_pct_hon_final'))||_pctClt,
+    hon_por_vaga:v('f_hon_por_vaga'),
+    hon_est_mensal:v('f_hon_est_mensal'),
+    hon_total_estimado:v('f_hon_total_estimado'),
+    salario_vaga:v('f_salario_vaga'),
+    bolsa_est:v('f_bolsa_est'),
+    dur_est:v('f_dur_est')||'12',
+    pct_est:parseFloat(v('f_pct_est'))||_pctEst,
+    honorario_minimo:v('f_honorario_minimo'),vagas_minimas:v('f_vagas_minimas'),retainer:v('f_retainer'),
+    dificuldades:v('f_dificuldades'),
+    dif_flags:{
+      perfil_escasso:document.getElementById('dif_perfil_escasso')?.checked,
+      salario:document.getElementById('dif_salario')?.checked,
+      urgencia:document.getElementById('dif_urgencia')?.checked,
+      geo:document.getElementById('dif_geo')?.checked,
+      req_acumulados:document.getElementById('dif_req_acumulados')?.checked,
+      volume:document.getElementById('dif_volume')?.checked,
+    },
+    atividades:{
+      triagem:document.getElementById('atv_triagem')?.checked,
+      entrevista:document.getElementById('atv_entrevista')?.checked,
+      testes:document.getElementById('atv_testes')?.checked,
+      shortlist:document.getElementById('atv_shortlist')?.checked,
+      alinhamento:document.getElementById('atv_alinhamento')?.checked,
+      hunting:document.getElementById('atv_hunting')?.checked,
+      divulgacao:document.getElementById('atv_divulgacao')?.checked,
+      poscontrat:document.getElementById('atv_poscontrat')?.checked,
+    },
+    garantia_dias:v('f_garantia_dias')||'30',garantia_cond:v('f_garantia_cond')||'gratuita',
+    garantia_excecao:v('f_garantia_excecao')||'sim',
+    valor_total:v('f_valor_total_manual')||v('f_valor_total'),valor:v('f_valor_total_manual')||v('f_valor_total'),
+    pagamento:(_honModalidade==='estagio')?'Mensalidade por estagiário admitido':'Por vaga fechada — na admissão do candidato',
+    pagKey:_honModalidade==='estagio'?'estagio':'admissao',
+    prazoPag:v('f_prazo_pag')||'5 dias úteis após a admissão do candidato',
+    inicio:v('f_inicio'),fim:v('f_fim'),cidade:v('f_cidade'),foro:v('f_foro'),
+    aviso:v('f_aviso')||'15',
+    testemunhas:v('f_testemunhas'),test1_nome:v('f_test1_nome'),test1_cpf:v('f_test1_cpf'),test2_nome:v('f_test2_nome'),test2_cpf:v('f_test2_cpf'),
+    nda:v('f_nda'),clausulas:v('f_clausulas')
+  };
+}
+
+function gerarDoc(d) {
+  const hoje = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'long',year:'numeric'});
+  const titulosContrato = {
+    prestacao: 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE RECRUTAMENTO E SELEÇÃO',
+    exclusividade: 'CONTRATO DE EXCLUSIVIDADE DE PROCESSO SELETIVO',
+    parceria: 'CONTRATO DE PARCERIA EMPRESARIAL',
+    hunting: 'CONTRATO DE INTERMEDIAÇÃO E HUNTING'
+  };
+  const tituloContrato = titulosContrato[d.tipo] || 'CONTRATO DE PRESTAÇÃO DE SERVIÇOS';
+
+  let docPrest = '';
+  const dm = d.prest?.docMode || 'cpf';
+  if ((dm==='cpf'||dm==='ambos') && d.prest?.cpf) docPrest += `CPF nº ${d.prest.cpf}`;
+  if (dm==='ambos' && d.prest?.cpf && d.prest?.rg) docPrest += ' / ';
+  if ((dm==='rg'||dm==='ambos') && d.prest?.rg) docPrest += `RG nº ${d.prest.rg}`;
+
+  const contDoc = d.cont?.doc ? (d.cont.doc.length > 14 ? `CNPJ nº ${d.cont.doc}` : `CPF nº ${d.cont.doc}`) : '';
+
+  // Cláusulas específicas por tipo
+  const clausulasEspecificas = {
+    exclusividade: `
+<h2>Cláusula 5ª — Da Exclusividade</h2>
+<p>A CONTRATANTE, durante a vigência deste instrumento, se compromete a não contratar outros serviços de recrutamento e seleção para a(s) vaga(s) objeto deste contrato sem prévia anuência do PRESTADOR, salvo se o PRESTADOR não apresentar candidatos dentro dos prazos acordados.</p>
+<p>Em caso de violação da exclusividade, a CONTRATANTE deverá pagar ao PRESTADOR o valor integral do honorário contratado, a título de indenização, independentemente de contratação do candidato.</p>`,
+    parceria: `
+<h2>Cláusula 5ª — Da Parceria Comercial</h2>
+<p>As partes estabelecem parceria para atuação conjunta no mercado de recrutamento, comprometendo-se a indicar oportunidades de negócios e dividir os honorários nos percentuais acordados neste instrumento.</p>
+<p>Cada parte é responsável pelos seus próprios custos operacionais. Os leads e oportunidades gerados durante a parceria pertencem exclusivamente à parte que os originou, salvo acordo específico por escrito.</p>`,
+    hunting: `
+<h2>Cláusula 5ª — Da Intermediação e Hunting</h2>
+<p>O PRESTADOR realizará a busca ativa de profissionais no mercado (hunting), mapeando perfis de candidatos que não estão necessariamente em processo ativo de busca de emprego, utilizando sua rede de relacionamentos e ferramentas especializadas.</p>
+<p>O sucesso da intermediação é caracterizado pela efetiva contratação do profissional indicado pelo PRESTADOR, momento em que os honorários se tornam devidos integralmente.</p>`
+  };
+
+  let pagTexto = '';
+  const isEstagio = d.hon_modalidade === 'estagio' || d.pagKey === 'estagio';
+
+  if (isEstagio) {
+    const pct = d.pct_est || 13;
+    const bolsa = d.bolsa_est ? parseMoney(d.bolsa_est) : 0;
+    const dur = parseInt(d.dur_est||'12',10);
+    const mensal = d.hon_est_mensal ? parseFloat(d.hon_est_mensal) : (bolsa * pct / 100);
+    pagTexto = `Os honorários de intermediação para contrato de estágio correspondem a ${pct}% (${porExtenso(pct)} por cento) do valor da bolsa/auxílio mensal do estagiário, cobrados mensalmente durante toda a vigência do estágio. ${bolsa>0?`Bolsa prevista: R$ ${fmtMoney(bolsa)} · Mensalidade: R$ ${fmtMoney(mensal)}.`:''} O pagamento será realizado mensalmente, até o ${d.prazoPag||'5º dia útil'} de cada mês, pelo período máximo de ${dur} (${porExtenso(dur)}) meses, respeitando o limite legal de 24 meses conforme Lei 11.788/2008. Em caso de encerramento antecipado do estágio por iniciativa da CONTRATANTE, os honorários mensais já vencidos permanecem devidos.`;
+  } else {
+    const pct = d.hon_pct || 40;
+    const salario = d.salario_vaga ? parseMoney(d.salario_vaga) : 0;
+    const honVaga = d.hon_por_vaga ? parseFloat(d.hon_por_vaga) : (salario * pct / 100);
+    const minVagas = d.vagas_minimas ? parseInt(d.vagas_minimas) : null;
+    const minHon = d.honorario_minimo ? parseMoney(d.honorario_minimo) : (minVagas && honVaga ? honVaga * minVagas : 0);
+    pagTexto = `Os honorários correspondem a ${pct}% (${porExtenso(pct)} por cento) sobre o salário mensal bruto da vaga, cobrados por vaga efetivamente preenchida, pagos em parcela única na admissão do candidato. ${salario>0?`Salário de referência: R$ ${fmtMoney(salario)} · Honorário por vaga: R$ ${fmtMoney(honVaga)}.`:''} O pagamento será realizado em até ${d.prazoPag||'5 dias úteis após a admissão do candidato'}. ${minVagas?`Independentemente do número de vagas efetivamente preenchidas, a CONTRATANTE se obriga ao pagamento mínimo equivalente a ${minVagas} (${porExtenso(minVagas)}) vaga(s)${minHon>0?', totalizando R$ '+fmtMoney(minHon):''}. Esta cláusula protege o PRESTADOR em processos com demanda elevada e fechamento parcial.`:''}`;
+  }
+
+  const ndaClausula = d.nda !== 'nao' ? `
+<h2>Cláusula ${d.tipo==='prestacao'?'7ª':'8ª'} — Da Confidencialidade (NDA)</h2>
+<p>As partes se comprometem a manter sigilo sobre todas as informações confidenciais obtidas em razão deste contrato, incluindo dados de candidatos, salários, estrutura organizacional, estratégias e informações comerciais, durante a vigência e por 2 (dois) anos após o encerramento.</p>
+<p>A violação desta cláusula sujeita a parte infratora ao pagamento de indenização por perdas e danos, sem prejuízo das sanções legais cabíveis.</p>` : '';
+
+  document.getElementById('previewDoc').innerHTML = `
+<div class="doc-logo-hdr">
+  <div class="doc-logo-left">
+    <div class="doc-logo-box">
+      <svg width="22" height="22" viewBox="0 0 26 26" fill="none">
+        <rect x="2" y="2" width="22" height="22" rx="5" fill="#3b82f6"/>
+        <text x="13" y="19" text-anchor="middle" font-family="Sora,sans-serif" font-weight="900" font-size="14" fill="white">N</text>
+      </svg>
+    </div>
+    <div>
+      <div class="doc-logo-nome">ORIZON</div>
+      <div class="doc-logo-tag">Orizon Recrutamento e Seleção</div>
+    </div>
+  </div>
+  <div class="doc-info">
+    ${d.numero ? `<div><strong>Ref.:</strong> ${d.numero}</div>` : ''}
+    <div><strong>Data:</strong> ${hoje}</div>
+    <div><strong>Modalidade:</strong> RPA — Autônomo</div>
+  </div>
+</div>
+
+<h1>${tituloContrato}</h1>
+<span class="doc-sub">${d.titulo || tituloContrato}${d.vaga?.nome?' — '+d.vaga.nome:''}</span>
+
+<h2>Das Partes</h2>
+<p><strong>PRESTADOR DE SERVIÇOS:</strong> ${d.prest?.nome || '___________________'}, ${d.prest?.prof || 'Profissional de Recrutamento e Seleção'}${docPrest?', portador(a) de '+docPrest:''}${d.prest?.end?', residente e domiciliado(a) em '+d.prest.end:''}${d.prest?.email?', e-mail: '+d.prest.email:''}${d.prest?.tel?', telefone: '+d.prest.tel:''}, doravante denominado(a) simplesmente PRESTADOR.</p>
+<p><strong>CONTRATANTE:</strong> ${d.cont?.nome || '___________________'}${contDoc?', inscrita(o) sob o '+contDoc:''}${d.cont?.end?', com sede/domicílio em '+d.cont.end:''}${d.cont?.rep?', neste ato representada por '+d.cont.rep+(d.cont.cargo?', '+d.cont.cargo:''):''}${d.cont?.email?', e-mail: '+d.cont.email:''}${d.cont?.tel?', telefone: '+d.cont.tel:''}, doravante denominada CONTRATANTE.</p>
+
+<p>As partes acima identificadas têm entre si justo e acordado o presente ${tituloContrato.toLowerCase()}, que se regerá pelas seguintes cláusulas e condições:</p>
+
+<h2>Cláusula 1ª — Do Objeto</h2>
+<p>O presente contrato tem por objeto a prestação de serviços de recrutamento e seleção de profissionais para a(s) seguinte(s) vaga(s):</p>
+<div class="hbox">
+  <strong>Vaga / Cargo</strong>
+  ${d.vaga?.nome||'A ser definido'} — ${[d.vaga?.tipo,d.vaga?.nivel,d.vaga?.mod,d.vaga?.area].filter(Boolean).join(' · ')||''}${d.vaga?.qtd && d.vaga.qtd>1?' ('+d.vaga.qtd+' vagas)':''}${d.vaga?.salario?' · Faixa salarial: R$ '+d.vaga.salario:''}
+</div>
+${d.servico?`<p>${d.servico}</p>`:'<p>Condução completa do processo seletivo, incluindo definição do perfil, divulgação, triagem de currículos, realização de entrevistas, aplicação de testes e apresentação de candidatos finalistas à CONTRATANTE.</p>'}
+
+<h2>Cláusula 2ª — Das Atividades e Entregáveis</h2>
+${(() => {
+  const atv = d.atividades || {};
+  const atvLabels = {
+    triagem: 'triagem e análise criteriosa de currículos recebidos',
+    entrevista: 'realização de entrevistas de mapeamento comportamental e técnico',
+    testes: 'aplicação de testes técnicos e/ou comportamentais',
+    shortlist: 'apresentação de shortlist qualificado com relatório de perfil de cada candidato',
+    alinhamento: 'alinhamentos periódicos de andamento do processo com o cliente',
+    hunting: 'busca ativa (hunting) de profissionais em redes e banco de talentos',
+    divulgacao: 'divulgação da vaga em portais e redes especializadas',
+    poscontrat: 'acompanhamento pós-contratação pelo período de garantia estabelecido',
+  };
+  const ativos = Object.entries(atv).filter(([,v])=>v).map(([k])=>atvLabels[k]).filter(Boolean);
+  return ativos.length > 0
+    ? `<p>São atividades do PRESTADOR no âmbito deste contrato: (${ativos.map((a,i)=>`${['i','ii','iii','iv','v','vi','vii','viii'][i]}) ${a}`).join('; ')}).</p>`
+    : '';
+})()}
+${d.entregaveis?`<p>${d.entregaveis}</p>`:'<p>O PRESTADOR se compromete a apresentar até 3 (três) candidatos finalistas por vaga, acompanhar as etapas do processo seletivo junto à CONTRATANTE e oferecer suporte no pós-contratação pelo período de garantia acordado.</p>'}
+
+${(() => {
+  const flags = d.dif_flags || {};
+  const flagLabels = {
+    perfil_escasso: 'perfil profissional com alta demanda e baixa oferta no mercado de trabalho atual',
+    salario: 'faixa salarial praticada abaixo da média de mercado para o perfil solicitado',
+    urgencia: 'urgência elevada no preenchimento que pode restringir o volume do shortlist',
+    geo: 'exigência de presencialidade ou restrição geográfica que reduz o universo de candidatos',
+    req_acumulados: 'acúmulo de requisitos técnicos e comportamentais acima do padrão para o nível da vaga',
+    volume: 'volume elevado de vagas simultâneas sendo trabalhadas',
+  };
+  const ativos = Object.entries(flags).filter(([,v])=>v).map(([k])=>flagLabels[k]).filter(Boolean);
+  const textoExtra = d.dificuldades ? d.dificuldades : '';
+  if (ativos.length === 0 && !textoExtra) return '';
+  return `
+<h2>Parágrafo Único — Condicionantes do Processo Seletivo</h2>
+<p>As partes reconhecem que o presente processo seletivo está sujeito às seguintes condicionantes de mercado, que podem impactar o prazo e/ou o volume de candidatos apresentados: ${ativos.map((a,i)=>`(${['i','ii','iii','iv','v','vi'][i]}) ${a}`).join('; ')}${ativos.length>0?'.':''}</p>
+${textoExtra ? `<p>${textoExtra}</p>` : ''}
+<p>Em razão dos fatores acima, o PRESTADOR compromete-se a empregar seus melhores esforços e toda a sua expertise, sem que o não preenchimento da totalidade das vagas, por si só, caracterize inadimplemento contratual.</p>`;
+})()}
+
+<h2>Cláusula 3ª — Dos Honorários e Forma de Pagamento</h2>
+${(() => {
+  const isEst = d.hon_modalidade === 'estagio' || d.pagKey === 'estagio';
+  const pct = isEst ? (d.pct_est||13) : (d.hon_pct||40);
+  const minVagas = d.vagas_minimas ? parseInt(d.vagas_minimas) : null;
+  const minHon = d.honorario_minimo;
+  if (isEst) {
+    const bolsa = d.bolsa_est || '—';
+    const mensal = d.hon_est_mensal ? fmtMoney(parseFloat(d.hon_est_mensal)) : '—';
+    const dur = d.dur_est || '12';
+    const total = d.hon_total_estimado ? fmtMoney(parseFloat(d.hon_total_estimado)) : '—';
+    return `
+<div class="hbox" style="border-left:3px solid #8b5cf6;">
+  <strong>🎓 Honorários — Estágio (${pct}% mensal sobre a bolsa)</strong>
+  Bolsa mensal do estagiário: R$ ${bolsa} · Mensalidade ORIZON: R$ ${mensal} · Duração: ${dur} meses · Total estimado: R$ ${total}
+</div>`;
+  } else {
+    const salario = d.salario_vaga || '—';
+    const honVaga = d.hon_por_vaga ? fmtMoney(parseFloat(d.hon_por_vaga)) : '—';
+    const vagasSol = d.vagas_solicitadas || '—';
+    const vagasFech = d.vagas_fechadas || 'a definir';
+    const total = d.hon_total_estimado ? fmtMoney(parseFloat(d.hon_total_estimado)) : 'a combinar';
+    return `
+<div class="hbox" style="border-left:3px solid #3b82f6;">
+  <strong>💼 Honorários — ${pct}% sobre 1 salário mensal · Pagamento na admissão</strong>
+  Salário de referência: R$ ${salario} · Honorário por vaga: R$ ${honVaga} · Vagas solicitadas: ${vagasSol} · Previstas fechar: ${vagasFech}
+</div>
+${minVagas || minHon ? `
+<div class="hbox" style="border-left:3px solid #f5c518;background:#fefbe8;">
+  <strong>⚠️ Mínimo Garantido</strong>
+  ${minVagas ? `Mínimo de ${minVagas} vaga(s) cobrada(s) independente do fechamento.` : ''} ${minHon ? `Honorário mínimo: R$ ${minHon}.` : ''}
+</div>` : ''}
+<div class="hbox">
+  <strong>💰 Total Estimado</strong>
+  ${d.valor_total || d.valor ? 'R$ ' + fmtMoney(parseFloat(d.valor_total || d.valor)) : 'A combinar conforme vagas efetivamente fechadas'}
+</div>`;
+  }
+})()}
+<p>${pagTexto}</p>
+${d.prest?.pix?`<p><strong>Dados para pagamento:</strong> ${d.prest.pix}</p>`:''}
+${d.prazoPag&&!d.pagamento?.includes('prazo')?`<p>O pagamento deverá ser realizado no prazo de ${d.prazoPag}.</p>`:''}
+<p>O atraso no pagamento sujeitará a CONTRATANTE à incidência de multa de 2% (dois por cento) sobre o valor em aberto, acrescida de juros de 1% (um por cento) ao mês e atualização monetária pelo IGPM.</p>
+
+<h2>Cláusula 4ª — Da Vigência</h2>
+<p>O presente contrato tem vigência pelo período de ${fmtData(d.inicio)||'___/___/______'} a ${fmtData(d.fim)||'___/___/______'}, podendo ser prorrogado por igual período mediante acordo escrito entre as partes.</p>
+<p>Qualquer das partes poderá rescindir o presente contrato, mediante notificação prévia por escrito com antecedência mínima de ${d.aviso||'15'} (${porExtenso(parseInt(d.aviso)||15)}) dias.</p>
+
+${clausulasEspecificas[d.tipo] || `
+<h2>Cláusula 5ª — Das Obrigações do Prestador</h2>
+<p>O PRESTADOR se compromete a: (i) conduzir o processo seletivo com profissionalismo e ética; (ii) manter sigilo sobre os candidatos e as informações fornecidas pela CONTRATANTE; (iii) comunicar tempestivamente à CONTRATANTE qualquer dificuldade identificada no processo.</p>`}
+
+${(() => {
+  const dias = parseInt(d.garantia_dias||'30');
+  if (dias === 0) return '';
+  if (d.garantia_cond === 'sem_substituicao') {
+    const clausNum2 = d.tipo==='prestacao'?'6ª':d.tipo==='exclusividade'?'6ª':'6ª';
+    return `\n<h2>Cláusula ${clausNum2} — Da Garantia</h2>\n<p>O PRESTADOR oferece garantia pelo prazo de ${dias} (${porExtenso(dias)}) dias contados da data de admissão do candidato indicado. Fica estabelecido que <strong>não haverá substituição</strong> do candidato dentro do período de garantia, cabendo à CONTRATANTE a contratação de novo serviço mediante celebração de novo instrumento contratual e pagamento integral dos honorários correspondentes.</p>`;
+  }
+  const condLabels = {
+    gratuita: 'sem custo adicional para a CONTRATANTE',
+    desconto: 'com desconto nos honorários a ser negociado entre as partes',
+    novo_contrato: 'mediante novo contrato com valores diferenciados',
+  };
+  const excLabels = {
+    sim: 'desde que o desligamento não tenha sido motivado por demissão sem justa causa pela própria CONTRATANTE',
+    ambas: 'desde que o desligamento não tenha sido motivado por demissão sem justa causa ou por encerramento da vaga pela CONTRATANTE',
+    nao: 'aplicável a todos os casos de desligamento',
+  };
+  const clausNum = d.tipo==='prestacao'?'6ª':d.tipo==='exclusividade'?'6ª':'6ª';
+  return `
+<h2>Cláusula ${clausNum} — Da Garantia de Substituição</h2>
+<p>O PRESTADOR oferece garantia de substituição pelo prazo de ${dias} (${porExtenso(dias)}) dias contados da data de admissão do candidato indicado. Caso o candidato seja desligado dentro deste período, o PRESTADOR realizará novo processo seletivo ${condLabels[d.garantia_cond]||'conforme acordado'}, ${excLabels[d.garantia_excecao]||''}.</p>
+<p>A garantia não se aplica em casos de alteração substancial dos requisitos da vaga após a apresentação do candidato.</p>`;
+})()}
+
+<h2>Cláusula ${d.tipo==='prestacao'?'7ª':'8ª'} — Das Obrigações da Contratante</h2>
+<p>A CONTRATANTE se compromete a: (i) fornecer ao PRESTADOR as informações necessárias para a condução do processo; (ii) efetuar os pagamentos nos prazos e condições estipulados; (iii) participar ativamente das etapas definidas; (iv) comunicar ao PRESTADOR qualquer alteração nos requisitos da vaga ou cancelamento do processo com antecedência mínima de ${d.aviso||'15'} dias; (v) não contratar, por conta própria, candidatos apresentados pelo PRESTADOR sem o pagamento integral dos honorários devidos.</p>
+
+${ndaClausula}
+
+<h2>Cláusula ${d.nda!=='nao'?(d.tipo==='prestacao'?'9ª':'10ª'):(d.tipo==='prestacao'?'8ª':'9ª')} — Do Foro</h2>
+<p>As partes elegem o foro da ${d.foro||'Comarca do domicílio do PRESTADOR'} para dirimir quaisquer controvérsias oriundas deste contrato, renunciando a qualquer outro, por mais privilegiado que seja.</p>
+
+${d.clausulas?`<h2>Cláusulas Adicionais</h2><p>${d.clausulas}</p>`:''}
+
+<p>E, por estarem assim justos e contratados, firmam o presente instrumento em 2 (duas) vias de igual teor e forma${d.testemunhas==='sim'?', na presença das testemunhas abaixo':''}.</p>
+<p>${d.cidade||'______________________'}, ${hoje}.</p>
+
+<div class="sigs">
+  <div class="sig-blk">
+    <strong>${d.prest?.nome || 'PRESTADOR DE SERVIÇOS'}</strong>
+    <span>${docPrest || 'CPF/RG: _______________'}</span>
+    <span>ORIZON — Orizon Recrutamento</span>
+    <span>${d.prest?.prof || 'Consultora de Recrutamento e Seleção'}</span>
+  </div>
+  <div class="sig-blk">
+    <strong>${d.cont?.nome || 'CONTRATANTE'}</strong>
+    <span>${contDoc || 'CNPJ/CPF: _______________'}</span>
+    ${d.cont?.rep?`<span>${d.cont.rep}${d.cont.cargo?' — '+d.cont.cargo:''}</span>`:''}
+  </div>
+</div>
+
+${d.testemunhas==='sim'?`
+<div class="sigs" style="margin-top:1.5rem;">
+  <div class="sig-blk">
+    <strong>Testemunha 1</strong>
+    <span>Nome: ${d.test1_nome || '_______________________'}</span>
+    <span>CPF: ${d.test1_cpf || '_______________'}</span>
+  </div>
+  <div class="sig-blk">
+    <strong>Testemunha 2</strong>
+    <span>Nome: ${d.test2_nome || '_______________________'}</span>
+    <span>CPF: ${d.test2_cpf || '_______________'}</span>
+  </div>
+</div>
+`:''}
+
+<div class="rodape">
+  <span>◆ Orizon Recrutamento e Seleção</span>
+  <span>Gerado em ${hoje} · Para validade jurídica plena, assine em plataforma digital certificada (Clicksign, Gov.br, D4Sign, ZapSign)</span>
+  ${d.numero?`<span>${d.numero}</span>`:'<span>—</span>'}
+</div>`;
+}
+
+// ─── PDF ─────────────────────────────────────────────
+function baixarPDF() {
+  const el = document.getElementById('previewDoc');
+  if (el.querySelector('[style*="text-align:center;color:#999"]')) {
+    toast('⚠️ Gere o documento primeiro.');
+    return;
+  }
+  const opt = {
+    margin:[10,15],filename:'Contrato_ORIZON.pdf',
+    image:{type:'jpeg',quality:0.98},
+    html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  };
+  html2pdf().set(opt).from(el).save();
+  toast('⬇️ Gerando PDF...');
+}
+
+function imprimirDoc() {
+  const conteudo = document.getElementById('previewDoc').innerHTML;
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head>
+  <meta charset="UTF-8"/><title>Contrato — ORIZON</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;}
+    body{font-family:'Times New Roman',serif;font-size:11pt;line-height:1.9;color:#111;margin:2cm 2.5cm;}
+    .doc-logo-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;padding-bottom:0.9rem;border-bottom:2px solid #1a1a2e;}
+    .doc-logo-left{display:flex;align-items:center;gap:0.6rem;}
+    .doc-logo-box{width:34px;height:34px;background:#3b82f6;border-radius:7px;display:flex;align-items:center;justify-content:center;}
+    .doc-logo-nome{font-family:'Sora',sans-serif;font-size:1.4rem;letter-spacing:2px;color:#0a0a0a;line-height:1;}
+    .doc-logo-tag{font-size:0.52rem;letter-spacing:2px;color:#666;text-transform:uppercase;}
+    .doc-info{text-align:right;font-size:0.65rem;color:#666;line-height:1.5;}
+    h1{font-size:13pt;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:1.5px;margin:0.8rem 0 0.2rem;}
+    .doc-sub{text-align:center;font-size:9pt;color:#555;margin-bottom:1.4rem;border:1px solid #e0e0e0;padding:0.35rem;border-radius:4px;display:block;}
+    h2{font-size:10pt;font-weight:700;text-transform:uppercase;margin:1.3rem 0 0.4rem;color:#1a1a2e;border-left:3px solid #3b82f6;padding-left:0.5rem;}
+    p{margin-bottom:0.55rem;text-align:justify;}
+    .hbox{background:#f8f8f0;border:1px solid #e8e8d0;border-radius:4px;padding:0.65rem;margin:0.4rem 0;font-size:10.5pt;}
+    .hbox strong{display:block;font-size:8.5pt;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:0.15rem;}
+    .sigs{display:grid;grid-template-columns:1fr 1fr;gap:2cm;margin-top:2.5rem;}
+    .sig-blk{text-align:center;border-top:1.5px solid #999;padding-top:0.5rem;font-size:9.5pt;}
+    .sig-blk strong{display:block;margin-bottom:0.15rem;}
+    .sig-blk span{display:block;font-size:8.5pt;color:#444;}
+    .rodape{margin-top:1.5rem;border-top:1px solid #ccc;padding-top:0.5rem;font-size:7.5pt;color:#aaa;display:flex;justify-content:space-between;}
+    @media print{body{margin:1.5cm 2cm;}}
+  </style></head><body>${conteudo}</body></html>`);
+  w.document.close();
+  setTimeout(()=>{w.focus();w.print();},600);
+}
+
+// ─── ENVIAR ──────────────────────────────────────────
+function enviarEmail() {
+  const i = _contratos.findIndex(c=>c.titulo === document.getElementById('mdTitulo')?.textContent);
+  const d = i>=0 ? _contratos[i] : null;
+  const email = d?.cont?.email || '';
+  const assunto = encodeURIComponent(`Contrato — ORIZON — ${d?.titulo||''}`);
+  const corpo = encodeURIComponent(`Olá${d?.cont?.rep?' '+d.cont.rep:''},\n\nSegue em anexo o contrato para sua análise e assinatura.\n\nAguardo retorno.\n\nAtenciosamente,\n${d?.prest?.nome||'Equipe Orizon'}\nORIZON — Orizon Recrutamento`);
+  window.open(`mailto:${email}?subject=${assunto}&body=${corpo}`);
+  fecharModal('modalEnviar');
+}
+
+function enviarWhatsApp() {
+  const d = _mdIdx !== null ? _contratos[_mdIdx] : null;
+  const tel = d?.cont?.tel?.replace(/\D/g,'') || '';
+  const msg = encodeURIComponent(`Olá! Segue o contrato da *ORIZON — Orizon Recrutamento* para sua análise. Após baixar o PDF, favor assinar e retornar. Qualquer dúvida, estou à disposição! 🤝`);
+  window.open(`https://wa.me/55${tel}?text=${msg}`);
+  fecharModal('modalEnviar');
+}
+
+function copiarTexto() {
+  navigator.clipboard.writeText(window.location.href).then(()=>toast('📋 Link copiado!')).catch(()=>toast('⚠️ Não foi possível copiar.'));
+  fecharModal('modalEnviar');
+}
+
+// ─── VAGAS ───────────────────────────────────────────
+const vagaStatusLabel = {aberta:'🟢 Aberta',em_andamento:'🔄 Em andamento',fechada:'✅ Fechada',cancelada:'❌ Cancelada'};
+
+function abrirNovaVaga() {
+  _editVagaIdx = null;
+  document.getElementById('vagaModalTitulo').textContent = 'Nova Vaga';
+  ['mv_nome','mv_empresa','mv_area','mv_salario','mv_obs'].forEach(id=>setVal(id,''));
+  ['mv_tipo','mv_nivel','mv_status'].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  document.getElementById('modalVaga').classList.add('on');
+}
+
+function salvarVaga() {
+  const vaga = {
+    nome:v('mv_nome')||'Vaga sem nome', empresa:v('mv_empresa'), tipo:v('mv_tipo'), area:v('mv_area'),
+    nivel:v('mv_nivel'), salario:v('mv_salario'), status:v('mv_status')||'aberta',
+    obs:v('mv_obs'), criadoEm:new Date().toISOString()
+  };
+  if (_editVagaIdx !== null) _vagas[_editVagaIdx] = vaga;
+  else _vagas.unshift(vaga);
+  localStorage.setItem('orizon_vagas', JSON.stringify(_vagas));
+  renderVagas(); fecharModal('modalVaga'); toast('✅ Vaga salva!');
+}
+
+function renderVagas() {
+  const el = document.getElementById('listaVagas');
+  if (!_vagas.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">🎯</div><div class="empty-msg">Nenhuma vaga cadastrada ainda.</div><button class="btn btn-acc btn-sm" onclick="abrirNovaVaga()">＋ Cadastrar Vaga</button></div>`;
+    return;
+  }
+  el.innerHTML = _vagas.map((v,i)=>`
+    <div class="vaga-card">
+      <div class="vaga-ico">🎯</div>
+      <div class="vaga-info">
+        <div class="vaga-nome">${v.nome}</div>
+        <div class="vaga-meta">
+          ${v.empresa?`<span>🏢 ${v.empresa}</span>`:''}
+          ${v.tipo?`<span>${v.tipo}</span>`:''}
+          ${v.nivel?`<span>${v.nivel}</span>`:''}
+          ${v.area?`<span>${v.area}</span>`:''}
+          ${v.salario?`<span>💰 R$ ${v.salario}</span>`:''}
+          <span class="chip ${v.status==='aberta'?'chip-ativo':v.status==='fechada'?'chip-enc':'chip-rascunho'}">${vagaStatusLabel[v.status]||v.status}</span>
+        </div>
+      </div>
+      <div class="vaga-acts">
+        <button class="btn btn-acc btn-sm" onclick="usarVagaNoContrato(${i})">📄 Contratar</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarVaga(${i})">✏️</button>
+        <button class="btn btn-red btn-sm" onclick="excluirVaga(${i})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+function usarVagaNoContrato(i) {
+  const vg = _vagas[i];
+  setVal('f_vaga_nome', vg.nome); setVal('f_vaga_tipo', vg.tipo); setVal('f_vaga_area', vg.area);
+  setVal('f_vaga_nivel', vg.nivel); setVal('f_vaga_salario', vg.salario);
+  novoContrato();
+  setVal('f_vaga_nome', vg.nome); setVal('f_vaga_tipo', vg.tipo); setVal('f_vaga_area', vg.area);
+  setVal('f_vaga_nivel', vg.nivel); setVal('f_vaga_salario', vg.salario);
+  toast('✅ Vaga carregada no contrato!');
+}
+
+function editarVaga(i) {
+  _editVagaIdx = i;
+  const vg = _vagas[i];
+  document.getElementById('vagaModalTitulo').textContent = 'Editar Vaga';
+  setVal('mv_nome', vg.nome); setVal('mv_empresa', vg.empresa); setVal('mv_tipo', vg.tipo);
+  setVal('mv_area', vg.area); setVal('mv_nivel', vg.nivel); setVal('mv_salario', vg.salario);
+  setVal('mv_status', vg.status); setVal('mv_obs', vg.obs);
+  document.getElementById('modalVaga').classList.add('on');
+}
+
+function excluirVaga(i) {
+  if (!confirm('Excluir esta vaga?')) return;
+  _vagas.splice(i,1);
+  localStorage.setItem('orizon_vagas', JSON.stringify(_vagas));
+  renderVagas(); toast('🗑️ Vaga excluída.');
+}
+
+// ─── HONORÁRIOS ──────────────────────────────────────
+function renderHonorarios() {
+  const el = document.getElementById('listaHonorarios');
+  const cs = _contratos.filter(c => c.valor && c.status !== 'encerrado');
+  if (!cs.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-ico">💰</div><div class="empty-msg">Nenhum honorário registrado.<br>Salve contratos com valores para visualizar aqui.</div></div>`;
+    document.getElementById('hon-total').textContent = 'R$ 0,00';
+    return;
+  }
+  const total = cs.reduce((s,c)=>s+(c.valorNum||0),0);
+  document.getElementById('hon-total').textContent = 'R$ ' + total.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const max = Math.max(...cs.map(c=>c.valorNum||0));
+  el.innerHTML = cs.map((c,i)=>{
+    const pct = max > 0 ? Math.round((c.valorNum/max)*100) : 0;
+    const chip = {ativo:'chip-ativo',rascunho:'chip-rascunho',encerrado:'chip-enc'}[c.status]||'chip-rascunho';
+    const lbl  = {ativo:'✅ Ativo',rascunho:'📝 Pendente',encerrado:'🔒 Recebido'}[c.status]||c.status;
+    return `
+    <div class="hon-card">
+      <div class="hon-hdr">
+        <div>
+          <div class="hon-nome">${c.titulo}</div>
+          <div class="hon-meta">
+            ${c.cont?.nome?`<span>🏢 ${c.cont.nome}</span>`:''}
+            ${c.vaga?.nome?`<span>🎯 ${c.vaga.nome}</span>`:''}
+            <span>${c.pagamento||'—'}</span>
+            <span class="chip ${chip}">${lbl}</span>
+          </div>
+        </div>
+        <div class="hon-valor">R$ ${c.valor}</div>
+      </div>
+      <div class="hon-bar"><div class="hon-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── CONFIG ──────────────────────────────────────────
+function salvarCfg() {
+  _cfg = {nome:v('cfg_nome'),cpf:v('cfg_cpf'),rg:v('cfg_rg'),email:v('cfg_email'),tel:v('cfg_tel'),end:v('cfg_end'),prof:v('cfg_prof'),pix:v('cfg_pix'),cidade:v('cfg_cidade'),foro:v('cfg_foro')};
+  localStorage.setItem('orizon_cfg', JSON.stringify(_cfg));
+  toast('✅ Dados salvos!');
+}
+
+function carregarCfg() {
+  Object.entries({cfg_nome:'nome',cfg_cpf:'cpf',cfg_rg:'rg',cfg_email:'email',cfg_tel:'tel',cfg_end:'end',cfg_prof:'prof',cfg_pix:'pix',cfg_cidade:'cidade',cfg_foro:'foro'})
+    .forEach(([id,key]) => setVal(id, _cfg[key]));
+}
+
+function carregarCfgNoForm() {
+  Object.entries({f_prest_nome:'nome',f_prest_cpf:'cpf',f_prest_rg:'rg',f_prest_email:'email',f_prest_tel:'tel',f_prest_end:'end',f_prest_prof:'prof',f_prest_pix:'pix',f_cidade:'cidade',f_foro:'foro'})
+    .forEach(([id,key]) => setVal(id, _cfg[key]));
+}
+
+// ─── HELPERS ─────────────────────────────────────────
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function setVal(id, val, inner=false){
+  const el = document.getElementById(id);
+  if (!el || val===undefined||val===null||val==='') return;
+  if (inner) el.textContent=val; else el.value=val;
+}
+function fmtData(d){ if(!d)return'—'; const[y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; }
+function fmtMoney(n){ return n.toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function parseMoney(s){ return parseFloat((s||'0').replace(/\./g,'').replace(',','.'))||0; }
+function porExtenso(n){
+  const u=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+  const d=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+  if(n<20)return u[n];if(n<100)return d[Math.floor(n/10)]+(n%10?` e ${u[n%10]}`:'');return n;
+}
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},3000);
+}
+
+// ─── MÁSCARAS ────────────────────────────────────────
+function maskCPF(el){ let v=el.value.replace(/\D/g,'').slice(0,11); v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); el.value=v; }
+function maskTel(el){ let v=el.value.replace(/\D/g,'').slice(0,11); if(v.length<=10)v=v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3'); else v=v.replace(/(\d{2})(\d{5})(\d{0,4})/,'($1) $2-$3'); el.value=v; }
+function maskMoney(el){ let v=el.value.replace(/\D/g,''); v=(parseInt(v||'0',10)/100).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); el.value=v; }
+
+// ─── ASSINATURA DIGITAL ──────────────────────────────
+let _asnToken = '';
+let _asnIP = '';
+
+async function sha256(str) {
+  const buf = new TextEncoder().encode(str);
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function gerarToken() {
+  const arr = new Uint8Array(18);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase().slice(0,32);
+}
+
+async function carregarIP() {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    const j = await r.json();
+    return j.ip;
+  } catch {
+    // Fallback simulated IP for offline use
+    return '177.' + Math.floor(Math.random()*255) + '.' + Math.floor(Math.random()*255) + '.' + Math.floor(Math.random()*255);
+  }
+}
+
+function asnAba(aba) {
+  document.getElementById('asn-tab-digital').classList.toggle('on', aba==='digital');
+  document.getElementById('asn-tab-plataforma').classList.toggle('on', aba==='plataforma');
+  document.getElementById('asn-painel-digital').style.display = aba==='digital' ? 'block' : 'none';
+  document.getElementById('asn-painel-plataforma').style.display = aba==='plataforma' ? 'block' : 'none';
+}
+
+async function gerarDadosAssinatura() {
+  const agora = new Date();
+  const dataHora = agora.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',timeZoneName:'short'});
+  document.getElementById('asn_datetime').textContent = dataHora;
+
+  _asnToken = gerarToken();
+  document.getElementById('asn_token').textContent = 'NXS-' + _asnToken;
+
+  if (!_asnIP) {
+    document.getElementById('asn_ip').textContent = 'Obtendo...';
+    _asnIP = await carregarIP();
+  }
+  document.getElementById('asn_ip').textContent = _asnIP;
+
+  const hashInput = `ORIZON|${_asnToken}|${_asnIP}|${agora.toISOString()}|${v('asn_assinatura')||''}`;
+  const hash = await sha256(hashInput);
+  document.getElementById('asn_hash').textContent = hash;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Pré-carregar IP ao abrir o modal
+  carregarIP().then(ip => { _asnIP = ip; });
+});
+
+function abrirModalAssinar() {
+  document.getElementById('modalAssinar').classList.add('on');
+  // Auto-preencher nome e doc do prestador se disponível
+  const nomePrest = v('f_prest_nome') || _cfg.nome || '';
+  const docPrest  = v('f_prest_cpf')  || _cfg.cpf  || '';
+  const emailPrest= v('f_prest_email')|| _cfg.email || '';
+  if (nomePrest) setVal('asn_nome', nomePrest);
+  if (docPrest)  setVal('asn_doc', docPrest);
+  if (emailPrest) setVal('asn_email', emailPrest);
+  gerarDadosAssinatura();
+}
+
+async function confirmarAssinaturaDigital() {
+  const nome = v('asn_nome');
+  const doc  = v('asn_doc');
+  const assinatura = v('asn_assinatura');
+  const parte = document.getElementById('asn_parte')?.value || 'prestador';
+
+  if (!nome || !assinatura) { toast('⚠️ Preencha nome e assinatura.'); return; }
+  if (assinatura.trim().toLowerCase() !== nome.trim().toLowerCase()) {
+    toast('⚠️ Assinatura deve ser igual ao nome completo.'); return;
+  }
+
+  const agora = new Date();
+  const dataHora = agora.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const token = document.getElementById('asn_token').textContent;
+  const ip = document.getElementById('asn_ip').textContent;
+
+  const hashInput = `ORIZON|${token}|${ip}|${agora.toISOString()}|${assinatura}|${nome}|${doc}`;
+  const hash = await sha256(hashInput);
+
+  const registro = { nome, doc, email:v('asn_email'), parte, assinatura, dataHora, ip, token, hash, iso: agora.toISOString() };
+
+  // Salvar no contrato atual
+  if (_mdIdx !== null && _contratos[_mdIdx]) {
+    if (!_contratos[_mdIdx].assinaturas) _contratos[_mdIdx].assinaturas = [];
+    _contratos[_mdIdx].assinaturas.push(registro);
+    localStorage.setItem('orizon_contratos', JSON.stringify(_contratos));
+  }
+
+  // Injetar bloco de assinatura no documento
+  injetarAssinaturaNoDoc(registro);
+
+  // Mostrar resultado
+  const parteLabels = {prestador:'Prestador de Serviços (ORIZON)',contratante:'Contratante',testemunha1:'Testemunha 1',testemunha2:'Testemunha 2'};
+  document.getElementById('asn_resultado_body').innerHTML = `
+    <div>✍️ <strong>Assinante:</strong> ${nome}${doc?' ('+doc+')':''}</div>
+    <div>👤 <strong>Parte:</strong> ${parteLabels[parte]||parte}</div>
+    <div>📧 <strong>E-mail:</strong> ${v('asn_email')||'—'}</div>
+    <div>🕐 <strong>Data/Hora:</strong> ${dataHora} (BRT)</div>
+    <div>🌐 <strong>IP:</strong> ${ip}</div>
+    <div>🔑 <strong>Token:</strong> ${token}</div>
+    <div>🔒 <strong>Hash SHA-256:</strong> ${hash}</div>
+    <div style="margin-top:0.5rem;font-size:0.6rem;color:var(--muted);">Assinatura eletrônica com validade legal conforme Lei 14.063/2020 e MP 2.200-2/2001. Para validade certificada (ICP-Brasil), use plataforma na aba "Plataformas Externas".</div>
+  `;
+  document.getElementById('asn_resultado').style.display = 'block';
+  toast('✅ Assinatura registrada com sucesso!');
+}
+
+function injetarAssinaturaNoDoc(reg) {
+  const doc = document.getElementById('previewDoc');
+  if (!doc || doc.querySelector('[style*="text-align:center;color:#999"]')) return;
+
+  const parteLabels = {prestador:'Prestador de Serviços (ORIZON)',contratante:'Contratante',testemunha1:'Testemunha 1',testemunha2:'Testemunha 2'};
+
+  // Remove bloco anterior da mesma parte se existir
+  const existente = doc.querySelector(`[data-asn-parte="${reg.parte}"]`);
+  if (existente) existente.remove();
+
+  const bloco = document.createElement('div');
+  bloco.setAttribute('data-asn-parte', reg.parte);
+  bloco.style.cssText = 'margin-top:1.5rem;border:1.5px solid #3b82f6;border-radius:8px;padding:0.8rem 1rem;background:#f0f6ff;font-size:8.5pt;font-family:monospace;line-height:1.7;page-break-inside:avoid;';
+  bloco.innerHTML = `
+    <div style="font-weight:700;font-size:9pt;color:#1a3a6b;margin-bottom:0.4rem;">◆ ORIZON — Assinatura Digital Eletrônica</div>
+    <div><strong>Parte:</strong> ${parteLabels[reg.parte]||reg.parte}</div>
+    <div><strong>Assinante:</strong> ${reg.nome}${reg.doc?' — '+reg.doc:''}</div>
+    <div><strong>E-mail:</strong> ${reg.email||'—'}</div>
+    <div><strong>Data/Hora:</strong> ${reg.dataHora} (Horário de Brasília)</div>
+    <div><strong>IP:</strong> ${reg.ip}</div>
+    <div><strong>Token:</strong> ${reg.token}</div>
+    <div style="word-break:break-all;"><strong>Hash SHA-256:</strong> ${reg.hash}</div>
+    <div style="margin-top:0.4rem;font-size:7.5pt;color:#666;">Assinatura eletrônica conforme Lei 14.063/2020 e MP 2.200-2/2001 — Orizon Recrutamento e Seleção</div>
+  `;
+  doc.appendChild(bloco);
+}
+</script>
+</body>
+</html>
