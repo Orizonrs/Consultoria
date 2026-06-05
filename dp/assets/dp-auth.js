@@ -9,8 +9,8 @@
    ════════════════════════════════════════════ */
 
 // ── 1. CONFIGURAÇÃO — preencha após criar o projeto Supabase ──
-const SUPABASE_URL      = 'https://huycenqggwkfhvoynnhi.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_XPRq5RZwkFLToHc8cYcXXg_5YnPr-TA';
+const SUPABASE_URL      = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
 
 // ── 2. Carrega o SDK do Supabase via CDN ──
 (function loadSupabaseSDK() {
@@ -31,7 +31,7 @@ window.__supabaseReady = async function () {
   if (!session) {
     // Sem sessão → redireciona para login, preservando a página de origem
     const origem = encodeURIComponent(window.location.pathname + window.location.search);
-    const base   = '/dp/';
+    const base   = '/Consultoria/dp/';
     window.location.replace(`${base}login.html?next=${origem}`);
     return;
   }
