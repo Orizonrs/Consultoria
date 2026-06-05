@@ -7,15 +7,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 window.__ccAuthReady = async function () {
   try {
-    let sb, session = null;
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window._sb = sb;
 
-      try {
-        sb = window.supabase.createClient(SUPABASE_URL, key);
-        window._sb = sb;
-        const res = await sb.auth.getSession();
-        if (res.data?.session) { session = res.data.session; break; }
-      } catch(e) { console.warn('[cc-auth] key falhou:', e.message); }
-    }
+    const res = await sb.auth.getSession();
+    const session = res.data?.session || null;
 
     if (!session) {
       const origem = encodeURIComponent(window.location.pathname);
