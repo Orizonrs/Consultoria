@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Meta por Recrutador | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+.btn-orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0.4rem;margin-bottom:1.5rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:0.35rem;}
+.tab-btn{flex:1;font-family:inherit;font-size:0.72rem;font-weight:700;padding:0.55rem 0.8rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.18s;color:var(--muted);background:transparent;text-align:center;}
+.tab-btn.on{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.25);}
+.tab-btn:hover:not(.on){color:var(--text);background:rgba(255,255,255,0.04);}
+
+/* STATS TOP */
+.stats-top{display:grid;grid-template-columns:repeat(5,1fr);gap:0.75rem;margin-bottom:1.4rem;}
+@media(max-width:900px){.stats-top{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.stats-top{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;animation:fadeUp 0.4s ease both;}
+.stat-card::before{content:attr(data-icon);position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);font-size:2.2rem;opacity:0.07;}
+.sc-lbl{font-size:0.57rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.4rem;}
+.sc-val{font-size:1.5rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.2rem;}
+.sc-sub{font-size:0.62rem;color:var(--muted);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:260px 1fr;gap:1rem;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+.sidebar{display:flex;flex-direction:column;gap:0.6rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* SEC LABEL */
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;margin-bottom:0.8rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* SEARCH / SELECT */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.55rem 0.75rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;margin-bottom:0.35rem;}
+select:focus{border-color:var(--border2);}
+select option{background:#1a1a1a;}
+
+/* REC ITEM SIDEBAR */
+.rec-item{display:flex;align-items:center;gap:0.7rem;padding:0.65rem 0.85rem;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:0.4rem;}
+.rec-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.05);}
+.rec-item.ativo{border-color:var(--border2);background:rgba(59,130,246,0.08);}
+.ri-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;}
+.ri-info{flex:1;min-width:0;}
+.ri-nome{font-size:0.74rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ri-sub{font-size:0.6rem;color:var(--muted);}
+.ri-pct{font-size:0.7rem;font-weight:900;font-family:var(--mono);}
+
+/* PROGRESS BAR */
+.progress-wrap{margin-bottom:1rem;}
+.progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;}
+.progress-label{font-size:0.68rem;color:var(--text2);}
+.progress-vals{font-size:0.68rem;font-family:var(--mono);color:var(--muted);}
+.progress-bar{height:8px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;transition:width 0.6s ease;}
+
+/* PERFIL */
+.perfil-wrap{display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);}
+.pf-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;border:2px solid var(--border2);flex-shrink:0;}
+.pf-nome{font-size:1.05rem;font-weight:900;margin-bottom:0.1rem;}
+.pf-cargo{font-size:0.68rem;color:var(--muted);}
+.pf-badges{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.4rem;}
+
+/* INDICADORES GRID */
+.ind-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:1.2rem;}
+@media(max-width:700px){.ind-grid{grid-template-columns:repeat(2,1fr);}}
+.ind-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.8rem 1rem;text-align:center;}
+.ind-ico{font-size:1.4rem;margin-bottom:0.3rem;}
+.ind-val{font-size:1.2rem;font-weight:900;font-family:var(--mono);margin-bottom:0.1rem;}
+.ind-lbl{font-size:0.57rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1.5px;}
+
+/* HISTÓRICO VAGAS */
+.vaga-row{display:grid;grid-template-columns:1fr auto auto auto;gap:0.7rem;align-items:center;padding:0.65rem 0.9rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;margin-bottom:0.4rem;transition:all 0.15s;}
+.vaga-row:hover{border-color:var(--border);background:rgba(59,130,246,0.03);}
+.vr-titulo{font-size:0.74rem;font-weight:700;}
+.vr-cliente{font-size:0.62rem;color:var(--muted);}
+.vr-dias{font-size:0.68rem;font-family:var(--mono);color:var(--text2);}
+.vr-status{font-size:0.55rem;font-weight:800;padding:0.2rem 0.55rem;border-radius:7px;}
+.vr-status.fechada{background:rgba(46,204,113,0.1);color:var(--green);}
+.vr-status.aberta{background:rgba(59,130,246,0.1);color:var(--accent);}
+.vr-status.atrasada{background:rgba(231,76,60,0.1);color:var(--red);}
+.vr-acoes{display:flex;gap:0.3rem;}
+
+/* RANKING */
+.rank-item{display:grid;grid-template-columns:28px 1fr auto auto;gap:0.8rem;align-items:center;padding:0.75rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:11px;margin-bottom:0.45rem;transition:all 0.15s;}
+.rank-item:hover{border-color:var(--border);background:rgba(59,130,246,0.03);}
+.rank-pos{font-size:0.85rem;font-weight:900;font-family:var(--mono);text-align:center;}
+.rank-info{min-width:0;}
+.rank-nome{font-size:0.76rem;font-weight:700;}
+.rank-sub{font-size:0.62rem;color:var(--muted);}
+.rank-bar-wrap{width:100px;}
+.rank-val{font-size:0.76rem;font-weight:900;font-family:var(--mono);text-align:right;}
+
+/* METAS GRID */
+.metas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;}
+.meta-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;transition:all 0.18s;cursor:pointer;}
+.meta-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.mc-top{display:flex;align-items:center;gap:0.9rem;margin-bottom:1rem;}
+.mc-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:900;flex-shrink:0;}
+.mc-nome{font-size:0.82rem;font-weight:800;margin-bottom:0.1rem;}
+.mc-cargo{font-size:0.62rem;color:var(--muted);}
+.mc-score{font-size:1.6rem;font-weight:900;font-family:var(--mono);margin-bottom:0.15rem;}
+.mc-score-lbl{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;}
+.mc-progresso{margin-top:0.8rem;}
+.mc-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-top:0.8rem;}
+.mc-mini{text-align:center;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:0.45rem 0.3rem;}
+.mc-mini-val{font-size:0.78rem;font-weight:900;font-family:var(--mono);}
+.mc-mini-lbl{font-size:0.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* FORM */
+.form-group{margin-bottom:0.85rem;}
+.form-label{font-size:0.62rem;font-weight:800;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:0.35rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.85rem;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+.form-select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.85rem;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;}
+.form-select:focus{border-color:var(--border2);}
+.form-select option{background:#1a1a1a;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:#0f0f0f;border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:slideUp 0.25s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:1.3rem;display:flex;align-items:center;gap:0.5rem;}
+.modal-footer{display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.78rem;font-weight:600;color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transform:translateY(10px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ALERTA PERIODO */
+.periodo-bar{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;margin-bottom:1.2rem;}
+.periodo-btn{font-family:inherit;font-size:0.68rem;font-weight:700;padding:0.4rem 0.85rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;color:var(--muted);background:rgba(255,255,255,0.03);}
+.periodo-btn.on{background:rgba(59,130,246,0.12);color:var(--accent);border-color:var(--border2);}
+
+/* CHART */
+.chart-wrap{width:100%;overflow-x:auto;}
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:60px;margin-top:0.5rem;}
+.mini-bar{flex:1;border-radius:4px 4px 0 0;min-width:14px;transition:height 0.4s ease;}
+.mini-labels{display:flex;gap:4px;margin-top:3px;}
+.mini-lbl{flex:1;font-size:0.48rem;color:var(--muted);text-align:center;font-family:var(--mono);}
+
+/* ALERTA */
+.alerta{display:flex;align-items:center;gap:0.7rem;padding:0.75rem 1rem;border-radius:10px;font-size:0.73rem;margin-bottom:0.6rem;}
+.alerta.warn{background:rgba(243,156,18,0.07);border:1px solid rgba(243,156,18,0.2);color:var(--orange);}
+.alerta.info{background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.15);color:var(--accent);}
+.alerta.success{background:rgba(46,204,113,0.07);border:1px solid rgba(46,204,113,0.2);color:var(--green);}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--border);margin:1rem 0;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Gestão de Performance</div>
+      <div class="hero-title">Meta por <span>Recrutador</span></div>
+      <div class="hero-sub">Acompanhe vagas, fechamentos e atingimento de metas individuais da equipe</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">📥 Exportar CSV</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirModal('modal-meta')">🎯 Nova Meta</button>
+      <button class="btn btn-primary" onclick="abrirModal('modal-recrutador')">➕ Recrutador</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn on" onclick="trocarTab('visao-geral',this)">📊 Visão Geral</button>
+    <button class="tab-btn" onclick="trocarTab('individual',this)">👤 Individual</button>
+    <button class="tab-btn" onclick="trocarTab('ranking',this)">🏆 Ranking</button>
+    <button class="tab-btn" onclick="trocarTab('historico',this)">📋 Histórico</button>
+  </div>
+
+  <!-- STATS TOP -->
+  <div class="stats-top">
+    <div class="stat-card" data-icon="👥" style="animation-delay:0s"><div class="sc-lbl">Recrutadores</div><div class="sc-val" id="st-total-rec">–</div><div class="sc-sub">ativos no período</div></div>
+    <div class="stat-card" data-icon="🎯" style="animation-delay:.05s"><div class="sc-lbl">Atingimento Médio</div><div class="sc-val" id="st-ating-medio">–</div><div class="sc-sub">meta de fechamentos</div></div>
+    <div class="stat-card" data-icon="✅" style="animation-delay:.1s"><div class="sc-lbl">Fechamentos</div><div class="sc-val" id="st-fechamentos">–</div><div class="sc-sub">no período</div></div>
+    <div class="stat-card" data-icon="📂" style="animation-delay:.15s"><div class="sc-lbl">Vagas Abertas</div><div class="sc-val" id="st-vagas-abertas">–</div><div class="sc-sub">em andamento</div></div>
+    <div class="stat-card" data-icon="⚡" style="animation-delay:.2s"><div class="sc-lbl">Tempo Médio</div><div class="sc-val" id="st-tma">–</div><div class="sc-sub">dias por fechamento</div></div>
+  </div>
+
+  <!-- ======================== VISÃO GERAL ======================== -->
+  <div id="tab-visao-geral">
+    <div class="periodo-bar">
+      <span style="font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;">Período:</span>
+      <button class="periodo-btn on" onclick="setPeriodo('mes',this)">Este mês</button>
+      <button class="periodo-btn" onclick="setPeriodo('trimestre',this)">Trimestre</button>
+      <button class="periodo-btn" onclick="setPeriodo('semestre',this)">Semestre</button>
+      <button class="periodo-btn" onclick="setPeriodo('ano',this)">Ano</button>
+    </div>
+
+    <div class="sec-label">Cards de Recrutadores</div>
+    <div class="metas-grid" id="metas-grid"></div>
+  </div>
+
+  <!-- ======================== INDIVIDUAL ======================== -->
+  <div id="tab-individual" style="display:none">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card" style="padding:1rem;">
+          <div class="card-head"><div class="card-title">👤 Recrutadores</div></div>
+          <div class="search-wrap">
+            <span class="search-ico">🔍</span>
+            <input type="text" placeholder="Buscar..." oninput="filtrarRecs(this.value)">
+          </div>
+          <div id="lista-recs"></div>
+        </div>
+      </div>
+      <div id="painel-individual">
+        <div class="card" style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:0.8rem;">
+          ← Selecione um recrutador
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== RANKING ======================== -->
+  <div id="tab-ranking" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🏆 Ranking por Fechamentos</div>
+          <div class="card-badge">Mês atual</div>
+        </div>
+        <div id="ranking-fechamentos"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">⚡ Ranking por Velocidade</div>
+          <div class="card-badge purple">Menor TMA</div>
+        </div>
+        <div id="ranking-velocidade"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1rem;">
+      <div class="card-head">
+        <div class="card-title">📈 Atingimento de Metas — Time Completo</div>
+        <div class="card-badge green">% da meta</div>
+      </div>
+      <div id="ranking-meta"></div>
+    </div>
+  </div>
+
+  <!-- ======================== HISTÓRICO ======================== -->
+  <div id="tab-historico" style="display:none">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📋 Histórico de Vagas</div>
+        <div style="display:flex;gap:0.5rem;">
+          <select id="hist-filtro-rec" onchange="renderHistorico()" style="width:auto;font-size:0.68rem;padding:0.3rem 0.6rem;margin:0;">
+            <option value="">Todos recrutadores</option>
+          </select>
+          <select id="hist-filtro-status" onchange="renderHistorico()" style="width:auto;font-size:0.68rem;padding:0.3rem 0.6rem;margin:0;">
+            <option value="">Todos status</option>
+            <option value="fechada">Fechada</option>
+            <option value="aberta">Aberta</option>
+            <option value="atrasada">Atrasada</option>
+          </select>
+        </div>
+      </div>
+      <div id="lista-historico"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL RECRUTADOR -->
+<div class="modal-overlay" id="modal-recrutador">
+  <div class="modal-box">
+    <div class="modal-title">➕ Novo Recrutador</div>
+    <div class="form-group"><label class="form-label">Nome completo *</label><input class="form-input" id="nr-nome" placeholder="Ex: Ana Paula Silva"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Cargo</label><input class="form-input" id="nr-cargo" placeholder="Ex: Recrutadora Sênior"/></div>
+      <div class="form-group"><label class="form-label">Nível</label>
+        <select class="form-select" id="nr-nivel">
+          <option>Júnior</option><option>Pleno</option><option selected>Sênior</option><option>Especialista</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">E-mail</label><input class="form-input" id="nr-email" type="email" placeholder="nome@orizon.com.br"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Meta mensal (fechamentos)</label><input class="form-input" id="nr-meta-fechamentos" type="number" value="4" min="1"/></div>
+      <div class="form-group"><label class="form-label">SLA padrão (dias)</label><input class="form-input" id="nr-sla" type="number" value="30" min="7"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Cor do avatar</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.3rem;" id="cor-picker">
+        <div class="cor-opt" data-cor="#3b82f6" style="width:24px;height:24px;border-radius:50%;background:#3b82f6;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+        <div class="cor-opt" data-cor="#2ecc71" style="width:24px;height:24px;border-radius:50%;background:#2ecc71;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+        <div class="cor-opt" data-cor="#a78bfa" style="width:24px;height:24px;border-radius:50%;background:#a78bfa;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+        <div class="cor-opt" data-cor="#f39c12" style="width:24px;height:24px;border-radius:50%;background:#f39c12;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+        <div class="cor-opt" data-cor="#e74c3c" style="width:24px;height:24px;border-radius:50%;background:#e74c3c;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+        <div class="cor-opt" data-cor="#14b8a6" style="width:24px;height:24px;border-radius:50%;background:#14b8a6;cursor:pointer;border:2px solid transparent;" onclick="selecionarCor(this)"></div>
+      </div>
+      <input type="hidden" id="nr-cor" value="#3b82f6"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-recrutador')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRecrutador()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL META -->
+<div class="modal-overlay" id="modal-meta">
+  <div class="modal-box">
+    <div class="modal-title">🎯 Definir Meta</div>
+    <div class="form-group"><label class="form-label">Recrutador *</label>
+      <select class="form-select" id="nm-rec"><option value="">Selecione...</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Mês/Ano</label><input class="form-input" id="nm-periodo" type="month"/></div>
+      <div class="form-group"><label class="form-label">Meta de fechamentos</label><input class="form-input" id="nm-meta-fech" type="number" value="4" min="1"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Meta vagas abertas</label><input class="form-input" id="nm-meta-vagas" type="number" value="8" min="1"/></div>
+      <div class="form-group"><label class="form-label">SLA meta (dias)</label><input class="form-input" id="nm-meta-sla" type="number" value="30" min="1"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Observação</label><input class="form-input" id="nm-obs" placeholder="Notas sobre essa meta..."/></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-meta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarMeta()">Salvar Meta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VAGA -->
+<div class="modal-overlay" id="modal-vaga">
+  <div class="modal-box">
+    <div class="modal-title">📂 Registrar Vaga</div>
+    <div class="form-group"><label class="form-label">Cargo da vaga *</label><input class="form-input" id="nv-cargo" placeholder="Ex: Gerente Financeiro"/></div>
+    <div class="form-group"><label class="form-label">Cliente</label><input class="form-input" id="nv-cliente" placeholder="Ex: Empresa ABC"/></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Recrutador responsável *</label>
+        <select class="form-select" id="nv-rec"><option value="">Selecione...</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="nv-status">
+          <option value="aberta">Aberta</option>
+          <option value="fechada">Fechada</option>
+          <option value="atrasada">Atrasada</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Data abertura *</label><input class="form-input" id="nv-abertura" type="date"/></div>
+      <div class="form-group"><label class="form-label">Data fechamento</label><input class="form-input" id="nv-fechamento" type="date"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">SLA acordado (dias)</label><input class="form-input" id="nv-sla" type="number" value="30" min="1"/></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-vaga')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarVaga()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ DADOS ============
+const STORAGE_KEY = 'orizon_meta_recrutador_v1';
+
+function carregarDados(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||dadosPadrao(); }
+  catch(e){ return dadosPadrao(); }
+}
+function salvarDados(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(dados)); }
+
+function dadosPadrao(){
+  const now = new Date();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const y = now.getFullYear();
+  return {
+    recrutadores: [
+      {id:'r1',nome:'Ana Paula Silva',cargo:'Recrutadora Sênior',nivel:'Sênior',email:'ana@orizon.com.br',cor:'#3b82f6',metaFechamentos:4,sla:30},
+      {id:'r2',nome:'Carlos Mendonça',cargo:'Recrutador Pleno',nivel:'Pleno',email:'carlos@orizon.com.br',cor:'#2ecc71',metaFechamentos:3,sla:35},
+      {id:'r3',nome:'Juliana Costa',cargo:'Especialista',nivel:'Especialista',email:'juliana@orizon.com.br',cor:'#a78bfa',metaFechamentos:5,sla:25},
+      {id:'r4',nome:'Rafael Nunes',cargo:'Recrutador Júnior',nivel:'Júnior',email:'rafael@orizon.com.br',cor:'#f39c12',metaFechamentos:2,sla:40},
+    ],
+    metas: [
+      {id:'m1',recId:'r1',periodo:`${y}-${m}`,metaFech:4,metaVagas:8,metaSla:30,obs:''},
+      {id:'m2',recId:'r2',periodo:`${y}-${m}`,metaFech:3,metaVagas:6,metaSla:35,obs:''},
+      {id:'m3',recId:'r3',periodo:`${y}-${m}`,metaFech:5,metaVagas:10,metaSla:25,obs:''},
+      {id:'m4',recId:'r4',periodo:`${y}-${m}`,metaFech:2,metaVagas:4,metaSla:40,obs:''},
+    ],
+    vagas: gerarVagasPadrao(),
+  };
+}
+
+function gerarVagasPadrao(){
+  const vagas = [];
+  const now = new Date();
+  const cargos = ['Gerente Financeiro','Analista de RH','Desenvolvedor Fullstack','Coordenador de Logística','Analista de Marketing','Diretor Comercial','Engenheiro de Produção','Designer UX','Advogado Trabalhista','Controller'];
+  const clientes = ['Empresa Alpha','Tech Solutions','Grupo Beta','Construtora Sol','Farmácias Plus'];
+  const recs = ['r1','r2','r3','r4'];
+  for(let i=0;i<20;i++){
+    const abertura = new Date(now.getTime() - Math.random()*90*86400000);
+    const fechada = Math.random()>0.4;
+    const fechamento = fechada ? new Date(abertura.getTime() + (10+Math.random()*40)*86400000) : null;
+    const dias = fechada ? Math.round((fechamento-abertura)/86400000) : Math.round((now-abertura)/86400000);
+    const sla = 30;
+    const status = fechada ? 'fechada' : (dias>sla ? 'atrasada' : 'aberta');
+    vagas.push({
+      id:'v'+i,
+      cargo: cargos[Math.floor(Math.random()*cargos.length)],
+      cliente: clientes[Math.floor(Math.random()*clientes.length)],
+      recId: recs[Math.floor(Math.random()*recs.length)],
+      abertura: abertura.toISOString().split('T')[0],
+      fechamento: fechamento ? fechamento.toISOString().split('T')[0] : null,
+      sla,
+      status,
+      dias,
+    });
+  }
+  return vagas;
+}
+
+let dados = carregarDados();
+let periodoAtual = 'mes';
+let recSelecionado = null;
+let corSelecionada = '#3b82f6';
+
+// ============ UTILITÁRIOS ============
+function getRec(id){ return dados.recrutadores.find(r=>r.id===id)||{}; }
+function iniciais(nome){ return nome.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase(); }
+
+function getPeriodoVagas(){
+  const now = new Date();
+  let from = new Date(0);
+  if(periodoAtual==='mes') from = new Date(now.getFullYear(), now.getMonth(), 1);
+  else if(periodoAtual==='trimestre') from = new Date(now.getFullYear(), now.getMonth()-2, 1);
+  else if(periodoAtual==='semestre') from = new Date(now.getFullYear(), now.getMonth()-5, 1);
+  return from;
+}
+
+function vagasDoRec(recId, status=null){
+  const from = getPeriodoVagas();
+  return dados.vagas.filter(v=>{
+    const dt = new Date(v.abertura);
+    return v.recId===recId && dt>=from && (!status || v.status===status);
+  });
+}
+
+function getPeriodoStr(){
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getMetaRec(recId){
+  const p = getPeriodoStr();
+  return dados.metas.find(m=>m.recId===recId && m.periodo===p) || null;
+}
+
+function tma(vagas){
+  const fechadas = vagas.filter(v=>v.status==='fechada'&&v.fechamento);
+  if(!fechadas.length) return null;
+  const soma = fechadas.reduce((acc,v)=>{
+    const d = (new Date(v.fechamento)-new Date(v.abertura))/86400000;
+    return acc+d;
+  },0);
+  return Math.round(soma/fechadas.length);
+}
+
+function calcAtingimento(recId){
+  const meta = getMetaRec(recId);
+  const fechadas = vagasDoRec(recId,'fechada').length;
+  const metaFech = meta ? meta.metaFech : getRec(recId).metaFechamentos || 4;
+  return Math.min(Math.round((fechadas/metaFech)*100),150);
+}
+
+function corAtingimento(pct){
+  if(pct>=100) return 'var(--green)';
+  if(pct>=60) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function fmtData(s){ if(!s) return '–'; const d=new Date(s+' 00:00'); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}); }
+
+// ============ STATS ============
+function atualizarStats(){
+  const from = getPeriodoVagas();
+  const vagasPeriodo = dados.vagas.filter(v=>new Date(v.abertura)>=from);
+  const fechadas = vagasPeriodo.filter(v=>v.status==='fechada');
+  const abertas = dados.vagas.filter(v=>v.status==='aberta'||v.status==='atrasada');
+  const atings = dados.recrutadores.map(r=>calcAtingimento(r.id));
+  const medioAting = atings.length ? Math.round(atings.reduce((a,b)=>a+b,0)/atings.length) : 0;
+  const tmaGeral = tma(vagasPeriodo);
+
+  document.getElementById('st-total-rec').textContent = dados.recrutadores.length;
+  document.getElementById('st-ating-medio').textContent = medioAting+'%';
+  document.getElementById('st-fechamentos').textContent = fechadas.length;
+  document.getElementById('st-vagas-abertas').textContent = abertas.length;
+  document.getElementById('st-tma').textContent = tmaGeral !== null ? tmaGeral+'d' : '–';
+
+  document.getElementById('st-ating-medio').style.color = corAtingimento(medioAting);
+}
+
+// ============ METAS GRID ============
+function renderMetasGrid(){
+  const el = document.getElementById('metas-grid');
+  if(!dados.recrutadores.length){ el.innerHTML='<p style="color:var(--muted);font-size:0.78rem;">Nenhum recrutador cadastrado.</p>'; return; }
+
+  el.innerHTML = dados.recrutadores.map(r=>{
+    const todasVagas = vagasDoRec(r.id);
+    const fechadas = todasVagas.filter(v=>v.status==='fechada').length;
+    const abertas = todasVagas.filter(v=>v.status==='aberta').length;
+    const atrasadas = todasVagas.filter(v=>v.status==='atrasada').length;
+    const meta = getMetaRec(r.id);
+    const metaFech = meta ? meta.metaFech : r.metaFechamentos;
+    const ating = Math.min(Math.round((fechadas/metaFech)*100),150);
+    const t = tma(todasVagas);
+    const slaRec = meta ? meta.metaSla : r.sla;
+    const cor = corAtingimento(ating);
+    const fillColor = ating>=100?'var(--green)':ating>=60?'var(--orange)':'var(--red)';
+
+    return `<div class="meta-card" onclick="abrirIndividual('${r.id}')">
+      <div class="mc-top">
+        <div class="mc-avatar" style="background:${r.cor}22;color:${r.cor};">${iniciais(r.nome)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="mc-nome">${r.nome}</div>
+          <div class="mc-cargo">${r.cargo} · ${r.nivel}</div>
+          <div style="display:flex;gap:0.4rem;margin-top:0.4rem;">
+            ${ating>=100?'<span class="card-badge green">✅ Meta atingida</span>':ating>=60?'<span class="card-badge orange">⚡ Em andamento</span>':'<span class="card-badge red">⚠️ Abaixo da meta</span>'}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="mc-score" style="color:${cor};">${ating}%</div>
+          <div class="mc-score-lbl">atingimento</div>
+        </div>
+      </div>
+      <div class="mc-progresso">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+          <span style="font-size:0.62rem;color:var(--muted);">Fechamentos</span>
+          <span style="font-size:0.62rem;font-family:var(--mono);color:var(--text2);">${fechadas} / ${metaFech}</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(ating,100)}%;background:${fillColor};"></div></div>
+      </div>
+      <div class="mc-mini-grid">
+        <div class="mc-mini"><div class="mc-mini-val" style="color:var(--green);">${fechadas}</div><div class="mc-mini-lbl">Fechadas</div></div>
+        <div class="mc-mini"><div class="mc-mini-val" style="color:var(--accent);">${abertas}</div><div class="mc-mini-lbl">Abertas</div></div>
+        <div class="mc-mini"><div class="mc-mini-val" style="color:${t!==null&&t>slaRec?'var(--red)':'var(--text2)'};">${t!==null?t+'d':'–'}</div><div class="mc-mini-lbl">TMA</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ INDIVIDUAL ============
+function renderListaRecs(filtro=''){
+  const el = document.getElementById('lista-recs');
+  const lista = dados.recrutadores.filter(r=>r.nome.toLowerCase().includes(filtro.toLowerCase()));
+  el.innerHTML = lista.map(r=>{
+    const ating = calcAtingimento(r.id);
+    return `<div class="rec-item ${recSelecionado===r.id?'ativo':''}" onclick="abrirIndividual('${r.id}')">
+      <div class="ri-avatar" style="background:${r.cor}22;color:${r.cor};">${iniciais(r.nome)}</div>
+      <div class="ri-info">
+        <div class="ri-nome">${r.nome}</div>
+        <div class="ri-sub">${r.nivel}</div>
+      </div>
+      <div class="ri-pct" style="color:${corAtingimento(ating)};">${ating}%</div>
+    </div>`;
+  }).join('') || '<p style="font-size:0.72rem;color:var(--muted);">Nenhum encontrado</p>';
+}
+
+function filtrarRecs(v){ renderListaRecs(v); }
+
+function abrirIndividual(recId){
+  recSelecionado = recId;
+  renderListaRecs();
+  const r = getRec(recId);
+  const todasVagas = vagasDoRec(r.id);
+  const fechadas = todasVagas.filter(v=>v.status==='fechada').length;
+  const abertas = todasVagas.filter(v=>v.status==='aberta').length;
+  const atrasadas = todasVagas.filter(v=>v.status==='atrasada').length;
+  const meta = getMetaRec(r.id);
+  const metaFech = meta ? meta.metaFech : r.metaFechamentos;
+  const ating = Math.min(Math.round((fechadas/metaFech)*100),150);
+  const t = tma(todasVagas);
+  const slaRec = meta ? meta.metaSla : r.sla;
+  const cor = corAtingimento(ating);
+  const fillColor = ating>=100?'var(--green)':ating>=60?'var(--orange)':'var(--red)';
+  const vagasLista = vagasDoRec(r.id).sort((a,b)=>new Date(b.abertura)-new Date(a.abertura)).slice(0,8);
+
+  // mini chart mensal (últimos 6 meses)
+  const agora = new Date();
+  const meses = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(agora.getFullYear(), agora.getMonth()-i, 1);
+    const label = d.toLocaleDateString('pt-BR',{month:'short'});
+    const mesStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const count = dados.vagas.filter(v=>v.recId===r.id&&v.status==='fechada'&&v.fechamento&&v.fechamento.startsWith(mesStr)).length;
+    meses.push({label,count});
+  }
+  const maxCount = Math.max(...meses.map(m=>m.count),1);
+
+  document.getElementById('painel-individual').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="card">
+        <div class="perfil-wrap">
+          <div class="pf-avatar" style="background:${r.cor}22;color:${r.cor};font-size:1.2rem;">${iniciais(r.nome)}</div>
+          <div style="flex:1">
+            <div class="pf-nome">${r.nome}</div>
+            <div class="pf-cargo">${r.cargo} · ${r.nivel} · ${r.email||'–'}</div>
+            <div class="pf-badges">
+              ${ating>=100?'<span class="card-badge green">✅ Meta atingida</span>':ating>=60?'<span class="card-badge orange">⚡ Em progresso</span>':'<span class="card-badge red">⚠️ Abaixo</span>'}
+              ${t!==null&&t>slaRec?'<span class="card-badge red">⏱ TMA acima do SLA</span>':''}
+            </div>
+          </div>
+          <div style="display:flex;gap:0.4rem;">
+            <button class="btn btn-ghost btn-sm" onclick="abrirModalVaga('${r.id}')">➕ Vaga</button>
+            <button class="btn btn-ghost btn-sm" onclick="editarRecrutador('${r.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirRecrutador('${r.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="sec-label">Indicadores do Período</div>
+        <div class="ind-grid">
+          <div class="ind-card"><div class="ind-ico">🎯</div><div class="ind-val" style="color:${cor};">${ating}%</div><div class="ind-lbl">Atingimento</div></div>
+          <div class="ind-card"><div class="ind-ico">✅</div><div class="ind-val" style="color:var(--green);">${fechadas}</div><div class="ind-lbl">Fechamentos</div></div>
+          <div class="ind-card"><div class="ind-ico">📂</div><div class="ind-val" style="color:var(--accent);">${abertas}</div><div class="ind-lbl">Em aberto</div></div>
+          <div class="ind-card"><div class="ind-ico">⚠️</div><div class="ind-val" style="color:${atrasadas>0?'var(--red)':'var(--text2)'};">${atrasadas}</div><div class="ind-lbl">Atrasadas</div></div>
+          <div class="ind-card"><div class="ind-ico">⚡</div><div class="ind-val" style="color:${t!==null&&t>slaRec?'var(--red)':'var(--text2)'};">${t!==null?t+'d':'–'}</div><div class="ind-lbl">TMA</div></div>
+          <div class="ind-card"><div class="ind-ico">📅</div><div class="ind-val">${slaRec}d</div><div class="ind-lbl">SLA meta</div></div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span class="progress-label">Meta de fechamentos</span>
+            <span class="progress-vals">${fechadas} / ${metaFech}</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${Math.min(ating,100)}%;background:${fillColor};"></div></div>
+        </div>
+        <div class="sec-label" style="margin-top:0.8rem;">Fechamentos por Mês (últimos 6)</div>
+        <div class="chart-wrap">
+          <div class="mini-chart">
+            ${meses.map(m=>`<div class="mini-bar" style="height:${Math.round((m.count/maxCount)*100)}%;background:linear-gradient(180deg,${r.cor},${r.cor}88);opacity:0.85;"></div>`).join('')}
+          </div>
+          <div class="mini-labels">${meses.map(m=>`<div class="mini-lbl">${m.label}</div>`).join('')}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📂 Últimas Vagas</div>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalVaga('${r.id}')">➕ Nova Vaga</button>
+        </div>
+        ${vagasLista.length ? vagasLista.map(v=>`
+          <div class="vaga-row">
+            <div><div class="vr-titulo">${v.cargo}</div><div class="vr-cliente">${v.cliente||'–'}</div></div>
+            <div class="vr-dias">${v.dias}d</div>
+            <span class="vr-status ${v.status}">${v.status==='fechada'?'Fechada':v.status==='atrasada'?'Atrasada':'Aberta'}</span>
+            <div class="vr-acoes">
+              <button class="btn btn-danger btn-sm" onclick="excluirVaga('${v.id}')">🗑</button>
+            </div>
+          </div>`).join('') : '<p style="color:var(--muted);font-size:0.75rem;">Nenhuma vaga registrada neste período.</p>'}
+      </div>
+    </div>`;
+
+  // Trocar para aba individual
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tab-btn')[1].classList.add('on');
+  trocarTab('individual',null,true);
+}
+
+// ============ RANKING ============
+function renderRanking(){
+  const recs = dados.recrutadores.map(r=>{
+    const todasVagas = vagasDoRec(r.id);
+    const fechadas = todasVagas.filter(v=>v.status==='fechada').length;
+    const t = tma(todasVagas);
+    const ating = calcAtingimento(r.id);
+    return {...r, fechadas, tma:t, ating};
+  });
+
+  // Por fechamentos
+  const porFech = [...recs].sort((a,b)=>b.fechadas-a.fechadas);
+  const maxFech = porFech[0]?.fechadas||1;
+  document.getElementById('ranking-fechamentos').innerHTML = porFech.map((r,i)=>{
+    const pos = ['🥇','🥈','🥉'][i]||(i+1+'º');
+    return `<div class="rank-item">
+      <div class="rank-pos">${pos}</div>
+      <div class="rank-info">
+        <div class="rank-nome">${r.nome}</div>
+        <div class="rank-sub">${r.nivel}</div>
+      </div>
+      <div class="rank-bar-wrap">
+        <div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:${Math.round((r.fechadas/maxFech)*100)}%;background:${r.cor};"></div></div>
+      </div>
+      <div class="rank-val" style="color:var(--green);">${r.fechadas}</div>
+    </div>`;
+  }).join('');
+
+  // Por velocidade (menor TMA)
+  const porVel = [...recs].filter(r=>r.tma!==null).sort((a,b)=>a.tma-b.tma);
+  const minTma = porVel[0]?.tma||1;
+  document.getElementById('ranking-velocidade').innerHTML = porVel.length ? porVel.map((r,i)=>{
+    const pos = ['🥇','🥈','🥉'][i]||(i+1+'º');
+    return `<div class="rank-item">
+      <div class="rank-pos">${pos}</div>
+      <div class="rank-info">
+        <div class="rank-nome">${r.nome}</div>
+        <div class="rank-sub">${r.tma}d por vaga</div>
+      </div>
+      <div class="rank-bar-wrap">
+        <div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:${Math.round((minTma/r.tma)*100)}%;background:${r.cor};"></div></div>
+      </div>
+      <div class="rank-val" style="color:var(--purple);">${r.tma}d</div>
+    </div>`;
+  }).join('') : '<p style="color:var(--muted);font-size:0.75rem;">Sem dados suficientes.</p>';
+
+  // Por atingimento
+  const porAting = [...recs].sort((a,b)=>b.ating-a.ating);
+  document.getElementById('ranking-meta').innerHTML = porAting.map((r,i)=>{
+    const cor = corAtingimento(r.ating);
+    const fillColor = r.ating>=100?'var(--green)':r.ating>=60?'var(--orange)':'var(--red)';
+    return `<div style="display:grid;grid-template-columns:20px 140px 1fr 60px;gap:0.8rem;align-items:center;padding:0.55rem 0.5rem;border-bottom:1px solid var(--border);">
+      <div style="font-size:0.72rem;font-weight:900;font-family:var(--mono);color:var(--muted);">${i+1}</div>
+      <div style="font-size:0.74rem;font-weight:700;">${r.nome}</div>
+      <div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:${Math.min(r.ating,100)}%;background:${fillColor};"></div></div></div>
+      <div style="font-size:0.76rem;font-weight:900;font-family:var(--mono);color:${cor};text-align:right;">${r.ating}%</div>
+    </div>`;
+  }).join('');
+}
+
+// ============ HISTÓRICO ============
+function renderHistorico(){
+  popularSelectHist();
+  const filtroRec = document.getElementById('hist-filtro-rec')?.value||'';
+  const filtroStatus = document.getElementById('hist-filtro-status')?.value||'';
+  let lista = [...dados.vagas];
+  if(filtroRec) lista = lista.filter(v=>v.recId===filtroRec);
+  if(filtroStatus) lista = lista.filter(v=>v.status===filtroStatus);
+  lista.sort((a,b)=>new Date(b.abertura)-new Date(a.abertura));
+
+  const el = document.getElementById('lista-historico');
+  if(!lista.length){ el.innerHTML='<p style="color:var(--muted);font-size:0.75rem;padding:1rem 0;">Nenhuma vaga encontrada.</p>'; return; }
+  el.innerHTML = lista.map(v=>{
+    const r = getRec(v.recId);
+    return `<div class="vaga-row" style="grid-template-columns:1fr 110px 80px auto auto;">
+      <div><div class="vr-titulo">${v.cargo}</div><div class="vr-cliente">${v.cliente||'–'} · <span style="color:${r.cor||'var(--muted)'};">${r.nome||'–'}</span></div></div>
+      <div style="font-size:0.62rem;color:var(--muted);">${fmtData(v.abertura)} ${v.fechamento?'→ '+fmtData(v.fechamento):''}</div>
+      <div class="vr-dias">${v.dias}d</div>
+      <span class="vr-status ${v.status}">${v.status==='fechada'?'Fechada':v.status==='atrasada'?'Atrasada':'Aberta'}</span>
+      <button class="btn btn-danger btn-sm" onclick="excluirVaga('${v.id}')">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function popularSelectHist(){
+  const s = document.getElementById('hist-filtro-rec');
+  if(!s) return;
+  const val = s.value;
+  s.innerHTML = '<option value="">Todos recrutadores</option>'+dados.recrutadores.map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
+  s.value = val;
+}
+
+// ============ POPULAR SELECTS ============
+function popularSelects(){
+  ['nm-rec','nv-rec'].forEach(id=>{
+    const s = document.getElementById(id); if(!s) return;
+    const val = s.value;
+    s.innerHTML = '<option value="">Selecione...</option>'+dados.recrutadores.map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
+    s.value = val;
+  });
+}
+
+// ============ SALVAR ============
+function salvarRecrutador(){
+  const nome = document.getElementById('nr-nome').value.trim();
+  const cargo = document.getElementById('nr-cargo').value.trim()||'Recrutador(a)';
+  const nivel = document.getElementById('nr-nivel').value;
+  const email = document.getElementById('nr-email').value.trim();
+  const metaFechamentos = parseInt(document.getElementById('nr-meta-fechamentos').value)||4;
+  const sla = parseInt(document.getElementById('nr-sla').value)||30;
+  const cor = document.getElementById('nr-cor').value;
+  if(!nome){ toast('Informe o nome','erro'); return; }
+  dados.recrutadores.push({id:'r'+Date.now(),nome,cargo,nivel,email,cor,metaFechamentos,sla});
+  salvarDados(); popularSelects(); renderTudo();
+  fecharModal('modal-recrutador'); toast('✅ Recrutador adicionado!');
+  ['nr-nome','nr-cargo','nr-email'].forEach(id=>document.getElementById(id).value='');
+}
+
+function salvarMeta(){
+  const recId = document.getElementById('nm-rec').value;
+  const periodo = document.getElementById('nm-periodo').value;
+  const metaFech = parseInt(document.getElementById('nm-meta-fech').value)||4;
+  const metaVagas = parseInt(document.getElementById('nm-meta-vagas').value)||8;
+  const metaSla = parseInt(document.getElementById('nm-meta-sla').value)||30;
+  const obs = document.getElementById('nm-obs').value;
+  if(!recId||!periodo){ toast('Selecione recrutador e período','erro'); return; }
+  const existe = dados.metas.findIndex(m=>m.recId===recId&&m.periodo===periodo);
+  const obj = {id:'m'+Date.now(),recId,periodo,metaFech,metaVagas,metaSla,obs};
+  if(existe>=0) dados.metas[existe]=obj; else dados.metas.push(obj);
+  salvarDados(); renderTudo();
+  fecharModal('modal-meta'); toast('✅ Meta salva!');
+}
+
+function salvarVaga(){
+  const cargo = document.getElementById('nv-cargo').value.trim();
+  const cliente = document.getElementById('nv-cliente').value.trim();
+  const recId = document.getElementById('nv-rec').value;
+  const status = document.getElementById('nv-status').value;
+  const abertura = document.getElementById('nv-abertura').value;
+  const fechamento = document.getElementById('nv-fechamento').value||null;
+  const sla = parseInt(document.getElementById('nv-sla').value)||30;
+  if(!cargo||!recId||!abertura){ toast('Preencha os campos obrigatórios','erro'); return; }
+  const dias = fechamento ? Math.round((new Date(fechamento)-new Date(abertura))/86400000) : Math.round((new Date()-new Date(abertura))/86400000);
+  dados.vagas.push({id:'v'+Date.now(),cargo,cliente,recId,abertura,fechamento,sla,status,dias});
+  salvarDados(); renderTudo();
+  fecharModal('modal-vaga'); toast('✅ Vaga registrada!');
+  if(recSelecionado) abrirIndividual(recSelecionado);
+}
+
+function excluirVaga(id){
+  if(!confirm('Remover esta vaga?')) return;
+  dados.vagas = dados.vagas.filter(v=>v.id!==id);
+  salvarDados(); renderTudo();
+  if(recSelecionado) abrirIndividual(recSelecionado);
+  toast('Vaga removida.');
+}
+
+function excluirRecrutador(id){
+  if(!confirm('Remover recrutador e todas as suas vagas?')) return;
+  dados.recrutadores = dados.recrutadores.filter(r=>r.id!==id);
+  dados.vagas = dados.vagas.filter(v=>v.recId!==id);
+  dados.metas = dados.metas.filter(m=>m.recId!==id);
+  recSelecionado = null;
+  salvarDados(); renderTudo();
+  document.getElementById('painel-individual').innerHTML='<div class="card" style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--muted);font-size:0.8rem;">← Selecione um recrutador</div>';
+  toast('Recrutador removido.');
+}
+
+function editarRecrutador(id){
+  const r = getRec(id);
+  document.getElementById('nr-nome').value = r.nome;
+  document.getElementById('nr-cargo').value = r.cargo;
+  document.getElementById('nr-nivel').value = r.nivel;
+  document.getElementById('nr-email').value = r.email||'';
+  document.getElementById('nr-meta-fechamentos').value = r.metaFechamentos;
+  document.getElementById('nr-sla').value = r.sla;
+  document.getElementById('nr-cor').value = r.cor;
+  // remove e re-salva com mesmo id
+  dados.recrutadores = dados.recrutadores.filter(rec=>rec.id!==id);
+  abrirModal('modal-recrutador');
+  // sobrescreve salvar para manter id
+  window._editandoRecId = id;
+}
+
+// Patch salvarRecrutador para edição
+const _origSalvar = salvarRecrutador;
+
+// ============ MODAL VAGA COM REC PRÉ-SELECIONADO ============
+function abrirModalVaga(recId){
+  popularSelects();
+  document.getElementById('nv-abertura').value = new Date().toISOString().split('T')[0];
+  document.getElementById('nv-rec').value = recId||'';
+  abrirModal('modal-vaga');
+}
+
+// ============ PERIODO ============
+function setPeriodo(p, el){
+  periodoAtual = p;
+  document.querySelectorAll('.periodo-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderTudo();
+}
+
+// ============ RENDER TUDO ============
+function renderTudo(){
+  atualizarStats();
+  renderMetasGrid();
+  renderListaRecs();
+  renderHistorico();
+}
+
+// ============ TAB ============
+function trocarTab(tab, el, skipBtn=false){
+  if(!skipBtn){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+    if(el) el.classList.add('on');
+  }
+  ['visao-geral','individual','ranking','historico'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+  });
+  if(tab==='ranking') renderRanking();
+  if(tab==='historico') renderHistorico();
+}
+
+// ============ MODAL ============
+function abrirModal(id){
+  popularSelects();
+  if(id==='modal-meta') document.getElementById('nm-periodo').value = getPeriodoStr();
+  document.getElementById(id).classList.add('open');
+}
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-overlay')) fecharModal(e.target.id); });
+
+// ============ COR PICKER ============
+function selecionarCor(el){
+  document.querySelectorAll('.cor-opt').forEach(c=>c.style.border='2px solid transparent');
+  el.style.border = '2px solid #fff';
+  corSelecionada = el.dataset.cor;
+  document.getElementById('nr-cor').value = corSelecionada;
+}
+document.querySelectorAll('.cor-opt')[0]?.click();
+
+// ============ EXPORT CSV ============
+function exportarCSV(){
+  const linhas = [['Recrutador','Nível','Cargo da Vaga','Cliente','Abertura','Fechamento','Dias','SLA','Status','Atingimento Meta']];
+  dados.vagas.forEach(v=>{
+    const r = getRec(v.recId);
+    linhas.push([r.nome||'–',r.nivel||'–',v.cargo,v.cliente||'–',v.abertura,v.fechamento||'–',v.dias,v.sla,v.status,calcAtingimento(v.recId)+'%']);
+  });
+  const csv = linhas.map(l=>l.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='meta_recrutadores_orizon.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============ TOAST ============
+function toast(msg, tipo='ok'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = tipo==='erro'?'rgba(231,76,60,0.4)':'var(--border2)';
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// ============ INIT ============
+renderTudo();
+</script>
+</body>
+</html>

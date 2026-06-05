@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Tempo Médio por Etapa | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-warning{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.btn-warning:hover{background:rgba(243,156,18,0.2);}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.cyan{background:rgba(6,182,212,0.1);color:var(--cyan);border-color:rgba(6,182,212,0.25);}
+
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FUNIL VISUAL */
+.funil-wrap{display:flex;flex-direction:column;gap:0;align-items:stretch;}
+.funil-etapa{position:relative;display:flex;align-items:center;gap:0;margin-bottom:0;}
+.funil-trapezoid{
+  flex:1;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:0;
+  padding:1rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;
+  transition:all 0.2s;
+  position:relative;overflow:hidden;
+  min-height:64px;
+}
+.funil-trapezoid:first-child{border-radius:14px 14px 0 0;}
+.funil-trapezoid:last-child{border-radius:0 0 14px 14px;}
+.funil-trapezoid:hover{background:rgba(59,130,246,0.05);border-color:var(--border2);}
+.funil-trapezoid.ativa{background:rgba(59,130,246,0.07);border-color:var(--border3);box-shadow:inset 0 0 0 1px rgba(59,130,246,0.15);}
+.funil-trapezoid::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;transition:opacity 0.2s;opacity:0;}
+.funil-trapezoid.ativa::before{opacity:1;}
+.funil-fill{position:absolute;left:0;top:0;bottom:0;opacity:0.06;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
+.funil-info{display:flex;align-items:center;gap:0.9rem;flex:1;z-index:1;}
+.funil-num{font-size:1.1rem;font-weight:900;font-family:var(--mono);min-width:28px;text-align:center;}
+.funil-etapa-nome{font-size:0.8rem;font-weight:700;}
+.funil-etapa-sub{font-size:0.6rem;color:var(--muted);margin-top:0.1rem;}
+.funil-right{display:flex;align-items:center;gap:1.5rem;z-index:1;}
+.funil-dias{text-align:center;}
+.funil-dias-num{font-size:1.4rem;font-weight:900;font-family:var(--mono);}
+.funil-dias-label{font-size:0.55rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.funil-status-badge{font-size:0.6rem;font-weight:800;padding:0.2rem 0.65rem;border-radius:8px;white-space:nowrap;}
+.funil-connector{height:1px;background:rgba(255,255,255,0.04);}
+
+/* SEPARADOR FUNIL */
+.funil-arrow{display:flex;justify-content:center;align-items:center;height:20px;color:var(--muted);font-size:0.75rem;position:relative;}
+.funil-arrow::before,.funil-arrow::after{content:'';position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,0.04);}
+.funil-arrow::before{top:50%;}
+
+/* GARGALO */
+.gargalo-badge{display:inline-flex;align-items:center;gap:0.4rem;font-size:0.62rem;font-weight:800;padding:0.25rem 0.7rem;border-radius:8px;background:rgba(231,76,60,0.12);color:var(--red);border:1px solid rgba(231,76,60,0.25);}
+
+/* GRID 2 COL */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* BARRA COMPARATIVO */
+.comp-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.6rem;}
+.comp-label{font-size:0.68rem;font-weight:600;color:var(--text2);min-width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.comp-bar-wrap{flex:1;height:22px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;position:relative;}
+.comp-bar-fill{height:100%;border-radius:6px;transition:width 0.9s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;padding-left:0.5rem;}
+.comp-bar-val{font-size:0.6rem;font-weight:800;color:rgba(255,255,255,0.85);font-family:var(--mono);}
+.comp-total{font-size:0.68rem;font-weight:800;font-family:var(--mono);color:var(--muted);min-width:50px;text-align:right;flex-shrink:0;}
+
+/* TREND */
+.trend-up{color:var(--red);}
+.trend-down{color:var(--green);}
+.trend-eq{color:var(--muted);}
+
+/* DETALHE LATERAL */
+.detalhe-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;height:100%;animation:fadeUp 0.4s ease both;}
+.detalhe-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:0.5rem;color:var(--muted);}
+.detalhe-icon{font-size:2.5rem;opacity:0.3;}
+.detalhe-meta-row{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.detalhe-meta-row:last-child{border-bottom:none;}
+.detalhe-meta-label{font-size:0.62rem;font-weight:700;color:var(--muted);letter-spacing:0.5px;}
+.detalhe-meta-val{font-size:0.75rem;font-weight:800;font-family:var(--mono);}
+.status-ok{color:var(--green);}
+.status-warn{color:var(--orange);}
+.status-crit{color:var(--red);}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+
+/* REGISTROS TABELA */
+.tbl-header{display:grid;grid-template-columns:1.5fr 1fr 1fr 0.9fr 0.9fr 0.9fr 1fr;gap:0.5rem;padding:0.5rem 0.9rem;font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
+.tbl-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 0.9fr 0.9fr 0.9fr 1fr;gap:0.5rem;padding:0.7rem 0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background 0.15s;cursor:pointer;}
+.tbl-row:hover{background:rgba(255,255,255,0.02);}
+.tbl-nome{font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbl-sub{font-size:0.6rem;color:var(--muted);}
+.etapa-pill{font-size:0.58rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:6px;white-space:nowrap;}
+.dias-num{font-size:0.8rem;font-weight:900;font-family:var(--mono);}
+.dias-sla{font-size:0.55rem;font-weight:700;}
+
+/* ALERTAS GARGALO */
+.alerta-list{display:flex;flex-direction:column;gap:0.5rem;}
+.alerta-item{display:flex;align-items:center;gap:0.8rem;padding:0.7rem 0.9rem;background:rgba(231,76,60,0.04);border:1px solid rgba(231,76,60,0.12);border-radius:10px;cursor:pointer;transition:all 0.15s;}
+.alerta-item:hover{background:rgba(231,76,60,0.08);}
+.alerta-item.warn{background:rgba(243,156,18,0.04);border-color:rgba(243,156,18,0.12);}
+.alerta-item.warn:hover{background:rgba(243,156,18,0.08);}
+.alerta-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.alerta-txt{flex:1;font-size:0.72rem;font-weight:600;}
+.alerta-badge{font-size:0.6rem;font-weight:800;padding:0.15rem 0.55rem;border-radius:6px;}
+
+/* MINI SPARKLINE */
+.sparkline-wrap{display:flex;align-items:flex-end;gap:3px;height:32px;}
+.spark-bar{flex:1;background:rgba(59,130,246,0.3);border-radius:3px 3px 0 0;transition:height 0.5s;min-height:3px;}
+.spark-bar.atual{background:var(--accent);}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.2rem;font-size:0.76rem;font-weight:600;color:var(--text);z-index:9999;transform:translateY(10px);opacity:0;transition:all 0.3s;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* PROGRESS CIRCLE */
+.circle-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.circle-svg{transform:rotate(-90deg);}
+.circle-track{fill:none;stroke:rgba(255,255,255,0.06);}
+.circle-fill{fill:none;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1);}
+.circle-inner{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.circle-val{font-size:1rem;font-weight:900;font-family:var(--mono);}
+.circle-lbl{font-size:0.45rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Analytics · Funil</div>
+      <div class="hero-title">Tempo Médio por <span>Etapa</span></div>
+      <div class="hero-sub">Identifique gargalos no funil e otimize o tempo de fechamento das vagas</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="togglePeriodo()">
+        <span>⏱</span> <span id="btnPeriodo">Últimos 90 dias</span>
+      </button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">
+        <span>📤</span> Exportar
+      </button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()">
+        <span>📋</span> Carregar Exemplos
+      </button>
+      <button class="btn btn-primary" onclick="abrirModalRegistro()">
+        <span>+</span> Novo Registro
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiTotalDias" style="color:var(--accent)">—</div>
+      <div class="kpi-label">Tempo Total Médio</div>
+      <div class="kpi-sub" id="kpiTotalSub">dias até fechamento</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiGargalo" style="color:var(--red)">—</div>
+      <div class="kpi-label">Maior Gargalo</div>
+      <div class="kpi-sub" id="kpiGargaloSub">etapa mais lenta</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiEtapaRapida" style="color:var(--green)">—</div>
+      <div class="kpi-label">Etapa Mais Rápida</div>
+      <div class="kpi-sub" id="kpiRapidaSub">média em dias</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiVagasAtivas" style="color:var(--purple)">—</div>
+      <div class="kpi-label">Vagas Ativas</div>
+      <div class="kpi-sub">com candidatos em processo</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiSlaOk" style="color:var(--green)">—</div>
+      <div class="kpi-label">Dentro do SLA</div>
+      <div class="kpi-sub" id="kpiSlaSub">% das etapas</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label class="form-label">Vaga / Cliente</label>
+      <select class="form-input" id="fVaga" onchange="render()">
+        <option value="">Todas as Vagas</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Recrutador</label>
+      <select class="form-input" id="fRecrutador" onchange="render()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Visualização</label>
+      <select class="form-input" id="fView" onchange="render()">
+        <option value="funil">Funil Visual</option>
+        <option value="comparativo">Comparativo por Vaga</option>
+        <option value="registros">Registros Individuais</option>
+      </select>
+    </div>
+    <div class="filter-field" style="flex:0 0 auto;">
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparFiltros()" style="height:38px;">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- CONTEUDO PRINCIPAL -->
+  <div id="mainContent"></div>
+
+</div>
+
+<!-- MODAL REGISTRO -->
+<div id="modalReg" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);overflow-y:auto;">
+  <div style="min-height:100%;display:flex;align-items:flex-start;justify-content:center;padding:2rem;">
+    <div style="background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:2rem;width:100%;max-width:580px;position:relative;animation:fadeUp 0.3s ease;">
+      <button onclick="fecharModal()" style="position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;">Novo Registro</div>
+      <div style="font-size:1.2rem;font-weight:900;margin-bottom:1.5rem;">Registrar Movimento de Candidato</div>
+
+      <input type="hidden" id="rEditId"/>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Candidato *</label>
+          <input class="form-input" id="rCandidato" placeholder="Nome do candidato"/>
+        </div>
+        <div>
+          <label class="form-label">Cargo / Vaga *</label>
+          <input class="form-input" id="rCargo" placeholder="Ex: Analista de RH"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Cliente / Empresa</label>
+          <input class="form-input" id="rEmpresa" placeholder="Empresa contratante"/>
+        </div>
+        <div>
+          <label class="form-label">Recrutador</label>
+          <input class="form-input" id="rRecrutador" placeholder="Nome do recrutador"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Etapa *</label>
+          <select class="form-input" id="rEtapa">
+            <option value="">Selecione...</option>
+            <option>Triagem de Currículo</option>
+            <option>Entrevista Inicial (RH)</option>
+            <option>Teste / Avaliação</option>
+            <option>Entrevista Técnica</option>
+            <option>Entrevista com Gestor</option>
+            <option>Entrevista Final</option>
+            <option>Proposta / Oferta</option>
+            <option>Contratação</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Status da Etapa *</label>
+          <select class="form-input" id="rStatus">
+            <option value="">Selecione...</option>
+            <option value="em_andamento">Em Andamento</option>
+            <option value="concluida">Concluída</option>
+            <option value="reprovado">Reprovado nesta etapa</option>
+            <option value="desistiu">Desistiu</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Data de Entrada *</label>
+          <input class="form-input" type="date" id="rDataEntrada"/>
+        </div>
+        <div>
+          <label class="form-label">Data de Saída</label>
+          <input class="form-input" type="date" id="rDataSaida" placeholder="Se concluída"/>
+        </div>
+        <div>
+          <label class="form-label">SLA Alvo (dias)</label>
+          <input class="form-input" type="number" id="rSla" placeholder="Ex: 5" min="1"/>
+        </div>
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="rObs" placeholder="Notas sobre esta etapa..." style="min-height:60px;"></textarea>
+      </div>
+      <div style="display:flex;gap:0.6rem;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarRegistro()">✓ Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DADOS ─────────────────────────────────────────────────────────
+let REGISTROS = [];
+let ETAPA_SELECIONADA = null;
+let PERIODO = 90;
+
+const ETAPAS_ORDEM = [
+  { nome:'Triagem de Currículo',      cor:'#06b6d4', sla:2  },
+  { nome:'Entrevista Inicial (RH)',   cor:'#3b82f6', sla:4  },
+  { nome:'Teste / Avaliação',         cor:'#8b5cf6', sla:5  },
+  { nome:'Entrevista Técnica',        cor:'#a78bfa', sla:5  },
+  { nome:'Entrevista com Gestor',     cor:'#f59e0b', sla:6  },
+  { nome:'Entrevista Final',          cor:'#f97316', sla:5  },
+  { nome:'Proposta / Oferta',         cor:'#ef4444', sla:3  },
+  { nome:'Contratação',              cor:'#22c55e', sla:3  },
+];
+
+function init() {
+  const saved = localStorage.getItem('orizon_etapas_registros');
+  if (saved) try { REGISTROS = JSON.parse(saved); } catch(e){}
+  const hoje = new Date().toISOString().slice(0,10);
+  document.getElementById('rDataEntrada').value = hoje;
+  populaFiltros();
+  render();
+}
+
+function salvarLocal() {
+  localStorage.setItem('orizon_etapas_registros', JSON.stringify(REGISTROS));
+}
+
+function togglePeriodo() {
+  const opts = [30,60,90,180,365];
+  const idx  = opts.indexOf(PERIODO);
+  PERIODO    = opts[(idx+1) % opts.length];
+  const map  = {30:'Últimos 30 dias',60:'Últimos 60 dias',90:'Últimos 90 dias',180:'Últimos 6 meses',365:'Último ano'};
+  document.getElementById('btnPeriodo').textContent = map[PERIODO];
+  render();
+}
+
+function populaFiltros() {
+  const vagas       = [...new Set(REGISTROS.map(r=>r.cargo).filter(Boolean))];
+  const recrutadores= [...new Set(REGISTROS.map(r=>r.recrutador).filter(Boolean))];
+  const sv = document.getElementById('fVaga');
+  const sr = document.getElementById('fRecrutador');
+  const prevV = sv.value, prevR = sr.value;
+  sv.innerHTML = '<option value="">Todas as Vagas</option>' + vagas.map(v=>`<option value="${v}">${v}</option>`).join('');
+  sr.innerHTML = '<option value="">Todos</option>' + recrutadores.map(r=>`<option value="${r}">${r}</option>`).join('');
+  sv.value = prevV; sr.value = prevR;
+}
+
+function filtrados() {
+  const fv = document.getElementById('fVaga').value;
+  const fr = document.getElementById('fRecrutador').value;
+  const limite = new Date();
+  limite.setDate(limite.getDate() - PERIODO);
+  return REGISTROS.filter(r => {
+    if (fv && r.cargo !== fv) return false;
+    if (fr && r.recrutador !== fr) return false;
+    if (r.data_entrada) {
+      const d = new Date(r.data_entrada);
+      if (d < limite) return false;
+    }
+    return true;
+  });
+}
+
+function calcDias(entrada, saida) {
+  if (!entrada) return null;
+  const e = new Date(entrada);
+  const s = saida ? new Date(saida) : new Date();
+  return Math.max(0, Math.round((s - e) / 86400000));
+}
+
+// ─── ESTATÍSTICAS POR ETAPA ────────────────────────────────────────
+function calcEstatisticas(regs) {
+  const stats = {};
+  ETAPAS_ORDEM.forEach(e => {
+    stats[e.nome] = { nome:e.nome, cor:e.cor, sla:e.sla, total:0, totalDias:0, acimaSla:0, emAndamento:0, concluidas:0, min:Infinity, max:0, diasList:[] };
+  });
+  regs.forEach(r => {
+    if (!stats[r.etapa]) return;
+    const dias = calcDias(r.data_entrada, r.data_saida);
+    if (dias === null) return;
+    const s = stats[r.etapa];
+    s.total++;
+    s.totalDias += dias;
+    s.diasList.push(dias);
+    if (dias < s.min) s.min = dias;
+    if (dias > s.max) s.max = dias;
+    if (r.status === 'em_andamento') s.emAndamento++;
+    else s.concluidas++;
+    if (dias > s.sla) s.acimaSla++;
+  });
+  ETAPAS_ORDEM.forEach(e => {
+    const s = stats[e.nome];
+    s.media = s.total > 0 ? +(s.totalDias / s.total).toFixed(1) : 0;
+    if (s.min === Infinity) s.min = 0;
+  });
+  return stats;
+}
+
+function render() {
+  const regs = filtrados();
+  const stats = calcEstatisticas(regs);
+  const stArr = ETAPAS_ORDEM.map(e => stats[e.nome]);
+  const totalDiasMedio = stArr.filter(s=>s.media>0).reduce((a,s)=>a+s.media,0);
+  const comDados = stArr.filter(s=>s.total>0);
+  const gargalo  = comDados.length ? comDados.reduce((a,b)=>b.media>a.media?b:a,comDados[0]) : null;
+  const rapida   = comDados.length ? comDados.reduce((a,b)=>b.media<a.media?b:a,comDados[0]) : null;
+  const vagasSet = new Set(regs.map(r=>r.cargo).filter(Boolean));
+  const totalEtapas = stArr.reduce((a,s)=>a+s.total,0);
+  const emSla = stArr.reduce((a,s)=>a+(s.total-s.acimaSla),0);
+  const pctSla = totalEtapas > 0 ? Math.round(100*emSla/totalEtapas) : 0;
+
+  document.getElementById('kpiTotalDias').textContent = totalDiasMedio > 0 ? totalDiasMedio.toFixed(0)+'d' : '—';
+  document.getElementById('kpiGargalo').textContent   = gargalo ? gargalo.media+'d' : '—';
+  document.getElementById('kpiGargaloSub').textContent= gargalo ? gargalo.nome : 'sem dados';
+  document.getElementById('kpiEtapaRapida').textContent= rapida ? rapida.media+'d' : '—';
+  document.getElementById('kpiRapidaSub').textContent  = rapida ? rapida.nome : '—';
+  document.getElementById('kpiVagasAtivas').textContent= vagasSet.size || '—';
+  document.getElementById('kpiSlaOk').textContent      = totalEtapas > 0 ? pctSla+'%' : '—';
+  document.getElementById('kpiSlaSub').textContent     = totalEtapas > 0 ? `${emSla} de ${totalEtapas} registros` : 'sem dados';
+
+  const view = document.getElementById('fView').value;
+  if (view==='funil') renderFunil(stArr, stats, regs);
+  else if (view==='comparativo') renderComparativo(regs, stats);
+  else renderRegistros(regs);
+}
+
+// ─── FUNIL ─────────────────────────────────────────────────────────
+function renderFunil(stArr, stats, regs) {
+  const max = Math.max(...stArr.map(s=>s.media), 1);
+  const alertas = stArr.filter(s=>s.total>0 && s.media > s.sla*1.5);
+  const alertasWarn = stArr.filter(s=>s.total>0 && s.media > s.sla && s.media <= s.sla*1.5);
+
+  let html = `<div class="grid2" style="align-items:start;gap:1rem;">
+    <div>
+      <div class="sec"><div class="sec-label">Funil de Etapas — Tempo Médio</div></div>
+      <div class="card" style="padding:0.5rem;">
+        <div class="funil-wrap" id="funilWrap">`;
+
+  stArr.forEach((s,i) => {
+    const pct   = max > 0 ? (s.media/max*100) : 0;
+    const delay = i*0.06;
+    let statusClass='', statusLabel='', statusColor='';
+    if (s.total === 0) { statusLabel='Sem dados'; statusColor='var(--muted)'; }
+    else if (s.media === 0) { statusLabel='0 dias'; statusColor='var(--green)'; statusClass='status-ok';}
+    else if (s.media <= s.sla) { statusLabel='✓ No SLA'; statusColor='var(--green)'; statusClass='status-ok';}
+    else if (s.media <= s.sla*1.5) { statusLabel='⚠ Atenção'; statusColor='var(--orange)'; statusClass='status-warn';}
+    else { statusLabel='✗ Crítico'; statusColor='var(--red)'; statusClass='status-crit';}
+    const ativa = ETAPA_SELECIONADA === s.nome ? 'ativa' : '';
+    const isFirst = i===0, isLast = i===stArr.length-1;
+    const radius = isFirst ? '14px 14px 0 0' : isLast ? '0 0 14px 14px' : '0';
+    html += `<div class="funil-trapezoid ${ativa}" style="border-radius:${radius};animation-delay:${delay}s;" onclick="selecionarEtapa('${s.nome}')">
+      <div class="funil-fill" style="background:${s.cor};width:${pct}%;"></div>
+      <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${s.cor};border-radius:4px 0 0 4px;opacity:${ativa?1:0.3};transition:opacity 0.2s;"></div>
+      <div class="funil-info">
+        <div class="funil-num" style="color:${s.cor}">${i+1}</div>
+        <div>
+          <div class="funil-etapa-nome">${s.nome}</div>
+          <div class="funil-etapa-sub">SLA alvo: ${s.sla}d · ${s.total} registros · ${s.emAndamento} em andamento</div>
+        </div>
+      </div>
+      <div class="funil-right">
+        <div class="funil-dias">
+          <div class="funil-dias-num" style="color:${statusColor}">${s.total>0?s.media:'—'}${s.total>0?'d':''}</div>
+          <div class="funil-dias-label">média</div>
+        </div>
+        <div class="funil-status-badge ${statusClass}" style="background:${s.total>0?statusColor+'1a':'rgba(255,255,255,0.04)'};color:${s.total>0?statusColor:'var(--muted)'};border:1px solid ${s.total>0?statusColor+'40':'rgba(255,255,255,0.06)'};">${statusLabel}</div>
+      </div>
+    </div>`;
+    if (!isLast) html += `<div style="height:1px;background:rgba(255,255,255,0.03);"></div>`;
+  });
+
+  html += `</div></div></div>`;
+
+  // PAINEL DETALHE
+  html += `<div>
+    <div class="sec"><div class="sec-label">Detalhe da Etapa</div></div>
+    <div class="detalhe-panel" id="detalhePainel">`;
+
+  if (!ETAPA_SELECIONADA) {
+    html += `<div class="detalhe-empty"><div class="detalhe-icon">🔍</div><div style="font-size:0.75rem;color:var(--muted)">Clique em uma etapa para ver detalhes</div></div>`;
+  } else {
+    const s = stats[ETAPA_SELECIONADA];
+    const pctSlaEtapa = s.total>0 ? Math.round(100*(s.total-s.acimaSla)/s.total) : 0;
+    const trend = s.media > s.sla ? 'trend-up' : 'trend-down';
+    html += `<div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:${s.cor};margin-bottom:0.3rem;">Etapa Selecionada</div>
+      <div style="font-size:1rem;font-weight:900;margin-bottom:1.2rem;">${ETAPA_SELECIONADA}</div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Média de dias</div><div class="detalhe-meta-val ${trend}">${s.media}d</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">SLA alvo</div><div class="detalhe-meta-val">${s.sla}d</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Variação vs SLA</div><div class="detalhe-meta-val ${trend}">${s.media>s.sla?'+':''+(s.media-s.sla).toFixed(1)}d</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Tempo mínimo</div><div class="detalhe-meta-val status-ok">${s.min}d</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Tempo máximo</div><div class="detalhe-meta-val status-crit">${s.max}d</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Total de registros</div><div class="detalhe-meta-val">${s.total}</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Em andamento</div><div class="detalhe-meta-val status-warn">${s.emAndamento}</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Concluídas</div><div class="detalhe-meta-val">${s.concluidas}</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Dentro do SLA</div><div class="detalhe-meta-val status-ok">${pctSlaEtapa}% (${s.total-s.acimaSla})</div></div>
+      <div class="detalhe-meta-row"><div class="detalhe-meta-label">Acima do SLA</div><div class="detalhe-meta-val status-crit">${s.acimaSla}</div></div>`;
+
+    // Mini sparkline
+    if (s.diasList.length > 0) {
+      const maxVal = Math.max(...s.diasList, 1);
+      html += `<div style="margin-top:1rem;">
+        <div style="font-size:0.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Distribuição de Dias</div>
+        <div class="sparkline-wrap">
+        ${s.diasList.slice(-12).map((v,i,arr)=>{
+          const h = Math.max(4, Math.round(v/maxVal*28));
+          const isAtual = i===arr.length-1;
+          return `<div class="spark-bar ${isAtual?'atual':''}" style="height:${h}px;" title="${v} dias"></div>`;
+        }).join('')}
+        </div>
+      </div>`;
+    }
+
+    // Candidatos nesta etapa
+    const cands = regs.filter(r=>r.etapa===ETAPA_SELECIONADA).slice(0,5);
+    if (cands.length) {
+      html += `<div style="margin-top:1rem;">
+        <div style="font-size:0.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;">Últimos Candidatos</div>`;
+      cands.forEach(r => {
+        const dias = calcDias(r.data_entrada, r.data_saida);
+        const cor  = dias > s.sla ? 'var(--red)' : 'var(--green)';
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+          <div>
+            <div style="font-size:0.72rem;font-weight:700;">${r.candidato}</div>
+            <div style="font-size:0.58rem;color:var(--muted);">${r.cargo}</div>
+          </div>
+          <div style="font-size:0.8rem;font-weight:900;font-family:var(--mono);color:${cor}">${dias}d</div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `</div></div>`;
+
+  // ALERTAS
+  if (alertas.length || alertasWarn.length) {
+    html += `<div class="sec"><div class="sec-label">⚠ Alertas de Gargalo</div></div>
+    <div class="card">
+      <div class="alerta-list">`;
+    alertas.forEach(s => {
+      const extra = s.media - s.sla;
+      html += `<div class="alerta-item"><div class="alerta-dot" style="background:var(--red)"></div>
+        <div class="alerta-txt"><strong>${s.nome}</strong> — ${extra.toFixed(1)} dias acima do SLA (média ${s.media}d, alvo ${s.sla}d)</div>
+        <span class="alerta-badge" style="background:rgba(231,76,60,0.1);color:var(--red);">CRÍTICO</span>
+      </div>`;
+    });
+    alertasWarn.forEach(s => {
+      const extra = s.media - s.sla;
+      html += `<div class="alerta-item warn"><div class="alerta-dot" style="background:var(--orange)"></div>
+        <div class="alerta-txt"><strong>${s.nome}</strong> — ${extra.toFixed(1)} dias acima do SLA (média ${s.media}d, alvo ${s.sla}d)</div>
+        <span class="alerta-badge" style="background:rgba(243,156,18,0.1);color:var(--orange);">ATENÇÃO</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+  setTimeout(animateCircles, 100);
+}
+
+function selecionarEtapa(nome) {
+  ETAPA_SELECIONADA = ETAPA_SELECIONADA === nome ? null : nome;
+  render();
+}
+
+// ─── COMPARATIVO ────────────────────────────────────────────────────
+function renderComparativo(regs, stats) {
+  const porVaga = {};
+  regs.forEach(r => {
+    if (!r.cargo) return;
+    if (!porVaga[r.cargo]) porVaga[r.cargo] = [];
+    porVaga[r.cargo].push(r);
+  });
+  const vagas = Object.keys(porVaga);
+  if (!vagas.length) {
+    document.getElementById('mainContent').innerHTML = `<div class="card"><div style="text-align:center;padding:3rem;color:var(--muted);">Sem dados suficientes para comparativo.<br>Adicione registros com cargos diferentes.</div></div>`;
+    return;
+  }
+
+  const maxGlobal = Math.max(...ETAPAS_ORDEM.map(e => {
+    const s = stats[e.nome];
+    return s.media || 0;
+  }), 1);
+
+  let html = `<div class="card">
+    <div class="card-head">
+      <div class="card-title">📊 Tempo Médio — Todas as Etapas <span class="card-badge">Período selecionado</span></div>
+    </div>
+    <div style="margin-bottom:1.5rem;">`;
+
+  ETAPAS_ORDEM.forEach(e => {
+    const s = stats[e.nome];
+    if (!s.total) return;
+    const pct = maxGlobal > 0 ? (s.media/maxGlobal*100) : 0;
+    const cor = s.media > s.sla*1.5 ? '#ef4444' : s.media > s.sla ? '#f59e0b' : '#22c55e';
+    html += `<div class="comp-row">
+      <div class="comp-label">${e.nome}</div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-fill" style="width:${pct}%;background:${cor};">
+          <span class="comp-bar-val">${s.media}d</span>
+        </div>
+        <div style="position:absolute;left:${(e.sla/Math.max(...ETAPAS_ORDEM.map(x=>x.sla),1)*100)}%;top:0;bottom:0;width:1px;background:rgba(255,255,255,0.2);"></div>
+      </div>
+      <div class="comp-total" style="color:${cor}">${s.media > s.sla ? '▲' : '✓'} SLA: ${e.sla}d</div>
+    </div>`;
+  });
+
+  html += `</div></div>`;
+
+  // Por vaga
+  if (vagas.length > 1) {
+    html += `<div class="sec"><div class="sec-label">Comparativo por Vaga</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.8rem;">`;
+    vagas.slice(0,6).forEach(vaga => {
+      const vagaRegs = porVaga[vaga];
+      const statsVaga = calcEstatisticas(vagaRegs);
+      const total = ETAPAS_ORDEM.filter(e=>statsVaga[e.nome].total>0).reduce((a,e)=>a+statsVaga[e.nome].media,0);
+      const qtd   = ETAPAS_ORDEM.filter(e=>statsVaga[e.nome].total>0).length;
+      const media = qtd>0 ? (total/qtd).toFixed(1) : 0;
+      html += `<div class="card" style="padding:1rem 1.2rem;">
+        <div style="font-size:0.65rem;font-weight:800;color:var(--muted);margin-bottom:0.2rem;">Vaga</div>
+        <div style="font-size:0.85rem;font-weight:900;margin-bottom:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${vaga}</div>
+        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;">
+          <div style="font-size:1.6rem;font-weight:900;font-family:var(--mono);color:var(--accent)">${media}d</div>
+          <div style="font-size:0.6rem;color:var(--muted)">média por etapa<br>${vagaRegs.length} registros</div>
+        </div>`;
+      ETAPAS_ORDEM.forEach(e => {
+        const s = statsVaga[e.nome];
+        if (!s.total) return;
+        const cor2 = s.media > s.sla ? (s.media>s.sla*1.5?'var(--red)':'var(--orange)') : 'var(--green)';
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+          <div style="font-size:0.6rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;">${e.nome}</div>
+          <div style="font-size:0.7rem;font-weight:800;font-family:var(--mono);color:${cor2}">${s.media}d</div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+// ─── REGISTROS ─────────────────────────────────────────────────────
+function renderRegistros(regs) {
+  let html = `<div class="card" style="padding:0;">
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div class="card-title">📋 Registros Individuais <span class="card-badge">${regs.length} registros</span></div>
+    </div>
+    <div class="tbl-header"><div>Candidato</div><div>Etapa</div><div>Vaga</div><div>Entrada</div><div>Saída</div><div>Dias</div><div>Status</div></div>`;
+
+  if (!regs.length) {
+    html += `<div style="text-align:center;padding:3rem;color:var(--muted);">Nenhum registro encontrado. Adicione registros ou carregue exemplos.</div>`;
+  } else {
+    regs.forEach(r => {
+      const dias = calcDias(r.data_entrada, r.data_saida);
+      const etapaInfo = ETAPAS_ORDEM.find(e=>e.nome===r.etapa);
+      const sla  = etapaInfo ? etapaInfo.sla : 5;
+      const cor  = dias > sla*1.5 ? 'var(--red)' : dias > sla ? 'var(--orange)' : 'var(--green)';
+      const statusMap = {em_andamento:'Em Andamento',concluida:'Concluída',reprovado:'Reprovado',desistiu:'Desistiu'};
+      const statusCorMap = {em_andamento:'var(--accent)',concluida:'var(--green)',reprovado:'var(--red)',desistiu:'var(--muted)'};
+      html += `<div class="tbl-row">
+        <div><div class="tbl-nome">${r.candidato}</div><div class="tbl-sub">${r.recrutador||''}</div></div>
+        <div><span class="etapa-pill" style="background:${etapaInfo?.cor||'var(--accent)'}1a;color:${etapaInfo?.cor||'var(--accent)'};">${r.etapa||'—'}</span></div>
+        <div><div class="tbl-nome" style="font-size:0.7rem;">${r.cargo||'—'}</div><div class="tbl-sub">${r.empresa||''}</div></div>
+        <div><div style="font-size:0.68rem;font-family:var(--mono)">${r.data_entrada||'—'}</div></div>
+        <div><div style="font-size:0.68rem;font-family:var(--mono)">${r.data_saida||'—'}</div></div>
+        <div><div class="dias-num" style="color:${cor}">${dias!==null?dias+'d':'—'}</div><div class="dias-sla" style="color:${cor}">${dias!==null?(dias<=sla?'✓ SLA':'⚠ +SLA'):'—'}</div></div>
+        <div><span style="font-size:0.6rem;font-weight:700;color:${statusCorMap[r.status]||'var(--muted)'};">${statusMap[r.status]||r.status||'—'}</span></div>
+      </div>`;
+    });
+  }
+  html += `</div>`;
+  document.getElementById('mainContent').innerHTML = html;
+}
+
+function animateCircles() {}
+
+// ─── MODAL ─────────────────────────────────────────────────────────
+function abrirModalRegistro(id) {
+  document.getElementById('rEditId').value = '';
+  document.getElementById('rCandidato').value = '';
+  document.getElementById('rCargo').value = '';
+  document.getElementById('rEmpresa').value = '';
+  document.getElementById('rRecrutador').value = '';
+  document.getElementById('rEtapa').value = '';
+  document.getElementById('rStatus').value = '';
+  document.getElementById('rDataEntrada').value = new Date().toISOString().slice(0,10);
+  document.getElementById('rDataSaida').value = '';
+  document.getElementById('rSla').value = '';
+  document.getElementById('rObs').value = '';
+  if (id) {
+    const r = REGISTROS.find(x=>x.id===id);
+    if (r) {
+      document.getElementById('rEditId').value = r.id;
+      document.getElementById('rCandidato').value = r.candidato||'';
+      document.getElementById('rCargo').value = r.cargo||'';
+      document.getElementById('rEmpresa').value = r.empresa||'';
+      document.getElementById('rRecrutador').value = r.recrutador||'';
+      document.getElementById('rEtapa').value = r.etapa||'';
+      document.getElementById('rStatus').value = r.status||'';
+      document.getElementById('rDataEntrada').value = r.data_entrada||'';
+      document.getElementById('rDataSaida').value = r.data_saida||'';
+      document.getElementById('rSla').value = r.sla_custom||'';
+      document.getElementById('rObs').value = r.obs||'';
+    }
+  }
+  document.getElementById('modalReg').style.display = 'block';
+}
+
+function fecharModal() {
+  document.getElementById('modalReg').style.display = 'none';
+}
+
+async function salvarRegistro() {
+  const candidato   = document.getElementById('rCandidato').value.trim();
+  const cargo       = document.getElementById('rCargo').value.trim();
+  const etapa       = document.getElementById('rEtapa').value;
+  const status      = document.getElementById('rStatus').value;
+  const data_entrada= document.getElementById('rDataEntrada').value;
+  if (!candidato) { toast('⚠️ Preencha o nome do candidato'); return; }
+  if (!cargo)     { toast('⚠️ Preencha o cargo'); return; }
+  if (!etapa)     { toast('⚠️ Selecione a etapa'); return; }
+  if (!status)    { toast('⚠️ Selecione o status'); return; }
+  if (!data_entrada){ toast('⚠️ Informe a data de entrada'); return; }
+
+  const editId = document.getElementById('rEditId').value;
+  const dados = {
+    id: editId || 'reg_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    candidato, cargo,
+    empresa:     document.getElementById('rEmpresa').value.trim(),
+    recrutador:  document.getElementById('rRecrutador').value.trim(),
+    etapa, status, data_entrada,
+    data_saida:  document.getElementById('rDataSaida').value||null,
+    sla_custom:  document.getElementById('rSla').value||null,
+    obs:         document.getElementById('rObs').value.trim(),
+    criado_em:   new Date().toISOString(),
+  };
+
+  if (editId) {
+    const idx = REGISTROS.findIndex(x=>x.id===editId);
+    if (idx!==-1) REGISTROS[idx] = dados;
+  } else {
+    REGISTROS.unshift(dados);
+  }
+  salvarLocal();
+  try { if (typeof sbPost === 'function') await sbPost('etapas_funil', dados); } catch(e){}
+  fecharModal();
+  populaFiltros();
+  render();
+  toast(editId ? '✅ Registro atualizado' : '✅ Registro adicionado');
+}
+
+// ─── FILTROS ────────────────────────────────────────────────────────
+function limparFiltros() {
+  document.getElementById('fVaga').value = '';
+  document.getElementById('fRecrutador').value = '';
+  render();
+}
+
+// ─── CSV ────────────────────────────────────────────────────────────
+function exportarCSV() {
+  const regs = filtrados();
+  if (!regs.length) { toast('⚠️ Nenhum dado para exportar'); return; }
+  const linhas = [
+    ['Candidato','Cargo','Empresa','Recrutador','Etapa','Status','Data Entrada','Data Saída','Dias na Etapa','SLA Alvo'],
+    ...regs.map(r => {
+      const etapaInfo = ETAPAS_ORDEM.find(e=>e.nome===r.etapa);
+      const dias = calcDias(r.data_entrada, r.data_saida);
+      return [r.candidato,r.cargo,r.empresa||'',r.recrutador||'',r.etapa,r.status,r.data_entrada,r.data_saida||'',dias!=null?dias:'',etapaInfo?.sla||''];
+    })
+  ];
+  const csv  = linhas.map(l=>l.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='tempo_medio_etapas.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado');
+}
+
+// ─── EXEMPLOS ───────────────────────────────────────────────────────
+function carregarExemplos() {
+  const hoje = new Date();
+  const ago  = d => { const x=new Date(hoje); x.setDate(x.getDate()-d); return x.toISOString().slice(0,10); };
+  const add  = d => { const x=new Date(hoje); x.setDate(x.getDate()+d); return x.toISOString().slice(0,10); };
+
+  REGISTROS = [
+    // Vaga 1: Analista de RH (em processo)
+    {id:'x1',candidato:'Ana Souza',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Triagem de Currículo',status:'concluida',data_entrada:ago(15),data_saida:ago(14),obs:''},
+    {id:'x2',candidato:'Ana Souza',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Entrevista Inicial (RH)',status:'concluida',data_entrada:ago(14),data_saida:ago(11),obs:''},
+    {id:'x3',candidato:'Ana Souza',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Entrevista com Gestor',status:'em_andamento',data_entrada:ago(11),data_saida:null,obs:''},
+    // Vaga 1: outro candidato
+    {id:'x4',candidato:'Bruno Melo',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Triagem de Currículo',status:'concluida',data_entrada:ago(20),data_saida:ago(19),obs:''},
+    {id:'x5',candidato:'Bruno Melo',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Entrevista Inicial (RH)',status:'concluida',data_entrada:ago(19),data_saida:ago(12),obs:'Demorou mais por agenda conflitante'},
+    {id:'x6',candidato:'Bruno Melo',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Entrevista com Gestor',status:'concluida',data_entrada:ago(12),data_saida:ago(8),obs:''},
+    {id:'x7',candidato:'Bruno Melo',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Proposta / Oferta',status:'concluida',data_entrada:ago(8),data_saida:ago(5),obs:''},
+    {id:'x8',candidato:'Bruno Melo',cargo:'Analista de RH',empresa:'TechCorp',recrutador:'Mariana Lima',etapa:'Contratação',status:'em_andamento',data_entrada:ago(5),data_saida:null,obs:''},
+    // Vaga 2: Dev Full Stack
+    {id:'x9', candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Triagem de Currículo',status:'concluida',data_entrada:ago(30),data_saida:ago(28),obs:''},
+    {id:'x10',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Entrevista Inicial (RH)',status:'concluida',data_entrada:ago(28),data_saida:ago(23),obs:''},
+    {id:'x11',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Teste / Avaliação',status:'concluida',data_entrada:ago(23),data_saida:ago(15),obs:'Teste técnico levou mais tempo'},
+    {id:'x12',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Entrevista Técnica',status:'concluida',data_entrada:ago(15),data_saida:ago(10),obs:''},
+    {id:'x13',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Entrevista Final',status:'concluida',data_entrada:ago(10),data_saida:ago(6),obs:''},
+    {id:'x14',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Proposta / Oferta',status:'concluida',data_entrada:ago(6),data_saida:ago(4),obs:''},
+    {id:'x15',candidato:'Carlos Dias',cargo:'Dev Full Stack',empresa:'StartupX',recrutador:'Pedro Costa',etapa:'Contratação',status:'concluida',data_entrada:ago(4),data_saida:ago(2),obs:''},
+    // Mais registros variados
+    {id:'x16',candidato:'Débora Nunes',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Mariana Lima',etapa:'Triagem de Currículo',status:'concluida',data_entrada:ago(12),data_saida:ago(12),obs:'Triagem rápida'},
+    {id:'x17',candidato:'Débora Nunes',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Mariana Lima',etapa:'Entrevista Inicial (RH)',status:'concluida',data_entrada:ago(12),data_saida:ago(9),obs:''},
+    {id:'x18',candidato:'Débora Nunes',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Mariana Lima',etapa:'Entrevista com Gestor',status:'concluida',data_entrada:ago(9),data_saida:ago(2),obs:'Gestor viajou, adiou reunião'},
+    {id:'x19',candidato:'Débora Nunes',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Mariana Lima',etapa:'Proposta / Oferta',status:'em_andamento',data_entrada:ago(2),data_saida:null,obs:''},
+    {id:'x20',candidato:'Eduardo Ferreira',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Pedro Costa',etapa:'Triagem de Currículo',status:'concluida',data_entrada:ago(18),data_saida:ago(17),obs:''},
+    {id:'x21',candidato:'Eduardo Ferreira',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Pedro Costa',etapa:'Entrevista Inicial (RH)',status:'concluida',data_entrada:ago(17),data_saida:ago(13),obs:''},
+    {id:'x22',candidato:'Eduardo Ferreira',cargo:'Gerente Comercial',empresa:'Vendas SA',recrutador:'Pedro Costa',etapa:'Entrevista com Gestor',status:'reprovado',data_entrada:ago(13),data_saida:ago(8),obs:'Perfil não aprovado'},
+  ];
+  salvarLocal();
+  populaFiltros();
+  render();
+  toast('📋 Exemplos carregados — 22 registros');
+}
+
+// ─── TOAST ──────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modalReg').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalReg')) fecharModal();
+});
+
+init();
+</script>
+</body>
+</html>

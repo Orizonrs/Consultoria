@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Pesquisa de Clima Pós-Contratação | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;top:-20%;right:-10%;z-index:0;
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;
+}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0.4rem;margin-bottom:1.5rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:0.35rem;}
+.tab-btn{flex:1;font-family:inherit;font-size:0.72rem;font-weight:700;padding:0.55rem 0.8rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.18s;color:var(--muted);background:transparent;text-align:center;}
+.tab-btn.on{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.25);}
+.tab-btn:hover:not(.on){color:var(--text);background:rgba(255,255,255,0.04);}
+
+/* LAYOUT PRINCIPAL */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:1rem;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:0.6rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+
+/* FILTROS */
+.filtros{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.7rem;}
+.filtro-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.2rem;}
+select,input[type="date"]{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.55rem 0.75rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;}
+select:focus,input[type="date"]:focus{border-color:var(--border2);}
+select option{background:#1a1a1a;}
+input[type="date"]{background-image:none;cursor:text;}
+
+/* STAT MINI */
+.stat-mini{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;margin-bottom:0.4rem;}
+.stat-mini-label{font-size:0.65rem;color:var(--muted);}
+.stat-mini-val{font-size:0.78rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.stat-mini-val.green{color:var(--green);}
+.stat-mini-val.orange{color:var(--orange);}
+.stat-mini-val.red{color:var(--red);}
+.stat-mini-val.purple{color:var(--purple);}
+
+/* LISTA DE CONTRATAÇÕES */
+.lista-contratacoes{display:flex;flex-direction:column;gap:0.4rem;}
+.contratacao-item{display:flex;align-items:center;gap:0.7rem;padding:0.65rem 0.85rem;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer;transition:all 0.15s;}
+.contratacao-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.05);}
+.contratacao-item.ativa{border-color:var(--border2);background:rgba(59,130,246,0.08);}
+.ci-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;flex-shrink:0;}
+.ci-info{flex:1;min-width:0;}
+.ci-nome{font-size:0.74rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ci-cargo{font-size:0.62rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ci-status{flex-shrink:0;}
+.ci-fase{font-size:0.52rem;font-weight:800;padding:0.15rem 0.45rem;border-radius:6px;}
+.ci-fase.d30{background:rgba(59,130,246,0.1);color:var(--accent);}
+.ci-fase.d60{background:rgba(243,156,18,0.1);color:var(--orange);}
+.ci-fase.d90{background:rgba(46,204,113,0.1);color:var(--green);}
+.ci-fase.pendente{background:rgba(85,85,85,0.2);color:var(--muted);}
+
+/* MAIN AREA */
+.main-area{display:flex;flex-direction:column;gap:1rem;}
+.sec{margin-bottom:0.3rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;margin-bottom:0.8rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* PERFIL HEADER */
+.perfil-header{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;}
+.ph-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;flex-shrink:0;border:2px solid var(--border2);}
+.ph-info{flex:1;}
+.ph-nome{font-size:1.1rem;font-weight:800;margin-bottom:0.2rem;}
+.ph-meta{font-size:0.72rem;color:var(--muted);display:flex;gap:0.9rem;flex-wrap:wrap;}
+.ph-meta span{display:flex;align-items:center;gap:0.3rem;}
+.ph-badges{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;}
+
+/* JORNADA TIMELINE */
+.jornada{display:flex;align-items:flex-start;gap:0;margin-bottom:0.5rem;position:relative;}
+.jornada::before{content:'';position:absolute;top:22px;left:22px;right:22px;height:2px;background:linear-gradient(90deg,var(--border2),var(--border2));z-index:0;}
+.jornada-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:0.5rem;position:relative;z-index:1;}
+.js-circle{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;border:2px solid;transition:all 0.3s;}
+.js-circle.feita{background:linear-gradient(135deg,var(--primary),var(--accent));border-color:var(--accent);color:#fff;box-shadow:0 0 16px rgba(59,130,246,0.35);}
+.js-circle.ativa{background:rgba(59,130,246,0.1);border-color:var(--accent);color:var(--accent);animation:pulseRing 2s ease-in-out infinite;}
+.js-circle.futura{background:rgba(255,255,255,0.03);border-color:rgba(255,255,255,0.1);color:var(--muted);}
+.js-label{font-size:0.65rem;font-weight:700;color:var(--text2);text-align:center;}
+.js-data{font-size:0.58rem;color:var(--muted);text-align:center;}
+.js-score{font-size:0.72rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+
+/* SCORE GERAL */
+.score-geral-wrap{display:grid;grid-template-columns:auto 1fr;gap:1.5rem;align-items:center;}
+.score-circle{position:relative;width:110px;height:110px;flex-shrink:0;}
+.score-circle svg{transform:rotate(-90deg);}
+.score-circle-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.sc-num{font-size:1.7rem;font-weight:900;font-family:var(--mono);line-height:1;}
+.sc-label{font-size:0.55rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.score-detalhe{display:flex;flex-direction:column;gap:0.5rem;}
+.sd-row{display:flex;align-items:center;gap:0.75rem;}
+.sd-label{font-size:0.7rem;color:var(--text2);width:130px;flex-shrink:0;}
+.sd-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+.sd-bar{height:100%;border-radius:99px;transition:width 0.8s cubic-bezier(.4,0,.2,1);}
+.sd-val{font-size:0.7rem;font-weight:800;font-family:var(--mono);width:30px;text-align:right;}
+
+/* FORMULÁRIO DE PESQUISA */
+.pesquisa-form{display:flex;flex-direction:column;gap:1.2rem;}
+.pf-section{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:1.1rem 1.3rem;}
+.pf-section-title{font-size:0.72rem;font-weight:800;color:var(--text);margin-bottom:0.9rem;display:flex;align-items:center;gap:0.5rem;}
+.pf-section-title span{width:22px;height:22px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:900;color:#fff;}
+.pf-perguntas{display:flex;flex-direction:column;gap:0.85rem;}
+.pf-pergunta{display:flex;flex-direction:column;gap:0.5rem;}
+.pf-p-texto{font-size:0.76rem;font-weight:600;color:var(--text);}
+.pf-p-sub{font-size:0.65rem;color:var(--muted);}
+
+/* ESCALA NPS / LIKERT */
+.escala-wrap{display:flex;flex-direction:column;gap:0.3rem;}
+.escala-nums{display:flex;gap:0.3rem;}
+.escala-num{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;font-family:var(--mono);cursor:pointer;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:var(--muted);transition:all 0.15s;flex-shrink:0;}
+.escala-num:hover{border-color:rgba(59,130,246,0.3);color:var(--accent);}
+.escala-num.sel{border-color:var(--accent);background:rgba(59,130,246,0.15);color:var(--accent);}
+.escala-num.sel-0,.escala-num.sel-1,.escala-num.sel-2,.escala-num.sel-3,.escala-num.sel-4,.escala-num.sel-5{border-color:var(--red);background:rgba(231,76,60,0.15);color:var(--red);}
+.escala-num.sel-6,.escala-num.sel-7{border-color:var(--orange);background:rgba(243,156,18,0.15);color:var(--orange);}
+.escala-num.sel-8,.escala-num.sel-9,.escala-num.sel-10{border-color:var(--green);background:rgba(46,204,113,0.15);color:var(--green);}
+.escala-labels{display:flex;justify-content:space-between;padding:0 2px;}
+.escala-lbl{font-size:0.58rem;color:var(--muted);}
+
+/* RADIO GRUPO */
+.radio-grupo{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.radio-opt{display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.75rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:9px;cursor:pointer;transition:all 0.15s;}
+.radio-opt:hover{border-color:rgba(59,130,246,0.25);background:rgba(59,130,246,0.05);}
+.radio-opt.sel{border-color:var(--accent);background:rgba(59,130,246,0.1);}
+.radio-opt input[type="radio"]{display:none;}
+.radio-opt-label{font-size:0.7rem;font-weight:600;color:var(--text2);cursor:pointer;}
+.radio-opt.sel .radio-opt-label{color:var(--accent);}
+
+/* TEXTAREA */
+.pf-textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.7rem 0.85rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;resize:vertical;min-height:70px;transition:border-color 0.18s;}
+.pf-textarea:focus{border-color:var(--border2);}
+.pf-textarea::placeholder{color:var(--muted);}
+
+/* STARS */
+.stars-wrap{display:flex;gap:0.4rem;}
+.star-btn{font-size:1.4rem;cursor:pointer;transition:all 0.15s;line-height:1;background:none;border:none;filter:grayscale(1) opacity(0.3);}
+.star-btn.on{filter:none;}
+.star-btn:hover{transform:scale(1.2);}
+
+/* CHIPS SELEÇÃO */
+.chips-multi{display:flex;flex-wrap:wrap;gap:0.35rem;}
+.chip-m{font-size:0.65rem;font-weight:700;padding:0.3rem 0.7rem;border-radius:99px;cursor:pointer;transition:all 0.15s;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:var(--muted);}
+.chip-m.on{background:rgba(59,130,246,0.15);color:var(--accent);border-color:rgba(59,130,246,0.3);}
+.chip-m:hover:not(.on){color:var(--text);border-color:rgba(255,255,255,0.15);}
+
+/* RESULTADO CARD */
+.resultado-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;}
+.rc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.rc-periodo{font-size:0.68rem;font-weight:800;padding:0.25rem 0.7rem;border-radius:99px;}
+.rc-periodo.d30{background:rgba(59,130,246,0.12);color:var(--accent);border:1px solid rgba(59,130,246,0.25);}
+.rc-periodo.d60{background:rgba(243,156,18,0.12);color:var(--orange);border:1px solid rgba(243,156,18,0.25);}
+.rc-periodo.d90{background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.25);}
+.rc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+@media(max-width:600px){.rc-grid{grid-template-columns:1fr;}}
+.rc-item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:0.75rem 0.9rem;}
+.rc-item-q{font-size:0.65rem;color:var(--muted);margin-bottom:0.35rem;}
+.rc-item-a{font-size:0.8rem;font-weight:700;color:var(--text);}
+.rc-item-a.score{font-family:var(--mono);font-size:1.1rem;}
+.rc-item-a.green{color:var(--green);}
+.rc-item-a.orange{color:var(--orange);}
+.rc-item-a.red{color:var(--red);}
+.rc-obs{margin-top:0.8rem;font-size:0.73rem;color:var(--text2);line-height:1.5;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;padding:0.65rem 0.8rem;}
+
+/* STATS TOP */
+.stats-top{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+@media(max-width:700px){.stats-top{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.stat-card::before{content:attr(data-icon);position:absolute;right:0.8rem;top:50%;transform:translateY(-50%);font-size:2rem;opacity:0.07;}
+.sc-label2{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.4rem;}
+.sc-val{font-size:1.5rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.2rem;}
+.sc-sub{font-size:0.62rem;color:var(--muted);}
+
+/* ALERTA RISCO */
+.alerta-risco{background:rgba(231,76,60,0.06);border:1px solid rgba(231,76,60,0.2);border-radius:12px;padding:0.8rem 1rem;margin-bottom:0.5rem;display:flex;align-items:flex-start;gap:0.7rem;}
+.ar-ico{font-size:1rem;flex-shrink:0;margin-top:0.05rem;}
+.ar-txt{flex:1;}
+.ar-titulo{font-size:0.72rem;font-weight:800;color:var(--red);margin-bottom:0.2rem;}
+.ar-desc{font-size:0.67rem;color:var(--text2);line-height:1.5;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-title{font-size:1rem;font-weight:800;}
+.modal-close{background:none;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.3rem 0.55rem;cursor:pointer;color:var(--muted);font-size:0.8rem;transition:all 0.15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+@media(max-width:500px){.modal-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:0.35rem;}
+.form-label{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(59,130,246,0.6);}
+.form-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.85rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+.modal-foot{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.5rem;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem 1rem;}
+.empty-ico{font-size:3rem;margin-bottom:0.8rem;opacity:0.3;}
+.empty-title{font-size:0.9rem;font-weight:800;color:var(--text);margin-bottom:0.3rem;}
+.empty-desc{font-size:0.72rem;color:var(--muted);}
+
+/* PROGRESS BAR */
+.progress-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-bottom:0.3rem;}
+.progress-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 0.5s ease;}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+@keyframes pulseRing{0%,100%{box-shadow:0 0 0 0 rgba(59,130,246,0.3);}50%{box-shadow:0 0 0 6px rgba(59,130,246,0);}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.2);border-radius:99px;}
+
+/* TOOLTIP */
+.tooltip{position:relative;}
+.tooltip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:#222;border:1px solid var(--border);color:var(--text2);font-size:0.62rem;padding:0.3rem 0.6rem;border-radius:7px;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:10;}
+.tooltip:hover::after{opacity:1;}
+
+/* ALERTA PENDENTE */
+.badge-pendente{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:var(--red);border-radius:50%;font-size:0.55rem;font-weight:900;color:#fff;margin-left:4px;}
+
+/* PRINT */
+@media print{
+  body::before,body::after{display:none;}
+  .hero-right,.tabs-nav,.modal-overlay,.btn{display:none!important;}
+  .page{padding:0;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>GESTÃO DE TALENTOS</div>
+      <div class="hero-title">Pesquisa de Clima <span>Pós-Contratação</span></div>
+      <div class="hero-sub">Acompanhe a integração de colaboradores nos marcos 30, 60 e 90 dias</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">📊 Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModalNovaContratacao()">＋ Nova Contratação</button>
+    </div>
+  </div>
+
+  <!-- STATS TOP -->
+  <div class="stats-top">
+    <div class="stat-card" data-icon="👥">
+      <div class="sc-label2">Contratações Ativas</div>
+      <div class="sc-val" id="stat-total" style="color:var(--accent)">0</div>
+      <div class="sc-sub">em acompanhamento</div>
+    </div>
+    <div class="stat-card" data-icon="⏰">
+      <div class="sc-label2">Pesquisas Pendentes</div>
+      <div class="sc-val" id="stat-pendentes" style="color:var(--orange)">0</div>
+      <div class="sc-sub">aguardando resposta</div>
+    </div>
+    <div class="stat-card" data-icon="😊">
+      <div class="sc-label2">NPS Médio (90d)</div>
+      <div class="sc-val" id="stat-nps" style="color:var(--green)">—</div>
+      <div class="sc-sub">escala 0–10</div>
+    </div>
+    <div class="stat-card" data-icon="⚠️">
+      <div class="sc-label2">Risco de Turnover</div>
+      <div class="sc-val" id="stat-risco" style="color:var(--red)">0</div>
+      <div class="sc-sub">abaixo de 6 no 60d</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn on" onclick="trocarTab('painel',this)">📋 Painel Geral</button>
+    <button class="tab-btn" onclick="trocarTab('pesquisa',this)">📝 Aplicar Pesquisa</button>
+    <button class="tab-btn" onclick="trocarTab('resultados',this)">📊 Resultados</button>
+  </div>
+
+  <!-- TAB: PAINEL GERAL -->
+  <div id="tab-painel">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">🔍 Filtros</div>
+          </div>
+          <div class="search-wrap">
+            <span class="search-ico">🔎</span>
+            <input type="text" id="busca-sidebar" placeholder="Buscar colaborador..." oninput="renderListaSidebar()"/>
+          </div>
+          <div class="filtros">
+            <div class="filtro-label">Fase Atual</div>
+            <select id="filtro-fase" onchange="renderListaSidebar()">
+              <option value="">Todas</option>
+              <option value="30">30 dias</option>
+              <option value="60">60 dias</option>
+              <option value="90">90 dias</option>
+              <option value="concluido">Concluído</option>
+            </select>
+            <div class="filtro-label">Status</div>
+            <select id="filtro-status" onchange="renderListaSidebar()">
+              <option value="">Todos</option>
+              <option value="pendente">Pendente</option>
+              <option value="respondido">Respondido</option>
+              <option value="risco">Em risco</option>
+            </select>
+          </div>
+          <div id="sidebar-stats">
+            <div class="stat-mini"><span class="stat-mini-label">30 dias</span><span class="stat-mini-val" id="ss-30">0</span></div>
+            <div class="stat-mini"><span class="stat-mini-label">60 dias</span><span class="stat-mini-val orange" id="ss-60">0</span></div>
+            <div class="stat-mini"><span class="stat-mini-label">90 dias</span><span class="stat-mini-val green" id="ss-90">0</span></div>
+            <div class="stat-mini"><span class="stat-mini-label">Concluídos</span><span class="stat-mini-val purple" id="ss-conc">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div id="alertas-risco" style="display:none;"></div>
+
+        <div class="card" id="card-lista-painel">
+          <div class="card-head">
+            <div class="card-title">👥 Colaboradores em Acompanhamento</div>
+            <div class="card-badge" id="badge-total">0</div>
+          </div>
+          <div id="lista-painel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: APLICAR PESQUISA -->
+  <div id="tab-pesquisa" style="display:none;">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">👤 Selecionar</div>
+          </div>
+          <div class="search-wrap">
+            <span class="search-ico">🔎</span>
+            <input type="text" id="busca-pesquisa" placeholder="Buscar colaborador..." oninput="renderListaPesquisa()"/>
+          </div>
+          <div class="lista-contratacoes" id="lista-pesquisa"></div>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div id="area-pesquisa-vazia" class="card">
+          <div class="empty-state">
+            <div class="empty-ico">📝</div>
+            <div class="empty-title">Selecione um colaborador</div>
+            <div class="empty-desc">Escolha na lista ao lado para iniciar a pesquisa do período correspondente</div>
+          </div>
+        </div>
+        <div id="area-formulario" style="display:none;">
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title" id="form-titulo">📋 Pesquisa</div>
+              <div class="card-badge" id="form-badge">30 DIAS</div>
+            </div>
+            <div class="pesquisa-form" id="formulario-pesquisa"></div>
+            <div style="display:flex;gap:0.5rem;margin-top:1.3rem;justify-content:flex-end;">
+              <button class="btn btn-ghost btn-sm" onclick="limparFormulario()">🔄 Limpar</button>
+              <button class="btn btn-primary" onclick="salvarPesquisa()">💾 Salvar Pesquisa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: RESULTADOS -->
+  <div id="tab-resultados" style="display:none;">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">🔍 Filtrar</div>
+          </div>
+          <div class="search-wrap">
+            <span class="search-ico">🔎</span>
+            <input type="text" id="busca-resultados" placeholder="Buscar colaborador..." oninput="renderResultados()"/>
+          </div>
+          <div class="filtros">
+            <div class="filtro-label">Período</div>
+            <select id="filtro-periodo" onchange="renderResultados()">
+              <option value="">Todos</option>
+              <option value="30">30 dias</option>
+              <option value="60">60 dias</option>
+              <option value="90">90 dias</option>
+            </select>
+            <div class="filtro-label">NPS</div>
+            <select id="filtro-nps" onchange="renderResultados()">
+              <option value="">Todos</option>
+              <option value="promotor">Promotores (9–10)</option>
+              <option value="neutro">Neutros (7–8)</option>
+              <option value="detrator">Detratores (0–6)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-area">
+        <div id="lista-resultados"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NOVA CONTRATAÇÃO -->
+<div class="modal-overlay" id="modal-nova">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">➕ Nova Contratação</div>
+      <button class="modal-close" onclick="fecharModal('modal-nova')">✕</button>
+    </div>
+    <div class="modal-grid">
+      <div class="form-group" style="grid-column:1/-1;">
+        <div class="form-label">Nome do Colaborador</div>
+        <input class="form-input" id="nc-nome" placeholder="Ex: Ana Paula Souza"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Cargo</div>
+        <input class="form-input" id="nc-cargo" placeholder="Ex: Analista de RH"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Departamento</div>
+        <input class="form-input" id="nc-dept" placeholder="Ex: Recursos Humanos"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Cliente / Empresa</div>
+        <input class="form-input" id="nc-empresa" placeholder="Ex: Acme Ltda"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Data de Admissão</div>
+        <input class="form-input" type="date" id="nc-admissao"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Recrutador Responsável</div>
+        <input class="form-input" id="nc-recrutador" placeholder="Ex: Carla Mendes"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Gestor Direto</div>
+        <input class="form-input" id="nc-gestor" placeholder="Ex: Marcos Lima"/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="fecharModal('modal-nova')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarNovaContratacao()">✅ Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.1rem;font-size:0.75rem;font-weight:700;color:var(--text);z-index:9999;transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:300px;"></div>
+
+<script>
+// ==================== DADOS ====================
+const COLORS = ['#3b82f6','#a78bfa','#2ecc71','#f39c12','#e74c3c','#2563eb','#ec4899','#06b6d4'];
+
+let contratacoes = JSON.parse(localStorage.getItem('orizon_clima_contratacoes') || '[]');
+let pesquisas = JSON.parse(localStorage.getItem('orizon_clima_pesquisas') || '[]');
+let colaboradorSelecionado = null;
+
+// Dados de exemplo se vazio
+if(contratacoes.length === 0){
+  const hoje = new Date();
+  const subDias = (d) => { const dt = new Date(hoje); dt.setDate(dt.getDate()-d); return dt.toISOString().split('T')[0]; };
+  contratacoes = [
+    {id:'c1',nome:'Beatriz Almeida',cargo:'Analista de Marketing',dept:'Marketing',empresa:'TechCorp SA',admissao:subDias(28),recrutador:'Carla Mendes',gestor:'Marcos Lima',cor:COLORS[0]},
+    {id:'c2',nome:'Felipe Rocha',cargo:'Desenvolvedor Frontend',dept:'TI',empresa:'Acme Ltda',admissao:subDias(62),recrutador:'Juliana Souza',gestor:'Ricardo Nunes',cor:COLORS[1]},
+    {id:'c3',nome:'Mariana Costa',cargo:'Gerente de Vendas',dept:'Comercial',empresa:'GlobalNet',admissao:subDias(91),recrutador:'Carla Mendes',gestor:'Ana Ferreira',cor:COLORS[2]},
+    {id:'c4',nome:'Thiago Barbosa',cargo:'Assistente Administrativo',dept:'Administração',empresa:'Localiza',admissao:subDias(15),recrutador:'Pedro Alves',gestor:'Sandra Melo',cor:COLORS[3]},
+    {id:'c5',nome:'Larissa Nunes',cargo:'Especialista em BI',dept:'TI',empresa:'DataTech',admissao:subDias(88),recrutador:'Juliana Souza',gestor:'Marcos Lima',cor:COLORS[4]},
+  ];
+  pesquisas = [
+    {id:'p1',contratacaoId:'c2',periodo:30,nps:8,integracao:4,expectativas:4,comunicacao:4,ferramentas:5,cultura:4,obs:'Muito bem recebido pela equipe. Ferrramentas configuradas rápido.',datas: subDias(30)},
+    {id:'p2',contratacaoId:'c3',periodo:30,nps:9,integracao:5,expectativas:5,comunicacao:5,ferramentas:4,cultura:5,obs:'Excelente integração. Meta do 1º mês superada.',datas:subDias(60)},
+    {id:'p3',contratacaoId:'c3',periodo:60,nps:9,integracao:5,expectativas:4,comunicacao:5,ferramentas:5,cultura:5,obs:'Já contribuindo com insights estratégicos no setor.',datas:subDias(30)},
+    {id:'p4',contratacaoId:'c5',periodo:30,nps:5,integracao:3,expectativas:2,comunicacao:3,ferramentas:2,cultura:3,obs:'Ferramentas desatualizadas. Gestor pouco presente no onboarding.',datas:subDias(58)},
+  ];
+  salvarDados();
+}
+
+function salvarDados(){
+  localStorage.setItem('orizon_clima_contratacoes', JSON.stringify(contratacoes));
+  localStorage.setItem('orizon_clima_pesquisas', JSON.stringify(pesquisas));
+}
+
+// ==================== UTILIDADES ====================
+function getFaseAtual(admissao){
+  const dias = Math.floor((new Date() - new Date(admissao)) / 86400000);
+  if(dias < 35) return '30';
+  if(dias < 70) return '60';
+  if(dias < 100) return '90';
+  return 'concluido';
+}
+
+function getPesquisasFase(cId, periodo){
+  return pesquisas.filter(p => p.contratacaoId === cId && p.periodo === periodo);
+}
+
+function temPesquisa(cId, periodo){
+  return pesquisas.some(p => p.contratacaoId === cId && p.periodo === parseInt(periodo));
+}
+
+function initials(nome){
+  return nome.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+}
+
+function corFase(fase){
+  if(fase==='30') return 'var(--accent)';
+  if(fase==='60') return 'var(--orange)';
+  if(fase==='90') return 'var(--green)';
+  return 'var(--purple)';
+}
+
+function labelFase(fase){
+  if(fase==='30') return '30 dias';
+  if(fase==='60') return '60 dias';
+  if(fase==='90') return '90 dias';
+  return 'Concluído';
+}
+
+function classFase(fase){
+  if(fase==='30') return 'd30';
+  if(fase==='60') return 'd60';
+  if(fase==='90') return 'd90';
+  return '';
+}
+
+function scoreColor(v){
+  if(v >= 8) return 'var(--green)';
+  if(v >= 6) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function toast(msg, tipo='ok'){
+  const t = document.getElementById('toast');
+  t.style.background = tipo==='erro' ? 'rgba(231,76,60,0.15)' : tipo==='aviso' ? 'rgba(243,156,18,0.15)' : 'rgba(46,204,113,0.12)';
+  t.style.borderColor = tipo==='erro' ? 'rgba(231,76,60,0.4)' : tipo==='aviso' ? 'rgba(243,156,18,0.4)' : 'rgba(46,204,113,0.3)';
+  t.textContent = msg;
+  t.style.opacity = '1'; t.style.transform = 'translateY(0)';
+  setTimeout(() => { t.style.opacity='0'; t.style.transform='translateY(80px)'; }, 3000);
+}
+
+// ==================== STATS GLOBAIS ====================
+function atualizarStats(){
+  document.getElementById('stat-total').textContent = contratacoes.length;
+
+  // Pendentes: contratação com fase ativa sem pesquisa respondida
+  let pendentes = 0;
+  contratacoes.forEach(c => {
+    const fase = getFaseAtual(c.admissao);
+    if(fase !== 'concluido' && !temPesquisa(c.id, fase)) pendentes++;
+  });
+  document.getElementById('stat-pendentes').textContent = pendentes;
+
+  // NPS médio (pesquisas de 90 dias)
+  const p90 = pesquisas.filter(p => p.periodo === 90 && p.nps !== undefined);
+  if(p90.length){
+    const avg = (p90.reduce((s,p)=>s+p.nps,0)/p90.length).toFixed(1);
+    document.getElementById('stat-nps').textContent = avg;
+  } else {
+    // fallback: todas
+    const todas = pesquisas.filter(p=>p.nps !== undefined);
+    if(todas.length){
+      const avg = (todas.reduce((s,p)=>s+p.nps,0)/todas.length).toFixed(1);
+      document.getElementById('stat-nps').textContent = avg;
+    }
+  }
+
+  // Risco: nps < 6 no 60d
+  const risco = pesquisas.filter(p => p.periodo === 60 && p.nps < 6).length;
+  document.getElementById('stat-risco').textContent = risco;
+
+  // sidebar stats
+  const fases = {30:0,60:0,90:0,conc:0};
+  contratacoes.forEach(c=>{
+    const f = getFaseAtual(c.admissao);
+    if(f==='30') fases[30]++;
+    else if(f==='60') fases[60]++;
+    else if(f==='90') fases[90]++;
+    else fases.conc++;
+  });
+  document.getElementById('ss-30').textContent = fases[30];
+  document.getElementById('ss-60').textContent = fases[60];
+  document.getElementById('ss-90').textContent = fases[90];
+  document.getElementById('ss-conc').textContent = fases.conc;
+}
+
+// ==================== TAB PAINEL ====================
+function renderListaSidebar(){
+  const busca = document.getElementById('busca-sidebar').value.toLowerCase();
+  const filtroFase = document.getElementById('filtro-fase').value;
+  const filtroStatus = document.getElementById('filtro-status').value;
+
+  let lista = contratacoes.filter(c=>{
+    const fase = getFaseAtual(c.admissao);
+    const respondido = fase === 'concluido' || temPesquisa(c.id, fase);
+    const emRisco = pesquisas.some(p => p.contratacaoId===c.id && p.nps < 6);
+    if(busca && !c.nome.toLowerCase().includes(busca) && !c.cargo.toLowerCase().includes(busca)) return false;
+    if(filtroFase && fase !== filtroFase) return false;
+    if(filtroStatus === 'pendente' && respondido) return false;
+    if(filtroStatus === 'respondido' && !respondido) return false;
+    if(filtroStatus === 'risco' && !emRisco) return false;
+    return true;
+  });
+
+  document.getElementById('badge-total').textContent = lista.length;
+
+  const alertasEl = document.getElementById('alertas-risco');
+  const riscos = contratacoes.filter(c => pesquisas.some(p=>p.contratacaoId===c.id && p.nps<6));
+  if(riscos.length){
+    alertasEl.style.display = 'block';
+    alertasEl.innerHTML = riscos.map(c=>`
+      <div class="alerta-risco">
+        <div class="ar-ico">⚠️</div>
+        <div class="ar-txt">
+          <div class="ar-titulo">Risco de Turnover — ${c.nome}</div>
+          <div class="ar-desc">NPS abaixo de 6 detectado. Recomenda-se ação imediata: conversa com gestor ou revisão do onboarding.</div>
+        </div>
+      </div>`).join('');
+  } else {
+    alertasEl.style.display = 'none';
+  }
+
+  const container = document.getElementById('lista-painel');
+  if(!lista.length){
+    container.innerHTML = `<div class="empty-state"><div class="empty-ico">🔍</div><div class="empty-title">Nenhum resultado</div><div class="empty-desc">Ajuste os filtros</div></div>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(c=>{
+    const fase = getFaseAtual(c.admissao);
+    const ps = pesquisas.filter(p=>p.contratacaoId===c.id).sort((a,b)=>a.periodo-b.periodo);
+    const ultimaP = ps[ps.length-1];
+    const pendente = fase !== 'concluido' && !temPesquisa(c.id, fase);
+    const dias = Math.floor((new Date()-new Date(c.admissao))/86400000);
+    return `<div class="contratacao-item" onclick="abrirColaborador('${c.id}')">
+      <div class="ci-avatar" style="background:${c.cor}22;color:${c.cor};">${initials(c.nome)}</div>
+      <div class="ci-info">
+        <div class="ci-nome">${c.nome}${pendente?`<span class="badge-pendente" title="Pesquisa pendente">!</span>`:''}</div>
+        <div class="ci-cargo">${c.cargo} · ${c.empresa} · ${dias}d</div>
+      </div>
+      <div class="ci-status">
+        <div class="ci-fase ${classFase(fase)}">${labelFase(fase)}</div>
+        ${ultimaP ? `<div style="text-align:center;font-size:0.6rem;font-weight:900;font-family:var(--mono);color:${scoreColor(ultimaP.nps)};margin-top:3px;">NPS ${ultimaP.nps}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirColaborador(id){
+  trocarTab('pesquisa', document.querySelector('.tab-btn:nth-child(2)'));
+  selecionarColaborador(id);
+  // scroll suave ao topo
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== TAB PESQUISA ====================
+function renderListaPesquisa(){
+  const busca = document.getElementById('busca-pesquisa').value.toLowerCase();
+  const lista = contratacoes.filter(c=>!busca||c.nome.toLowerCase().includes(busca)||c.cargo.toLowerCase().includes(busca));
+  const container = document.getElementById('lista-pesquisa');
+  container.innerHTML = lista.map(c=>{
+    const fase = getFaseAtual(c.admissao);
+    const pendente = fase !== 'concluido' && !temPesquisa(c.id, fase);
+    return `<div class="contratacao-item ${colaboradorSelecionado===c.id?'ativa':''}" onclick="selecionarColaborador('${c.id}')">
+      <div class="ci-avatar" style="background:${c.cor}22;color:${c.cor};">${initials(c.nome)}</div>
+      <div class="ci-info">
+        <div class="ci-nome">${c.nome}${pendente?`<span class="badge-pendente">!</span>`:''}</div>
+        <div class="ci-cargo">${c.cargo}</div>
+      </div>
+      <div class="ci-status">
+        <div class="ci-fase ${classFase(fase)}">${labelFase(fase)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selecionarColaborador(id){
+  colaboradorSelecionado = id;
+  renderListaPesquisa();
+  const c = contratacoes.find(x=>x.id===id);
+  if(!c) return;
+  const fase = getFaseAtual(c.admissao);
+  const periodoInt = parseInt(fase);
+
+  document.getElementById('area-pesquisa-vazia').style.display = 'none';
+  document.getElementById('area-formulario').style.display = 'block';
+
+  document.getElementById('form-titulo').innerHTML = `📋 Pesquisa ${labelFase(fase)} — ${c.nome}`;
+  const badge = document.getElementById('form-badge');
+  badge.textContent = labelFase(fase).toUpperCase();
+  badge.className = `card-badge ${fase==='30'?'':'fase==='60'?'orange':'green'}`;
+  if(fase==='60') badge.className='card-badge orange';
+  else if(fase==='90') badge.className='card-badge green';
+  else badge.className='card-badge';
+
+  if(fase === 'concluido'){
+    document.getElementById('formulario-pesquisa').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-ico">✅</div>
+        <div class="empty-title">Ciclo 90 dias concluído</div>
+        <div class="empty-desc">Todas as pesquisas foram respondidas para este colaborador. Veja os resultados na aba Resultados.</div>
+      </div>`;
+    return;
+  }
+
+  if(temPesquisa(id, fase)){
+    const p = pesquisas.find(x=>x.contratacaoId===id&&x.periodo===periodoInt);
+    document.getElementById('formulario-pesquisa').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-ico">✅</div>
+        <div class="empty-title">Pesquisa de ${labelFase(fase)} já respondida</div>
+        <div class="empty-desc">NPS registrado: <strong style="color:${scoreColor(p.nps)}">${p.nps}/10</strong><br><br>Aguarde o próximo marco para nova pesquisa.</div>
+      </div>`;
+    return;
+  }
+
+  renderFormulario(fase, c);
+}
+
+function renderFormulario(fase, colaborador){
+  const form = document.getElementById('formulario-pesquisa');
+  const perguntas30 = [
+    {id:'nps',tipo:'nps',titulo:'Recomendação Geral',texto:'Em uma escala de 0 a 10, o quanto você recomendaria trabalhar nessa empresa para um amigo ou familiar?'},
+    {id:'integracao',tipo:'estrelas',titulo:'Integração',texto:'Como foi sua integração à equipe e à empresa nos primeiros dias?'},
+    {id:'expectativas',tipo:'estrelas',titulo:'Expectativas',texto:'A realidade do cargo correspondeu às expectativas passadas no processo seletivo?'},
+    {id:'comunicacao',tipo:'estrelas',titulo:'Comunicação com Gestor',texto:'Seu gestor foi presente e comunicativo durante o período de integração?'},
+    {id:'ferramentas',tipo:'estrelas',titulo:'Ferramentas e Estrutura',texto:'As ferramentas, equipamentos e acessos necessários foram disponibilizados adequadamente?'},
+    {id:'cultura',tipo:'estrelas',titulo:'Fit Cultural',texto:'Você se identificou com a cultura e os valores da empresa?'},
+    {id:'desafios',tipo:'chips',titulo:'Principais Desafios',texto:'Quais foram seus maiores desafios neste primeiro mês? (selecione todos que se aplicam)',
+      opcoes:['Adaptação à cultura','Aprender os processos','Falta de onboarding estruturado','Comunicação com o time','Ferramentas complexas','Carga de trabalho alta','Falta de feedback','Outros']},
+    {id:'obs',tipo:'textarea',titulo:'Observações',texto:'Há algo que você gostaria de compartilhar sobre sua experiência até agora?'},
+  ];
+  const perguntas60 = [
+    {id:'nps',tipo:'nps',titulo:'Recomendação Geral',texto:'Em uma escala de 0 a 10, o quanto você recomendaria trabalhar nessa empresa?'},
+    {id:'integracao',tipo:'estrelas',titulo:'Progresso e Evolução',texto:'Você sente que está progredindo e entregando valor para a empresa?'},
+    {id:'expectativas',tipo:'estrelas',titulo:'Expectativas (60d)',texto:'Suas expectativas sobre o cargo ainda estão sendo atendidas após dois meses?'},
+    {id:'comunicacao',tipo:'estrelas',titulo:'Feedback do Gestor',texto:'Você recebe feedback claro e construtivo do seu gestor regularmente?'},
+    {id:'ferramentas',tipo:'estrelas',titulo:'Autonomia',texto:'Você se sente autônomo para realizar suas atividades com qualidade?'},
+    {id:'cultura',tipo:'estrelas',titulo:'Pertencimento',texto:'Você sente que pertence à equipe e que seu trabalho é valorizado?'},
+    {id:'inten_perm',tipo:'radio',titulo:'Intenção de Permanência',texto:'Como você avalia sua intenção de continuar na empresa no longo prazo?',
+      opcoes:['Muito alta','Alta','Média','Baixa','Não sei']},
+    {id:'desafios',tipo:'chips',titulo:'O que poderia melhorar?',texto:'O que a empresa poderia fazer melhor neste momento?',
+      opcoes:['Feedback mais frequente','Reconhecimento','Clareza nos objetivos','Mais treinamentos','Melhora no clima','Flexibilidade','Infraestrutura','Outros']},
+    {id:'obs',tipo:'textarea',titulo:'Observações',texto:'Algo que queira destacar sobre sua experiência nos últimos 60 dias?'},
+  ];
+  const perguntas90 = [
+    {id:'nps',tipo:'nps',titulo:'eNPS Final (90d)',texto:'Em uma escala de 0 a 10, o quanto você recomendaria trabalhar nessa empresa?'},
+    {id:'integracao',tipo:'estrelas',titulo:'Integração Completa',texto:'Você se sente completamente integrado e parte da equipe?'},
+    {id:'expectativas',tipo:'estrelas',titulo:'Realização Profissional',texto:'O cargo está contribuindo para seu crescimento e realização profissional?'},
+    {id:'comunicacao',tipo:'estrelas',titulo:'Liderança',texto:'Você está satisfeito com o estilo de liderança do seu gestor?'},
+    {id:'ferramentas',tipo:'estrelas',titulo:'Recursos Disponíveis',texto:'Os recursos e ferramentas disponíveis são adequados para sua performance?'},
+    {id:'cultura',tipo:'estrelas',titulo:'Cultura e Valores',texto:'A cultura da empresa está alinhada com seus valores pessoais?'},
+    {id:'inten_perm',tipo:'radio',titulo:'Planos para os próximos 6 meses',texto:'Qual é sua perspectiva para os próximos 6 meses na empresa?',
+      opcoes:['Pretendo ficar e crescer','Pretendo ficar no mesmo cargo','Ainda estou avaliando','Não me vejo aqui a longo prazo','Prefiro não responder']},
+    {id:'pontos_fortes',tipo:'textarea',titulo:'Pontos Fortes da Empresa',texto:'Quais são os aspectos mais positivos de trabalhar aqui?'},
+    {id:'desafios',tipo:'chips',titulo:'Áreas de Melhoria',texto:'Onde a empresa tem mais a melhorar na sua visão?',
+      opcoes:['Comunicação interna','Reconhecimento e remuneração','Desenvolvimento profissional','Clima organizacional','Processos e burocracia','Liderança','Benefícios','Outros']},
+    {id:'obs',tipo:'textarea',titulo:'Mensagem Final',texto:'Algum comentário ou sugestão para tornar a empresa um lugar ainda melhor?'},
+  ];
+
+  const perguntas = fase==='30' ? perguntas30 : fase==='60' ? perguntas60 : perguntas90;
+
+  form.innerHTML = perguntas.map((p,i)=>{
+    let inputHtml = '';
+    if(p.tipo==='nps'){
+      inputHtml = `
+        <div class="escala-wrap">
+          <div class="escala-nums">
+            ${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<div class="escala-num" data-val="${n}" onclick="selecionarNPS(this,'${p.id}')">${n}</div>`).join('')}
+          </div>
+          <div class="escala-labels"><span class="escala-lbl">😞 Muito improvável</span><span class="escala-lbl">😍 Com certeza!</span></div>
+        </div>`;
+    } else if(p.tipo==='estrelas'){
+      inputHtml = `
+        <div class="stars-wrap" id="stars-${p.id}">
+          ${[1,2,3,4,5].map(n=>`<button class="star-btn" data-val="${n}" onclick="selecionarEstrela(this,'${p.id}')">⭐</button>`).join('')}
+        </div>`;
+    } else if(p.tipo==='radio'){
+      inputHtml = `
+        <div class="radio-grupo" id="radio-${p.id}">
+          ${p.opcoes.map(o=>`
+            <label class="radio-opt" onclick="selecionarRadio(this,'${p.id}','${o}')">
+              <input type="radio" name="${p.id}" value="${o}"/>
+              <span class="radio-opt-label">${o}</span>
+            </label>`).join('')}
+        </div>`;
+    } else if(p.tipo==='chips'){
+      inputHtml = `
+        <div class="chips-multi" id="chips-${p.id}">
+          ${p.opcoes.map(o=>`<div class="chip-m" onclick="toggleChip(this,'${p.id}','${o}')">${o}</div>`).join('')}
+        </div>`;
+    } else if(p.tipo==='textarea'){
+      inputHtml = `<textarea class="pf-textarea" id="txt-${p.id}" placeholder="Escreva aqui..."></textarea>`;
+    }
+    return `
+      <div class="pf-section" style="animation:fadeUp 0.3s ease ${i*0.05}s both">
+        <div class="pf-section-title"><span>${i+1}</span>${p.titulo}</div>
+        <div class="pf-perguntas">
+          <div class="pf-pergunta">
+            <div class="pf-p-texto">${p.texto}</div>
+            ${inputHtml}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ==================== INTERAÇÕES DO FORM ====================
+function selecionarNPS(el, campo){
+  const nums = el.parentElement.querySelectorAll('.escala-num');
+  nums.forEach(n=>{
+    n.className='escala-num';
+  });
+  const val = parseInt(el.dataset.val);
+  el.className = `escala-num sel sel-${val}`;
+  el.setAttribute('data-selected','true');
+  el.closest('.escala-wrap').setAttribute('data-field', campo);
+  el.closest('.escala-wrap').setAttribute('data-val', val);
+}
+
+function selecionarEstrela(el, campo){
+  const wrap = el.parentElement;
+  const val = parseInt(el.dataset.val);
+  wrap.setAttribute('data-val', val);
+  const btns = wrap.querySelectorAll('.star-btn');
+  btns.forEach(b=>{
+    b.classList.toggle('on', parseInt(b.dataset.val) <= val);
+  });
+}
+
+function selecionarRadio(el, campo, valor){
+  const grupo = document.getElementById(`radio-${campo}`);
+  grupo.querySelectorAll('.radio-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function toggleChip(el, campo, valor){
+  el.classList.toggle('on');
+}
+
+function limparFormulario(){
+  if(colaboradorSelecionado) selecionarColaborador(colaboradorSelecionado);
+}
+
+function salvarPesquisa(){
+  if(!colaboradorSelecionado){ toast('Selecione um colaborador','erro'); return; }
+  const c = contratacoes.find(x=>x.id===colaboradorSelecionado);
+  const fase = getFaseAtual(c.admissao);
+  if(fase==='concluido'){ toast('Ciclo já concluído','aviso'); return; }
+  if(temPesquisa(colaboradorSelecionado, fase)){ toast('Pesquisa já respondida para este período','aviso'); return; }
+  const periodo = parseInt(fase);
+
+  // Coletar NPS
+  const escalaWrap = document.querySelector('.escala-wrap[data-val]');
+  const nps = escalaWrap ? parseInt(escalaWrap.getAttribute('data-val')) : null;
+  if(nps === null){ toast('Preencha o NPS','erro'); return; }
+
+  // Coletar estrelas
+  const campos = ['integracao','expectativas','comunicacao','ferramentas','cultura'];
+  const vals = {};
+  for(const campo of campos){
+    const wrap = document.getElementById(`stars-${campo}`);
+    if(wrap){ vals[campo] = parseInt(wrap.getAttribute('data-val') || 0) || 0; }
+  }
+
+  // Textos
+  const txtFields = document.querySelectorAll('textarea[id^="txt-"]');
+  const txts = {};
+  txtFields.forEach(t=>{ txts[t.id.replace('txt-','')] = t.value; });
+
+  // Radio
+  const radios = document.querySelectorAll('.radio-opt.sel');
+  const radioVals = {};
+  radios.forEach(r=>{
+    const name = r.querySelector('input').name;
+    radioVals[name] = r.querySelector('.radio-opt-label').textContent;
+  });
+
+  // Chips
+  const chipWraps = document.querySelectorAll('[id^="chips-"]');
+  const chipVals = {};
+  chipWraps.forEach(w=>{
+    const campo = w.id.replace('chips-','');
+    chipVals[campo] = [...w.querySelectorAll('.chip-m.on')].map(c=>c.textContent);
+  });
+
+  const pesquisa = {
+    id: 'p'+Date.now(),
+    contratacaoId: colaboradorSelecionado,
+    periodo,
+    nps,
+    ...vals,
+    ...txts,
+    ...radioVals,
+    ...chipVals,
+    data: new Date().toISOString().split('T')[0]
+  };
+
+  pesquisas.push(pesquisa);
+  salvarDados();
+  atualizarStats();
+  toast(`✅ Pesquisa de ${labelFase(fase)} salva com sucesso!`);
+  selecionarColaborador(colaboradorSelecionado);
+  renderListaSidebar();
+}
+
+// ==================== TAB RESULTADOS ====================
+function renderResultados(){
+  const busca = document.getElementById('busca-resultados').value.toLowerCase();
+  const filtroPeriodo = document.getElementById('filtro-periodo').value;
+  const filtroNPS = document.getElementById('filtro-nps').value;
+
+  let pList = pesquisas.filter(p=>{
+    const c = contratacoes.find(x=>x.id===p.contratacaoId);
+    if(!c) return false;
+    if(busca && !c.nome.toLowerCase().includes(busca)) return false;
+    if(filtroPeriodo && p.periodo !== parseInt(filtroPeriodo)) return false;
+    if(filtroNPS === 'promotor' && p.nps < 9) return false;
+    if(filtroNPS === 'neutro' && (p.nps < 7 || p.nps > 8)) return false;
+    if(filtroNPS === 'detrator' && p.nps > 6) return false;
+    return true;
+  });
+
+  const container = document.getElementById('lista-resultados');
+  if(!pList.length){
+    container.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-ico">📊</div><div class="empty-title">Nenhum resultado encontrado</div><div class="empty-desc">Aplique pesquisas ou ajuste os filtros</div></div></div>`;
+    return;
+  }
+
+  container.innerHTML = pList.map(p=>{
+    const c = contratacoes.find(x=>x.id===p.contratacaoId);
+    const faseClass = p.periodo===30?'d30':p.periodo===60?'d60':'d90';
+    const faseLabel = p.periodo+'d';
+    const itens = [
+      {q:'Integração/Progresso',a:p.integracao,tipo:'estrelas'},
+      {q:'Expectativas',a:p.expectativas,tipo:'estrelas'},
+      {q:'Comunicação/Gestor',a:p.comunicacao,tipo:'estrelas'},
+      {q:'Ferramentas/Autonomia',a:p.ferramentas,tipo:'estrelas'},
+      {q:'Fit Cultural',a:p.cultura,tipo:'estrelas'},
+    ].filter(i=>i.a);
+
+    const npsClass = p.nps >= 9 ? 'green' : p.nps >= 7 ? 'orange' : 'red';
+    const npsLabel = p.nps >= 9 ? '😍 Promotor' : p.nps >= 7 ? '😐 Neutro' : '😟 Detrator';
+
+    return `<div class="resultado-card" style="margin-bottom:0.8rem;animation:fadeUp 0.3s ease both">
+      <div class="rc-head">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div class="ci-avatar" style="width:38px;height:38px;border-radius:50%;background:${c.cor}22;color:${c.cor};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.75rem;">${initials(c.nome)}</div>
+          <div>
+            <div style="font-weight:800;font-size:0.82rem;">${c.nome}</div>
+            <div style="font-size:0.65rem;color:var(--muted);">${c.cargo} · ${c.empresa}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="rc-periodo ${faseClass}">${faseLabel}</div>
+          <div style="font-size:0.62rem;color:var(--muted);">${p.data||''}</div>
+        </div>
+      </div>
+      <div class="rc-grid">
+        <div class="rc-item">
+          <div class="rc-item-q">eNPS</div>
+          <div class="rc-item-a score ${npsClass}">${p.nps}/10 <span style="font-size:0.65rem;font-family:inherit;">${npsLabel}</span></div>
+        </div>
+        ${itens.map(i=>`
+          <div class="rc-item">
+            <div class="rc-item-q">${i.q}</div>
+            <div class="rc-item-a">${'⭐'.repeat(i.a)}${'☆'.repeat(5-i.a)} <span style="font-size:0.65rem;color:var(--muted);">${i.a}/5</span></div>
+          </div>`).join('')}
+        ${p.inten_perm ? `<div class="rc-item"><div class="rc-item-q">Intenção de Permanência</div><div class="rc-item-a">${p.inten_perm}</div></div>` : ''}
+        ${p.desafios && p.desafios.length ? `<div class="rc-item" style="grid-column:1/-1"><div class="rc-item-q">Desafios / Melhorias</div><div class="rc-item-a" style="font-size:0.72rem;">${Array.isArray(p.desafios)?p.desafios.join(', '):p.desafios}</div></div>` : ''}
+      </div>
+      ${p.obs ? `<div class="rc-obs">💬 ${p.obs}</div>` : ''}
+      ${p.pontos_fortes ? `<div class="rc-obs" style="border-color:rgba(46,204,113,0.15)">✅ Pontos fortes: ${p.pontos_fortes}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ==================== TABS ====================
+function trocarTab(tab, el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  document.getElementById('tab-painel').style.display = tab==='painel' ? 'block' : 'none';
+  document.getElementById('tab-pesquisa').style.display = tab==='pesquisa' ? 'block' : 'none';
+  document.getElementById('tab-resultados').style.display = tab==='resultados' ? 'block' : 'none';
+  if(tab==='pesquisa') renderListaPesquisa();
+  if(tab==='resultados') renderResultados();
+}
+
+// ==================== MODAL ====================
+function abrirModalNovaContratacao(){
+  document.getElementById('nc-admissao').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modal-nova').classList.add('open');
+}
+
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function salvarNovaContratacao(){
+  const nome = document.getElementById('nc-nome').value.trim();
+  const cargo = document.getElementById('nc-cargo').value.trim();
+  const dept = document.getElementById('nc-dept').value.trim();
+  const empresa = document.getElementById('nc-empresa').value.trim();
+  const admissao = document.getElementById('nc-admissao').value;
+  const recrutador = document.getElementById('nc-recrutador').value.trim();
+  const gestor = document.getElementById('nc-gestor').value.trim();
+
+  if(!nome || !cargo || !admissao){ toast('Preencha os campos obrigatórios','erro'); return; }
+
+  const nova = {
+    id: 'c'+Date.now(),
+    nome, cargo, dept, empresa, admissao, recrutador, gestor,
+    cor: COLORS[Math.floor(Math.random()*COLORS.length)]
+  };
+  contratacoes.push(nova);
+  salvarDados();
+  atualizarStats();
+  renderListaSidebar();
+  fecharModal('modal-nova');
+  toast('✅ Contratação cadastrada!');
+}
+
+// ==================== EXPORT ====================
+function exportarCSV(){
+  const linhas = [['Colaborador','Cargo','Empresa','Período','Data','NPS','Integração','Expectativas','Comunicação','Ferramentas','Cultura','Observações']];
+  pesquisas.forEach(p=>{
+    const c = contratacoes.find(x=>x.id===p.contratacaoId);
+    if(!c) return;
+    linhas.push([c.nome,c.cargo,c.empresa,p.periodo+'d',p.data||'',p.nps||'',p.integracao||'',p.expectativas||'',p.comunicacao||'',p.ferramentas||'',p.cultura||'',p.obs||'']);
+  });
+  const csv = linhas.map(l=>l.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='pesquisa_clima_pos_contratacao.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== INIT ====================
+document.addEventListener('click', e=>{
+  if(e.target.classList.contains('modal-overlay')) fecharModal(e.target.id);
+});
+
+atualizarStats();
+renderListaSidebar();
+</script>
+</body>
+</html>

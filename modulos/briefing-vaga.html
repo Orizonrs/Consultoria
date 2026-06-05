@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Briefing de Vaga | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+.btn-orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0.4rem;margin-bottom:1.5rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:0.35rem;}
+.tab-btn{flex:1;font-family:inherit;font-size:0.72rem;font-weight:700;padding:0.55rem 0.8rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.18s;color:var(--muted);background:transparent;text-align:center;}
+.tab-btn.on{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.25);}
+.tab-btn:hover:not(.on){color:var(--text);background:rgba(255,255,255,0.04);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:1rem;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+.sidebar{display:flex;flex-direction:column;gap:0.6rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+
+/* VAGA ITEM */
+.vaga-item{display:flex;flex-direction:column;gap:0.3rem;padding:0.8rem 1rem;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:0.4rem;}
+.vaga-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.05);}
+.vaga-item.ativo{border-color:var(--border2);background:rgba(59,130,246,0.08);}
+.vi-titulo{font-size:0.76rem;font-weight:700;}
+.vi-cliente{font-size:0.63rem;color:var(--muted);}
+.vi-footer{display:flex;align-items:center;justify-content:space-between;margin-top:0.2rem;}
+.vi-status{font-size:0.52rem;font-weight:800;padding:0.14rem 0.45rem;border-radius:6px;}
+.vi-status.aberta{background:rgba(46,204,113,0.1);color:var(--green);}
+.vi-status.pausada{background:rgba(243,156,18,0.1);color:var(--orange);}
+.vi-status.fechada{background:rgba(231,76,60,0.1);color:var(--red);}
+.vi-status.rascunho{background:rgba(100,100,100,0.15);color:var(--muted);}
+.vi-data{font-size:0.58rem;color:var(--muted);font-family:var(--mono);}
+
+/* PROGRESS BRIEFING */
+.progress-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-top:0.5rem;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 0.4s ease;}
+
+/* STATS */
+.stats-top{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+@media(max-width:700px){.stats-top{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.stat-card::before{content:attr(data-icon);position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);font-size:2.2rem;opacity:0.07;}
+.sc-lbl{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.4rem;}
+.sc-val{font-size:1.5rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.2rem;}
+.sc-sub{font-size:0.62rem;color:var(--muted);}
+
+/* FORM */
+.form-section{margin-bottom:1.5rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;margin-bottom:0.9rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;}
+@media(max-width:700px){.form-grid-3{grid-template-columns:1fr 1fr;}}
+.form-group{display:flex;flex-direction:column;gap:0.35rem;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:0.62rem;font-weight:700;color:var(--text2);letter-spacing:0.5px;}
+.form-label .req{color:var(--red);margin-left:2px;}
+.form-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;width:100%;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+textarea.form-input{resize:vertical;min-height:90px;line-height:1.6;}
+select.form-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.8rem center;}
+select.form-input option{background:#1a1a1a;}
+.form-hint{font-size:0.6rem;color:var(--muted);margin-top:0.15rem;}
+
+/* TAGS INPUT */
+.tags-container{display:flex;flex-wrap:wrap;gap:0.4rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.5rem 0.8rem;min-height:42px;cursor:text;transition:border-color 0.18s;}
+.tags-container:focus-within{border-color:var(--border2);}
+.tag-pill{display:inline-flex;align-items:center;gap:0.3rem;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:var(--accent);font-size:0.65rem;font-weight:700;padding:0.2rem 0.55rem;border-radius:99px;}
+.tag-pill.red{background:rgba(231,76,60,0.1);border-color:rgba(231,76,60,0.25);color:var(--red);}
+.tag-pill.green{background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.25);color:var(--green);}
+.tag-pill .tag-x{cursor:pointer;opacity:0.6;font-size:0.7rem;line-height:1;}
+.tag-pill .tag-x:hover{opacity:1;}
+.tag-input{border:none;background:transparent;outline:none;font-family:inherit;font-size:0.74rem;color:var(--text);min-width:80px;flex:1;}
+.tag-input::placeholder{color:var(--muted);}
+
+/* ESCALA SALARIO */
+.salary-range{display:flex;align-items:center;gap:0.5rem;}
+.salary-range .form-input{flex:1;}
+.salary-sep{font-size:0.7rem;color:var(--muted);flex-shrink:0;}
+
+/* SCORE COMPLETUDE */
+.completude-wrap{background:rgba(59,130,246,0.04);border:1px solid var(--border);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.2rem;}
+.comp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}
+.comp-label{font-size:0.68rem;font-weight:700;color:var(--text2);}
+.comp-pct{font-size:1.1rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.comp-bar{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-bottom:0.6rem;}
+.comp-fill{height:100%;border-radius:99px;transition:width 0.4s,background 0.4s;}
+.comp-items{display:flex;flex-wrap:wrap;gap:0.35rem;}
+.comp-item{display:flex;align-items:center;gap:0.3rem;font-size:0.6rem;color:var(--muted);}
+.comp-item.ok{color:var(--green);}
+.comp-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* RADIO BUTTONS */
+.radio-group{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.radio-opt{display:flex;align-items:center;gap:0.4rem;cursor:pointer;}
+.radio-opt input{display:none;}
+.radio-box{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+.radio-opt input:checked + .radio-box{border-color:var(--accent);background:var(--accent);}
+.radio-box::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;opacity:0;transition:opacity 0.15s;}
+.radio-opt input:checked + .radio-box::after{opacity:1;}
+.radio-label{font-size:0.72rem;color:var(--text2);}
+
+/* CHECKLIST DEALBREAKERS */
+.db-list{display:flex;flex-direction:column;gap:0.4rem;}
+.db-item{display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0.75rem;background:rgba(231,76,60,0.04);border:1px solid rgba(231,76,60,0.12);border-radius:8px;}
+.db-ico{font-size:0.85rem;flex-shrink:0;}
+.db-text{font-size:0.72rem;flex:1;color:var(--text2);}
+.db-rm{cursor:pointer;font-size:0.75rem;color:var(--muted);opacity:0.6;}
+.db-rm:hover{opacity:1;color:var(--red);}
+.db-add{display:flex;gap:0.5rem;margin-top:0.5rem;}
+
+/* PREVIEW CARD */
+.preview-vaga{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;}
+.pv-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);}
+.pv-cargo{font-size:1.2rem;font-weight:900;margin-bottom:0.2rem;}
+.pv-cliente{font-size:0.75rem;color:var(--muted);}
+.pv-badges{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.5rem;}
+.pv-badge{font-size:0.6rem;font-weight:700;padding:0.2rem 0.55rem;border-radius:99px;border:1px solid;}
+.pv-section{margin-bottom:1rem;}
+.pv-section-title{font-size:0.58rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.5rem;}
+.pv-text{font-size:0.76rem;color:var(--text2);line-height:1.65;}
+.pv-chips{display:flex;flex-wrap:wrap;gap:0.35rem;}
+.pv-chip{font-size:0.63rem;font-weight:600;padding:0.2rem 0.55rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:var(--text2);}
+.pv-chip.must{background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);color:var(--accent);}
+.pv-chip.db{background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.2);color:var(--red);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:900;align-items:center;justify-content:center;padding:1rem;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:1.8rem;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;}
+.modal-title{font-size:0.95rem;font-weight:900;}
+.modal-close{cursor:pointer;font-size:1.1rem;color:var(--muted);transition:color 0.15s;background:none;border:none;font-family:inherit;}
+.modal-close:hover{color:var(--text);}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;}
+.toast{background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.1rem;font-size:0.74rem;font-weight:600;color:var(--text);box-shadow:0 8px 30px rgba(0,0,0,0.4);animation:toastIn 0.3s ease;max-width:300px;}
+.toast.erro{border-color:rgba(231,76,60,0.4);color:var(--red);}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem 1rem;}
+.empty-ico{font-size:2.8rem;margin-bottom:0.8rem;opacity:0.3;}
+.empty-text{font-size:0.8rem;color:var(--muted);}
+
+/* BENEFICIO TOGGLE */
+.benef-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;}
+@media(max-width:500px){.benef-grid{grid-template-columns:repeat(2,1fr);}}
+.benef-item{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.7rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;cursor:pointer;transition:all 0.15s;font-size:0.68rem;color:var(--muted);user-select:none;}
+.benef-item.on{background:rgba(46,204,113,0.08);border-color:rgba(46,204,113,0.25);color:var(--green);}
+.benef-item .benef-ico{font-size:0.9rem;flex-shrink:0;}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>ORIZON ATS</div>
+    <div class="hero-title">Briefing de <span>Vaga</span></div>
+    <div class="hero-sub">Formulário estruturado para captura completa de requisitos, cultura e dealbreakers</div>
+  </div>
+  <div class="hero-right">
+    <button class="btn btn-ghost" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    <button class="btn btn-green" onclick="imprimirBriefing()">🖨 Imprimir</button>
+    <button class="btn btn-primary" onclick="abrirModal('modal-nova')">+ Nova Vaga</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-top" id="statsTop">
+  <div class="stat-card" data-icon="📋">
+    <div class="sc-lbl">Total de Vagas</div>
+    <div class="sc-val" id="stat-total">0</div>
+    <div class="sc-sub">briefings cadastrados</div>
+  </div>
+  <div class="stat-card" data-icon="🟢">
+    <div class="sc-lbl">Abertas</div>
+    <div class="sc-val" id="stat-abertas" style="color:var(--green)">0</div>
+    <div class="sc-sub">em andamento</div>
+  </div>
+  <div class="stat-card" data-icon="⚡">
+    <div class="sc-lbl">Completos</div>
+    <div class="sc-val" id="stat-completos" style="color:var(--accent)">0</div>
+    <div class="sc-sub">briefing ≥ 80%</div>
+  </div>
+  <div class="stat-card" data-icon="🎯">
+    <div class="sc-lbl">Completude Média</div>
+    <div class="sc-val" id="stat-media" style="color:var(--orange)">0%</div>
+    <div class="sc-sub">qualidade do briefing</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-nav">
+  <button class="tab-btn on" onclick="trocarTab('lista',this)">📋 Vagas</button>
+  <button class="tab-btn" onclick="trocarTab('formulario',this)">✏️ Briefing</button>
+  <button class="tab-btn" onclick="trocarTab('preview',this)">👁 Preview</button>
+</div>
+
+<!-- TAB: LISTA -->
+<div id="tab-lista">
+  <div class="layout">
+    <div class="sidebar">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📂 Vagas</div>
+          <span class="card-badge" id="badge-count">0</span>
+        </div>
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" placeholder="Buscar vaga ou cliente..." oninput="filtrarVagas(this.value)" id="inp-busca"/>
+        </div>
+        <div style="margin-bottom:0.6rem;">
+          <select class="form-input" style="font-size:0.7rem;" onchange="filtrarVagas(document.getElementById('inp-busca').value)" id="sel-status-filtro">
+            <option value="">Todos os status</option>
+            <option value="aberta">Aberta</option>
+            <option value="pausada">Pausada</option>
+            <option value="fechada">Fechada</option>
+            <option value="rascunho">Rascunho</option>
+          </select>
+        </div>
+        <div id="lista-vagas"></div>
+      </div>
+    </div>
+    <div class="main-area" id="main-lista">
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-ico">📋</div>
+          <div class="empty-text">Selecione uma vaga para ver o resumo<br>ou crie um novo briefing</div>
+          <button class="btn btn-primary" style="margin-top:1rem;" onclick="abrirModal('modal-nova')">+ Nova Vaga</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: FORMULÁRIO -->
+<div id="tab-formulario" style="display:none;">
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">✏️ <span id="form-titulo-label">Novo Briefing</span></div>
+      <div style="display:flex;gap:0.5rem;">
+        <button class="btn btn-ghost btn-sm" onclick="limparForm()">🗑 Limpar</button>
+        <button class="btn btn-green btn-sm" onclick="salvarBriefing()">💾 Salvar</button>
+      </div>
+    </div>
+
+    <!-- COMPLETUDE -->
+    <div class="completude-wrap" id="comp-wrap">
+      <div class="comp-header">
+        <div class="comp-label">Completude do Briefing</div>
+        <div class="comp-pct" id="comp-pct">0%</div>
+      </div>
+      <div class="comp-bar"><div class="comp-fill" id="comp-fill" style="width:0%;background:var(--red);"></div></div>
+      <div class="comp-items" id="comp-items"></div>
+    </div>
+
+    <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
+    <div class="form-section">
+      <div class="sec-label">1 — Identificação da Vaga</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Título do Cargo <span class="req">*</span></label>
+          <input class="form-input" id="f-cargo" placeholder="Ex: Analista de RH Sênior" oninput="calcularCompletude()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente / Empresa <span class="req">*</span></label>
+          <input class="form-input" id="f-cliente" placeholder="Nome da empresa" oninput="calcularCompletude()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Departamento / Área</label>
+          <input class="form-input" id="f-area" placeholder="Ex: Recursos Humanos"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nível da Vaga <span class="req">*</span></label>
+          <select class="form-input" id="f-nivel" onchange="calcularCompletude()">
+            <option value="">Selecione...</option>
+            <option>Estágio</option>
+            <option>Júnior</option>
+            <option>Pleno</option>
+            <option>Sênior</option>
+            <option>Especialista</option>
+            <option>Coordenador</option>
+            <option>Gerente</option>
+            <option>Diretor</option>
+            <option>C-Level</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modalidade</label>
+          <select class="form-input" id="f-modalidade">
+            <option value="">Selecione...</option>
+            <option>Presencial</option>
+            <option>Híbrido</option>
+            <option>Remoto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Localidade</label>
+          <input class="form-input" id="f-local" placeholder="Cidade / Estado ou 'Remoto'"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo de Contrato</label>
+          <select class="form-input" id="f-contrato">
+            <option value="">Selecione...</option>
+            <option>CLT</option>
+            <option>PJ</option>
+            <option>Temporário</option>
+            <option>Freelancer</option>
+            <option>Sócio / Co-founder</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status da Vaga</label>
+          <select class="form-input" id="f-status">
+            <option value="rascunho">Rascunho</option>
+            <option value="aberta">Aberta</option>
+            <option value="pausada">Pausada</option>
+            <option value="fechada">Fechada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Número de Vagas</label>
+          <input class="form-input" id="f-qtd" type="number" min="1" value="1" placeholder="1"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prazo de Entrega</label>
+          <input class="form-input" id="f-prazo" type="date"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recrutador Responsável</label>
+          <input class="form-input" id="f-recrutador" placeholder="Nome do recrutador"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contato no Cliente</label>
+          <input class="form-input" id="f-contato" placeholder="Nome / cargo do ponto focal"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 2: REMUNERAÇÃO -->
+    <div class="form-section">
+      <div class="sec-label">2 — Remuneração & Benefícios</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Faixa Salarial <span class="req">*</span></label>
+          <div class="salary-range">
+            <input class="form-input" id="f-sal-min" type="number" placeholder="Mínimo" oninput="calcularCompletude()"/>
+            <span class="salary-sep">até</span>
+            <input class="form-input" id="f-sal-max" type="number" placeholder="Máximo" oninput="calcularCompletude()"/>
+          </div>
+          <div class="form-hint">Valores em R$. Deixe em branco se for sigilo.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Modelo de Remuneração</label>
+          <select class="form-input" id="f-rem-modelo">
+            <option value="">Selecione...</option>
+            <option>Fixo</option>
+            <option>Fixo + Variável</option>
+            <option>Comissionado</option>
+            <option>Participação nos lucros</option>
+            <option>Equity / Stock options</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Benefícios Oferecidos</label>
+          <div class="benef-grid" id="benef-grid">
+            <!-- gerado por JS -->
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Outros Benefícios / Observações</label>
+          <textarea class="form-input" id="f-benef-obs" placeholder="PLR, bônus anual, day off de aniversário..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 3: REQUISITOS -->
+    <div class="form-section">
+      <div class="sec-label">3 — Perfil & Requisitos</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Formação Acadêmica</label>
+          <select class="form-input" id="f-formacao">
+            <option value="">Sem exigência</option>
+            <option>Ensino Médio Completo</option>
+            <option>Ensino Superior Cursando</option>
+            <option>Ensino Superior Completo</option>
+            <option>Pós-graduação / MBA</option>
+            <option>Mestrado</option>
+            <option>Doutorado</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Experiência Mínima</label>
+          <select class="form-input" id="f-exp">
+            <option value="">Sem experiência</option>
+            <option>6 meses</option>
+            <option>1 ano</option>
+            <option>2 anos</option>
+            <option>3 anos</option>
+            <option>5 anos</option>
+            <option>7+ anos</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Competências Técnicas Obrigatórias <span class="req">*</span></label>
+          <div class="tags-container" id="tags-hard" onclick="document.getElementById('inp-hard').focus()">
+            <input class="tag-input" id="inp-hard" placeholder="Digite e pressione Enter..." onkeydown="addTag(event,'tags-hard','hard')"/>
+          </div>
+          <div class="form-hint">Habilidades técnicas sem as quais o candidato é eliminado</div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Competências Comportamentais Desejáveis</label>
+          <div class="tags-container" id="tags-soft" onclick="document.getElementById('inp-soft').focus()">
+            <input class="tag-input" id="inp-soft" placeholder="Digite e pressione Enter..." onkeydown="addTag(event,'tags-soft','soft')"/>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Diferenciais / Bônus (não obrigatórios)</label>
+          <div class="tags-container" id="tags-plus" onclick="document.getElementById('inp-plus').focus()">
+            <input class="tag-input" id="inp-plus" placeholder="Digite e pressione Enter..." onkeydown="addTag(event,'tags-plus','plus')"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Idiomas</label>
+          <div class="tags-container" id="tags-idiomas" onclick="document.getElementById('inp-idiomas').focus()">
+            <input class="tag-input" id="inp-idiomas" placeholder="Ex: Inglês Avançado" onkeydown="addTag(event,'tags-idiomas','idioma')"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNH / Veículo Próprio</label>
+          <select class="form-input" id="f-cnh">
+            <option value="">Não exigido</option>
+            <option>CNH B</option>
+            <option>CNH C/D/E</option>
+            <option>CNH + Veículo Próprio</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 4: CULTURA & DEALBREAKERS -->
+    <div class="form-section">
+      <div class="sec-label">4 — Cultura & Dealbreakers</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Sobre a Empresa / Cultura Organizacional <span class="req">*</span></label>
+          <textarea class="form-input" id="f-cultura" rows="4" placeholder="Como é o ambiente de trabalho? Qual o ritmo? Quais os valores da empresa?" oninput="calcularCompletude()"></textarea>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Por que é um bom lugar para trabalhar?</label>
+          <textarea class="form-input" id="f-selling" rows="3" placeholder="O que torna essa oportunidade atrativa? O que a empresa oferece além do salário?"></textarea>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">🚫 Dealbreakers — o que ELIMINA automaticamente</label>
+          <div class="db-list" id="db-list"></div>
+          <div class="db-add">
+            <input class="form-input" id="inp-db" placeholder="Ex: Não ter experiência com SAP" style="flex:1;" onkeydown="if(event.key==='Enter')addDealbreaker()"/>
+            <button class="btn btn-danger btn-sm" onclick="addDealbreaker()">+ Adicionar</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fit Cultural — Perfil de Personalidade</label>
+          <select class="form-input" id="f-perfil-cult">
+            <option value="">Selecione...</option>
+            <option>Executor / Hands-on</option>
+            <option>Analítico / Metódico</option>
+            <option>Relacional / Comunicativo</option>
+            <option>Inovador / Disruptivo</option>
+            <option>Líder / Influenciador</option>
+            <option>Generalista / Adaptável</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Diversidade & Inclusão</label>
+          <div class="tags-container" id="tags-dei" onclick="document.getElementById('inp-dei').focus()">
+            <input class="tag-input" id="inp-dei" placeholder="Ex: Prioritário para PCDs..." onkeydown="addTag(event,'tags-dei','dei')"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO 5: PROCESSO SELETIVO -->
+    <div class="form-section">
+      <div class="sec-label">5 — Processo Seletivo</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">Etapas do Processo <span class="req">*</span></label>
+          <div class="tags-container" id="tags-etapas" onclick="document.getElementById('inp-etapas').focus()">
+            <input class="tag-input" id="inp-etapas" placeholder="Ex: Triagem → Entrevista RH → Teste Técnico → CEO..." onkeydown="addTag(event,'tags-etapas','etapa')"/>
+          </div>
+          <div class="form-hint">Adicione cada etapa em ordem</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">SLA de Retorno ao Candidato</label>
+          <select class="form-input" id="f-sla">
+            <option value="">Selecione...</option>
+            <option>24 horas</option>
+            <option>48 horas</option>
+            <option>3 dias úteis</option>
+            <option>5 dias úteis</option>
+            <option>1 semana</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Formato das Entrevistas</label>
+          <select class="form-input" id="f-fmt-entrevista">
+            <option value="">Selecione...</option>
+            <option>Online (Google Meet, Teams)</option>
+            <option>Presencial</option>
+            <option>Híbrido (online + presencial)</option>
+            <option>Assíncrono (vídeo gravado)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Decisor Final</label>
+          <input class="form-input" id="f-decisor" placeholder="Cargo / nome de quem aprova"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Observações Adicionais / Briefing Livre</label>
+          <textarea class="form-input" id="f-obs" rows="4" placeholder="Contexto da vaga, substituição, expansão, histórico de tentativas anteriores..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:0.6rem;">
+      <button class="btn btn-ghost" onclick="limparForm()">🗑 Limpar</button>
+      <button class="btn btn-primary" onclick="salvarBriefing()">💾 Salvar Briefing</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: PREVIEW -->
+<div id="tab-preview" style="display:none;">
+  <div id="preview-container">
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-ico">👁</div>
+        <div class="empty-text">Preencha o briefing e salve para ver o preview</div>
+        <button class="btn btn-primary" style="margin-top:1rem;" onclick="trocarTab('formulario',document.querySelectorAll('.tab-btn')[1])">✏️ Ir para o Briefing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOVA VAGA RÁPIDA -->
+<div class="modal-overlay" id="modal-nova">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📋 Nova Vaga</div>
+      <button class="modal-close" onclick="fecharModal('modal-nova')">✕</button>
+    </div>
+    <div class="form-group" style="margin-bottom:0.8rem;">
+      <label class="form-label">Título do Cargo <span class="req">*</span></label>
+      <input class="form-input" id="mn-cargo" placeholder="Ex: Desenvolvedor Full Stack"/>
+    </div>
+    <div class="form-group" style="margin-bottom:0.8rem;">
+      <label class="form-label">Cliente <span class="req">*</span></label>
+      <input class="form-input" id="mn-cliente" placeholder="Nome da empresa"/>
+    </div>
+    <div class="form-group" style="margin-bottom:1.2rem;">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="mn-status">
+        <option value="rascunho">Rascunho</option>
+        <option value="aberta">Aberta</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-nova')">Cancelar</button>
+      <button class="btn btn-primary" onclick="criarVagaRapida()">Criar & Preencher →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// ==================== DADOS ====================
+const BENEFICIOS_LISTA = [
+  {ico:'🏥',label:'Plano de Saúde'},
+  {ico:'🦷',label:'Plano Odonto'},
+  {ico:'🍽',label:'VR / VA'},
+  {ico:'🚗',label:'VT / Combustível'},
+  {ico:'💰',label:'PLR / Bônus'},
+  {ico:'📚',label:'Bolsa Estudo'},
+  {ico:'🏋',label:'Gympass / Bem-estar'},
+  {ico:'🏠',label:'Home Office'},
+  {ico:'🐶',label:'Pet Friendly'},
+  {ico:'👶',label:'Creche / Babá'},
+  {ico:'💊',label:'Farmácia'},
+  {ico:'📱',label:'Celular Corporativo'},
+];
+
+let vagas = JSON.parse(localStorage.getItem('orizon_briefings')||'[]');
+if(!vagas.length) vagas = dadosDemostracao();
+
+let vagaAtiva = null;
+let tagsData = {hard:[],soft:[],plus:[],idioma:[],dei:[],etapa:[]};
+let dealbreakers = [];
+let beneficiosOn = new Set();
+
+// ==================== DEMO ====================
+function dadosDemostracao(){
+  return [
+    {
+      id:'b1',cargo:'Gerente de Projetos',cliente:'TechSol Ltda',area:'PMO',nivel:'Gerente',
+      modalidade:'Híbrido',local:'São Paulo - SP',contrato:'CLT',status:'aberta',qtd:1,
+      prazo:'2024-08-30',recrutador:'Ana Lima',contato:'Carlos Mendes (COO)',
+      salMin:12000,salMax:16000,remModelo:'Fixo + Variável',beneficios:['Plano de Saúde','VR / VA','PLR / Bônus'],
+      hard:['PMP ou equivalente','MS Project','Gestão de stakeholders'],
+      soft:['Liderança','Comunicação assertiva','Gestão de conflitos'],
+      plus:['Experiência em startup','Inglês avançado'],
+      idiomas:['Inglês Intermediário'],
+      cultura:'Empresa de tecnologia com cultura ágil, ritmo acelerado e ambiente descontraído. Valorizam autonomia e entrega de resultado.',
+      selling:'Oportunidade de liderar projetos de alta visibilidade com impacto direto na estratégia da empresa.',
+      dealbreakers:['Não ter certificação PMP ou PRINCE2','Não ter gerenciado equipes acima de 10 pessoas'],
+      etapas:['Triagem CV','Entrevista RH','Case Prático','Entrevista CEO'],
+      sla:'48 horas',fmtEntrevista:'Online (Google Meet, Teams)',decisor:'CEO',
+      obs:'Substituição de gerente que saiu. Processo urgente — prazo máximo 45 dias.',
+      criadoEm: new Date().toISOString()
+    },
+    {
+      id:'b2',cargo:'Analista de Marketing Digital',cliente:'Marca Forte S/A',area:'Marketing',nivel:'Pleno',
+      modalidade:'Remoto',local:'Remoto - Brasil',contrato:'CLT',status:'aberta',qtd:2,
+      prazo:'2024-09-15',recrutador:'Bruno Costa',contato:'Patrícia Oliveira (CMO)',
+      salMin:5000,salMax:8000,remModelo:'Fixo',beneficios:['Plano de Saúde','VR / VA','Home Office'],
+      hard:['Google Ads','Meta Ads','Google Analytics','SEO'],
+      soft:['Criatividade','Organização','Autonomia'],
+      plus:['RD Station','Hubspot'],
+      idiomas:['Inglês Básico'],
+      cultura:'Empresa consumer goods com equipe jovem e dinâmica. Trabalho 100% remoto com reuniões semanais.',
+      selling:'Flexibilidade total de horário e home office permanente. Equipe super colaborativa.',
+      dealbreakers:['Nunca ter gerenciado verba de mídia paga','Não ter portfólio comprovado'],
+      etapas:['Triagem CV','Entrevista RH','Entrevista Gestor','Análise de portfólio'],
+      sla:'3 dias úteis',fmtEntrevista:'Online (Google Meet, Teams)',decisor:'CMO',
+      obs:'Expansão de equipe. 2 vagas simultâneas.',
+      criadoEm: new Date().toISOString()
+    },
+    {
+      id:'b3',cargo:'Desenvolvedor Backend Python',cliente:'Fintech Nexus',area:'Engenharia',nivel:'Sênior',
+      modalidade:'Remoto',local:'Remoto - Brasil',contrato:'PJ',status:'rascunho',qtd:1,
+      prazo:'',recrutador:'',contato:'',
+      salMin:15000,salMax:22000,remModelo:'PJ',beneficios:['Home Office'],
+      hard:['Python','Django ou FastAPI','PostgreSQL','AWS'],
+      soft:['Autogestão','Pensamento crítico'],
+      plus:['Kubernetes','Go lang'],
+      idiomas:['Inglês Avançado'],
+      cultura:'Fintech com cultura de engenharia forte, code review rigoroso, deploys diários.',
+      selling:'Salário PJ competitivo, projeto desafiador com escala nacional.',
+      dealbreakers:['Não ter experiência com sistemas financeiros','Não ter contribuição em projetos open source'],
+      etapas:['Triagem','Entrevista Técnica','Pair Programming'],
+      sla:'48 horas',fmtEntrevista:'Online (Google Meet, Teams)',decisor:'CTO',
+      obs:'',criadoEm: new Date().toISOString()
+    }
+  ];
+}
+
+// ==================== INIT ====================
+function init(){
+  renderBeneficios();
+  renderLista();
+  atualizarStats();
+  calcularCompletude();
+}
+
+// ==================== STATS ====================
+function atualizarStats(){
+  const total = vagas.length;
+  const abertas = vagas.filter(v=>v.status==='aberta').length;
+  const completos = vagas.filter(v=>calcScore(v)>=80).length;
+  const media = total ? Math.round(vagas.reduce((s,v)=>s+calcScore(v),0)/total) : 0;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-abertas').textContent = abertas;
+  document.getElementById('stat-completos').textContent = completos;
+  document.getElementById('stat-media').textContent = media+'%';
+}
+
+function calcScore(v){
+  const campos = [
+    !!v.cargo, !!v.cliente, !!v.nivel, !!v.contrato, !!v.modalidade,
+    !!(v.salMin||v.salMax), !!(v.hard&&v.hard.length),
+    !!v.cultura, !!(v.etapas&&v.etapas.length), !!v.status
+  ];
+  return Math.round((campos.filter(Boolean).length / campos.length)*100);
+}
+
+// ==================== LISTA ====================
+function renderLista(){
+  const busca = (document.getElementById('inp-busca')?.value||'').toLowerCase();
+  const sfilt = document.getElementById('sel-status-filtro')?.value||'';
+  const filtradas = vagas.filter(v=>{
+    const m = (!busca || v.cargo.toLowerCase().includes(busca) || (v.cliente||'').toLowerCase().includes(busca));
+    const s = (!sfilt || v.status===sfilt);
+    return m && s;
+  });
+  document.getElementById('badge-count').textContent = filtradas.length;
+  const cont = document.getElementById('lista-vagas');
+  if(!filtradas.length){ cont.innerHTML='<div class="empty-state" style="padding:1.5rem 0;"><div class="empty-ico" style="font-size:1.8rem;">🔍</div><div class="empty-text">Nenhuma vaga encontrada</div></div>'; return; }
+  cont.innerHTML = filtradas.map(v=>{
+    const score = calcScore(v);
+    return `<div class="vaga-item${vagaAtiva===v.id?' ativo':''}" onclick="selecionarVaga('${v.id}')">
+      <div class="vi-titulo">${v.cargo}</div>
+      <div class="vi-cliente">${v.cliente||'—'} · ${v.nivel||'—'}</div>
+      <div class="vi-footer">
+        <span class="vi-status ${v.status}">${v.status}</span>
+        <span class="vi-data">${score}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${score}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarVagas(){ renderLista(); }
+
+function selecionarVaga(id){
+  vagaAtiva = id;
+  renderLista();
+  const v = vagas.find(x=>x.id===id);
+  if(!v) return;
+  renderDetalhe(v);
+}
+
+function renderDetalhe(v){
+  const score = calcScore(v);
+  const corScore = score>=80?'var(--green)':score>=50?'var(--orange)':'var(--red)';
+  document.getElementById('main-lista').innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:1.1rem;font-weight:900;margin-bottom:0.25rem;">${v.cargo}</div>
+          <div style="font-size:0.75rem;color:var(--muted);">${v.cliente} · ${v.area||''} · ${v.nivel}</div>
+          <div style="display:flex;gap:0.4rem;margin-top:0.5rem;flex-wrap:wrap;">
+            <span class="card-badge ${v.status==='aberta'?'green':v.status==='fechada'?'red':''}">${v.status}</span>
+            ${v.modalidade?`<span class="card-badge">${v.modalidade}</span>`:''}
+            ${v.contrato?`<span class="card-badge">${v.contrato}</span>`:''}
+            ${v.qtd>1?`<span class="card-badge orange">${v.qtd} vagas</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
+          <div style="text-align:center;background:rgba(59,130,246,0.05);border:1px solid var(--border);border-radius:10px;padding:0.5rem 1rem;">
+            <div style="font-size:1.3rem;font-weight:900;font-family:var(--mono);color:${corScore};">${score}%</div>
+            <div style="font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Completude</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="editarVaga('${v.id}')">✏️ Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="verPreview('${v.id}')">👁 Preview</button>
+          <button class="btn btn-danger btn-sm" onclick="deletarVaga('${v.id}')">🗑</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:1.2rem;">
+        ${campoInfo('📍',v.local||'—','Localidade')}
+        ${campoInfo('💰',v.salMin&&v.salMax?`R$ ${fmtNum(v.salMin)} – ${fmtNum(v.salMax)}`:v.salMin?`A partir de R$ ${fmtNum(v.salMin)}`:'Sigiloso','Faixa Salarial')}
+        ${campoInfo('📅',v.prazo?fmtData(v.prazo):'Sem prazo','Prazo Entrega')}
+        ${campoInfo('👤',v.recrutador||'—','Recrutador')}
+        ${campoInfo('🤝',v.contato||'—','Contato Cliente')}
+        ${campoInfo('⚖',v.sla||'—','SLA Retorno')}
+      </div>
+
+      ${v.hard&&v.hard.length?`<div style="margin-bottom:1rem;"><div class="sec-label" style="font-size:0.55rem;">Requisitos Obrigatórios</div><div style="display:flex;flex-wrap:wrap;gap:0.35rem;">${v.hard.map(t=>`<span class="pv-chip must">${t}</span>`).join('')}</div></div>`:''}
+      ${v.dealbreakers&&v.dealbreakers.length?`<div style="margin-bottom:1rem;"><div class="sec-label" style="font-size:0.55rem;">Dealbreakers</div><div style="display:flex;flex-direction:column;gap:0.3rem;">${v.dealbreakers.map(d=>`<div style="display:flex;align-items:center;gap:0.5rem;font-size:0.7rem;color:var(--red);">🚫 ${d}</div>`).join('')}</div></div>`:''}
+      ${v.etapas&&v.etapas.length?`<div><div class="sec-label" style="font-size:0.55rem;">Etapas do Processo</div><div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;">${v.etapas.map((e,i)=>`${i>0?'<span style="color:var(--muted);font-size:0.7rem;">→</span>':''}<span class="pv-chip">${e}</span>`).join('')}</div></div>`:''}
+    </div>`;
+}
+
+function campoInfo(ico,val,label){
+  return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:0.55rem 0.7rem;">
+    <div style="font-size:0.57rem;color:var(--muted);margin-bottom:0.2rem;">${ico} ${label}</div>
+    <div style="font-size:0.72rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val}</div>
+  </div>`;
+}
+
+// ==================== FORMULÁRIO ====================
+function renderBeneficios(){
+  document.getElementById('benef-grid').innerHTML = BENEFICIOS_LISTA.map(b=>`
+    <div class="benef-item${beneficiosOn.has(b.label)?' on':''}" onclick="toggleBenef('${b.label}',this)">
+      <span class="benef-ico">${b.ico}</span>${b.label}
+    </div>`).join('');
+}
+
+function toggleBenef(label, el){
+  beneficiosOn.has(label) ? beneficiosOn.delete(label) : beneficiosOn.add(label);
+  el.classList.toggle('on');
+  calcularCompletude();
+}
+
+function addTag(e, containerId, tipo){
+  if(e.key!=='Enter' && e.key!==',') return;
+  e.preventDefault();
+  const inp = e.target;
+  const val = inp.value.trim();
+  if(!val) return;
+  if(!tagsData[tipo]) tagsData[tipo]=[];
+  if(tagsData[tipo].includes(val)) { inp.value=''; return; }
+  tagsData[tipo].push(val);
+  renderTag(containerId, val, tipo);
+  inp.value='';
+  calcularCompletude();
+}
+
+function renderTag(containerId, val, tipo){
+  const cont = document.getElementById(containerId);
+  const inp = cont.querySelector('.tag-input');
+  const pill = document.createElement('span');
+  const cls = tipo==='hard'?'must':tipo==='dei'?'red':'';
+  pill.className = `tag-pill ${cls}`;
+  pill.innerHTML = `${val}<span class="tag-x" onclick="removeTag(this,'${tipo}','${val}','${containerId}')">✕</span>`;
+  cont.insertBefore(pill, inp);
+}
+
+function removeTag(el, tipo, val, containerId){
+  tagsData[tipo] = tagsData[tipo].filter(t=>t!==val);
+  el.parentElement.remove();
+  calcularCompletude();
+}
+
+function addDealbreaker(){
+  const inp = document.getElementById('inp-db');
+  const val = inp.value.trim();
+  if(!val) return;
+  dealbreakers.push(val);
+  inp.value='';
+  renderDealbreakers();
+}
+
+function renderDealbreakers(){
+  document.getElementById('db-list').innerHTML = dealbreakers.map((d,i)=>`
+    <div class="db-item">
+      <span class="db-ico">🚫</span>
+      <span class="db-text">${d}</span>
+      <span class="db-rm" onclick="removeDealbreaker(${i})">✕</span>
+    </div>`).join('');
+}
+
+function removeDealbreaker(i){ dealbreakers.splice(i,1); renderDealbreakers(); }
+
+// ==================== COMPLETUDE ====================
+const CRITERIOS = [
+  {id:'cargo',label:'Título do cargo',fn:()=>!!document.getElementById('f-cargo')?.value},
+  {id:'cliente',label:'Cliente',fn:()=>!!document.getElementById('f-cliente')?.value},
+  {id:'nivel',label:'Nível da vaga',fn:()=>!!document.getElementById('f-nivel')?.value},
+  {id:'salario',label:'Faixa salarial',fn:()=>!!(document.getElementById('f-sal-min')?.value||document.getElementById('f-sal-max')?.value)},
+  {id:'hard',label:'Competências técnicas',fn:()=>tagsData.hard.length>0},
+  {id:'cultura',label:'Cultura/empresa',fn:()=>!!document.getElementById('f-cultura')?.value},
+  {id:'dealbreakers',label:'Dealbreakers',fn:()=>dealbreakers.length>0},
+  {id:'etapas',label:'Etapas do processo',fn:()=>tagsData.etapa.length>0},
+  {id:'beneficios',label:'Benefícios',fn:()=>beneficiosOn.size>0},
+  {id:'prazo',label:'Prazo de entrega',fn:()=>!!document.getElementById('f-prazo')?.value},
+];
+
+function calcularCompletude(){
+  const ok = CRITERIOS.filter(c=>c.fn());
+  const pct = Math.round((ok.length/CRITERIOS.length)*100);
+  document.getElementById('comp-pct').textContent = pct+'%';
+  const fill = document.getElementById('comp-fill');
+  fill.style.width = pct+'%';
+  fill.style.background = pct>=80?'var(--green)':pct>=50?'var(--orange)':'var(--red)';
+  document.getElementById('comp-items').innerHTML = CRITERIOS.map(c=>{
+    const pass = c.fn();
+    return `<div class="comp-item${pass?' ok':''}"><div class="comp-dot"></div>${c.label}</div>`;
+  }).join('');
+}
+
+// ==================== SALVAR ====================
+function salvarBriefing(){
+  const cargo = document.getElementById('f-cargo').value.trim();
+  const cliente = document.getElementById('f-cliente').value.trim();
+  if(!cargo||!cliente){ toast('Preencha Cargo e Cliente','erro'); return; }
+
+  const id = vagaAtiva && vagas.find(v=>v.id===vagaAtiva) ? vagaAtiva : 'b'+Date.now();
+  const vaga = {
+    id, cargo, cliente,
+    area: document.getElementById('f-area').value,
+    nivel: document.getElementById('f-nivel').value,
+    modalidade: document.getElementById('f-modalidade').value,
+    local: document.getElementById('f-local').value,
+    contrato: document.getElementById('f-contrato').value,
+    status: document.getElementById('f-status').value,
+    qtd: parseInt(document.getElementById('f-qtd').value)||1,
+    prazo: document.getElementById('f-prazo').value,
+    recrutador: document.getElementById('f-recrutador').value,
+    contato: document.getElementById('f-contato').value,
+    salMin: parseFloat(document.getElementById('f-sal-min').value)||0,
+    salMax: parseFloat(document.getElementById('f-sal-max').value)||0,
+    remModelo: document.getElementById('f-rem-modelo').value,
+    beneficios: [...beneficiosOn],
+    benefObs: document.getElementById('f-benef-obs').value,
+    formacao: document.getElementById('f-formacao').value,
+    exp: document.getElementById('f-exp').value,
+    hard: [...tagsData.hard],
+    soft: [...tagsData.soft],
+    plus: [...tagsData.plus],
+    idiomas: [...tagsData.idioma],
+    cnh: document.getElementById('f-cnh').value,
+    cultura: document.getElementById('f-cultura').value,
+    selling: document.getElementById('f-selling').value,
+    dealbreakers: [...dealbreakers],
+    perfilCult: document.getElementById('f-perfil-cult').value,
+    dei: [...tagsData.dei],
+    etapas: [...tagsData.etapa],
+    sla: document.getElementById('f-sla').value,
+    fmtEntrevista: document.getElementById('f-fmt-entrevista').value,
+    decisor: document.getElementById('f-decisor').value,
+    obs: document.getElementById('f-obs').value,
+    criadoEm: new Date().toISOString()
+  };
+
+  const idx = vagas.findIndex(v=>v.id===id);
+  if(idx>=0) vagas[idx]=vaga; else vagas.unshift(vaga);
+  salvarDados();
+  vagaAtiva = id;
+  renderLista();
+  atualizarStats();
+  renderPreview(vaga);
+  toast('✅ Briefing salvo com sucesso!');
+  trocarTab('preview', document.querySelectorAll('.tab-btn')[2]);
+}
+
+function salvarDados(){ localStorage.setItem('orizon_briefings', JSON.stringify(vagas)); }
+
+// ==================== EDITAR / DELETAR ====================
+function editarVaga(id){
+  const v = vagas.find(x=>x.id===id);
+  if(!v) return;
+  vagaAtiva = id;
+  limparFormSilencioso();
+
+  document.getElementById('f-cargo').value = v.cargo||'';
+  document.getElementById('f-cliente').value = v.cliente||'';
+  document.getElementById('f-area').value = v.area||'';
+  document.getElementById('f-nivel').value = v.nivel||'';
+  document.getElementById('f-modalidade').value = v.modalidade||'';
+  document.getElementById('f-local').value = v.local||'';
+  document.getElementById('f-contrato').value = v.contrato||'';
+  document.getElementById('f-status').value = v.status||'rascunho';
+  document.getElementById('f-qtd').value = v.qtd||1;
+  document.getElementById('f-prazo').value = v.prazo||'';
+  document.getElementById('f-recrutador').value = v.recrutador||'';
+  document.getElementById('f-contato').value = v.contato||'';
+  document.getElementById('f-sal-min').value = v.salMin||'';
+  document.getElementById('f-sal-max').value = v.salMax||'';
+  document.getElementById('f-rem-modelo').value = v.remModelo||'';
+  document.getElementById('f-benef-obs').value = v.benefObs||'';
+  document.getElementById('f-formacao').value = v.formacao||'';
+  document.getElementById('f-exp').value = v.exp||'';
+  document.getElementById('f-cnh').value = v.cnh||'';
+  document.getElementById('f-cultura').value = v.cultura||'';
+  document.getElementById('f-selling').value = v.selling||'';
+  document.getElementById('f-perfil-cult').value = v.perfilCult||'';
+  document.getElementById('f-sla').value = v.sla||'';
+  document.getElementById('f-fmt-entrevista').value = v.fmtEntrevista||'';
+  document.getElementById('f-decisor').value = v.decisor||'';
+  document.getElementById('f-obs').value = v.obs||'';
+
+  // benefícios
+  beneficiosOn = new Set(v.beneficios||[]);
+  renderBeneficios();
+
+  // dealbreakers
+  dealbreakers = [...(v.dealbreakers||[])];
+  renderDealbreakers();
+
+  // tags
+  const tipos = {hard:'tags-hard',soft:'tags-soft',plus:'tags-plus',idioma:'tags-idiomas',dei:'tags-dei',etapa:'tags-etapas'};
+  const srcMap = {hard:v.hard,soft:v.soft,plus:v.plus,idioma:v.idiomas,dei:v.dei,etapa:v.etapas};
+  Object.entries(tipos).forEach(([tipo,contId])=>{
+    tagsData[tipo] = [...(srcMap[tipo]||[])];
+    const cont = document.getElementById(contId);
+    const inp = cont.querySelector('.tag-input');
+    cont.querySelectorAll('.tag-pill').forEach(p=>p.remove());
+    tagsData[tipo].forEach(val=>{
+      const cls = tipo==='hard'?'must':tipo==='dei'?'red':'';
+      const pill = document.createElement('span');
+      pill.className = `tag-pill ${cls}`;
+      pill.innerHTML = `${val}<span class="tag-x" onclick="removeTag(this,'${tipo}','${val}','${contId}')">✕</span>`;
+      cont.insertBefore(pill, inp);
+    });
+  });
+
+  document.getElementById('form-titulo-label').textContent = `Editando: ${v.cargo}`;
+  calcularCompletude();
+  trocarTab('formulario', document.querySelectorAll('.tab-btn')[1]);
+}
+
+function deletarVaga(id){
+  if(!confirm('Deletar este briefing?')) return;
+  vagas = vagas.filter(v=>v.id!==id);
+  if(vagaAtiva===id) vagaAtiva=null;
+  salvarDados();
+  renderLista();
+  atualizarStats();
+  document.getElementById('main-lista').innerHTML=`<div class="card"><div class="empty-state"><div class="empty-ico">📋</div><div class="empty-text">Selecione uma vaga</div></div></div>`;
+  toast('🗑 Briefing removido');
+}
+
+function criarVagaRapida(){
+  const cargo = document.getElementById('mn-cargo').value.trim();
+  const cliente = document.getElementById('mn-cliente').value.trim();
+  if(!cargo||!cliente){ toast('Preencha Cargo e Cliente','erro'); return; }
+  fecharModal('modal-nova');
+  limparFormSilencioso();
+  vagaAtiva = null;
+  document.getElementById('f-cargo').value = cargo;
+  document.getElementById('f-cliente').value = cliente;
+  document.getElementById('f-status').value = document.getElementById('mn-status').value;
+  document.getElementById('mn-cargo').value='';
+  document.getElementById('mn-cliente').value='';
+  document.getElementById('form-titulo-label').textContent = 'Novo Briefing';
+  calcularCompletude();
+  trocarTab('formulario', document.querySelectorAll('.tab-btn')[1]);
+}
+
+// ==================== PREVIEW ====================
+function verPreview(id){
+  const v = vagas.find(x=>x.id===id);
+  if(!v) return;
+  renderPreview(v);
+  trocarTab('preview', document.querySelectorAll('.tab-btn')[2]);
+}
+
+function renderPreview(v){
+  const score = calcScore(v);
+  const corScore = score>=80?'var(--green)':score>=50?'var(--orange)':'var(--red)';
+  document.getElementById('preview-container').innerHTML = `
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.8rem;">
+      <button class="btn btn-ghost btn-sm" onclick="editarVaga('${v.id}')">✏️ Editar</button>
+      <button class="btn btn-green btn-sm" onclick="imprimirBriefing()">🖨 Imprimir</button>
+      <button class="btn btn-primary btn-sm" onclick="exportarBriefingTexto(${JSON.stringify(v).replace(/'/g,"&#39;")})">📄 Exportar TXT</button>
+    </div>
+    <div class="preview-vaga" id="print-area">
+      <div class="pv-header">
+        <div>
+          <div class="pv-cargo">${v.cargo}</div>
+          <div class="pv-cliente">${v.cliente}${v.area?' · '+v.area:''}${v.local?' · '+v.local:''}</div>
+          <div class="pv-badges">
+            <span class="pv-badge" style="background:rgba(46,204,113,0.08);border-color:rgba(46,204,113,0.2);color:var(--green);">${v.status||'rascunho'}</span>
+            ${v.nivel?`<span class="pv-badge" style="background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.2);color:var(--accent);">${v.nivel}</span>`:''}
+            ${v.modalidade?`<span class="pv-badge" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:var(--text2);">${v.modalidade}</span>`:''}
+            ${v.contrato?`<span class="pv-badge" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:var(--text2);">${v.contrato}</span>`:''}
+            ${v.qtd>1?`<span class="pv-badge" style="background:rgba(243,156,18,0.08);border-color:rgba(243,156,18,0.2);color:var(--orange);">${v.qtd} vagas</span>`:''}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:2rem;font-weight:900;font-family:var(--mono);color:${corScore};">${score}%</div>
+          <div style="font-size:0.6rem;color:var(--muted);">completude</div>
+          ${v.prazo?`<div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem;">📅 ${fmtData(v.prazo)}</div>`:''}
+        </div>
+      </div>
+
+      ${v.salMin||v.salMax?`
+      <div class="pv-section">
+        <div class="pv-section-title">💰 Remuneração</div>
+        <div class="pv-text" style="font-size:1rem;font-weight:700;color:var(--green);">R$ ${fmtNum(v.salMin)} – R$ ${fmtNum(v.salMax)}</div>
+        ${v.remModelo?`<div class="pv-text" style="font-size:0.68rem;color:var(--muted);">${v.remModelo}</div>`:''}
+      </div>`:''}
+
+      ${v.beneficios&&v.beneficios.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">🎁 Benefícios</div>
+        <div class="pv-chips">${v.beneficios.map(b=>`<span class="pv-chip">${b}</span>`).join('')}${v.benefObs?`<span class="pv-chip">${v.benefObs}</span>`:''}</div>
+      </div>`:''}
+
+      ${v.hard&&v.hard.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">⚙ Requisitos Técnicos Obrigatórios</div>
+        <div class="pv-chips">${v.hard.map(t=>`<span class="pv-chip must">${t}</span>`).join('')}</div>
+      </div>`:''}
+
+      ${v.soft&&v.soft.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">🧠 Competências Comportamentais</div>
+        <div class="pv-chips">${v.soft.map(t=>`<span class="pv-chip">${t}</span>`).join('')}</div>
+      </div>`:''}
+
+      ${v.plus&&v.plus.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">⭐ Diferenciais (bônus)</div>
+        <div class="pv-chips">${v.plus.map(t=>`<span class="pv-chip">${t}</span>`).join('')}</div>
+      </div>`:''}
+
+      ${v.idiomas&&v.idiomas.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">🌐 Idiomas</div>
+        <div class="pv-chips">${v.idiomas.map(t=>`<span class="pv-chip">${t}</span>`).join('')}</div>
+      </div>`:''}
+
+      ${v.cultura?`
+      <div class="pv-section">
+        <div class="pv-section-title">🏢 Cultura & Empresa</div>
+        <div class="pv-text">${v.cultura}</div>
+      </div>`:''}
+
+      ${v.selling?`
+      <div class="pv-section">
+        <div class="pv-section-title">✨ Por que é um bom lugar para trabalhar?</div>
+        <div class="pv-text">${v.selling}</div>
+      </div>`:''}
+
+      ${v.dealbreakers&&v.dealbreakers.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">🚫 Dealbreakers</div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;">${v.dealbreakers.map(d=>`
+          <div style="display:flex;align-items:center;gap:0.5rem;padding:0.45rem 0.7rem;background:rgba(231,76,60,0.05);border:1px solid rgba(231,76,60,0.15);border-radius:8px;font-size:0.72rem;color:var(--red);">🚫 ${d}</div>`).join('')}</div>
+      </div>`:''}
+
+      ${v.etapas&&v.etapas.length?`
+      <div class="pv-section">
+        <div class="pv-section-title">🔁 Etapas do Processo</div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;">${v.etapas.map((e,i)=>`${i>0?'<span style="color:var(--muted);font-size:0.9rem;">→</span>':''}<span class="pv-chip">${e}</span>`).join('')}</div>
+        ${v.fmtEntrevista?`<div class="pv-text" style="margin-top:0.5rem;font-size:0.68rem;color:var(--muted);">Formato: ${v.fmtEntrevista}</div>`:''}
+        ${v.sla?`<div class="pv-text" style="font-size:0.68rem;color:var(--muted);">SLA de retorno: ${v.sla}</div>`:''}
+        ${v.decisor?`<div class="pv-text" style="font-size:0.68rem;color:var(--muted);">Decisor final: ${v.decisor}</div>`:''}
+      </div>`:''}
+
+      ${v.obs?`
+      <div class="pv-section">
+        <div class="pv-section-title">📝 Observações</div>
+        <div class="pv-text">${v.obs}</div>
+      </div>`:''}
+
+      <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;gap:1rem;flex-wrap:wrap;">
+        ${v.recrutador?`<div style="font-size:0.63rem;color:var(--muted);">👤 Recrutador: <strong style="color:var(--text2);">${v.recrutador}</strong></div>`:''}
+        ${v.contato?`<div style="font-size:0.63rem;color:var(--muted);">🤝 Contato: <strong style="color:var(--text2);">${v.contato}</strong></div>`:''}
+        <div style="font-size:0.63rem;color:var(--muted);">📅 Criado: <strong style="color:var(--text2);">${fmtDataHora(v.criadoEm)}</strong></div>
+      </div>
+    </div>`;
+}
+
+// ==================== LIMPAR ====================
+function limparForm(){
+  if(!confirm('Limpar o formulário?')) return;
+  limparFormSilencioso();
+  vagaAtiva = null;
+  document.getElementById('form-titulo-label').textContent = 'Novo Briefing';
+  toast('Formulário limpo');
+}
+
+function limparFormSilencioso(){
+  ['f-cargo','f-cliente','f-area','f-local','f-recrutador','f-contato','f-sal-min','f-sal-max','f-benef-obs','f-cultura','f-selling','f-inp-db','f-decisor','f-obs'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  ['f-nivel','f-modalidade','f-contrato','f-status','f-rem-modelo','f-formacao','f-exp','f-cnh','f-perfil-cult','f-sla','f-fmt-entrevista'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('f-qtd').value='1';
+  document.getElementById('f-prazo').value='';
+  document.getElementById('f-status').value='rascunho';
+
+  tagsData = {hard:[],soft:[],plus:[],idioma:[],dei:[],etapa:[]};
+  dealbreakers = [];
+  beneficiosOn = new Set();
+  renderBeneficios();
+  renderDealbreakers();
+  ['tags-hard','tags-soft','tags-plus','tags-idiomas','tags-dei','tags-etapas'].forEach(id=>{
+    const cont = document.getElementById(id);
+    cont.querySelectorAll('.tag-pill').forEach(p=>p.remove());
+  });
+  calcularCompletude();
+}
+
+// ==================== EXPORT ====================
+function exportarCSV(){
+  const cols = ['ID','Cargo','Cliente','Área','Nível','Modalidade','Local','Contrato','Status','Vagas','Prazo','Salário Min','Salário Max','Recrutador','Hard Skills','Soft Skills','Etapas','Dealbreakers'];
+  const linhas = [cols];
+  vagas.forEach(v=>{
+    linhas.push([v.id,v.cargo,v.cliente,v.area,v.nivel,v.modalidade,v.local,v.contrato,v.status,v.qtd,v.prazo,v.salMin,v.salMax,v.recrutador,(v.hard||[]).join(';'),(v.soft||[]).join(';'),(v.etapas||[]).join(';'),(v.dealbreakers||[]).join(';')]);
+  });
+  const csv = linhas.map(l=>l.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');a.href=url;a.download='briefings_orizon.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+
+function imprimirBriefing(){
+  const area = document.getElementById('print-area');
+  if(!area){ toast('Primeiro abra um preview','erro'); return; }
+  const w = window.open('','_blank','width=800,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Briefing - Orizon</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Sora',sans-serif;background:#fff;color:#111;padding:2rem;}
+  .pv-cargo{font-size:1.4rem;font-weight:900;margin-bottom:0.3rem;}
+  .pv-cliente{font-size:0.85rem;color:#666;margin-bottom:0.6rem;}
+  .pv-section{margin-bottom:1.2rem;}
+  .pv-section-title{font-size:0.6rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#3b82f6;margin-bottom:0.4rem;}
+  .pv-text{font-size:0.82rem;line-height:1.65;color:#333;}
+  .pv-chip{display:inline-block;padding:0.2rem 0.6rem;border:1px solid #ddd;border-radius:6px;font-size:0.65rem;margin:0.15rem;}
+  .pv-chip.must{border-color:#3b82f6;color:#1d4ed8;}
+  .pv-badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:99px;border:1px solid #ddd;font-size:0.65rem;margin-right:0.3rem;}
+  .pv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0;}
+  hr{border:none;border-top:1px solid #eee;margin:1rem 0;}
+  </style></head><body>${area.innerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(), 600);
+}
+
+function exportarBriefingTexto(v){
+  let txt = `BRIEFING DE VAGA — ORIZON ATS\n${'='.repeat(50)}\n\n`;
+  txt += `CARGO: ${v.cargo}\nCLIENTE: ${v.cliente}\nNÍVEL: ${v.nivel||'—'}\nMODALIDADE: ${v.modalidade||'—'}\nLOCAL: ${v.local||'—'}\nCONTRATO: ${v.contrato||'—'}\nSTATUS: ${v.status}\n\n`;
+  if(v.salMin||v.salMax) txt += `FAIXA SALARIAL: R$ ${fmtNum(v.salMin)} – R$ ${fmtNum(v.salMax)}\n\n`;
+  if(v.hard?.length) txt += `REQUISITOS TÉCNICOS:\n${v.hard.map(t=>'• '+t).join('\n')}\n\n`;
+  if(v.soft?.length) txt += `COMPETÊNCIAS COMPORTAMENTAIS:\n${v.soft.map(t=>'• '+t).join('\n')}\n\n`;
+  if(v.cultura) txt += `CULTURA: ${v.cultura}\n\n`;
+  if(v.dealbreakers?.length) txt += `DEALBREAKERS:\n${v.dealbreakers.map(d=>'🚫 '+d).join('\n')}\n\n`;
+  if(v.etapas?.length) txt += `ETAPAS: ${v.etapas.join(' → ')}\n\n`;
+  if(v.obs) txt += `OBSERVAÇÕES: ${v.obs}\n`;
+  const blob = new Blob([txt],{type:'text/plain;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');a.href=url;a.download=`briefing_${v.cargo.replace(/\s/g,'_')}.txt`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== MODAL / TAB ====================
+function abrirModal(id){ document.getElementById(id).classList.add('open'); }
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click',e=>{ if(e.target.classList.contains('modal-overlay')) fecharModal(e.target.id); });
+
+function trocarTab(tab, el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  ['lista','formulario','preview'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+  });
+}
+
+// ==================== UTILS ====================
+function fmtNum(n){ return n?(+n).toLocaleString('pt-BR'):'0'; }
+function fmtData(d){ if(!d) return '—'; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; }
+function fmtDataHora(s){ if(!s) return '—'; return new Date(s).toLocaleDateString('pt-BR'); }
+
+function toast(msg, tipo='ok'){
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast'+(tipo==='erro'?' erro':'');
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ==================== START ====================
+init();
+</script>
+</body>
+</html>

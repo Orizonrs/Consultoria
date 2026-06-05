@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Taxa de Conversão por Origem | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:60px;line-height:1.6;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+@media(max-width:960px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* ORIGEM CARDS */
+.origem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.8rem;margin-bottom:1rem;}
+.origem-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.origem-card:hover,.origem-card.ativa{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.origem-card.ativa{box-shadow:0 0 0 1px rgba(59,130,246,0.3),0 8px 24px rgba(59,130,246,0.1);}
+.origem-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;opacity:0.08;pointer-events:none;}
+.origem-icon{font-size:1.5rem;margin-bottom:0.5rem;}
+.origem-nome{font-size:0.8rem;font-weight:800;margin-bottom:0.6rem;}
+.origem-pct-big{font-size:2rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.1rem;}
+.origem-pct-label{font-size:0.55rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.origem-stats{display:flex;gap:1rem;margin-top:0.7rem;padding-top:0.7rem;border-top:1px solid rgba(255,255,255,0.05);}
+.origem-stat{text-align:center;}
+.origem-stat-num{font-size:0.85rem;font-weight:900;font-family:var(--mono);}
+.origem-stat-lbl{font-size:0.52rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);}
+
+/* FUNIL MINI */
+.funil-mini{display:flex;align-items:center;gap:0;}
+.funil-mini-etapa{flex:1;text-align:center;position:relative;}
+.funil-mini-num{font-size:1rem;font-weight:900;font-family:var(--mono);}
+.funil-mini-lbl{font-size:0.52rem;font-weight:700;color:var(--muted);margin-top:0.1rem;}
+.funil-mini-arrow{font-size:0.7rem;color:var(--muted);flex-shrink:0;padding:0 0.1rem;}
+.funil-mini-pct{font-size:0.55rem;font-weight:800;font-family:var(--mono);}
+
+/* BARRA COMPARATIVO */
+.comp-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.55rem;}
+.comp-label{font-size:0.68rem;font-weight:700;color:var(--text2);min-width:130px;flex-shrink:0;display:flex;align-items:center;gap:0.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.comp-icon{font-size:0.9rem;}
+.comp-bar-wrap{flex:1;height:24px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;position:relative;}
+.comp-bar-fill{height:100%;border-radius:6px;transition:width 0.9s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;padding-left:0.6rem;min-width:2px;}
+.comp-bar-val{font-size:0.62rem;font-weight:800;color:rgba(255,255,255,0.9);font-family:var(--mono);white-space:nowrap;}
+.comp-total{font-size:0.68rem;font-weight:800;font-family:var(--mono);color:var(--muted);min-width:44px;text-align:right;flex-shrink:0;}
+
+/* DONUT */
+.donut-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.donut-center{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.donut-num{font-size:1.4rem;font-weight:900;font-family:var(--mono);}
+.donut-lbl{font-size:0.5rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+
+/* LEGENDA */
+.legenda{display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-top:0.8rem;}
+.legenda-item{display:flex;align-items:center;gap:0.4rem;font-size:0.62rem;font-weight:600;color:var(--text2);}
+.legenda-dot{width:8px;height:8px;border-radius:3px;flex-shrink:0;}
+
+/* TABELA CANDIDATOS */
+.cand-header{display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 0.8fr 0.8fr;gap:0.5rem;padding:0.5rem 0.9rem;font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
+.cand-row{display:grid;grid-template-columns:1.5fr 1fr 1fr 0.8fr 0.8fr 0.8fr;gap:0.5rem;padding:0.7rem 0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background 0.15s;}
+.cand-row:hover{background:rgba(255,255,255,0.02);}
+.cand-nome{font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cand-sub{font-size:0.6rem;color:var(--muted);}
+.pill{font-size:0.58rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:6px;white-space:nowrap;display:inline-block;}
+
+/* RANKING BADGE */
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;font-size:0.65rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+
+/* INSIGHT CARD */
+.insight-card{background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.12);border-radius:12px;padding:0.9rem 1.1rem;display:flex;align-items:flex-start;gap:0.7rem;}
+.insight-icon{font-size:1.1rem;flex-shrink:0;margin-top:0.1rem;}
+.insight-title{font-size:0.72rem;font-weight:800;margin-bottom:0.2rem;}
+.insight-body{font-size:0.66rem;color:var(--text2);line-height:1.6;}
+.insight-card.orange{background:rgba(243,156,18,0.04);border-color:rgba(243,156,18,0.15);}
+.insight-card.green{background:rgba(46,204,113,0.04);border-color:rgba(46,204,113,0.15);}
+.insight-card.red{background:rgba(231,76,60,0.04);border-color:rgba(231,76,60,0.15);}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);overflow-y:auto;}
+.modal-box{min-height:100%;display:flex;align-items:flex-start;justify-content:center;padding:2rem;}
+.modal-inner{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:2rem;width:100%;max-width:600px;position:relative;animation:fadeUp 0.3s ease;}
+.modal-close{position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.2rem;font-size:0.76rem;font-weight:600;color:var(--text);z-index:9999;transform:translateY(10px);opacity:0;transition:all 0.3s;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,0.4);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes drawArc{from{stroke-dashoffset:var(--dash-total);}to{stroke-dashoffset:var(--dash-offset);}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Analytics · Captação</div>
+      <div class="hero-title">Taxa de Conversão por <span>Origem</span></div>
+      <div class="hero-sub">Qual canal traz os melhores candidatos? Onde o ROI de captação é maior?</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="togglePeriodo()">
+        <span>📅</span> <span id="btnPeriodo">Últimos 90 dias</span>
+      </button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">
+        <span>📤</span> Exportar
+      </button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()">
+        <span>📋</span> Exemplos
+      </button>
+      <button class="btn btn-primary" onclick="abrirModal()">
+        <span>+</span> Novo Candidato
+      </button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiTotal" style="color:var(--accent)">—</div>
+      <div class="kpi-label">Total de Candidatos</div>
+      <div class="kpi-sub" id="kpiTotalSub">no período</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiTaxaGeral" style="color:var(--green)">—</div>
+      <div class="kpi-label">Taxa Geral de Conversão</div>
+      <div class="kpi-sub">triagem → contratado</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiBestOrigem" style="color:var(--accent2)">—</div>
+      <div class="kpi-label">Melhor Canal</div>
+      <div class="kpi-sub" id="kpiBestSub">maior taxa de conversão</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiContratados" style="color:var(--purple)">—</div>
+      <div class="kpi-label">Contratados</div>
+      <div class="kpi-sub" id="kpiContratadosSub">no período</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-num" id="kpiOrigens" style="color:var(--cyan)">—</div>
+      <div class="kpi-label">Canais Ativos</div>
+      <div class="kpi-sub">com candidatos</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label class="form-label">Cargo / Vaga</label>
+      <select class="form-input" id="fCargo" onchange="render()">
+        <option value="">Todos os Cargos</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Recrutador</label>
+      <select class="form-input" id="fRecrutador" onchange="render()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Visualização</label>
+      <select class="form-input" id="fView" onchange="render()">
+        <option value="cards">Cards por Origem</option>
+        <option value="comparativo">Comparativo de Funil</option>
+        <option value="candidatos">Lista de Candidatos</option>
+      </select>
+    </div>
+    <div class="filter-field" style="flex:0 0 auto;">
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparFiltros()" style="height:38px;">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div id="mainContent"></div>
+
+</div>
+
+<!-- MODAL NOVO CANDIDATO -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal-box">
+    <div class="modal-inner">
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;">Captação</div>
+      <div style="font-size:1.2rem;font-weight:900;margin-bottom:1.5rem;" id="modalTitulo">Novo Candidato</div>
+      <input type="hidden" id="mEditId"/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Nome do Candidato *</label>
+          <input class="form-input" id="mNome" placeholder="Nome completo"/>
+        </div>
+        <div>
+          <label class="form-label">Cargo / Vaga *</label>
+          <input class="form-input" id="mCargo" placeholder="Ex: Analista de Marketing"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Canal de Origem *</label>
+          <select class="form-input" id="mOrigem">
+            <option value="">Selecione...</option>
+            <option>LinkedIn</option>
+            <option>Indicação</option>
+            <option>Site / Portal</option>
+            <option>Indeed</option>
+            <option>Gupy</option>
+            <option>Banco Interno</option>
+            <option>Instagram</option>
+            <option>WhatsApp</option>
+            <option>Outro</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Status Final *</label>
+          <select class="form-input" id="mStatus">
+            <option value="">Selecione...</option>
+            <option value="em_triagem">Em Triagem</option>
+            <option value="entrevista">Em Entrevista</option>
+            <option value="avancou">Avançou no Processo</option>
+            <option value="finalista">Finalista</option>
+            <option value="contratado">Contratado ✓</option>
+            <option value="reprovado">Reprovado</option>
+            <option value="desistiu">Desistiu</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;">
+        <div>
+          <label class="form-label">Data de Entrada *</label>
+          <input class="form-input" type="date" id="mData"/>
+        </div>
+        <div>
+          <label class="form-label">Empresa / Cliente</label>
+          <input class="form-input" id="mEmpresa" placeholder="Cliente"/>
+        </div>
+        <div>
+          <label class="form-label">Recrutador</label>
+          <input class="form-input" id="mRecrutador" placeholder="Responsável"/>
+        </div>
+      </div>
+      <div style="margin-bottom:1.5rem;">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="mObs" placeholder="Notas sobre este candidato..."></textarea>
+      </div>
+      <div style="display:flex;gap:0.6rem;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvar()">✓ Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────
+let CANDS = [];
+let ORIGEM_SELECIONADA = null;
+let PERIODO = 90;
+
+const ORIGENS_CONFIG = {
+  'LinkedIn':       { icon:'💼', cor:'#0a66c2' },
+  'Indicação':      { icon:'🤝', cor:'#22c55e' },
+  'Site / Portal':  { icon:'🌐', cor:'#3b82f6' },
+  'Indeed':         { icon:'🔍', cor:'#2557a7' },
+  'Gupy':           { icon:'🟣', cor:'#a78bfa' },
+  'Banco Interno':  { icon:'🗃️', cor:'#f59e0b' },
+  'Instagram':      { icon:'📸', cor:'#e1306c' },
+  'WhatsApp':       { icon:'💬', cor:'#25d366' },
+  'Outro':          { icon:'📌', cor:'#6b7280' },
+};
+
+const ETAPAS_PESO = {
+  'em_triagem': 1, 'reprovado': 1, 'desistiu': 1,
+  'entrevista': 2, 'avancou': 3, 'finalista': 4, 'contratado': 5
+};
+
+function init() {
+  const s = localStorage.getItem('orizon_conversao_cands');
+  if (s) try { CANDS = JSON.parse(s); } catch(e){}
+  document.getElementById('mData').value = new Date().toISOString().slice(0,10);
+  populaFiltros();
+  render();
+}
+
+function salvarLocal() {
+  localStorage.setItem('orizon_conversao_cands', JSON.stringify(CANDS));
+}
+
+function togglePeriodo() {
+  const opts=[30,60,90,180,365];
+  const idx=opts.indexOf(PERIODO);
+  PERIODO=opts[(idx+1)%opts.length];
+  const map={30:'Últimos 30 dias',60:'Últimos 60 dias',90:'Últimos 90 dias',180:'Últimos 6 meses',365:'Último ano'};
+  document.getElementById('btnPeriodo').textContent=map[PERIODO];
+  render();
+}
+
+function populaFiltros() {
+  const cargos=[...new Set(CANDS.map(c=>c.cargo).filter(Boolean))];
+  const recs  =[...new Set(CANDS.map(c=>c.recrutador).filter(Boolean))];
+  const sc=document.getElementById('fCargo'), sr=document.getElementById('fRecrutador');
+  const pC=sc.value, pR=sr.value;
+  sc.innerHTML='<option value="">Todos os Cargos</option>'+cargos.map(v=>`<option>${v}</option>`).join('');
+  sr.innerHTML='<option value="">Todos</option>'+recs.map(v=>`<option>${v}</option>`).join('');
+  sc.value=pC; sr.value=pR;
+}
+
+function filtrados() {
+  const fc=document.getElementById('fCargo').value;
+  const fr=document.getElementById('fRecrutador').value;
+  const limite=new Date(); limite.setDate(limite.getDate()-PERIODO);
+  return CANDS.filter(c=>{
+    if(fc && c.cargo!==fc) return false;
+    if(fr && c.recrutador!==fr) return false;
+    if(c.data && new Date(c.data)<limite) return false;
+    return true;
+  });
+}
+
+// ─── CÁLCULO ORIGENS ───────────────────────────────────────────────
+function calcOrigens(cands) {
+  const map={};
+  cands.forEach(c=>{
+    const o=c.origem||'Outro';
+    if(!map[o]) map[o]={nome:o,total:0,triagem:0,entrevista:0,avancou:0,finalista:0,contratado:0,reprovado:0,desistiu:0,emAndamento:0};
+    map[o].total++;
+    map[o][c.status]=(map[o][c.status]||0)+1;
+    if(c.status==='em_triagem') map[o].emAndamento++;
+  });
+  return Object.values(map).map(o=>{
+    o.taxaConversao = o.total>0 ? +(o.contratado/o.total*100).toFixed(1) : 0;
+    o.taxaAvanco    = o.total>0 ? +((o.contratado+o.finalista+o.avancou)/o.total*100).toFixed(1) : 0;
+    o.taxaReprovacao= o.total>0 ? +((o.reprovado+o.desistiu)/o.total*100).toFixed(1) : 0;
+    o.config = ORIGENS_CONFIG[o.nome] || ORIGENS_CONFIG['Outro'];
+    return o;
+  }).sort((a,b)=>b.total-a.total);
+}
+
+// ─── RENDER PRINCIPAL ─────────────────────────────────────────────
+function render() {
+  const cands=filtrados();
+  const origens=calcOrigens(cands);
+  const total=cands.length;
+  const contratados=cands.filter(c=>c.status==='contratado').length;
+  const taxaGeral=total>0?+(contratados/total*100).toFixed(1):0;
+  const melhor=origens.length?origens.reduce((a,b)=>b.taxaConversao>a.taxaConversao?b:a,origens[0]):null;
+
+  document.getElementById('kpiTotal').textContent=total||'—';
+  document.getElementById('kpiTaxaGeral').textContent=total>0?taxaGeral+'%':'—';
+  document.getElementById('kpiBestOrigem').textContent=melhor&&melhor.taxaConversao>0?melhor.config.icon+' '+melhor.nome.split(' ')[0]:'—';
+  document.getElementById('kpiBestSub').textContent=melhor&&melhor.taxaConversao>0?melhor.taxaConversao+'% de conversão':'maior taxa de conversão';
+  document.getElementById('kpiContratados').textContent=contratados||'—';
+  document.getElementById('kpiContratadosSub').textContent=total>0?`${taxaGeral}% do total`:'no período';
+  document.getElementById('kpiOrigens').textContent=origens.length||'—';
+
+  const view=document.getElementById('fView').value;
+  if(view==='cards') renderCards(origens,cands);
+  else if(view==='comparativo') renderComparativo(origens,cands);
+  else renderCandidatos(cands,origens);
+}
+
+// ─── CARDS ─────────────────────────────────────────────────────────
+function renderCards(origens,cands) {
+  if(!origens.length){
+    document.getElementById('mainContent').innerHTML=`<div class="card"><div style="text-align:center;padding:3rem;color:var(--muted);">Sem candidatos. Adicione registros ou carregue exemplos.</div></div>`;
+    return;
+  }
+  let html=`<div class="origem-grid">`;
+  origens.forEach((o,i)=>{
+    const ativa=ORIGEM_SELECIONADA===o.nome?'ativa':'';
+    const delay=(i*0.07).toFixed(2);
+    const cor=o.config.cor;
+    html+=`<div class="origem-card ${ativa}" style="animation-delay:${delay}s;border-color:${ativa?cor+'50':''};" onclick="selecionarOrigem('${o.nome}')">
+      <div style="position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:${cor};opacity:0.06;pointer-events:none;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <span style="font-size:1.3rem;">${o.config.icon}</span>
+          <div class="origem-nome">${o.nome}</div>
+        </div>
+        <div style="font-size:0.6rem;font-weight:800;padding:0.15rem 0.5rem;border-radius:6px;background:${cor}1a;color:${cor};border:1px solid ${cor}40;">#${i+1}</div>
+      </div>
+      <div class="origem-pct-big" style="color:${cor}">${o.taxaConversao}%</div>
+      <div class="origem-pct-label">Taxa de Conversão</div>
+      <div class="origem-stats">
+        <div class="origem-stat"><div class="origem-stat-num">${o.total}</div><div class="origem-stat-lbl">Total</div></div>
+        <div class="origem-stat"><div class="origem-stat-num" style="color:${cor}">${o.contratado}</div><div class="origem-stat-lbl">Contratados</div></div>
+        <div class="origem-stat"><div class="origem-stat-num" style="color:var(--orange)">${o.finalista+o.avancou}</div><div class="origem-stat-lbl">Em Avanço</div></div>
+        <div class="origem-stat"><div class="origem-stat-num" style="color:var(--red)">${o.reprovado+o.desistiu}</div><div class="origem-stat-lbl">Saíram</div></div>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Detalhe se selecionado
+  if(ORIGEM_SELECIONADA){
+    const o=origens.find(x=>x.nome===ORIGEM_SELECIONADA);
+    if(o){
+      const cor=o.config.cor;
+      const candsOrigem=cands.filter(c=>c.origem===ORIGEM_SELECIONADA);
+      html+=`<div class="sec"><div class="sec-label">${o.config.icon} Detalhe — ${o.nome}</div></div>
+      <div class="grid2" style="align-items:start;">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📊 Funil de Conversão</div></div>
+          <div style="display:flex;flex-direction:column;gap:0.7rem;">`;
+      const etapas=[
+        {label:'Total de Candidatos',val:o.total,cor:'var(--text)'},
+        {label:'Chegaram à Entrevista',val:o.entrevista+o.avancou+o.finalista+o.contratado,cor:cor},
+        {label:'Avançaram no Processo',val:o.avancou+o.finalista+o.contratado,cor:cor},
+        {label:'Chegaram como Finalistas',val:o.finalista+o.contratado,cor:cor},
+        {label:'Contratados',val:o.contratado,cor:cor},
+      ];
+      etapas.forEach((e,i)=>{
+        const pct=o.total>0?+(e.val/o.total*100).toFixed(0):0;
+        html+=`<div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+            <div style="font-size:0.65rem;font-weight:700;color:var(--text2);">${e.label}</div>
+            <div style="font-size:0.68rem;font-weight:900;font-family:var(--mono);color:${e.cor}">${e.val} <span style="color:var(--muted);font-size:0.58rem;">(${pct}%)</span></div>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${e.cor};border-radius:3px;transition:width 0.8s;opacity:${1-i*0.12};"></div>
+          </div>
+        </div>`;
+      });
+      html+=`</div></div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">👥 Últimos Candidatos deste Canal</div></div>`;
+      if(!candsOrigem.length){
+        html+=`<div style="color:var(--muted);font-size:0.72rem;padding:1rem 0;">Nenhum candidato registrado.</div>`;
+      } else {
+        const statusMap={em_triagem:'Em Triagem',entrevista:'Entrevista',avancou:'Avançou',finalista:'Finalista',contratado:'Contratado',reprovado:'Reprovado',desistiu:'Desistiu'};
+        const statusCor={em_triagem:'var(--accent)',entrevista:'var(--cyan)',avancou:'var(--purple)',finalista:'var(--orange)',contratado:'var(--green)',reprovado:'var(--red)',desistiu:'var(--muted)'};
+        candsOrigem.slice(0,8).forEach(c=>{
+          html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <div>
+              <div style="font-size:0.73rem;font-weight:700;">${c.nome}</div>
+              <div style="font-size:0.58rem;color:var(--muted);">${c.cargo||''}${c.empresa?' · '+c.empresa:''}</div>
+            </div>
+            <span class="pill" style="background:${(statusCor[c.status]||'var(--muted)')}1a;color:${statusCor[c.status]||'var(--muted)'};">${statusMap[c.status]||c.status}</span>
+          </div>`;
+        });
+        if(candsOrigem.length>8) html+=`<div style="text-align:center;padding-top:0.7rem;font-size:0.62rem;color:var(--muted);">+${candsOrigem.length-8} candidatos</div>`;
+      }
+      html+=`</div></div></div>`;
+    }
+  }
+
+  // Insights automáticos
+  const insights=gerarInsights(origens,cands);
+  if(insights.length){
+    html+=`<div class="sec"><div class="sec-label">💡 Insights Automáticos</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.7rem;">`;
+    insights.forEach(ins=>{
+      html+=`<div class="insight-card ${ins.tipo}">
+        <div class="insight-icon">${ins.icon}</div>
+        <div><div class="insight-title">${ins.titulo}</div><div class="insight-body">${ins.texto}</div></div>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ─── COMPARATIVO ───────────────────────────────────────────────────
+function renderComparativo(origens,cands) {
+  const maxTotal=Math.max(...origens.map(o=>o.total),1);
+  const maxTaxa =Math.max(...origens.map(o=>o.taxaConversao),1);
+  let html=`<div class="grid2" style="align-items:start;">`;
+
+  // Volume
+  html+=`<div class="card">
+    <div class="card-head"><div class="card-title">📦 Volume de Candidatos por Canal</div></div>`;
+  origens.forEach(o=>{
+    const pct=(o.total/maxTotal*100).toFixed(0);
+    html+=`<div class="comp-row">
+      <div class="comp-label"><span class="comp-icon">${o.config.icon}</span>${o.nome}</div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-fill" style="width:${pct}%;background:${o.config.cor};">
+          <span class="comp-bar-val">${o.total}</span>
+        </div>
+      </div>
+      <div class="comp-total" style="color:${o.config.cor}">${o.taxaAvanco}% ↑</div>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // Taxa de conversão
+  html+=`<div class="card">
+    <div class="card-head"><div class="card-title">🎯 Taxa de Conversão por Canal</div></div>`;
+  [...origens].sort((a,b)=>b.taxaConversao-a.taxaConversao).forEach(o=>{
+    const pct=maxTaxa>0?(o.taxaConversao/maxTaxa*100).toFixed(0):0;
+    const cor=o.taxaConversao>15?'var(--green)':o.taxaConversao>7?'var(--orange)':'var(--red)';
+    html+=`<div class="comp-row">
+      <div class="comp-label"><span class="comp-icon">${o.config.icon}</span>${o.nome}</div>
+      <div class="comp-bar-wrap">
+        <div class="comp-bar-fill" style="width:${pct}%;background:${cor};">
+          <span class="comp-bar-val">${o.taxaConversao}%</span>
+        </div>
+      </div>
+      <div class="comp-total">${o.contratado} ✓</div>
+    </div>`;
+  });
+  html+=`</div></div>`;
+
+  // Breakdown status por origem
+  html+=`<div class="sec"><div class="sec-label">Breakdown de Status por Canal</div></div>
+  <div class="card" style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;min-width:600px;">
+      <thead>
+        <tr style="font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">
+          <th style="text-align:left;padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);">Canal</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);">Total</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--cyan)">Triagem</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--accent)">Entrevista</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--purple)">Avançou</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--orange)">Finalista</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--green)">Contratado</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--red)">Reprovado</th>
+          <th style="padding:0.5rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.05);">Conversão</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  origens.forEach(o=>{
+    const cor=o.taxaConversao>15?'var(--green)':o.taxaConversao>7?'var(--orange)':'var(--red)';
+    html+=`<tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+      <td style="padding:0.6rem 0.7rem;font-size:0.73rem;font-weight:700;">${o.config.icon} ${o.nome}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono)">${o.total}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--cyan)">${o.em_triagem||0}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--accent)">${o.entrevista||0}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--purple)">${o.avancou||0}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--orange)">${o.finalista||0}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--green)">${o.contratado||0}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.75rem;font-weight:800;font-family:var(--mono);color:var(--red)">${(o.reprovado||0)+(o.desistiu||0)}</td>
+      <td style="text-align:center;padding:0.6rem 0.7rem;font-size:0.8rem;font-weight:900;font-family:var(--mono);color:${cor}">${o.taxaConversao}%</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ─── LISTA CANDIDATOS ──────────────────────────────────────────────
+function renderCandidatos(cands,origens) {
+  const statusMap={em_triagem:'Em Triagem',entrevista:'Entrevista',avancou:'Avançou',finalista:'Finalista',contratado:'Contratado',reprovado:'Reprovado',desistiu:'Desistiu'};
+  const statusCor={em_triagem:'var(--accent)',entrevista:'var(--cyan)',avancou:'var(--purple)',finalista:'var(--orange)',contratado:'var(--green)',reprovado:'var(--red)',desistiu:'var(--muted)'};
+  let html=`<div class="card" style="padding:0;">
+    <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div class="card-title">👥 Candidatos <span class="card-badge">${cands.length} registros</span></div>
+    </div>
+    <div class="cand-header"><div>Candidato</div><div>Canal</div><div>Cargo</div><div>Data</div><div>Status</div><div>Empresa</div></div>`;
+  if(!cands.length){
+    html+=`<div style="text-align:center;padding:3rem;color:var(--muted);">Nenhum candidato encontrado.</div>`;
+  } else {
+    cands.forEach(c=>{
+      const conf=ORIGENS_CONFIG[c.origem]||ORIGENS_CONFIG['Outro'];
+      html+=`<div class="cand-row">
+        <div><div class="cand-nome">${c.nome}</div><div class="cand-sub">${c.recrutador||''}</div></div>
+        <div><span style="font-size:0.7rem;">${conf.icon}</span> <span style="font-size:0.68rem;font-weight:700;color:${conf.cor}">${c.origem||'—'}</span></div>
+        <div><div class="cand-nome" style="font-size:0.7rem;">${c.cargo||'—'}</div></div>
+        <div><div style="font-size:0.65rem;font-family:var(--mono);color:var(--muted)">${c.data||'—'}</div></div>
+        <div><span class="pill" style="background:${(statusCor[c.status]||'var(--muted)')}1a;color:${statusCor[c.status]||'var(--muted)'};">${statusMap[c.status]||c.status||'—'}</span></div>
+        <div><div style="font-size:0.68rem;color:var(--muted)">${c.empresa||'—'}</div></div>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ─── INSIGHTS ──────────────────────────────────────────────────────
+function gerarInsights(origens,cands) {
+  const insights=[];
+  if(!origens.length) return insights;
+  const melhor=origens.reduce((a,b)=>b.taxaConversao>a.taxaConversao?b:a,origens[0]);
+  const pior  =origens.filter(o=>o.total>=3).reduce((a,b)=>b.taxaConversao<a.taxaConversao?b:a,origens[0]);
+  const maior =origens.reduce((a,b)=>b.total>a.total?b:a,origens[0]);
+  if(melhor.taxaConversao>0){
+    insights.push({tipo:'green',icon:'🏆',titulo:`${melhor.config.icon} ${melhor.nome} lidera em conversão`,texto:`Taxa de ${melhor.taxaConversao}% — ${melhor.contratado} contratado${melhor.contratado!==1?'s':''} de ${melhor.total} candidatos. Invista mais neste canal.`});
+  }
+  if(maior.nome!==melhor.nome){
+    insights.push({tipo:'',icon:'📊',titulo:`${maior.config.icon} ${maior.nome} domina em volume`,texto:`${maior.total} candidatos (${+(maior.total/Math.max(cands.length,1)*100).toFixed(0)}% do total), mas taxa de conversão de ${maior.taxaConversao}%. Avalie custo-benefício.`});
+  }
+  const indicacao=origens.find(o=>o.nome==='Indicação');
+  if(indicacao&&indicacao.taxaConversao>0){
+    insights.push({tipo:'green',icon:'🤝',titulo:'Indicações têm alto potencial',texto:`Taxa de ${indicacao.taxaConversao}% — candidatos indicados costumam ter maior aderência cultural e menor tempo de onboarding.`});
+  }
+  if(pior&&pior.taxaConversao<5&&pior.total>=5){
+    insights.push({tipo:'red',icon:'⚠️',titulo:`${pior.config.icon} ${pior.nome} com baixa conversão`,texto:`Apenas ${pior.taxaConversao}% dos ${pior.total} candidatos deste canal avançaram. Revise a qualidade dos perfis captados.`});
+  }
+  return insights.slice(0,4);
+}
+
+// ─── SELEÇÃO ───────────────────────────────────────────────────────
+function selecionarOrigem(nome) {
+  ORIGEM_SELECIONADA=ORIGEM_SELECIONADA===nome?null:nome;
+  render();
+}
+
+// ─── MODAL ─────────────────────────────────────────────────────────
+function abrirModal(id) {
+  ['mEditId','mNome','mCargo','mOrigem','mStatus','mEmpresa','mRecrutador','mObs'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('mData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('modalTitulo').textContent='Novo Candidato';
+  if(id){
+    const c=CANDS.find(x=>x.id===id);
+    if(c){
+      document.getElementById('mEditId').value=c.id;
+      document.getElementById('mNome').value=c.nome||'';
+      document.getElementById('mCargo').value=c.cargo||'';
+      document.getElementById('mOrigem').value=c.origem||'';
+      document.getElementById('mStatus').value=c.status||'';
+      document.getElementById('mData').value=c.data||'';
+      document.getElementById('mEmpresa').value=c.empresa||'';
+      document.getElementById('mRecrutador').value=c.recrutador||'';
+      document.getElementById('mObs').value=c.obs||'';
+      document.getElementById('modalTitulo').textContent='Editar Candidato';
+    }
+  }
+  document.getElementById('modalBg').style.display='block';
+}
+
+function fecharModal(){ document.getElementById('modalBg').style.display='none'; }
+
+async function salvar() {
+  const nome=document.getElementById('mNome').value.trim();
+  const cargo=document.getElementById('mCargo').value.trim();
+  const origem=document.getElementById('mOrigem').value;
+  const status=document.getElementById('mStatus').value;
+  const data=document.getElementById('mData').value;
+  if(!nome){toast('⚠️ Preencha o nome');return;}
+  if(!cargo){toast('⚠️ Preencha o cargo');return;}
+  if(!origem){toast('⚠️ Selecione a origem');return;}
+  if(!status){toast('⚠️ Selecione o status');return;}
+  if(!data){toast('⚠️ Informe a data');return;}
+  const editId=document.getElementById('mEditId').value;
+  const dados={
+    id:editId||'c_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    nome,cargo,origem,status,data,
+    empresa:document.getElementById('mEmpresa').value.trim(),
+    recrutador:document.getElementById('mRecrutador').value.trim(),
+    obs:document.getElementById('mObs').value.trim(),
+    criado_em:new Date().toISOString(),
+  };
+  if(editId){const i=CANDS.findIndex(x=>x.id===editId);if(i!==-1)CANDS[i]=dados;}
+  else CANDS.unshift(dados);
+  salvarLocal();
+  try{if(typeof sbPost==='function')await sbPost('captacao_candidatos',dados);}catch(e){}
+  fecharModal();
+  populaFiltros();
+  render();
+  toast(editId?'✅ Candidato atualizado':'✅ Candidato registrado');
+}
+
+// ─── FILTROS ───────────────────────────────────────────────────────
+function limparFiltros(){
+  document.getElementById('fCargo').value='';
+  document.getElementById('fRecrutador').value='';
+  render();
+}
+
+// ─── CSV ───────────────────────────────────────────────────────────
+function exportarCSV(){
+  const cands=filtrados();
+  if(!cands.length){toast('⚠️ Sem dados para exportar');return;}
+  const linhas=[
+    ['Nome','Cargo','Canal de Origem','Status','Data','Empresa','Recrutador','Observações'],
+    ...cands.map(c=>[c.nome,c.cargo,c.origem,c.status,c.data,c.empresa||'',c.recrutador||'',c.obs||''])
+  ];
+  const csv=linhas.map(l=>l.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='taxa_conversao_origem.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado');
+}
+
+// ─── EXEMPLOS ──────────────────────────────────────────────────────
+function carregarExemplos(){
+  const hoje=new Date();
+  const ago=d=>{const x=new Date(hoje);x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+  const gen=(nome,cargo,empresa,recrutador,origem,status,data)=>({
+    id:'ex_'+Math.random().toString(36).slice(2,8),nome,cargo,empresa,recrutador,origem,status,data,obs:'',criado_em:new Date().toISOString()
+  });
+  CANDS=[
+    // LinkedIn — volume alto, conversão média
+    gen('Ana Souza','Analista de Marketing','TechCorp','Mariana Lima','LinkedIn','contratado',ago(60)),
+    gen('Bruno Costa','Analista de Marketing','TechCorp','Mariana Lima','LinkedIn','reprovado',ago(55)),
+    gen('Camila Dias','Analista de Marketing','TechCorp','Pedro Costa','LinkedIn','finalista',ago(50)),
+    gen('Daniel Melo','Analista de RH','RH Plus','Mariana Lima','LinkedIn','reprovado',ago(45)),
+    gen('Elisa Nunes','Analista de RH','RH Plus','Pedro Costa','LinkedIn','entrevista',ago(30)),
+    gen('Felipe Ramos','Dev Full Stack','StartupX','Pedro Costa','LinkedIn','avancou',ago(25)),
+    gen('Gabi Torres','Dev Full Stack','StartupX','Pedro Costa','LinkedIn','reprovado',ago(20)),
+    gen('Hugo Lima','Gerente Comercial','Vendas SA','Mariana Lima','LinkedIn','em_triagem',ago(10)),
+    gen('Isabela Paz','Gerente Comercial','Vendas SA','Mariana Lima','LinkedIn','reprovado',ago(8)),
+    gen('João Motta','Coordenador de TI','Infra Co','Pedro Costa','LinkedIn','contratado',ago(7)),
+    // Indicação — volume menor, conversão maior
+    gen('Karla Vieira','Analista de RH','RH Plus','Mariana Lima','Indicação','contratado',ago(70)),
+    gen('Lucas Pinto','Dev Full Stack','StartupX','Pedro Costa','Indicação','contratado',ago(65)),
+    gen('Marina Fonseca','Gerente Comercial','Vendas SA','Mariana Lima','Indicação','finalista',ago(40)),
+    gen('Natan Cruz','Analista de Marketing','TechCorp','Pedro Costa','Indicação','reprovado',ago(35)),
+    gen('Olga Barros','Coordenador de TI','Infra Co','Mariana Lima','Indicação','contratado',ago(15)),
+    // Site / Portal
+    gen('Paulo Serra','Analista de Marketing','TechCorp','Mariana Lima','Site / Portal','reprovado',ago(80)),
+    gen('Queila Braga','Analista de RH','RH Plus','Pedro Costa','Site / Portal','em_triagem',ago(12)),
+    gen('Rafael Duarte','Dev Full Stack','StartupX','Pedro Costa','Site / Portal','entrevista',ago(18)),
+    gen('Sônia Vaz','Analista de Marketing','TechCorp','Mariana Lima','Site / Portal','reprovado',ago(55)),
+    gen('Tiago Alves','Gerente Comercial','Vendas SA','Pedro Costa','Site / Portal','contratado',ago(48)),
+    // Indeed
+    gen('Ursula Mendes','Analista de RH','RH Plus','Mariana Lima','Indeed','reprovado',ago(42)),
+    gen('Victor Leal','Analista de Marketing','TechCorp','Pedro Costa','Indeed','reprovado',ago(38)),
+    gen('Wanda Rocha','Dev Full Stack','StartupX','Mariana Lima','Indeed','avancou',ago(22)),
+    gen('Ximena Luz','Coordenador de TI','Infra Co','Pedro Costa','Indeed','em_triagem',ago(5)),
+    // Banco Interno
+    gen('Yan Godoi','Analista de Marketing','TechCorp','Mariana Lima','Banco Interno','contratado',ago(90)),
+    gen('Zara Faria','Analista de RH','RH Plus','Pedro Costa','Banco Interno','finalista',ago(28)),
+    gen('André Silva','Gerente Comercial','Vendas SA','Mariana Lima','Banco Interno','entrevista',ago(14)),
+    // Gupy
+    gen('Beatriz Cunha','Dev Full Stack','StartupX','Pedro Costa','Gupy','reprovado',ago(33)),
+    gen('Caio Esteves','Analista de Marketing','TechCorp','Mariana Lima','Gupy','em_triagem',ago(6)),
+    gen('Diana Prado','Coordenador de TI','Infra Co','Pedro Costa','Gupy','reprovado',ago(17)),
+  ];
+  salvarLocal();
+  populaFiltros();
+  render();
+  toast('📋 30 candidatos de exemplo carregados');
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+document.getElementById('modalBg').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modalBg'))fecharModal();
+});
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Feedback Pós-Processo | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-sm{padding:0.3rem 0.7rem;font-size:0.68rem;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.cyan{background:rgba(6,182,212,0.1);color:var(--cyan);border-color:rgba(6,182,212,0.25);}
+.card-badge.yellow{background:rgba(241,196,15,0.1);color:var(--yellow);border-color:rgba(241,196,15,0.25);}
+
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.6;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.grid3{grid-template-columns:1fr;}}
+
+/* LISTA DE FEEDBACKS */
+.feedback-list{display:flex;flex-direction:column;gap:0.75rem;}
+.feedback-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.feedback-item:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,0.25);}
+.feedback-item.aberto{border-color:var(--border3);background:rgba(59,130,246,0.03);}
+.fi-top{display:flex;align-items:center;gap:1rem;margin-bottom:0.8rem;}
+.fi-ava{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+.fi-info{flex:1;}
+.fi-nome{font-size:0.88rem;font-weight:800;margin-bottom:0.1rem;}
+.fi-cargo{font-size:0.63rem;color:var(--muted);}
+.fi-meta{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin-top:0.3rem;}
+.fi-empresa{font-size:0.6rem;color:var(--accent);font-weight:700;}
+.fi-data{font-size:0.58rem;color:var(--muted);font-family:var(--mono);}
+.fi-right{display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;}
+.fi-score{font-size:1.4rem;font-weight:900;font-family:var(--mono);}
+.fi-score-label{font-size:0.55rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+
+.status-badge{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;font-weight:800;padding:0.2rem 0.6rem;border-radius:8px;}
+.status-dot{width:6px;height:6px;border-radius:50%;}
+
+/* DIMENSÕES SCORE MINI */
+.dims-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;}
+.dim-pill{display:flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:0.25rem 0.6rem;}
+.dim-pill-label{font-size:0.58rem;color:var(--muted);font-weight:600;}
+.dim-pill-val{font-size:0.62rem;font-weight:800;font-family:var(--mono);}
+
+/* EXPAND */
+.fi-expand{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.feedback-item.aberto .fi-expand{display:block;}
+
+.dim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.6rem;margin-bottom:1rem;}
+.dim-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.85rem 1rem;}
+.dim-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.55rem;}
+.dim-name{font-size:0.68rem;font-weight:700;}
+.dim-nota{font-size:1.1rem;font-weight:900;font-family:var(--mono);}
+.dim-bar-wrap{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:0.4rem;}
+.dim-bar{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.dim-obs{font-size:0.6rem;color:var(--muted);line-height:1.5;}
+
+/* TEXTO FEEDBACK */
+.fb-bloco{margin-bottom:0.9rem;}
+.fb-bloco-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.35rem;}
+.fb-bloco-texto{font-size:0.76rem;color:var(--text2);line-height:1.7;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.75rem 0.9rem;}
+
+/* TAGS */
+.tags-row{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.4rem;}
+.tag{font-size:0.58rem;font-weight:700;padding:0.18rem 0.55rem;border-radius:6px;border:1px solid;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:2rem 1rem;backdrop-filter:blur(4px);overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:680px;animation:fadeUp 0.2s ease;position:relative;margin:auto;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.2rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.form-row{margin-bottom:0.85rem;}
+
+/* ESCALA VISUAL */
+.escala{display:flex;gap:0.4rem;margin-top:0.35rem;}
+.escala-btn{flex:1;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);cursor:pointer;font-family:var(--mono);font-size:0.78rem;font-weight:800;color:var(--muted);transition:all 0.15s;}
+.escala-btn:hover{border-color:var(--border2);color:var(--text);}
+.escala-btn.ativo{color:#fff;border-color:transparent;}
+
+/* TABS */
+.tabs{display:flex;gap:0.3rem;margin-bottom:1.2rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:0.3rem;}
+.tab-btn{flex:1;padding:0.5rem 0.6rem;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;transition:all 0.18s;text-align:center;}
+.tab-btn.ativo{background:rgba(59,130,246,0.12);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+
+/* CHART BARS */
+.chart-wrap{padding:0.5rem 0;}
+.chart-row{display:flex;align-items:center;gap:0.7rem;margin-bottom:0.65rem;}
+.chart-label{font-size:0.62rem;font-weight:700;width:160px;flex-shrink:0;color:var(--text2);}
+.chart-bar-outer{flex:1;height:22px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;}
+.chart-bar-inner{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:0.5rem;font-size:0.6rem;font-weight:800;font-family:var(--mono);color:#fff;transition:width 0.6s ease;}
+.chart-val{font-size:0.62rem;font-family:var(--mono);font-weight:800;width:40px;text-align:right;flex-shrink:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;text-align:center;}
+.empty-ico{font-size:3rem;opacity:0.3;}
+.empty-title{font-size:1rem;font-weight:800;color:var(--text2);}
+.empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;max-width:360px;}
+
+/* TEMPLATE CARD */
+.template-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem 1.1rem;cursor:pointer;transition:all 0.15s;margin-bottom:0.5rem;}
+.template-card:hover{border-color:var(--border2);background:rgba(59,130,246,0.04);}
+.template-card.ativo{border-color:var(--border3);background:rgba(59,130,246,0.07);}
+.tc-title{font-size:0.76rem;font-weight:800;margin-bottom:0.2rem;}
+.tc-sub{font-size:0.62rem;color:var(--muted);line-height:1.4;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><div class="hero-eyebrow-dot"></div>ORIZON ATS · RELACIONAMENTO</div>
+      <div class="hero-title">Feedback <span>Pós-Processo</span></div>
+      <div class="hero-sub">Feedback estruturado por competência, personalizado por cargo e resultado</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModal()">＋ Novo Feedback</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--accent)" id="kpiTotal">0</div><div class="kpi-label">Total Enviados</div><div class="kpi-sub">todos os processos</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--green)" id="kpiMes">0</div><div class="kpi-label">Este Mês</div><div class="kpi-sub">últimos 30 dias</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--yellow)" id="kpiNota">—</div><div class="kpi-label">Nota Média</div><div class="kpi-sub">satisfação geral</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--purple)" id="kpiAprovados">0</div><div class="kpi-label">Aprovados</div><div class="kpi-sub">com feedback +</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--orange)" id="kpiReprovados">0</div><div class="kpi-label">Não Aprovados</div><div class="kpi-sub">com feedback -</div></div>
+    <div class="kpi-card"><div class="kpi-num" style="color:var(--cyan)" id="kpiPendentes">0</div><div class="kpi-label">Pendentes</div><div class="kpi-sub">sem feedback ainda</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn ativo" onclick="trocarTab('lista',this)">📋 Feedbacks</button>
+    <button class="tab-btn" onclick="trocarTab('analytics',this)">📊 Analytics</button>
+    <button class="tab-btn" onclick="trocarTab('templates',this)">📝 Templates</button>
+  </div>
+
+  <!-- TAB LISTA -->
+  <div id="tab-lista">
+    <div class="filter-bar">
+      <div class="filter-field"><label class="form-label">Buscar</label><input class="form-input" id="fBusca" placeholder="nome, cargo..." oninput="renderLista()"/></div>
+      <div class="filter-field"><label class="form-label">Resultado</label>
+        <select class="form-input" id="fResultado" onchange="renderLista()">
+          <option value="">Todos</option>
+          <option>Aprovado</option>
+          <option>Não Aprovado</option>
+          <option>Em espera</option>
+        </select>
+      </div>
+      <div class="filter-field"><label class="form-label">Cargo</label>
+        <select class="form-input" id="fCargo" onchange="renderLista()">
+          <option value="">Todos os cargos</option>
+        </select>
+      </div>
+      <div class="filter-field"><label class="form-label">Período</label>
+        <select class="form-input" id="fPeriodo" onchange="renderLista()">
+          <option value="">Todo período</option>
+          <option value="7">Últimos 7 dias</option>
+          <option value="30">Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+        </select>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+    <div id="listaFeedbacks"></div>
+  </div>
+
+  <!-- TAB ANALYTICS -->
+  <div id="tab-analytics" style="display:none">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📊 Notas por Dimensão</span><span class="card-badge">média geral</span></div>
+        <div class="chart-wrap" id="chartDimensoes"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">🏆 Cargos com Melhor Feedback</span><span class="card-badge">top 5</span></div>
+        <div class="chart-wrap" id="chartCargos"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📈 Feedbacks por Mês</span><span class="card-badge">últimos 6 meses</span></div>
+        <div class="chart-wrap" id="chartMeses"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">✅ Resultado Geral</span><span class="card-badge">distribuição</span></div>
+        <div id="chartResultado" style="padding:0.5rem 0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB TEMPLATES -->
+  <div id="tab-templates" style="display:none">
+    <div class="grid2">
+      <div class="card">
+        <div class="card-head"><span class="card-title">📝 Templates de Feedback</span><span class="card-badge">por tipo</span></div>
+        <div id="listaTemplates"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">👁 Pré-visualização</span></div>
+        <div id="previewTemplate">
+          <div class="empty-state"><div class="empty-ico">📝</div><div class="empty-title">Selecione um template</div><div class="empty-sub">Clique em um template ao lado para visualizar</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL NOVO FEEDBACK -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Novo Feedback Pós-Processo</div>
+    <div class="modal-sub">Registre o feedback estruturado para o candidato</div>
+
+    <div class="grid2">
+      <div class="form-row"><label class="form-label">Nome do Candidato *</label><input class="form-input" id="mNome" placeholder="Ex: Ana Costa"/></div>
+      <div class="form-row"><label class="form-label">Cargo Aplicado *</label><input class="form-input" id="mCargo" placeholder="Ex: Gerente de Projetos"/></div>
+    </div>
+    <div class="grid2">
+      <div class="form-row"><label class="form-label">Empresa Cliente</label><input class="form-input" id="mEmpresa" placeholder="Ex: TechCorp"/></div>
+      <div class="form-row"><label class="form-label">Resultado</label>
+        <select class="form-input" id="mResultado">
+          <option>Aprovado</option>
+          <option>Não Aprovado</option>
+          <option>Em espera</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec"><div class="sec-label">AVALIAÇÃO POR DIMENSÃO</div></div>
+
+    <div id="dimensoesForm"></div>
+
+    <div class="sec"><div class="sec-label">FEEDBACK QUALITATIVO</div></div>
+
+    <div class="form-row"><label class="form-label">✅ Pontos Fortes</label><textarea class="form-input" id="mPontosFortes" placeholder="O que o candidato demonstrou muito bem durante o processo..."></textarea></div>
+    <div class="form-row"><label class="form-label">🔧 Pontos de Desenvolvimento</label><textarea class="form-input" id="mGaps" placeholder="Áreas com oportunidade de crescimento identificadas..."></textarea></div>
+    <div class="form-row"><label class="form-label">💬 Mensagem Personalizada ao Candidato</label><textarea class="form-input" id="mMensagem" rows="4" placeholder="Mensagem que será enviada ao candidato (tom construtivo e respeitoso)..."></textarea></div>
+    <div class="form-row"><label class="form-label">🔮 Próximos Passos / Recomendação</label><textarea class="form-input" id="mProximos" placeholder="Ex: Recomendamos aprofundar experiência em liderança..."></textarea></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarFeedback()">💾 Salvar Feedback</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DADOS ──────────────────────────────────────────────────
+const DIMENSOES = [
+  {id:'tecnica',     label:'Competência Técnica',   cor:'var(--accent)'},
+  {id:'comunicacao', label:'Comunicação',            cor:'var(--green)'},
+  {id:'lideranca',   label:'Liderança/Gestão',      cor:'var(--purple)'},
+  {id:'fit',         label:'Fit Cultural',           cor:'var(--cyan)'},
+  {id:'resolucao',   label:'Resolução de Problemas', cor:'var(--orange)'},
+  {id:'adaptacao',   label:'Adaptabilidade',         cor:'var(--yellow)'},
+];
+
+const TEMPLATES = [
+  {
+    id:'aprovado_tec', titulo:'✅ Aprovado — Perfil Técnico',
+    resultado:'Aprovado', descricao:'Para candidatos aprovados em vagas técnicas',
+    pontosFortes:'Demonstrou sólido conhecimento técnico e capacidade analítica acima da média. Resolveu os desafios propostos com clareza e objetividade.',
+    gaps:'Há oportunidade de ampliar habilidades de comunicação com stakeholders não-técnicos.',
+    mensagem:'Ficamos muito satisfeitos com seu processo! Sua capacidade técnica e abordagem estruturada foram diferenciais importantes. Esperamos ter você na equipe em breve.',
+    proximos:'Próxima etapa: proposta formal em até 2 dias úteis.'
+  },
+  {
+    id:'nao_aprovado_gen', titulo:'❌ Não Aprovado — Geral',
+    resultado:'Não Aprovado', descricao:'Feedback construtivo para candidatos não aprovados',
+    pontosFortes:'Demonstrou entusiasmo e proatividade durante todo o processo. Sua experiência em [área] foi relevante e bem apresentada.',
+    gaps:'Neste momento, buscamos um perfil com maior senioridade em [competência]. Recomendamos aprofundar essa área para futuras oportunidades.',
+    mensagem:'Agradecemos sua dedicação ao longo do processo seletivo. Embora não sigamos juntos nesta oportunidade, seu perfil é muito positivo e manteremos seu contato em nosso banco de talentos.',
+    proximos:'Manteremos seu currículo ativo por 6 meses para oportunidades futuras.'
+  },
+  {
+    id:'aprovado_lider', titulo:'✅ Aprovado — Liderança',
+    resultado:'Aprovado', descricao:'Para candidatos aprovados em posições de gestão',
+    pontosFortes:'Liderança madura e orientada a resultados. Demonstrou excelente gestão de conflitos e capacidade de engajar times.',
+    gaps:'Sugerimos atenção à gestão de KPIs e métricas de desempenho da equipe na nova posição.',
+    mensagem:'Sua trajetória e visão de liderança foram impressionantes. Estamos confiantes de que você trará enorme valor para a equipe.',
+    proximos:'Proposta formalizada. Aguardamos sua confirmação.'
+  },
+  {
+    id:'espera', titulo:'⏳ Em Espera — Banco de Talentos',
+    resultado:'Em espera', descricao:'Para candidatos em espera ou banco de talentos',
+    pontosFortes:'Perfil muito qualificado que chamou atenção positivamente da empresa. Experiência relevante e valores alinhados.',
+    gaps:'No momento não há abertura para o seu perfil específico, mas a empresa tem grande interesse.',
+    mensagem:'Seu processo foi excelente! Não temos abertura no momento mas você está no nosso banco de talentos prioritário. Entraremos em contato assim que surgir uma oportunidade adequada.',
+    proximos:'Contato ativo nos próximos 90 dias com novas oportunidades.'
+  },
+];
+
+let feedbacks = JSON.parse(localStorage.getItem('orizon_feedbacks_pos') || '[]');
+if(feedbacks.length === 0) feedbacks = gerarDemoData();
+
+function gerarDemoData(){
+  const nomes = ['Carlos Mendes','Ana Beatriz Lima','Rafael Souza','Juliana Ferreira','Marcos Oliveira','Patrícia Santos','Diego Costa','Fernanda Alves'];
+  const cargos = ['Gerente de Projetos','Dev Full Stack','Analista de RH','SDR','Coordenador de Vendas','Designer UX','Analista Financeiro','Tech Lead'];
+  const empresas = ['TechCorp','GreenBiz','Finova','StartupX','Retail+'];
+  const resultados = ['Aprovado','Aprovado','Não Aprovado','Em espera','Não Aprovado','Aprovado'];
+  const arr = [];
+  nomes.forEach((n,i)=>{
+    const dims = {};
+    DIMENSOES.forEach(d=>{ dims[d.id] = Math.floor(Math.random()*4)+6; });
+    arr.push({
+      id: Date.now()+i,
+      nome: n,
+      cargo: cargos[i % cargos.length],
+      empresa: empresas[i % empresas.length],
+      resultado: resultados[i % resultados.length],
+      dimensoes: dims,
+      pontosFortes: 'Excelente comunicação e postura profissional. Demonstrou conhecimento técnico sólido e proatividade.',
+      gaps: 'Oportunidade de desenvolver habilidades de gestão de stakeholders e planejamento estratégico.',
+      mensagem: 'Agradecemos sua participação no processo. Foi um prazer conhecê-lo!',
+      proximos: 'Manteremos contato para futuras oportunidades.',
+      data: new Date(Date.now() - Math.random()*60*24*3600*1000).toISOString()
+    });
+  });
+  return arr;
+}
+
+function salvarLocal(){ localStorage.setItem('orizon_feedbacks_pos', JSON.stringify(feedbacks)); }
+
+// ── RENDER KPIs ──────────────────────────────────────────
+function renderKPIs(){
+  const total = feedbacks.length;
+  const agora = Date.now();
+  const mes = feedbacks.filter(f=> agora - new Date(f.data) < 30*24*3600*1000).length;
+  const notas = feedbacks.map(f=> mediaNotasFb(f)).filter(n=> n>0);
+  const media = notas.length ? (notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(1) : '—';
+  const apr = feedbacks.filter(f=>f.resultado==='Aprovado').length;
+  const rep = feedbacks.filter(f=>f.resultado==='Não Aprovado').length;
+  const pend = 0;
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiMes').textContent = mes;
+  document.getElementById('kpiNota').textContent = media;
+  document.getElementById('kpiAprovados').textContent = apr;
+  document.getElementById('kpiReprovados').textContent = rep;
+  document.getElementById('kpiPendentes').textContent = pend;
+}
+
+function mediaNotasFb(f){
+  if(!f.dimensoes) return 0;
+  const vals = Object.values(f.dimensoes);
+  if(!vals.length) return 0;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+
+// ── FILTROS ──────────────────────────────────────────────
+function limparFiltros(){
+  ['fBusca','fResultado','fCargo','fPeriodo'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value='';
+  });
+  renderLista();
+}
+
+function popularSelectCargo(){
+  const sel = document.getElementById('fCargo');
+  const cargos = [...new Set(feedbacks.map(f=>f.cargo))].sort();
+  sel.innerHTML = '<option value="">Todos os cargos</option>';
+  cargos.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+}
+
+function feedbacksFiltrados(){
+  const busca = (document.getElementById('fBusca')?.value||'').toLowerCase();
+  const res = document.getElementById('fResultado')?.value||'';
+  const cargo = document.getElementById('fCargo')?.value||'';
+  const periodo = parseInt(document.getElementById('fPeriodo')?.value||'0');
+  const agora = Date.now();
+  return feedbacks.filter(f=>{
+    if(busca && !`${f.nome} ${f.cargo} ${f.empresa}`.toLowerCase().includes(busca)) return false;
+    if(res && f.resultado !== res) return false;
+    if(cargo && f.cargo !== cargo) return false;
+    if(periodo && agora - new Date(f.data) > periodo*24*3600*1000) return false;
+    return true;
+  });
+}
+
+// ── LISTA ────────────────────────────────────────────────
+function renderLista(){
+  const lista = document.getElementById('listaFeedbacks');
+  const fbs = feedbacksFiltrados();
+
+  if(!fbs.length){
+    lista.innerHTML = `<div class="empty-state"><div class="empty-ico">💬</div><div class="empty-title">Nenhum feedback encontrado</div><div class="empty-sub">Ajuste os filtros ou registre um novo feedback.</div></div>`;
+    return;
+  }
+
+  lista.innerHTML = `<div class="feedback-list">${fbs.map(f=> cardFeedback(f)).join('')}</div>`;
+}
+
+function cardFeedback(f){
+  const media = mediaNotasFb(f);
+  const mediaStr = media ? media.toFixed(1) : '—';
+  const corMedia = media >= 8.5 ? 'var(--green)' : media >= 7 ? 'var(--accent)' : media >= 5 ? 'var(--orange)' : 'var(--red)';
+  const cores = ['#3b82f6','#a78bfa','#2ecc71','#f39c12','#06b6d4','#e74c3c'];
+  const corAva = cores[f.nome.charCodeAt(0) % cores.length];
+  const iniciais = f.nome.split(' ').slice(0,2).map(n=>n[0]).join('');
+  const dataFmt = new Date(f.data).toLocaleDateString('pt-BR');
+
+  const resBadge = f.resultado === 'Aprovado'
+    ? `<span class="status-badge" style="background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.25)"><span class="status-dot" style="background:var(--green)"></span>${f.resultado}</span>`
+    : f.resultado === 'Não Aprovado'
+    ? `<span class="status-badge" style="background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.25)"><span class="status-dot" style="background:var(--red)"></span>${f.resultado}</span>`
+    : `<span class="status-badge" style="background:rgba(243,156,18,0.1);color:var(--orange);border:1px solid rgba(243,156,18,0.25)"><span class="status-dot" style="background:var(--orange)"></span>${f.resultado}</span>`;
+
+  const pillsDims = DIMENSOES.slice(0,3).map(d=>{
+    const val = f.dimensoes?.[d.id] || 0;
+    return `<div class="dim-pill"><span class="dim-pill-label">${d.label.split('/')[0]}</span><span class="dim-pill-val" style="color:${d.cor}">${val}/10</span></div>`;
+  }).join('');
+
+  const dimCards = DIMENSOES.map(d=>{
+    const val = f.dimensoes?.[d.id] || 0;
+    const pct = val*10;
+    return `<div class="dim-card">
+      <div class="dim-header"><span class="dim-name">${d.label}</span><span class="dim-nota" style="color:${d.cor}">${val}</span></div>
+      <div class="dim-bar-wrap"><div class="dim-bar" style="width:${pct}%;background:${d.cor}"></div></div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="feedback-item" id="fb-${f.id}" onclick="toggleFb(${f.id})">
+    <div class="fi-top">
+      <div class="fi-ava" style="background:${corAva}22;color:${corAva};border:1px solid ${corAva}44">${iniciais}</div>
+      <div class="fi-info">
+        <div class="fi-nome">${f.nome}</div>
+        <div class="fi-cargo">${f.cargo}</div>
+        <div class="fi-meta">${f.empresa ? `<span class="fi-empresa">${f.empresa}</span>` : ''}<span class="fi-data">${dataFmt}</span>${resBadge}</div>
+      </div>
+      <div class="fi-right">
+        <div class="fi-score" style="color:${corMedia}">${mediaStr}</div>
+        <div class="fi-score-label">Nota Média</div>
+        <div style="display:flex;gap:0.3rem">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editarFb(${f.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deletarFb(${f.id})">🗑</button>
+        </div>
+      </div>
+    </div>
+    <div class="dims-row">${pillsDims}</div>
+    <div class="fi-expand">
+      <div class="dim-grid">${dimCards}</div>
+      ${f.pontosFortes ? `<div class="fb-bloco"><div class="fb-bloco-label">✅ Pontos Fortes</div><div class="fb-bloco-texto">${f.pontosFortes}</div></div>` : ''}
+      ${f.gaps ? `<div class="fb-bloco"><div class="fb-bloco-label">🔧 Pontos de Desenvolvimento</div><div class="fb-bloco-texto">${f.gaps}</div></div>` : ''}
+      ${f.mensagem ? `<div class="fb-bloco"><div class="fb-bloco-label">💬 Mensagem ao Candidato</div><div class="fb-bloco-texto">${f.mensagem}</div></div>` : ''}
+      ${f.proximos ? `<div class="fb-bloco"><div class="fb-bloco-label">🔮 Próximos Passos</div><div class="fb-bloco-texto">${f.proximos}</div></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleFb(id){
+  const el = document.getElementById('fb-'+id);
+  if(el) el.classList.toggle('aberto');
+}
+
+function deletarFb(id){
+  if(!confirm('Remover este feedback?')) return;
+  feedbacks = feedbacks.filter(f=>f.id!==id);
+  salvarLocal();
+  renderTudo();
+  toast('Feedback removido','var(--red)');
+}
+
+// ── MODAL ────────────────────────────────────────────────
+let editandoId = null;
+
+function abrirModal(fb=null){
+  editandoId = fb ? fb.id : null;
+  document.getElementById('mNome').value = fb?.nome||'';
+  document.getElementById('mCargo').value = fb?.cargo||'';
+  document.getElementById('mEmpresa').value = fb?.empresa||'';
+  document.getElementById('mResultado').value = fb?.resultado||'Aprovado';
+  document.getElementById('mPontosFortes').value = fb?.pontosFortes||'';
+  document.getElementById('mGaps').value = fb?.gaps||'';
+  document.getElementById('mMensagem').value = fb?.mensagem||'';
+  document.getElementById('mProximos').value = fb?.proximos||'';
+  renderDimensoesForm(fb?.dimensoes||{});
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fecharModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+function renderDimensoesForm(vals){
+  const wrap = document.getElementById('dimensoesForm');
+  wrap.innerHTML = DIMENSOES.map(d=>{
+    const val = vals[d.id]||7;
+    const btns = Array.from({length:10},(_,i)=>{
+      const n=i+1;
+      const cor = n>=8 ? 'var(--green)' : n>=6 ? 'var(--accent)' : n>=4 ? 'var(--orange)' : 'var(--red)';
+      return `<button type="button" class="escala-btn${n===val?' ativo':''}" style="${n===val?`background:${cor};border-color:${cor}`:''}" onclick="selecionarNota('${d.id}',${n})" data-dim="${d.id}" data-n="${n}">${n}</button>`;
+    }).join('');
+    return `<div class="form-row"><label class="form-label" style="color:${d.cor}">${d.label}</label><div class="escala" id="esc-${d.id}">${btns}</div></div>`;
+  }).join('');
+}
+
+function selecionarNota(dimId, n){
+  const wrap = document.getElementById('esc-'+dimId);
+  wrap.querySelectorAll('.escala-btn').forEach(btn=>{
+    const bn = parseInt(btn.dataset.n);
+    const cor = bn>=8 ? 'var(--green)' : bn>=6 ? 'var(--accent)' : bn>=4 ? 'var(--orange)' : 'var(--red)';
+    if(bn===n){ btn.classList.add('ativo'); btn.style.background=cor; btn.style.borderColor=cor; }
+    else{ btn.classList.remove('ativo'); btn.style.background=''; btn.style.borderColor=''; }
+  });
+}
+
+function getNotasDimensoes(){
+  const dims = {};
+  DIMENSOES.forEach(d=>{
+    const wrap = document.getElementById('esc-'+d.id);
+    const ativo = wrap?.querySelector('.escala-btn.ativo');
+    dims[d.id] = ativo ? parseInt(ativo.dataset.n) : 7;
+  });
+  return dims;
+}
+
+function salvarFeedback(){
+  const nome = document.getElementById('mNome').value.trim();
+  const cargo = document.getElementById('mCargo').value.trim();
+  if(!nome||!cargo){ toast('Preencha nome e cargo','var(--red)'); return; }
+
+  const fb = {
+    id: editandoId || Date.now(),
+    nome,
+    cargo,
+    empresa: document.getElementById('mEmpresa').value.trim(),
+    resultado: document.getElementById('mResultado').value,
+    dimensoes: getNotasDimensoes(),
+    pontosFortes: document.getElementById('mPontosFortes').value.trim(),
+    gaps: document.getElementById('mGaps').value.trim(),
+    mensagem: document.getElementById('mMensagem').value.trim(),
+    proximos: document.getElementById('mProximos').value.trim(),
+    data: editandoId ? feedbacks.find(x=>x.id===editandoId)?.data || new Date().toISOString() : new Date().toISOString()
+  };
+
+  if(editandoId){ feedbacks = feedbacks.map(x=>x.id===editandoId?fb:x); }
+  else { feedbacks.unshift(fb); }
+
+  salvarLocal();
+  fecharModal();
+  renderTudo();
+  toast(editandoId?'Feedback atualizado!':'Feedback salvo!','var(--green)');
+}
+
+function editarFb(id){
+  const fb = feedbacks.find(f=>f.id===id);
+  if(fb) abrirModal(fb);
+}
+
+// ── ANALYTICS ───────────────────────────────────────────
+function renderAnalytics(){
+  // Notas por dimensão
+  const dimWrap = document.getElementById('chartDimensoes');
+  dimWrap.innerHTML = DIMENSOES.map(d=>{
+    const vals = feedbacks.map(f=>f.dimensoes?.[d.id]||0).filter(v=>v>0);
+    const media = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : 0;
+    const pct = media/10*100;
+    return `<div class="chart-row">
+      <span class="chart-label">${d.label}</span>
+      <div class="chart-bar-outer"><div class="chart-bar-inner" style="width:${pct}%;background:${d.cor}">${media.toFixed(1)}</div></div>
+      <span class="chart-val" style="color:${d.cor}">${media.toFixed(1)}</span>
+    </div>`;
+  }).join('');
+
+  // Cargos top
+  const porCargo = {};
+  feedbacks.forEach(f=>{ if(!porCargo[f.cargo]) porCargo[f.cargo]=[]; porCargo[f.cargo].push(mediaNotasFb(f)); });
+  const rankCargos = Object.entries(porCargo).map(([c,arr])=>({cargo:c, media:arr.reduce((a,b)=>a+b,0)/arr.length})).sort((a,b)=>b.media-a.media).slice(0,5);
+  const cargosWrap = document.getElementById('chartCargos');
+  cargosWrap.innerHTML = rankCargos.map((r,i)=>{
+    const pct = r.media/10*100;
+    const cor = i===0?'var(--yellow)':i===1?'var(--text2)':'var(--orange)';
+    return `<div class="chart-row">
+      <span class="chart-label">${r.cargo}</span>
+      <div class="chart-bar-outer"><div class="chart-bar-inner" style="width:${pct}%;background:var(--accent)">${r.media.toFixed(1)}</div></div>
+      <span class="chart-val" style="color:${cor}">${i===0?'🥇':i===1?'🥈':'🥉'}</span>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:0.72rem;padding:1rem">Sem dados</div>';
+
+  // Meses
+  const mesesWrap = document.getElementById('chartMeses');
+  const contMes = {};
+  feedbacks.forEach(f=>{
+    const d = new Date(f.data);
+    const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    contMes[k] = (contMes[k]||0)+1;
+  });
+  const mesesOrd = Object.entries(contMes).sort((a,b)=>a[0]>b[0]?1:-1).slice(-6);
+  const maxM = Math.max(...mesesOrd.map(m=>m[1]),1);
+  mesesWrap.innerHTML = mesesOrd.map(([k,v])=>{
+    const [ano,m] = k.split('-');
+    const nm = new Date(+ano,+m-1).toLocaleString('pt-BR',{month:'short'});
+    const pct = v/maxM*100;
+    return `<div class="chart-row">
+      <span class="chart-label">${nm} ${ano}</span>
+      <div class="chart-bar-outer"><div class="chart-bar-inner" style="width:${pct}%;background:var(--teal)">${v}</div></div>
+      <span class="chart-val">${v}</span>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:0.72rem;padding:1rem">Sem dados</div>';
+
+  // Resultado
+  const resWrap = document.getElementById('chartResultado');
+  const total = feedbacks.length || 1;
+  const counts = {Aprovado:0,'Não Aprovado':0,'Em espera':0};
+  feedbacks.forEach(f=>{ if(counts[f.resultado]!==undefined) counts[f.resultado]++; });
+  const coresRes = {Aprovado:'var(--green)','Não Aprovado':'var(--red)','Em espera':'var(--orange)'};
+  resWrap.innerHTML = Object.entries(counts).map(([k,v])=>{
+    const pct = (v/total*100).toFixed(0);
+    return `<div class="chart-row">
+      <span class="chart-label" style="color:${coresRes[k]}">${k}</span>
+      <div class="chart-bar-outer"><div class="chart-bar-inner" style="width:${pct}%;background:${coresRes[k]}">${v}</div></div>
+      <span class="chart-val">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ── TEMPLATES ────────────────────────────────────────────
+function renderTemplates(){
+  const lista = document.getElementById('listaTemplates');
+  lista.innerHTML = TEMPLATES.map(t=>`
+    <div class="template-card" onclick="verTemplate('${t.id}')">
+      <div class="tc-title">${t.titulo}</div>
+      <div class="tc-sub">${t.descricao}</div>
+    </div>`).join('');
+}
+
+function verTemplate(id){
+  const t = TEMPLATES.find(x=>x.id===id);
+  if(!t) return;
+  document.querySelectorAll('.template-card').forEach(c=>c.classList.remove('ativo'));
+  document.querySelector(`.template-card[onclick*="${id}"]`)?.classList.add('ativo');
+
+  const prev = document.getElementById('previewTemplate');
+  prev.innerHTML = `
+    <div style="margin-bottom:0.8rem"><span class="card-badge ${t.resultado==='Aprovado'?'green':t.resultado==='Não Aprovado'?'red':'orange'}">${t.resultado}</span></div>
+    <div class="fb-bloco"><div class="fb-bloco-label">✅ Pontos Fortes</div><div class="fb-bloco-texto">${t.pontosFortes}</div></div>
+    <div class="fb-bloco"><div class="fb-bloco-label">🔧 Pontos de Desenvolvimento</div><div class="fb-bloco-texto">${t.gaps}</div></div>
+    <div class="fb-bloco"><div class="fb-bloco-label">💬 Mensagem ao Candidato</div><div class="fb-bloco-texto">${t.mensagem}</div></div>
+    <div class="fb-bloco"><div class="fb-bloco-label">🔮 Próximos Passos</div><div class="fb-bloco-texto">${t.proximos}</div></div>
+    <button class="btn btn-primary btn-sm" style="margin-top:0.5rem" onclick="usarTemplate('${t.id}')">Usar este template →</button>
+  `;
+}
+
+function usarTemplate(id){
+  const t = TEMPLATES.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('mResultado').value = t.resultado;
+  document.getElementById('mPontosFortes').value = t.pontosFortes;
+  document.getElementById('mGaps').value = t.gaps;
+  document.getElementById('mMensagem').value = t.mensagem;
+  document.getElementById('mProximos').value = t.proximos;
+  trocarTab('lista', document.querySelector('.tab-btn'));
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{ if(i===0){b.classList.add('ativo')}else{b.classList.remove('ativo')}});
+  abrirModal();
+  document.getElementById('mPontosFortes').value = t.pontosFortes;
+  document.getElementById('mGaps').value = t.gaps;
+  document.getElementById('mMensagem').value = t.mensagem;
+  document.getElementById('mProximos').value = t.proximos;
+  document.getElementById('mResultado').value = t.resultado;
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function trocarTab(tab, btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('ativo'));
+  if(btn) btn.classList.add('ativo');
+  document.getElementById('tab-lista').style.display = tab==='lista'?'block':'none';
+  document.getElementById('tab-analytics').style.display = tab==='analytics'?'block':'none';
+  document.getElementById('tab-templates').style.display = tab==='templates'?'block':'none';
+  if(tab==='analytics') renderAnalytics();
+  if(tab==='templates') renderTemplates();
+}
+
+// ── EXPORT ───────────────────────────────────────────────
+function exportarCSV(){
+  const header = ['Nome','Cargo','Empresa','Resultado','Nota Média',...DIMENSOES.map(d=>d.label),'Pontos Fortes','Gaps','Data'];
+  const rows = feedbacks.map(f=>[
+    f.nome, f.cargo, f.empresa||'', f.resultado, mediaNotasFb(f).toFixed(1),
+    ...DIMENSOES.map(d=>f.dimensoes?.[d.id]||0),
+    `"${(f.pontosFortes||'').replace(/"/g,"'")}"`,
+    `"${(f.gaps||'').replace(/"/g,"'")}"`,
+    new Date(f.data).toLocaleDateString('pt-BR')
+  ]);
+  const csv = [header,...rows].map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = 'feedbacks-pos-processo.csv';
+  a.click();
+}
+
+// ── TOAST ────────────────────────────────────────────────
+function toast(msg, cor='var(--green)'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = cor;
+  t.style.color = cor;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ── INIT ─────────────────────────────────────────────────
+function renderTudo(){
+  renderKPIs();
+  popularSelectCargo();
+  renderLista();
+}
+
+document.addEventListener('DOMContentLoaded', renderTudo);
+document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) fecharModal(); });
+</script>
+</body>
+</html>

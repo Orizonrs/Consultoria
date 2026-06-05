@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Portal do Candidato | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-sm{padding:0.3rem 0.7rem;font-size:0.68rem;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.cyan{background:rgba(6,182,212,0.1);color:var(--cyan);border-color:rgba(6,182,212,0.25);}
+
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:65px;line-height:1.6;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:1000px){.grid2{grid-template-columns:1fr;}.grid3{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.grid3{grid-template-columns:1fr;}}
+
+/* CARDS CANDIDATOS */
+.cands-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0.8rem;}
+.cand-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.3rem;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.cand-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.cand-card.selecionado{border-color:var(--border3);background:rgba(59,130,246,0.04);}
+.cand-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;}
+.cand-header{display:flex;align-items:center;gap:0.85rem;margin-bottom:0.9rem;}
+.cand-ava{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+.cand-nome{font-size:0.88rem;font-weight:800;margin-bottom:0.1rem;}
+.cand-cargo{font-size:0.65rem;color:var(--muted);}
+.cand-empresa{font-size:0.6rem;color:var(--accent);font-weight:700;}
+.status-badge{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.6rem;font-weight:800;padding:0.2rem 0.6rem;border-radius:8px;white-space:nowrap;}
+.status-dot{width:6px;height:6px;border-radius:50%;}
+
+/* PROGRESSO ETAPAS */
+.etapas-progress{display:flex;gap:3px;margin:0.75rem 0 0.5rem;}
+.ep-step{flex:1;height:5px;border-radius:3px;transition:background 0.3s;}
+.ep-labels{display:flex;justify-content:space-between;}
+.ep-label-txt{font-size:0.5rem;color:var(--muted);font-weight:700;}
+
+/* TIMELINE DETALHE */
+.tl{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:1rem;position:relative;padding-bottom:1rem;}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:15px;top:32px;bottom:0;width:2px;background:rgba(255,255,255,0.06);}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;border:2px solid;z-index:1;}
+.tl-body{flex:1;}
+.tl-title{font-size:0.78rem;font-weight:700;margin-bottom:0.15rem;}
+.tl-sub{font-size:0.62rem;color:var(--muted);line-height:1.5;}
+.tl-data{font-size:0.58rem;color:var(--muted);font-family:var(--mono);margin-top:0.15rem;}
+
+/* LINK PÚBLICO */
+.link-box{background:rgba(59,130,246,0.05);border:1px solid var(--border2);border-radius:12px;padding:0.9rem 1.1rem;display:flex;align-items:center;gap:0.8rem;margin-top:0.8rem;}
+.link-url{flex:1;font-size:0.68rem;font-family:var(--mono);color:var(--text2);word-break:break-all;}
+
+/* MENSAGEM TEMPLATE */
+.msg-template{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.5rem;cursor:pointer;transition:all 0.15s;}
+.msg-template:hover{border-color:var(--border2);background:rgba(59,130,246,0.04);}
+.msg-template-title{font-size:0.72rem;font-weight:700;margin-bottom:0.2rem;}
+.msg-template-prev{font-size:0.62rem;color:var(--muted);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* PAINEL DETALHE */
+.detalhe-panel{position:fixed;top:0;right:-500px;width:480px;height:100vh;background:var(--card2);border-left:1px solid var(--border2);z-index:90;overflow-y:auto;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.detalhe-panel.open{right:0;}
+.detalhe-inner{padding:1.5rem;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:2rem;backdrop-filter:blur(4px);overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:580px;animation:fadeUp 0.2s ease;position:relative;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.form-row{margin-bottom:0.85rem;}
+
+/* EMPTY */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;text-align:center;}
+.empty-ico{font-size:3rem;opacity:0.3;}
+.empty-title{font-size:1rem;font-weight:800;color:var(--text2);}
+.empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;max-width:360px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+
+/* TABS */
+.tabs{display:flex;gap:0.3rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.25rem;margin-bottom:1.2rem;}
+.tab{flex:1;padding:0.45rem 0.7rem;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;transition:all 0.18s;text-align:center;}
+.tab.ativo{background:rgba(59,130,246,0.15);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.tab:hover:not(.ativo){background:rgba(255,255,255,0.05);color:var(--text);}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:900px){
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero-title{font-size:1.25rem;}
+  .detalhe-panel{width:100%;right:-100%;}
+  .cands-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Candidatos · Relacionamento · Orizon ATS</div>
+      <div class="hero-title">Portal do <span>Candidato</span></div>
+      <div class="hero-sub">Gerencie e compartilhe o status do processo com candidatos · Sem precisar de login no ATS</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()">📋 Carregar Exemplos</button>
+      <button class="btn btn-primary" onclick="abrirModalNovo()">+ Novo Candidato</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="kpi-num" id="kpiTotal" style="color:var(--accent)">0</div><div class="kpi-label">Candidatos Ativos</div><div class="kpi-sub">em processo</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiLinksGerados" style="color:var(--green)">0</div><div class="kpi-label">Links Gerados</div><div class="kpi-sub">portais ativos</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiAguardando" style="color:var(--orange)">0</div><div class="kpi-label">Aguardando Retorno</div><div class="kpi-sub">pendentes de ação</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiFinalizados" style="color:var(--purple)">0</div><div class="kpi-label">Finalizados</div><div class="kpi-sub">aprovados + encerrados</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiMsgPendente" style="color:var(--yellow)">0</div><div class="kpi-label">Msgs Pendentes</div><div class="kpi-sub">para enviar</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label class="form-label">Buscar candidato</label>
+      <input class="form-input" id="fBusca" placeholder="Nome, cargo, empresa..." oninput="aplicarFiltros()"/>
+    </div>
+    <div class="filter-field" style="max-width:160px;">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="fStatus" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+        <option value="em_processo">Em Processo</option>
+        <option value="aguardando">Aguardando Retorno</option>
+        <option value="aprovado">Aprovado</option>
+        <option value="encerrado">Encerrado</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:170px;">
+      <label class="form-label">Etapa Atual</label>
+      <select class="form-input" id="fEtapa" onchange="aplicarFiltros()">
+        <option value="">Todas as etapas</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:160px;">
+      <label class="form-label">Recrutador</label>
+      <select class="form-input" id="fRecrutador" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- CARDS CANDIDATOS -->
+  <div class="cands-grid" id="candsGrid"></div>
+
+</div>
+
+<!-- DETALHE LATERAL -->
+<div class="detalhe-panel" id="detalhePanel">
+  <div class="detalhe-inner" id="detalheInner"></div>
+</div>
+
+<!-- MODAL NOVO / EDITAR CANDIDATO -->
+<div class="modal-overlay" id="modalNovo">
+  <div class="modal">
+    <button onclick="fecharModalNovo()" style="position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.3rem;">Candidato</div>
+    <div class="modal-title" id="modalNovoTitle">Novo Candidato</div>
+    <div class="modal-sub">Preencha os dados para criar o perfil e gerar o link do portal</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Nome Completo *</label>
+        <input class="form-input" id="nNome" placeholder="Nome do candidato"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Cargo / Vaga *</label>
+        <input class="form-input" id="nCargo" placeholder="Ex: Analista de RH"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Cliente / Empresa</label>
+        <input class="form-input" id="nEmpresa" placeholder="Empresa contratante"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">E-mail do Candidato</label>
+        <input class="form-input" type="email" id="nEmail" placeholder="email@exemplo.com"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">WhatsApp</label>
+        <input class="form-input" id="nWhatsApp" placeholder="(51) 99999-9999"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Recrutador Responsável</label>
+        <input class="form-input" id="nRecrutador" placeholder="Nome do recrutador"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Etapa Atual *</label>
+        <select class="form-input" id="nEtapa">
+          <option value="">— Selecionar —</option>
+          <option>Triagem de Currículo</option>
+          <option>Entrevista Inicial (RH)</option>
+          <option>Teste / Avaliação</option>
+          <option>Entrevista Técnica</option>
+          <option>Entrevista com Gestor</option>
+          <option>Entrevista Final</option>
+          <option>Proposta / Oferta</option>
+          <option>Exame Admissional</option>
+          <option>Contratação</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="nStatus">
+          <option value="em_processo">Em Processo</option>
+          <option value="aguardando">Aguardando Retorno</option>
+          <option value="aprovado">Aprovado ✅</option>
+          <option value="encerrado">Encerrado</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Data de Início</label>
+        <input class="form-input" type="date" id="nDataInicio"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Próxima Etapa Prevista</label>
+        <input class="form-input" type="date" id="nProxData"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Mensagem Visível ao Candidato</label>
+      <textarea class="form-input" id="nMensagem" placeholder="Ex: Seu currículo foi aprovado! Nossa equipe entrará em contato para agendar a entrevista inicial."></textarea>
+    </div>
+    <div class="form-row" style="margin:0;">
+      <label class="form-label">Observações Internas (não visíveis ao candidato)</label>
+      <textarea class="form-input" id="nObs" placeholder="Notas internas sobre o candidato..."></textarea>
+    </div>
+    <input type="hidden" id="nEditId"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModalNovo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PORTAL PÚBLICO (SIMULAÇÃO) -->
+<div class="modal-overlay" id="modalPortal">
+  <div class="modal" style="max-width:500px;">
+    <button onclick="fecharModalPortal()" style="position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    <div id="portalContent"></div>
+  </div>
+</div>
+
+<!-- MODAL MENSAGEM -->
+<div class="modal-overlay" id="modalMsg">
+  <div class="modal" style="max-width:540px;">
+    <button onclick="fecharModalMsg()" style="position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.3rem;">Comunicação</div>
+    <div class="modal-title">Enviar Mensagem</div>
+    <div class="modal-sub" id="msgSubtitle">Para o candidato</div>
+
+    <div style="margin-bottom:1rem;">
+      <div class="form-label" style="margin-bottom:0.5rem;">Templates rápidos</div>
+      <div id="templatesWrap"></div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">Canal</label>
+      <select class="form-input" id="msgCanal">
+        <option value="whatsapp">📱 WhatsApp</option>
+        <option value="email">📧 E-mail</option>
+        <option value="portal">🌐 Portal (mensagem visível)</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Mensagem *</label>
+      <textarea class="form-input" id="msgTexto" style="min-height:110px;" placeholder="Digite a mensagem..."></textarea>
+    </div>
+    <input type="hidden" id="msgCandId"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModalMsg()">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarMsg()">📤 Enviar / Registrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO ───────────────────────────────────────────────────────
+let CANDS = [];
+let FILTRADO = [];
+
+const ETAPAS = [
+  'Triagem de Currículo',
+  'Entrevista Inicial (RH)',
+  'Teste / Avaliação',
+  'Entrevista Técnica',
+  'Entrevista com Gestor',
+  'Entrevista Final',
+  'Proposta / Oferta',
+  'Exame Admissional',
+  'Contratação',
+];
+
+const ETAPA_COR = {
+  'Triagem de Currículo':     '#06b6d4',
+  'Entrevista Inicial (RH)':  '#3b82f6',
+  'Teste / Avaliação':        '#8b5cf6',
+  'Entrevista Técnica':       '#a78bfa',
+  'Entrevista com Gestor':    '#f59e0b',
+  'Entrevista Final':         '#f97316',
+  'Proposta / Oferta':        '#ef4444',
+  'Exame Admissional':        '#a8d85f',
+  'Contratação':              '#22c55e',
+};
+
+const STATUS_CFG = {
+  em_processo: { label:'Em Processo',       cor:'var(--accent)',  bg:'rgba(59,130,246,0.12)'  },
+  aguardando:  { label:'Aguardando Retorno', cor:'var(--orange)', bg:'rgba(243,156,18,0.12)'  },
+  aprovado:    { label:'Aprovado ✅',         cor:'var(--green)',  bg:'rgba(46,204,113,0.12)'  },
+  encerrado:   { label:'Encerrado',          cor:'var(--muted)',  bg:'rgba(85,85,85,0.12)'    },
+};
+
+const TEMPLATES = [
+  { titulo:'✅ Aprovado para próxima etapa', msg:'Olá, {nome}! Temos ótimas notícias: você foi aprovado(a) para a próxima etapa do nosso processo para a vaga de {cargo}. Em breve entraremos em contato com mais detalhes.' },
+  { titulo:'📅 Confirmação de entrevista',   msg:'Olá, {nome}! Confirmamos sua entrevista para a vaga de {cargo} na {empresa}. Por favor, confirme seu comparecimento respondendo esta mensagem.' },
+  { titulo:'⏳ Processo em andamento',       msg:'Olá, {nome}! Gostaríamos de informar que seu processo seletivo para {cargo} está em andamento. Agradecemos sua paciência e em breve teremos novidades!' },
+  { titulo:'🔔 Aguardando documentação',     msg:'Olá, {nome}! Para avançarmos com sua candidatura para {cargo}, precisamos de alguns documentos. Entre em contato conosco para mais informações.' },
+  { titulo:'🎉 Proposta de contratação',     msg:'Olá, {nome}! É com grande satisfação que apresentamos nossa proposta de contratação para a vaga de {cargo} na {empresa}. Favor analisar e nos retornar até 48h.' },
+];
+
+// ─── INIT ────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('nDataInicio').value = new Date().toISOString().slice(0,10);
+  carregarLocal();
+  render();
+}
+
+function carregarLocal() {
+  try { CANDS = JSON.parse(localStorage.getItem('orizon_portal_cands') || '[]'); } catch(e){ CANDS = []; }
+}
+
+function salvarLocal() {
+  localStorage.setItem('orizon_portal_cands', JSON.stringify(CANDS));
+}
+
+// ─── FILTROS ────────────────────────────────────────────────────
+function popularFiltros() {
+  const etapas = [...new Set(CANDS.map(c=>c.etapa).filter(Boolean))];
+  const recs   = [...new Set(CANDS.map(c=>c.recrutador).filter(Boolean))];
+  const fe = document.getElementById('fEtapa');
+  const fr = document.getElementById('fRecrutador');
+  const vE = fe.value, vR = fr.value;
+  fe.innerHTML = '<option value="">Todas as etapas</option>' + etapas.map(e=>`<option${e===vE?' selected':''}>${e}</option>`).join('');
+  fr.innerHTML = '<option value="">Todos</option>' + recs.map(r=>`<option${r===vR?' selected':''}>${r}</option>`).join('');
+}
+
+function aplicarFiltros() {
+  const busca = document.getElementById('fBusca').value.toLowerCase();
+  const status = document.getElementById('fStatus').value;
+  const etapa  = document.getElementById('fEtapa').value;
+  const rec    = document.getElementById('fRecrutador').value;
+  FILTRADO = CANDS.filter(c => {
+    if (busca && !`${c.nome} ${c.cargo} ${c.empresa}`.toLowerCase().includes(busca)) return false;
+    if (status && c.status !== status) return false;
+    if (etapa && c.etapa !== etapa) return false;
+    if (rec && c.recrutador !== rec) return false;
+    return true;
+  });
+  renderCards();
+}
+
+function limparFiltros() {
+  ['fBusca','fStatus','fEtapa','fRecrutador'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.tagName === 'INPUT') el.value = ''; else el.value = '';
+  });
+  aplicarFiltros();
+}
+
+// ─── RENDER GLOBAL ───────────────────────────────────────────────
+function render() {
+  renderKPIs();
+  popularFiltros();
+  aplicarFiltros();
+}
+
+// ─── KPIs ────────────────────────────────────────────────────────
+function renderKPIs() {
+  const ativos     = CANDS.filter(c=>c.status==='em_processo'||c.status==='aguardando').length;
+  const links      = CANDS.filter(c=>c.link).length;
+  const aguardando = CANDS.filter(c=>c.status==='aguardando').length;
+  const finalizados= CANDS.filter(c=>c.status==='aprovado'||c.status==='encerrado').length;
+  const msgPend    = CANDS.filter(c=>c.msgPendente).length;
+
+  document.getElementById('kpiTotal').textContent      = ativos;
+  document.getElementById('kpiLinksGerados').textContent = links;
+  document.getElementById('kpiAguardando').textContent  = aguardando;
+  document.getElementById('kpiFinalizados').textContent = finalizados;
+  document.getElementById('kpiMsgPendente').textContent = msgPend;
+}
+
+// ─── CARDS ──────────────────────────────────────────────────────
+function renderCards() {
+  const grid = document.getElementById('candsGrid');
+  if (!FILTRADO.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-ico">👤</div>
+      <div class="empty-title">Nenhum candidato encontrado</div>
+      <div class="empty-sub">Adicione candidatos ao portal para compartilhar o status do processo sem precisar de acesso ao ATS.</div>
+      <button class="btn btn-primary" onclick="abrirModalNovo()">+ Novo Candidato</button>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = FILTRADO.map(c => {
+    const st = STATUS_CFG[c.status] || STATUS_CFG.em_processo;
+    const ini = c.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+    const etapaIdx = ETAPAS.indexOf(c.etapa);
+    const etapaCor = ETAPA_COR[c.etapa] || '#aaa';
+    const progressWidth = etapaIdx >= 0 ? ((etapaIdx+1)/ETAPAS.length)*100 : 0;
+
+    const steps = ETAPAS.map((e,i) => {
+      const done = i < etapaIdx;
+      const atual = i === etapaIdx;
+      const cor = done ? '#22c55e' : atual ? etapaCor : 'rgba(255,255,255,0.06)';
+      return `<div class="ep-step" style="background:${cor};" title="${e}"></div>`;
+    }).join('');
+
+    return `<div class="cand-card" onclick="abrirDetalhe('${c.id}')" style="--cor:${etapaCor};">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${etapaCor};border-radius:16px 16px 0 0;"></div>
+      <div class="cand-header">
+        <div class="cand-ava" style="background:${etapaCor}22;color:${etapaCor};">${ini}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="cand-nome">${c.nome}</div>
+          <div class="cand-cargo">${c.cargo}</div>
+          ${c.empresa ? `<div class="cand-empresa">${c.empresa}</div>` : ''}
+        </div>
+        <div class="status-badge" style="background:${st.bg};color:${st.cor};">
+          <div class="status-dot" style="background:${st.cor};"></div>
+          ${st.label}
+        </div>
+      </div>
+
+      <div style="font-size:0.6rem;font-weight:700;color:var(--muted);margin-bottom:0.3rem;">ETAPA ATUAL</div>
+      <div style="font-size:0.78rem;font-weight:800;color:${etapaCor};margin-bottom:0.6rem;">${c.etapa||'—'}</div>
+
+      <div class="etapas-progress">${steps}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.8rem;">
+        <span style="font-size:0.52rem;color:var(--muted);">Início</span>
+        <span style="font-size:0.52rem;color:var(--muted);">${Math.round(progressWidth)}% concluído</span>
+        <span style="font-size:0.52rem;color:var(--muted);">Contratação</span>
+      </div>
+
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">
+        ${c.recrutador ? `<span style="font-size:0.6rem;color:var(--muted);">👤 ${c.recrutador}</span>` : ''}
+        ${c.dataInicio ? `<span style="font-size:0.6rem;color:var(--muted);font-family:var(--mono);">📅 ${c.dataInicio}</span>` : ''}
+        ${c.msgPendente ? `<span class="card-badge orange">📨 Msg pendente</span>` : ''}
+        ${c.link ? `<span class="card-badge green">🔗 Link ativo</span>` : ''}
+      </div>
+
+      <div style="display:flex;gap:0.4rem;margin-top:0.9rem;" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalMsg('${c.id}')">💬 Mensagem</button>
+        <button class="btn btn-ghost btn-sm" onclick="verPortal('${c.id}')">🌐 Ver Portal</button>
+        <button class="btn btn-ghost btn-sm" onclick="copiarLink('${c.id}')">🔗 Copiar Link</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarCand('${c.id}')">✏️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── DETALHE LATERAL ────────────────────────────────────────────
+function abrirDetalhe(id) {
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  const st = STATUS_CFG[c.status] || STATUS_CFG.em_processo;
+  const etapaCor = ETAPA_COR[c.etapa] || '#aaa';
+  const etapaIdx = ETAPAS.indexOf(c.etapa);
+  const ini = c.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+
+  const tl = ETAPAS.slice(0, etapaIdx+1).reverse().map((e,i) => {
+    const cor = i === 0 ? etapaCor : '#22c55e';
+    const ativo = i === 0;
+    return `<div class="tl-item">
+      <div class="tl-dot" style="background:${cor}20;border-color:${cor};color:${cor};">${ativo?'◉':'✓'}</div>
+      <div class="tl-body">
+        <div class="tl-title" style="color:${ativo?etapaCor:'var(--text2)'}">${e}</div>
+        <div class="tl-sub">${ativo?'Etapa atual':'Concluída'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const link = `https://portal.orizon.com.br/candidato/${c.id}`;
+
+  document.getElementById('detalheInner').innerHTML = `
+    <button onclick="fecharDetalhe()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.3rem 0.7rem;cursor:pointer;font-family:inherit;font-size:0.72rem;color:var(--muted);">✕ Fechar</button>
+
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;margin-top:0.3rem;">
+      <div style="width:52px;height:52px;border-radius:14px;background:${etapaCor}22;color:${etapaCor};display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:900;font-family:var(--mono);flex-shrink:0;">${ini}</div>
+      <div>
+        <div style="font-size:1.05rem;font-weight:900;">${c.nome}</div>
+        <div style="font-size:0.68rem;color:var(--muted);">${c.cargo}${c.empresa?' · '+c.empresa:''}</div>
+        <div class="status-badge" style="background:${st.bg};color:${st.cor};margin-top:0.3rem;display:inline-flex;">
+          <div class="status-dot" style="background:${st.cor};"></div>${st.label}
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs" id="detTabs">
+      <button class="tab ativo" onclick="switchTab('visao')">📊 Visão Geral</button>
+      <button class="tab" onclick="switchTab('timeline')">📋 Timeline</button>
+      <button class="tab" onclick="switchTab('msgs')">💬 Mensagens</button>
+    </div>
+
+    <div id="tabVisao">
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-bottom:0.8rem;">
+        <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;">Dados do Processo</div>
+        ${row('Etapa Atual', `<span style="color:${etapaCor};font-weight:700;">${c.etapa||'—'}</span>`)}
+        ${row('Recrutador', c.recrutador||'—')}
+        ${row('Início', c.dataInicio||'—')}
+        ${row('Próxima Etapa', c.proxData||'—')}
+        ${row('E-mail', c.email||'—')}
+        ${row('WhatsApp', c.whatsapp||'—')}
+      </div>
+
+      ${c.mensagem ? `<div style="background:rgba(59,130,246,0.05);border:1px solid var(--border2);border-radius:12px;padding:0.9rem;margin-bottom:0.8rem;">
+        <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Mensagem Visível ao Candidato</div>
+        <div style="font-size:0.74rem;color:var(--text2);line-height:1.6;">${c.mensagem}</div>
+      </div>` : ''}
+
+      ${c.obs ? `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.9rem;margin-bottom:0.8rem;">
+        <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;">Obs. Internas</div>
+        <div style="font-size:0.72rem;color:var(--muted);line-height:1.6;">${c.obs}</div>
+      </div>` : ''}
+
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.9rem;margin-bottom:0.8rem;">
+        <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">🔗 Link do Portal</div>
+        <div class="link-box">
+          <div class="link-url">${link}</div>
+          <button class="btn btn-ghost btn-sm" onclick="copiarLink('${c.id}')">📋 Copiar</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.8rem;">
+        <button class="btn btn-primary" onclick="abrirModalMsg('${c.id}');fecharDetalhe()">💬 Enviar Mensagem</button>
+        <button class="btn btn-ghost" onclick="verPortal('${c.id}')">🌐 Ver Portal</button>
+        <button class="btn btn-ghost" onclick="editarCand('${c.id}');fecharDetalhe()">✏️ Editar</button>
+        <button class="btn btn-danger" onclick="excluir('${c.id}');fecharDetalhe()">🗑 Excluir</button>
+      </div>
+    </div>
+
+    <div id="tabTimeline" style="display:none;">
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:1rem;">Progresso no funil de seleção</div>
+      <div class="tl">${tl}</div>
+      ${etapaIdx < ETAPAS.length-1 ? `<div style="padding:0.8rem;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:10px;margin-top:0.5rem;">
+        <div style="font-size:0.62rem;color:var(--muted);">Próximas etapas</div>
+        ${ETAPAS.slice(etapaIdx+1).map(e=>`<div style="font-size:0.7rem;color:var(--muted);padding:0.3rem 0;">${e}</div>`).join('')}
+      </div>` : ''}
+    </div>
+
+    <div id="tabMsgs" style="display:none;">
+      <div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.8rem;">Histórico de comunicações</div>
+      ${(c.msgs||[]).length ? (c.msgs||[]).slice().reverse().map(m=>`
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.8rem;margin-bottom:0.5rem;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+            <span style="font-size:0.6rem;font-weight:800;color:var(--accent);">${m.canal==='whatsapp'?'📱 WhatsApp':m.canal==='email'?'📧 E-mail':'🌐 Portal'}</span>
+            <span style="font-size:0.58rem;color:var(--muted);font-family:var(--mono);">${m.data}</span>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text2);line-height:1.5;">${m.texto}</div>
+        </div>
+      `).join('') : `<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.72rem;">Nenhuma mensagem registrada</div>`}
+      <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;" onclick="abrirModalMsg('${c.id}');fecharDetalhe()">💬 Nova Mensagem</button>
+    </div>
+  `;
+
+  document.getElementById('detalhePanel').classList.add('open');
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalhePanel').classList.remove('open');
+}
+
+function switchTab(tab) {
+  ['visao','timeline','msgs'].forEach(t => {
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('#detTabs .tab').forEach((el,i) => {
+    el.classList.toggle('ativo', ['visao','timeline','msgs'][i]===tab);
+  });
+}
+
+function row(label, val) {
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+    <span style="font-size:0.62rem;font-weight:700;color:var(--muted);">${label}</span>
+    <span style="font-size:0.74rem;font-weight:700;color:var(--text2);">${val}</span>
+  </div>`;
+}
+
+// ─── MODAL CANDIDATO ────────────────────────────────────────────
+function abrirModalNovo() {
+  document.getElementById('nEditId').value = '';
+  document.getElementById('modalNovoTitle').textContent = 'Novo Candidato';
+  ['nNome','nCargo','nEmpresa','nEmail','nWhatsApp','nRecrutador','nMensagem','nObs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nEtapa').value = '';
+  document.getElementById('nStatus').value = 'em_processo';
+  document.getElementById('nDataInicio').value = new Date().toISOString().slice(0,10);
+  document.getElementById('nProxData').value = '';
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function fecharModalNovo() {
+  document.getElementById('modalNovo').classList.remove('open');
+}
+
+function editarCand(id) {
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  document.getElementById('nEditId').value = c.id;
+  document.getElementById('modalNovoTitle').textContent = 'Editar Candidato';
+  document.getElementById('nNome').value = c.nome||'';
+  document.getElementById('nCargo').value = c.cargo||'';
+  document.getElementById('nEmpresa').value = c.empresa||'';
+  document.getElementById('nEmail').value = c.email||'';
+  document.getElementById('nWhatsApp').value = c.whatsapp||'';
+  document.getElementById('nRecrutador').value = c.recrutador||'';
+  document.getElementById('nEtapa').value = c.etapa||'';
+  document.getElementById('nStatus').value = c.status||'em_processo';
+  document.getElementById('nDataInicio').value = c.dataInicio||'';
+  document.getElementById('nProxData').value = c.proxData||'';
+  document.getElementById('nMensagem').value = c.mensagem||'';
+  document.getElementById('nObs').value = c.obs||'';
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function salvar() {
+  const nome  = document.getElementById('nNome').value.trim();
+  const cargo = document.getElementById('nCargo').value.trim();
+  const etapa = document.getElementById('nEtapa').value;
+  if (!nome)  { toast('⚠️ Informe o nome do candidato'); return; }
+  if (!cargo) { toast('⚠️ Informe o cargo / vaga'); return; }
+  if (!etapa) { toast('⚠️ Selecione a etapa atual'); return; }
+
+  const editId = document.getElementById('nEditId').value;
+  const item = {
+    id: editId || 'cand_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    nome, cargo,
+    empresa:    document.getElementById('nEmpresa').value.trim(),
+    email:      document.getElementById('nEmail').value.trim(),
+    whatsapp:   document.getElementById('nWhatsApp').value.trim(),
+    recrutador: document.getElementById('nRecrutador').value.trim(),
+    etapa,
+    status:     document.getElementById('nStatus').value,
+    dataInicio: document.getElementById('nDataInicio').value,
+    proxData:   document.getElementById('nProxData').value,
+    mensagem:   document.getElementById('nMensagem').value.trim(),
+    obs:        document.getElementById('nObs').value.trim(),
+    link:       true,
+    msgs:       editId ? (CANDS.find(x=>x.id===editId)?.msgs||[]) : [],
+    criado_em:  editId ? (CANDS.find(x=>x.id===editId)?.criado_em||new Date().toISOString()) : new Date().toISOString(),
+  };
+
+  if (editId) {
+    const idx = CANDS.findIndex(x=>x.id===editId);
+    if (idx !== -1) CANDS[idx] = item;
+  } else {
+    CANDS.unshift(item);
+  }
+
+  salvarLocal();
+  fecharModalNovo();
+  render();
+  toast(editId ? '✅ Candidato atualizado' : '✅ Candidato adicionado ao portal');
+}
+
+function excluir(id) {
+  const c = CANDS.find(x=>x.id===id);
+  if (!c || !confirm(`Excluir "${c.nome}" do portal?\nEsta ação não pode ser desfeita.`)) return;
+  CANDS = CANDS.filter(x=>x.id!==id);
+  salvarLocal();
+  render();
+  toast('🗑 Candidato removido');
+}
+
+// ─── PORTAL PÚBLICO (SIMULAÇÃO) ─────────────────────────────────
+function verPortal(id) {
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  const etapaCor = ETAPA_COR[c.etapa] || '#aaa';
+  const etapaIdx = ETAPAS.indexOf(c.etapa);
+  const st = STATUS_CFG[c.status] || STATUS_CFG.em_processo;
+
+  const steps = ETAPAS.map((e,i) => {
+    const done = i < etapaIdx;
+    const atual = i === etapaIdx;
+    const cor = done ? '#22c55e' : atual ? etapaCor : 'rgba(255,255,255,0.08)';
+    const txtCor = done||atual ? '#fff' : 'var(--muted)';
+    return `<div style="display:flex;align-items:center;gap:0.7rem;padding:0.55rem 0.8rem;border-radius:8px;background:${atual?etapaCor+'15':'transparent'};border:1px solid ${atual?etapaCor+'40':'transparent'};">
+      <div style="width:22px;height:22px;border-radius:50%;background:${cor};display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:900;color:#fff;flex-shrink:0;">${done?'✓':atual?'◉':i+1}</div>
+      <span style="font-size:0.72rem;font-weight:${atual?800:600};color:${txtCor};">${e}</span>
+      ${atual?`<span style="margin-left:auto;font-size:0.55rem;font-weight:800;color:${etapaCor};">ATUAL</span>`:''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('portalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;">Portal do Candidato · Orizon</div>
+      <div style="font-size:1.3rem;font-weight:900;margin-bottom:0.2rem;">Olá, ${c.nome.split(' ')[0]}! 👋</div>
+      <div style="font-size:0.76rem;color:var(--muted);">Acompanhe seu processo para <strong style="color:var(--text)">${c.cargo}</strong>${c.empresa?' na '+c.empresa:''}</div>
+    </div>
+
+    <div style="background:${st.bg};border:1px solid ${st.cor}40;border-radius:12px;padding:0.9rem 1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.7rem;">
+      <div style="width:10px;height:10px;border-radius:50%;background:${st.cor};flex-shrink:0;"></div>
+      <div>
+        <div style="font-size:0.7rem;font-weight:800;color:${st.cor};">${st.label}</div>
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.1rem;">Etapa atual: ${c.etapa||'—'}</div>
+      </div>
+    </div>
+
+    ${c.mensagem ? `<div style="background:rgba(59,130,246,0.06);border:1px solid var(--border2);border-radius:12px;padding:0.9rem 1.1rem;margin-bottom:1.2rem;">
+      <div style="font-size:0.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;">📩 Mensagem da Equipe</div>
+      <div style="font-size:0.76rem;color:var(--text2);line-height:1.6;">${c.mensagem}</div>
+    </div>` : ''}
+
+    <div style="font-size:0.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;">PROGRESSO NO PROCESSO</div>
+    <div style="display:flex;flex-direction:column;gap:0.2rem;margin-bottom:1.2rem;">${steps}</div>
+
+    ${c.proxData ? `<div style="background:rgba(243,156,18,0.06);border:1px solid rgba(243,156,18,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1.2rem;">
+      <div style="font-size:0.62rem;font-weight:800;color:var(--orange);">📅 Próxima etapa prevista</div>
+      <div style="font-size:0.8rem;font-weight:700;margin-top:0.2rem;font-family:var(--mono);">${c.proxData}</div>
+    </div>` : ''}
+
+    <div style="background:rgba(255,255,255,0.02);border-radius:10px;padding:0.75rem 1rem;font-size:0.65rem;color:var(--muted);text-align:center;line-height:1.6;">
+      Dúvidas? Entre em contato com seu recrutador${c.recrutador?' ('+c.recrutador+')':''}.<br/>
+      <span style="color:var(--accent);">portal.orizon.com.br</span>
+    </div>
+  `;
+  document.getElementById('modalPortal').classList.add('open');
+}
+
+function fecharModalPortal() {
+  document.getElementById('modalPortal').classList.remove('open');
+}
+
+// ─── MENSAGEM ────────────────────────────────────────────────────
+function abrirModalMsg(id) {
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  document.getElementById('msgCandId').value = id;
+  document.getElementById('msgSubtitle').textContent = `Para: ${c.nome} · ${c.cargo}`;
+  document.getElementById('msgTexto').value = '';
+
+  const wrap = document.getElementById('templatesWrap');
+  wrap.innerHTML = TEMPLATES.map((t,i) => {
+    const msg = t.msg.replace('{nome}', c.nome.split(' ')[0]).replace('{cargo}', c.cargo).replace('{empresa}', c.empresa||'empresa');
+    return `<div class="msg-template" onclick="usarTemplate(${i})">
+      <div class="msg-template-title">${t.titulo}</div>
+      <div class="msg-template-prev">${msg}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('modalMsg').classList.add('open');
+  document._msgCandId = id;
+}
+
+function usarTemplate(idx) {
+  const id = document.getElementById('msgCandId').value;
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  const t = TEMPLATES[idx];
+  const msg = t.msg.replace('{nome}', c.nome.split(' ')[0]).replace('{cargo}', c.cargo).replace('{empresa}', c.empresa||'empresa');
+  document.getElementById('msgTexto').value = msg;
+}
+
+function fecharModalMsg() {
+  document.getElementById('modalMsg').classList.remove('open');
+}
+
+function enviarMsg() {
+  const id = document.getElementById('msgCandId').value;
+  const texto = document.getElementById('msgTexto').value.trim();
+  const canal = document.getElementById('msgCanal').value;
+  if (!texto) { toast('⚠️ Digite a mensagem'); return; }
+
+  const c = CANDS.find(x=>x.id===id);
+  if (!c) return;
+  if (!c.msgs) c.msgs = [];
+
+  if (canal === 'portal') { c.mensagem = texto; }
+
+  c.msgs.push({
+    canal,
+    texto,
+    data: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}),
+  });
+  c.msgPendente = false;
+
+  // whatsapp link
+  if (canal === 'whatsapp' && c.whatsapp) {
+    const num = c.whatsapp.replace(/\D/g,'');
+    window.open(`https://wa.me/55${num}?text=${encodeURIComponent(texto)}`, '_blank');
+  } else if (canal === 'email' && c.email) {
+    window.open(`mailto:${c.email}?body=${encodeURIComponent(texto)}`, '_blank');
+  }
+
+  salvarLocal();
+  fecharModalMsg();
+  render();
+  toast('✅ Mensagem registrada' + (canal==='whatsapp'&&c.whatsapp ? ' · WhatsApp aberto' : canal==='email'&&c.email ? ' · E-mail aberto' : ''));
+}
+
+// ─── LINK ───────────────────────────────────────────────────────
+function copiarLink(id) {
+  const link = `https://portal.orizon.com.br/candidato/${id}`;
+  navigator.clipboard.writeText(link).then(() => toast('🔗 Link copiado!')).catch(() => toast('🔗 Link: ' + link));
+}
+
+// ─── CSV ────────────────────────────────────────────────────────
+function exportarCSV() {
+  if (!CANDS.length) { toast('⚠️ Nenhum dado para exportar'); return; }
+  const linhas = [
+    ['Nome','Cargo','Empresa','E-mail','WhatsApp','Recrutador','Etapa Atual','Status','Início','Próxima Data','Mensagem Pública','Observações'],
+    ...CANDS.map(c=>[c.nome,c.cargo,c.empresa||'',c.email||'',c.whatsapp||'',c.recrutador||'',c.etapa,c.status,c.dataInicio||'',c.proxData||'',c.mensagem||'',c.obs||''])
+  ];
+  const csv = linhas.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='portal_candidatos.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado');
+}
+
+// ─── EXEMPLOS ───────────────────────────────────────────────────
+function carregarExemplos() {
+  CANDS = [
+    { id:'pc1', nome:'Lucas Andrade', cargo:'Analista de Marketing', empresa:'ABC Corp', email:'lucas@email.com', whatsapp:'51991110001', recrutador:'Ana Luiza', etapa:'Entrevista com Gestor', status:'em_processo', dataInicio:'2026-05-20', proxData:'2026-06-10', mensagem:'Parabéns Lucas! Você passou para a etapa de entrevista com o gestor da área. Em breve entraremos em contato para agendar.', obs:'Excelente comunicação. Gestor pediu para priorizar.', link:true, msgs:[{canal:'whatsapp',texto:'Olá Lucas, você foi aprovado para a próxima etapa!',data:'20/05/2026 10:30'}], criado_em:'2026-05-20T10:00:00Z' },
+    { id:'pc2', nome:'Fernanda Costa', cargo:'Dev Full Stack', empresa:'Tech Start', email:'fernanda@email.com', whatsapp:'51992220002', recrutador:'Carlos Mota', etapa:'Entrevista Técnica', status:'aguardando', dataInicio:'2026-05-18', proxData:'2026-06-08', mensagem:'Fernanda, sua entrevista técnica está confirmada. Por favor confirme sua presença.', obs:'Aguardando confirmação de presença.', link:true, msgs:[], msgPendente:true, criado_em:'2026-05-18T09:00:00Z' },
+    { id:'pc3', nome:'Ricardo Melo', cargo:'Gerente Comercial', empresa:'Vendas SA', email:'ricardo@email.com', whatsapp:'51993330003', recrutador:'Ana Luiza', etapa:'Proposta / Oferta', status:'aguardando', dataInicio:'2026-05-10', proxData:'2026-06-06', mensagem:'Ricardo, nossa proposta foi enviada por e-mail. Aguardamos seu retorno em até 48h.', obs:'Proposta enviada. Candidato analisando.', link:true, msgs:[{canal:'email',texto:'Proposta de contratação enviada.',data:'03/06/2026 14:00'}], criado_em:'2026-05-10T08:00:00Z' },
+    { id:'pc4', nome:'Juliana Pires', cargo:'Analista de RH', empresa:'RH Plus', email:'juliana@email.com', whatsapp:'51994440004', recrutador:'Carlos Mota', etapa:'Contratação', status:'aprovado', dataInicio:'2026-04-28', mensagem:'Juliana, seja bem-vinda à equipe! Seu processo foi concluído com sucesso. Em breve você receberá os próximos passos do onboarding.', obs:'Contratada. Início 10/06.', link:true, msgs:[{canal:'portal',texto:'Bem-vinda à equipe!',data:'05/06/2026 09:00'}], criado_em:'2026-04-28T10:00:00Z' },
+    { id:'pc5', nome:'Marcos Teixeira', cargo:'Coordenador de TI', empresa:'Obras Ltda', email:'marcos@email.com', whatsapp:'51995550005', recrutador:'Ana Luiza', etapa:'Entrevista Inicial (RH)', status:'em_processo', dataInicio:'2026-06-01', mensagem:'Olá Marcos! Sua candidatura está sendo avaliada. Em breve teremos novidades sobre os próximos passos.', obs:'Novo no processo. Triagem ok.', link:true, msgs:[], criado_em:'2026-06-01T11:00:00Z' },
+  ];
+  salvarLocal();
+  render();
+  toast('📋 5 candidatos de exemplo carregados');
+}
+
+// ─── UTILS ──────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modalNovo').addEventListener('click', e => { if(e.target===document.getElementById('modalNovo')) fecharModalNovo(); });
+document.getElementById('modalPortal').addEventListener('click', e => { if(e.target===document.getElementById('modalPortal')) fecharModalPortal(); });
+document.getElementById('modalMsg').addEventListener('click', e => { if(e.target===document.getElementById('modalMsg')) fecharModalMsg(); });
+
+init();
+</script>
+</body>
+</html>

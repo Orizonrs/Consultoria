@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Histórico de Contratações por Cliente | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:0.2rem;position:relative;overflow:hidden;transition:border-color 0.18s;}
+.kpi-card:hover{border-color:var(--border2);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0;}
+.kpi-card.blue::before{background:linear-gradient(90deg,var(--accent),transparent);}
+.kpi-card.green::before{background:linear-gradient(90deg,var(--green),transparent);}
+.kpi-card.orange::before{background:linear-gradient(90deg,var(--orange),transparent);}
+.kpi-card.purple::before{background:linear-gradient(90deg,var(--purple),transparent);}
+.kpi-card.red::before{background:linear-gradient(90deg,var(--red),transparent);}
+.kpi-icon{font-size:1.1rem;margin-bottom:0.2rem;}
+.kpi-val{font-size:1.7rem;font-weight:900;font-family:var(--mono);line-height:1;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.62rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.6;}
+
+/* TABS */
+.tabs{display:flex;gap:0.4rem;margin-bottom:1.2rem;border-bottom:1px solid var(--border);padding-bottom:0.8rem;flex-wrap:wrap;}
+.tab{font-family:inherit;font-size:0.72rem;font-weight:700;border-radius:10px;padding:0.45rem 1rem;border:1px solid transparent;cursor:pointer;transition:all 0.18s;color:var(--muted);background:transparent;}
+.tab:hover{background:rgba(255,255,255,0.04);color:var(--text2);}
+.tab.active{background:rgba(59,130,246,0.12);color:var(--accent);border-color:rgba(59,130,246,0.2);}
+
+/* CLIENTES GRID */
+.clientes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:0.9rem;}
+.cliente-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden;}
+.cliente-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.3);}
+.cliente-card.ativo{border-color:var(--border3);background:linear-gradient(135deg,rgba(59,130,246,0.07),var(--card));}
+.cliente-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0;background:linear-gradient(90deg,var(--accent),transparent);opacity:0;transition:opacity 0.22s;}
+.cliente-card.ativo::before{opacity:1;}
+.cliente-head{display:flex;align-items:center;gap:0.9rem;margin-bottom:0.9rem;}
+.cliente-avatar{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+.cliente-nome{font-size:0.88rem;font-weight:800;margin-bottom:0.1rem;}
+.cliente-seg{font-size:0.6rem;color:var(--muted);}
+.cliente-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.8rem;}
+.cstat{text-align:center;background:rgba(255,255,255,0.025);border-radius:8px;padding:0.5rem 0.3rem;}
+.cstat-val{font-size:1rem;font-weight:900;font-family:var(--mono);}
+.cstat-label{font-size:0.52rem;color:var(--muted);margin-top:0.1rem;}
+.cliente-last{display:flex;align-items:center;justify-content:space-between;font-size:0.62rem;color:var(--muted);}
+.cliente-tag{font-size:0.52rem;font-weight:700;padding:0.12rem 0.5rem;border-radius:6px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+
+/* DETALHE DO CLIENTE */
+.detalhe-wrap{display:none;}
+.detalhe-wrap.visible{display:block;}
+.detalhe-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.4rem;flex-wrap:wrap;}
+.detalhe-avatar{width:60px;height:60px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;font-family:var(--mono);}
+.detalhe-nome{font-size:1.3rem;font-weight:900;}
+.detalhe-seg{font-size:0.7rem;color:var(--muted);}
+.detalhe-tags{display:flex;gap:0.4rem;margin-top:0.3rem;flex-wrap:wrap;}
+
+/* SEÇÃO */
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* TABELA DE CONTRATAÇÕES */
+.table-wrap{overflow-x:auto;}
+.htable{width:100%;border-collapse:collapse;min-width:720px;}
+.htable th{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0.6rem 0.9rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.htable td{font-size:0.72rem;padding:0.75rem 0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);vertical-align:middle;}
+.htable tr:hover td{background:rgba(255,255,255,0.02);}
+.htable tr:last-child td{border-bottom:none;}
+.htag{font-size:0.55rem;font-weight:700;padding:0.12rem 0.55rem;border-radius:99px;display:inline-block;}
+.htag-green{background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.2);}
+.htag-blue{background:rgba(59,130,246,0.12);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.htag-orange{background:rgba(243,156,18,0.12);color:var(--orange);border:1px solid rgba(243,156,18,0.2);}
+.htag-red{background:rgba(231,76,60,0.12);color:var(--red);border:1px solid rgba(231,76,60,0.2);}
+.htag-purple{background:rgba(167,139,250,0.12);color:var(--purple);border:1px solid rgba(167,139,250,0.2);}
+
+/* PERFIL PATTERN */
+.perfil-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.7rem;}
+.perfil-item{background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;}
+.perfil-label{font-size:0.58rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+.perfil-value{font-size:0.8rem;font-weight:700;}
+.perfil-bar-wrap{margin-top:0.4rem;}
+.perfil-bar{height:5px;border-radius:99px;background:rgba(255,255,255,0.06);}
+.perfil-bar-fill{height:100%;border-radius:99px;transition:width 0.8s ease;}
+
+/* MINI CHART */
+.mini-chart{display:flex;align-items:flex-end;gap:3px;height:50px;}
+.mini-bar{flex:1;border-radius:4px 4px 0 0;min-height:4px;position:relative;cursor:pointer;transition:opacity 0.18s;}
+.mini-bar:hover{opacity:0.75;}
+.mini-bar-label{font-size:0.48rem;color:var(--muted);text-align:center;margin-top:0.25rem;}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative;}
+.timeline::before{content:'';position:absolute;left:18px;top:8px;bottom:8px;width:1px;background:linear-gradient(180deg,var(--border2),transparent);}
+.tl-item{display:flex;gap:1rem;align-items:flex-start;padding:0.7rem 0;position:relative;}
+.tl-dot{width:14px;height:14px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:2px;position:relative;z-index:1;}
+.tl-dot.green{background:rgba(46,204,113,0.2);border-color:var(--green);}
+.tl-dot.orange{background:rgba(243,156,18,0.2);border-color:var(--orange);}
+.tl-dot.blue{background:rgba(59,130,246,0.2);border-color:var(--accent);}
+.tl-dot.red{background:rgba(231,76,60,0.2);border-color:var(--red);}
+.tl-dot.purple{background:rgba(167,139,250,0.2);border-color:var(--purple);}
+.tl-content{flex:1;}
+.tl-title{font-size:0.76rem;font-weight:700;margin-bottom:0.1rem;}
+.tl-sub{font-size:0.62rem;color:var(--muted);}
+.tl-date{font-size:0.58rem;color:var(--muted);font-family:var(--mono);flex-shrink:0;margin-top:2px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:90%;max-width:580px;max-height:90vh;overflow-y:auto;animation:slideUp 0.25s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+.modal-field{display:flex;flex-direction:column;gap:0.3rem;}
+.modal-field.full{grid-column:1/-1;}
+.modal-actions{display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.4rem;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:0.75rem 1.2rem;border-radius:12px;font-size:0.76rem;font-weight:600;z-index:9999;transform:translateY(60px);opacity:0;transition:all 0.3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ANIMS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>ORIZON ATS</div>
+      <div class="hero-title">Histórico de <span>Contratações</span></div>
+      <div class="hero-sub">Padrões de perfil, SLA e performance por cliente — inteligência para fechar mais rápido.</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()">📋 Exemplos</button>
+      <button class="btn btn-primary" onclick="abrirModalContratacao()">＋ Nova Contratação</button>
+    </div>
+  </div>
+
+  <!-- KPIs GLOBAIS -->
+  <div class="kpi-strip" id="kpiStrip"></div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="trocarTab('clientes',this)">🏢 Clientes</button>
+    <button class="tab" onclick="trocarTab('contratacoes',this)">📋 Todas as Contratações</button>
+    <button class="tab" onclick="trocarTab('analytics',this)">📊 Analytics</button>
+  </div>
+
+  <!-- TAB: CLIENTES -->
+  <div id="tab-clientes">
+    <div class="filter-bar" style="margin-bottom:1rem;">
+      <div class="filter-field">
+        <label class="form-label">Buscar cliente</label>
+        <input class="form-input" type="text" placeholder="Nome da empresa..." id="searchCliente" oninput="filtrarClientes()"/>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Segmento</label>
+        <select class="form-input" id="filtroSeg" onchange="filtrarClientes()">
+          <option value="">Todos</option>
+          <option>Tecnologia</option>
+          <option>Saúde</option>
+          <option>Indústria</option>
+          <option>Varejo</option>
+          <option>Serviços</option>
+          <option>Financeiro</option>
+          <option>Educação</option>
+          <option>Logística</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Ordenar por</label>
+        <select class="form-input" id="filtroOrdem" onchange="filtrarClientes()">
+          <option value="total">Total de contratações</option>
+          <option value="recente">Mais recente</option>
+          <option value="sla">Melhor SLA</option>
+          <option value="retencao">Maior retenção</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LISTA CLIENTES -->
+    <div class="clientes-grid" id="clientesGrid"></div>
+
+    <!-- DETALHE CLIENTE -->
+    <div class="detalhe-wrap" id="detalheWrap">
+      <div class="sec"><div class="sec-label">PERFIL DO CLIENTE</div></div>
+      <div id="detalheContent"></div>
+    </div>
+  </div>
+
+  <!-- TAB: TODAS AS CONTRATAÇÕES -->
+  <div id="tab-contratacoes" style="display:none;">
+    <div class="filter-bar" style="margin-bottom:1rem;">
+      <div class="filter-field">
+        <label class="form-label">Buscar</label>
+        <input class="form-input" type="text" placeholder="Candidato, cargo, cliente..." id="searchGeral" oninput="filtrarTabela()"/>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Cliente</label>
+        <select class="form-input" id="filtroClienteTab" onchange="filtrarTabela()"><option value="">Todos</option></select>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Área</label>
+        <select class="form-input" id="filtroArea" onchange="filtrarTabela()">
+          <option value="">Todas</option>
+          <option>Tecnologia</option>
+          <option>Comercial</option>
+          <option>RH</option>
+          <option>Operacional</option>
+          <option>Financeiro</option>
+          <option>Marketing</option>
+          <option>Jurídico</option>
+          <option>Engenharia</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="filtroStatus" onchange="filtrarTabela()">
+          <option value="">Todos</option>
+          <option value="ativo">Ativo</option>
+          <option value="demitido">Desligado</option>
+          <option value="promovido">Promovido</option>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label class="form-label">Período</label>
+        <select class="form-input" id="filtroPeriodo" onchange="filtrarTabela()">
+          <option value="">Todo período</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="180">Últimos 6 meses</option>
+          <option value="365">Último ano</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📋 Contratações <span class="card-badge" id="badgeTotal">0</span></div>
+      </div>
+      <div class="table-wrap">
+        <table class="htable">
+          <thead>
+            <tr>
+              <th>Candidato</th>
+              <th>Cargo</th>
+              <th>Cliente</th>
+              <th>Área</th>
+              <th>Origem</th>
+              <th>Data Contrat.</th>
+              <th>SLA (dias)</th>
+              <th>Salário</th>
+              <th>Recrutador</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ANALYTICS -->
+  <div id="tab-analytics" style="display:none;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;">
+
+      <!-- Contratações por mês -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📈 Contratações / Mês</div>
+        </div>
+        <div id="chartMes"></div>
+      </div>
+
+      <!-- Origens mais eficientes -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🎯 Origens mais eficientes</div>
+        </div>
+        <div id="chartOrigens"></div>
+      </div>
+
+      <!-- Top cargos -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">💼 Top cargos contratados</div>
+        </div>
+        <div id="chartCargos"></div>
+      </div>
+
+      <!-- SLA médio por cliente -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">⏱️ SLA médio por cliente</div>
+        </div>
+        <div id="chartSLA"></div>
+      </div>
+
+      <!-- Faixa salarial -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">💰 Distribuição salarial</div>
+        </div>
+        <div id="chartSalario"></div>
+      </div>
+
+      <!-- Taxa de retenção -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🔒 Retenção por cliente</div>
+          <span class="card-badge green">% ativos</span>
+        </div>
+        <div id="chartRetencao"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NOVA CONTRATAÇÃO -->
+<div class="modal-overlay" id="modalContratacao">
+  <div class="modal">
+    <div class="modal-title">📋 Registrar Contratação</div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label class="form-label">Candidato *</label>
+        <input class="form-input" id="mCandidato" placeholder="Nome completo"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Cargo *</label>
+        <input class="form-input" id="mCargo" placeholder="Título do cargo"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Cliente *</label>
+        <input class="form-input" id="mCliente" placeholder="Empresa contratante"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Segmento</label>
+        <select class="form-input" id="mSegmento">
+          <option value="">Selecione</option>
+          <option>Tecnologia</option>
+          <option>Saúde</option>
+          <option>Indústria</option>
+          <option>Varejo</option>
+          <option>Serviços</option>
+          <option>Financeiro</option>
+          <option>Educação</option>
+          <option>Logística</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Área</label>
+        <select class="form-input" id="mArea">
+          <option value="">Selecione</option>
+          <option>Tecnologia</option>
+          <option>Comercial</option>
+          <option>RH</option>
+          <option>Operacional</option>
+          <option>Financeiro</option>
+          <option>Marketing</option>
+          <option>Jurídico</option>
+          <option>Engenharia</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Origem do candidato</label>
+        <select class="form-input" id="mOrigem">
+          <option value="">Selecione</option>
+          <option>LinkedIn</option>
+          <option>Indicação</option>
+          <option>Banco interno</option>
+          <option>Site/Portal</option>
+          <option>Headhunting</option>
+          <option>Indeed</option>
+          <option>Catho</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Data de contratação</label>
+        <input class="form-input" type="date" id="mDataContrat"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">SLA (dias abertura→fechamento)</label>
+        <input class="form-input" type="number" id="mSLA" placeholder="Ex: 28"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Salário (R$)</label>
+        <input class="form-input" type="number" id="mSalario" placeholder="Ex: 8500"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Recrutador responsável</label>
+        <input class="form-input" id="mRecrutador" placeholder="Nome do recrutador"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Escolaridade</label>
+        <select class="form-input" id="mEscolaridade">
+          <option value="">Selecione</option>
+          <option>Ensino Médio</option>
+          <option>Graduação</option>
+          <option>Pós-graduação</option>
+          <option>MBA</option>
+          <option>Mestrado</option>
+          <option>Doutorado</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Status atual</label>
+        <select class="form-input" id="mStatus">
+          <option value="ativo">Ativo</option>
+          <option value="demitido">Desligado</option>
+          <option value="promovido">Promovido</option>
+        </select>
+      </div>
+      <div class="modal-field full">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="mObs" placeholder="Notas sobre o processo, perfil do candidato, expectativas do cliente..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarContratacao()">✅ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="modalEditar">
+  <div class="modal">
+    <div class="modal-title">✏️ Editar Contratação</div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label class="form-label">Candidato</label>
+        <input class="form-input" id="eCandidato"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Cargo</label>
+        <input class="form-input" id="eCargo"/>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Status atual</label>
+        <select class="form-input" id="eStatus">
+          <option value="ativo">Ativo</option>
+          <option value="demitido">Desligado</option>
+          <option value="promovido">Promovido</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label class="form-label">Salário (R$)</label>
+        <input class="form-input" type="number" id="eSalario"/>
+      </div>
+      <div class="modal-field full">
+        <label class="form-label">Observações</label>
+        <textarea class="form-input" id="eObs"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="excluirContratacao()">🗑 Excluir</button>
+      <button class="btn btn-ghost" onclick="fecharModalEditar()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEdicao()">✅ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DADOS ────────────────────────────────────────────────────────
+let DADOS = [];
+let EDIT_ID = null;
+const CORES = ['#3b82f6','#a78bfa','#2ecc71','#f39c12','#e74c3c','#2563eb','#ec4899','#14b8a6'];
+const CORES_BG = ['rgba(59,130,246,0.15)','rgba(167,139,250,0.15)','rgba(46,204,113,0.15)','rgba(243,156,18,0.15)','rgba(231,76,60,0.15)','rgba(37,99,235,0.15)'];
+
+function coresCliente(nome) {
+  const idx = Math.abs(nome.charCodeAt(0) + nome.charCodeAt(1)) % CORES.length;
+  return { cor: CORES[idx], bg: CORES_BG[idx % CORES_BG.length] };
+}
+
+function iniciais(nome) {
+  return nome.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();
+}
+
+// ─── KPIs ────────────────────────────────────────────────────────
+function renderKPIs() {
+  const total = DADOS.length;
+  const ativos = DADOS.filter(d=>d.status==='ativo').length;
+  const slaM = total ? Math.round(DADOS.reduce((a,d)=>a+(d.sla||0),0)/total) : 0;
+  const clientes = [...new Set(DADOS.map(d=>d.cliente))].length;
+  const retencao = total ? Math.round((ativos/total)*100) : 0;
+  const salM = total ? Math.round(DADOS.filter(d=>d.salario).reduce((a,d)=>a+d.salario,0)/DADOS.filter(d=>d.salario).length)||0 : 0;
+
+  document.getElementById('kpiStrip').innerHTML = `
+    <div class="kpi-card blue"><div class="kpi-icon">📋</div><div class="kpi-val">${total}</div><div class="kpi-label">Total Contratações</div></div>
+    <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val">${ativos}</div><div class="kpi-label">Ativos</div><div class="kpi-sub">${retencao}% de retenção</div></div>
+    <div class="kpi-card orange"><div class="kpi-icon">⏱️</div><div class="kpi-val">${slaM}</div><div class="kpi-label">SLA Médio (dias)</div></div>
+    <div class="kpi-card purple"><div class="kpi-icon">🏢</div><div class="kpi-val">${clientes}</div><div class="kpi-label">Clientes Ativos</div></div>
+    <div class="kpi-card blue"><div class="kpi-icon">💰</div><div class="kpi-val">R$${salM>0?salM.toLocaleString('pt-BR'):'—'}</div><div class="kpi-label">Salário Médio</div></div>
+  `;
+}
+
+// ─── CLIENTES ─────────────────────────────────────────────────────
+function getClientes() {
+  const map = {};
+  DADOS.forEach(d => {
+    if (!map[d.cliente]) map[d.cliente] = { nome:d.cliente, seg:d.segmento||'—', contratacoes:[], cor:coresCliente(d.cliente) };
+    map[d.cliente].contratacoes.push(d);
+  });
+  return Object.values(map);
+}
+
+function filtrarClientes() {
+  const q = document.getElementById('searchCliente').value.toLowerCase();
+  const seg = document.getElementById('filtroSeg').value;
+  const ordem = document.getElementById('filtroOrdem').value;
+  let lista = getClientes();
+  if (q) lista = lista.filter(c=>c.nome.toLowerCase().includes(q));
+  if (seg) lista = lista.filter(c=>c.seg===seg);
+  if (ordem==='total') lista.sort((a,b)=>b.contratacoes.length-a.contratacoes.length);
+  else if (ordem==='sla') lista.sort((a,b)=>slaCliente(a)-slaCliente(b));
+  else if (ordem==='retencao') lista.sort((a,b)=>retencaoCliente(b)-retencaoCliente(a));
+  renderClientes(lista);
+}
+
+function slaCliente(c) { const sl=c.contratacoes.filter(d=>d.sla); return sl.length?Math.round(sl.reduce((a,d)=>a+d.sla,0)/sl.length):999; }
+function retencaoCliente(c) { return c.contratacoes.length?Math.round(c.contratacoes.filter(d=>d.status==='ativo').length/c.contratacoes.length*100):0; }
+
+function renderClientes(lista) {
+  const el = document.getElementById('clientesGrid');
+  if (!lista.length) { el.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:1rem;">Nenhum cliente encontrado.</div>'; return; }
+  el.innerHTML = lista.map(c => {
+    const total = c.contratacoes.length;
+    const ativos = c.contratacoes.filter(d=>d.status==='ativo').length;
+    const sla = slaCliente(c);
+    const ult = c.contratacoes.sort((a,b)=>new Date(b.dataContrat)-new Date(a.dataContrat))[0];
+    const ultData = ult?.dataContrat ? new Date(ult.dataContrat).toLocaleDateString('pt-BR') : '—';
+    return `<div class="cliente-card" onclick="verCliente('${c.nome}')">
+      <div class="cliente-head">
+        <div class="cliente-avatar" style="background:${c.cor.bg};color:${c.cor.cor};">${iniciais(c.nome)}</div>
+        <div>
+          <div class="cliente-nome">${c.nome}</div>
+          <div class="cliente-seg">${c.seg}</div>
+        </div>
+      </div>
+      <div class="cliente-stats">
+        <div class="cstat"><div class="cstat-val" style="color:var(--accent);">${total}</div><div class="cstat-label">Contrat.</div></div>
+        <div class="cstat"><div class="cstat-val" style="color:var(--green);">${ativos}</div><div class="cstat-label">Ativos</div></div>
+        <div class="cstat"><div class="cstat-val" style="color:var(--orange);">${sla<999?sla+'d':'—'}</div><div class="cstat-label">SLA</div></div>
+      </div>
+      <div class="cliente-last">
+        <span>Última: ${ultData}</span>
+        <span class="cliente-tag">${retencaoCliente(c)}% retenção</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── DETALHE CLIENTE ─────────────────────────────────────────────
+function verCliente(nome) {
+  const clientes = getClientes();
+  const c = clientes.find(cl=>cl.nome===nome);
+  if (!c) return;
+  document.querySelectorAll('.cliente-card').forEach(el=>el.classList.remove('ativo'));
+  const cards = document.querySelectorAll('.cliente-card');
+  cards.forEach(el=>{ if(el.querySelector('.cliente-nome')?.textContent===nome) el.classList.add('ativo'); });
+  
+  const d = c.contratacoes;
+  const ativos = d.filter(x=>x.status==='ativo').length;
+  const sla = slaCliente(c);
+  const retencao = retencaoCliente(c);
+  const salarios = d.filter(x=>x.salario).map(x=>x.salario);
+  const salM = salarios.length ? Math.round(salarios.reduce((a,b)=>a+b,0)/salarios.length) : 0;
+
+  // Padrão de perfil: áreas mais contratadas
+  const areas = {}; d.forEach(x=>{if(x.area){areas[x.area]=(areas[x.area]||0)+1;}});
+  const origens = {}; d.forEach(x=>{if(x.origem){origens[x.origem]=(origens[x.origem]||0)+1;}});
+  const cargos = {}; d.forEach(x=>{if(x.cargo){cargos[x.cargo]=(cargos[x.cargo]||0)+1;}});
+
+  const topAreas = Object.entries(areas).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topOrigens = Object.entries(origens).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const topCargos = Object.entries(cargos).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  // Timeline de contratações
+  const recentes = [...d].sort((a,b)=>new Date(b.dataContrat)-new Date(a.dataContrat)).slice(0,6);
+  const statusDot = {ativo:'green',demitido:'red',promovido:'purple'};
+  const statusLabel = {ativo:'Ativo',demitido:'Desligado',promovido:'Promovido'};
+
+  document.getElementById('detalheContent').innerHTML = `
+    <div class="detalhe-header">
+      <div class="detalhe-avatar" style="background:${c.cor.bg};color:${c.cor.cor};">${iniciais(c.nome)}</div>
+      <div>
+        <div class="detalhe-nome">${c.nome}</div>
+        <div class="detalhe-seg">${c.seg}</div>
+        <div class="detalhe-tags">
+          <span class="htag htag-blue">${d.length} contratações</span>
+          <span class="htag htag-green">${retencao}% retenção</span>
+          <span class="htag htag-orange">SLA: ${sla<999?sla+'d':'—'}</span>
+          ${salM?`<span class="htag htag-purple">Salário médio: R$${salM.toLocaleString('pt-BR')}</span>`:''}
+        </div>
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-ghost" onclick="fecharDetalhe()">✕ Fechar</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.2rem;">
+      <!-- Padrão de perfil -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">🧬 Padrão de perfil contratado</div></div>
+        <div class="sec"><div class="sec-label">ÁREAS</div></div>
+        ${topAreas.map(([a,n])=>`
+          <div style="margin-bottom:0.6rem;">
+            <div style="display:flex;justify-content:space-between;font-size:0.7rem;margin-bottom:0.25rem;"><span>${a}</span><span style="color:var(--accent);font-weight:700;">${n}</span></div>
+            <div class="perfil-bar"><div class="perfil-bar-fill" style="width:${Math.round(n/d.length*100)}%;background:var(--accent);"></div></div>
+          </div>`).join('')}
+        <div class="sec"><div class="sec-label">ORIGENS</div></div>
+        ${topOrigens.map(([o,n])=>`
+          <div style="margin-bottom:0.6rem;">
+            <div style="display:flex;justify-content:space-between;font-size:0.7rem;margin-bottom:0.25rem;"><span>${o}</span><span style="color:var(--green);font-weight:700;">${n}</span></div>
+            <div class="perfil-bar"><div class="perfil-bar-fill" style="width:${Math.round(n/d.length*100)}%;background:var(--green);"></div></div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Timeline recente -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">📅 Contratações recentes</div></div>
+        <div class="timeline">
+          ${recentes.map(x=>`
+            <div class="tl-item">
+              <div class="tl-dot ${statusDot[x.status]||'blue'}"></div>
+              <div class="tl-content">
+                <div class="tl-title">${x.candidato} — ${x.cargo}</div>
+                <div class="tl-sub">${x.area||'—'} · Origem: ${x.origem||'—'} · SLA: ${x.sla?x.sla+'d':'—'}</div>
+              </div>
+              <div class="tl-date">${x.dataContrat?new Date(x.dataContrat).toLocaleDateString('pt-BR'):'—'}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Top cargos -->
+      <div class="card">
+        <div class="card-head"><div class="card-title">💼 Cargos mais contratados</div></div>
+        ${topCargos.map(([cargo,n],i)=>`
+          <div style="display:flex;align-items:center;gap:0.7rem;padding:0.5rem 0;border-bottom:1px solid var(--border);">
+            <div style="font-size:0.8rem;font-weight:900;font-family:var(--mono);color:var(--muted);width:18px;">${i+1}</div>
+            <div style="flex:1;font-size:0.74rem;font-weight:700;">${cargo}</div>
+            <div style="font-size:0.7rem;color:var(--accent);font-weight:800;font-family:var(--mono);">${n}x</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('detalheWrap').classList.add('visible');
+  document.getElementById('detalheWrap').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalheWrap').classList.remove('visible');
+  document.querySelectorAll('.cliente-card').forEach(el=>el.classList.remove('ativo'));
+}
+
+// ─── TABELA ──────────────────────────────────────────────────────
+function filtrarTabela() {
+  const q = document.getElementById('searchGeral').value.toLowerCase();
+  const cli = document.getElementById('filtroClienteTab').value;
+  const area = document.getElementById('filtroArea').value;
+  const status = document.getElementById('filtroStatus').value;
+  const periodo = parseInt(document.getElementById('filtroPeriodo').value)||0;
+  const agora = new Date();
+
+  let lista = DADOS.filter(d=>{
+    if(q && !`${d.candidato} ${d.cargo} ${d.cliente}`.toLowerCase().includes(q)) return false;
+    if(cli && d.cliente!==cli) return false;
+    if(area && d.area!==area) return false;
+    if(status && d.status!==status) return false;
+    if(periodo && d.dataContrat){
+      const diff=(agora-new Date(d.dataContrat))/(1000*60*60*24);
+      if(diff>periodo) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('badgeTotal').textContent = lista.length;
+
+  const statusTag = {
+    ativo:'<span class="htag htag-green">Ativo</span>',
+    demitido:'<span class="htag htag-red">Desligado</span>',
+    promovido:'<span class="htag htag-purple">Promovido</span>',
+  };
+
+  document.getElementById('tabelaBody').innerHTML = lista.length ? lista.map(d=>`
+    <tr>
+      <td style="font-weight:700;color:var(--text);">${d.candidato}</td>
+      <td>${d.cargo}</td>
+      <td>${d.cliente}</td>
+      <td>${d.area||'—'}</td>
+      <td>${d.origem||'—'}</td>
+      <td style="font-family:var(--mono);font-size:0.68rem;">${d.dataContrat?new Date(d.dataContrat).toLocaleDateString('pt-BR'):'—'}</td>
+      <td style="font-family:var(--mono);font-size:0.7rem;color:var(--orange);">${d.sla||'—'}</td>
+      <td style="font-family:var(--mono);font-size:0.68rem;">${d.salario?'R$'+d.salario.toLocaleString('pt-BR'):'—'}</td>
+      <td>${d.recrutador||'—'}</td>
+      <td>${statusTag[d.status]||'—'}</td>
+      <td><button class="btn btn-ghost" style="padding:0.3rem 0.6rem;font-size:0.65rem;" onclick="editarContratacao('${d.id}')">✏️</button></td>
+    </tr>`).join('') : `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:2rem;">Nenhuma contratação encontrada.</td></tr>`;
+}
+
+function popularSelectCliente() {
+  const clientes = [...new Set(DADOS.map(d=>d.cliente))].sort();
+  const sel = document.getElementById('filtroClienteTab');
+  sel.innerHTML = '<option value="">Todos</option>' + clientes.map(c=>`<option>${c}</option>`).join('');
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────────
+function renderAnalytics() {
+  renderChartMes();
+  renderChartOrigens();
+  renderChartCargos();
+  renderChartSLA();
+  renderChartSalario();
+  renderChartRetencao();
+}
+
+function barras(containerId, dados, cor, suffix='') {
+  const max = Math.max(...dados.map(d=>d.val),1);
+  document.getElementById(containerId).innerHTML = dados.map(d=>`
+    <div style="display:flex;align-items:center;gap:0.7rem;margin-bottom:0.6rem;">
+      <div style="font-size:0.62rem;color:var(--muted);width:90px;text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.label}</div>
+      <div style="flex:1;height:10px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round(d.val/max*100)}%;background:${cor};border-radius:99px;transition:width 0.8s;"></div>
+      </div>
+      <div style="font-size:0.65rem;font-weight:800;font-family:var(--mono);color:${cor};flex-shrink:0;">${d.val}${suffix}</div>
+    </div>`).join('');
+}
+
+function renderChartMes() {
+  const map = {};
+  DADOS.forEach(d=>{
+    if(!d.dataContrat) return;
+    const k = d.dataContrat.slice(0,7);
+    map[k]=(map[k]||0)+1;
+  });
+  const sorted = Object.entries(map).sort((a,b)=>a[0]>b[0]?1:-1).slice(-8);
+  barras('chartMes', sorted.map(([k,v])=>({label:k,val:v})), 'var(--accent)');
+}
+
+function renderChartOrigens() {
+  const map = {};
+  DADOS.forEach(d=>{if(d.origem) map[d.origem]=(map[d.origem]||0)+1;});
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  barras('chartOrigens', sorted.map(([k,v])=>({label:k,val:v})), 'var(--green)');
+}
+
+function renderChartCargos() {
+  const map = {};
+  DADOS.forEach(d=>{if(d.cargo) map[d.cargo]=(map[d.cargo]||0)+1;});
+  const sorted = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  barras('chartCargos', sorted.map(([k,v])=>({label:k,val:v})), 'var(--purple)');
+}
+
+function renderChartSLA() {
+  const map = {};
+  DADOS.forEach(d=>{if(d.sla&&d.cliente){
+    if(!map[d.cliente]) map[d.cliente]={sum:0,n:0};
+    map[d.cliente].sum+=d.sla;map[d.cliente].n++;
+  }});
+  const sorted = Object.entries(map).map(([k,v])=>({label:k,val:Math.round(v.sum/v.n)})).sort((a,b)=>a.val-b.val).slice(0,6);
+  barras('chartSLA', sorted, 'var(--orange)', 'd');
+}
+
+function renderChartSalario() {
+  const faixas = {'Até 3k':0,'3k–6k':0,'6k–10k':0,'10k–15k':0,'15k+':0};
+  DADOS.forEach(d=>{
+    if(!d.salario) return;
+    if(d.salario<=3000) faixas['Até 3k']++;
+    else if(d.salario<=6000) faixas['3k–6k']++;
+    else if(d.salario<=10000) faixas['6k–10k']++;
+    else if(d.salario<=15000) faixas['10k–15k']++;
+    else faixas['15k+']++;
+  });
+  barras('chartSalario', Object.entries(faixas).map(([k,v])=>({label:k,val:v})), 'var(--teal)');
+}
+
+function renderChartRetencao() {
+  const clientes = getClientes().map(c=>({label:c.nome,val:retencaoCliente(c)})).sort((a,b)=>b.val-a.val).slice(0,7);
+  barras('chartRetencao', clientes, 'var(--green)', '%');
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────
+function abrirModalContratacao() {
+  document.getElementById('modalContratacao').classList.add('open');
+  document.getElementById('mDataContrat').value = new Date().toISOString().split('T')[0];
+}
+function fecharModal() { document.getElementById('modalContratacao').classList.remove('open'); }
+
+function salvarContratacao() {
+  const candidato = document.getElementById('mCandidato').value.trim();
+  const cargo = document.getElementById('mCargo').value.trim();
+  const cliente = document.getElementById('mCliente').value.trim();
+  if (!candidato||!cargo||!cliente) { toast('⚠️ Candidato, cargo e cliente são obrigatórios'); return; }
+  const obj = {
+    id: 'c'+Date.now(),
+    candidato,
+    cargo,
+    cliente,
+    segmento: document.getElementById('mSegmento').value,
+    area: document.getElementById('mArea').value,
+    origem: document.getElementById('mOrigem').value,
+    dataContrat: document.getElementById('mDataContrat').value,
+    sla: parseInt(document.getElementById('mSLA').value)||null,
+    salario: parseInt(document.getElementById('mSalario').value)||null,
+    recrutador: document.getElementById('mRecrutador').value,
+    escolaridade: document.getElementById('mEscolaridade').value,
+    status: document.getElementById('mStatus').value,
+    obs: document.getElementById('mObs').value,
+  };
+  DADOS.push(obj);
+  salvarLocal();
+  fecharModal();
+  render();
+  toast('✅ Contratação registrada com sucesso');
+}
+
+// ─── EDITAR ───────────────────────────────────────────────────────
+function editarContratacao(id) {
+  const d = DADOS.find(x=>x.id===id);
+  if(!d) return;
+  EDIT_ID = id;
+  document.getElementById('eCandidato').value = d.candidato;
+  document.getElementById('eCargo').value = d.cargo;
+  document.getElementById('eStatus').value = d.status;
+  document.getElementById('eSalario').value = d.salario||'';
+  document.getElementById('eObs').value = d.obs||'';
+  document.getElementById('modalEditar').classList.add('open');
+}
+function fecharModalEditar() { document.getElementById('modalEditar').classList.remove('open'); EDIT_ID=null; }
+function confirmarEdicao() {
+  const d = DADOS.find(x=>x.id===EDIT_ID);
+  if(!d) return;
+  d.candidato = document.getElementById('eCandidato').value;
+  d.cargo = document.getElementById('eCargo').value;
+  d.status = document.getElementById('eStatus').value;
+  d.salario = parseInt(document.getElementById('eSalario').value)||null;
+  d.obs = document.getElementById('eObs').value;
+  salvarLocal();
+  fecharModalEditar();
+  render();
+  toast('✅ Contratação atualizada');
+}
+function excluirContratacao() {
+  if(!confirm('Excluir esta contratação?')) return;
+  DADOS = DADOS.filter(x=>x.id!==EDIT_ID);
+  salvarLocal();
+  fecharModalEditar();
+  render();
+  toast('🗑 Contratação excluída');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────
+function trocarTab(id, el) {
+  ['clientes','contratacoes','analytics'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===id?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='analytics') renderAnalytics();
+  if(id==='contratacoes') { filtrarTabela(); popularSelectCliente(); }
+}
+
+// ─── RENDER PRINCIPAL ─────────────────────────────────────────────
+function render() {
+  renderKPIs();
+  filtrarClientes();
+  filtrarTabela();
+  popularSelectCliente();
+}
+
+// ─── EXPORTAR CSV ─────────────────────────────────────────────────
+function exportarCSV() {
+  if (!DADOS.length) { toast('⚠️ Nenhum dado para exportar'); return; }
+  const cols = ['Candidato','Cargo','Cliente','Segmento','Área','Origem','Data','SLA','Salário','Recrutador','Escolaridade','Status','Observações'];
+  const linhas = [cols, ...DADOS.map(d=>[
+    d.candidato,d.cargo,d.cliente,d.segmento||'',d.area||'',d.origem||'',
+    d.dataContrat||'',d.sla||'',d.salario||'',d.recrutador||'',d.escolaridade||'',d.status,d.obs||''
+  ])];
+  const csv = linhas.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'})),download:'historico_contratacoes.csv'});
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('📤 CSV exportado');
+}
+
+// ─── LOCAL STORAGE ────────────────────────────────────────────────
+function salvarLocal() { localStorage.setItem('orizon_hist_contrat', JSON.stringify(DADOS)); }
+function carregarLocal() {
+  const s = localStorage.getItem('orizon_hist_contrat');
+  if (s) { try { DADOS = JSON.parse(s); } catch(e){} }
+}
+
+// ─── EXEMPLOS ─────────────────────────────────────────────────────
+function carregarExemplos() {
+  DADOS = [
+    {id:'e1',candidato:'Ana Ferreira',cargo:'Gerente de Projetos',cliente:'TechNova',segmento:'Tecnologia',area:'Tecnologia',origem:'LinkedIn',dataContrat:'2025-01-15',sla:22,salario:12000,recrutador:'Camila',escolaridade:'MBA',status:'ativo',obs:'Excelente fit cultural.'},
+    {id:'e2',candidato:'Bruno Mendes',cargo:'Desenvolvedor Sênior',cliente:'TechNova',segmento:'Tecnologia',area:'Tecnologia',origem:'Indicação',dataContrat:'2025-02-10',sla:18,salario:14000,recrutador:'João',escolaridade:'Graduação',status:'ativo',obs:''},
+    {id:'e3',candidato:'Carla Souza',cargo:'Analista de RH',cliente:'Saúde+',segmento:'Saúde',area:'RH',origem:'Banco interno',dataContrat:'2025-03-05',sla:30,salario:6500,recrutador:'Camila',escolaridade:'Pós-graduação',status:'ativo',obs:''},
+    {id:'e4',candidato:'Diego Alves',cargo:'Coordenador Comercial',cliente:'VendaMais',segmento:'Varejo',area:'Comercial',origem:'LinkedIn',dataContrat:'2025-01-28',sla:25,salario:9000,recrutador:'Roberto',escolaridade:'Graduação',status:'promovido',obs:'Promovido em 6 meses.'},
+    {id:'e5',candidato:'Elisa Ramos',cargo:'Analista Financeiro',cliente:'FinCorp',segmento:'Financeiro',area:'Financeiro',origem:'Catho',dataContrat:'2024-11-20',sla:35,salario:8000,recrutador:'João',escolaridade:'MBA',status:'demitido',obs:'Saiu no período de experiência.'},
+    {id:'e6',candidato:'Felipe Costa',cargo:'Engenheiro de Dados',cliente:'TechNova',segmento:'Tecnologia',area:'Tecnologia',origem:'LinkedIn',dataContrat:'2025-04-12',sla:20,salario:16000,recrutador:'Camila',escolaridade:'Mestrado',status:'ativo',obs:''},
+    {id:'e7',candidato:'Gabriela Lima',cargo:'Enfermeira Gestora',cliente:'Saúde+',segmento:'Saúde',area:'Operacional',origem:'Indicação',dataContrat:'2025-02-18',sla:28,salario:9500,recrutador:'Roberto',escolaridade:'Pós-graduação',status:'ativo',obs:''},
+    {id:'e8',candidato:'Henrique Dias',cargo:'Supervisor de Logística',cliente:'LogBrasil',segmento:'Logística',area:'Operacional',origem:'Indeed',dataContrat:'2025-03-22',sla:32,salario:7200,recrutador:'João',escolaridade:'Graduação',status:'ativo',obs:''},
+    {id:'e9',candidato:'Isabela Torres',cargo:'Diretora Comercial',cliente:'VendaMais',segmento:'Varejo',area:'Comercial',origem:'Headhunting',dataContrat:'2024-12-10',sla:45,salario:22000,recrutador:'Camila',escolaridade:'MBA',status:'ativo',obs:'Processo de headhunting de 45 dias.'},
+    {id:'e10',candidato:'João Pedro Nunes',cargo:'Analista de Marketing',cliente:'MarcaBrasil',segmento:'Serviços',area:'Marketing',origem:'Site/Portal',dataContrat:'2025-05-08',sla:19,salario:5800,recrutador:'Roberto',escolaridade:'Graduação',status:'ativo',obs:''},
+    {id:'e11',candidato:'Karen Oliveira',cargo:'Desenvolvedora Front-end',cliente:'TechNova',segmento:'Tecnologia',area:'Tecnologia',origem:'LinkedIn',dataContrat:'2025-05-20',sla:15,salario:11000,recrutador:'Camila',escolaridade:'Graduação',status:'ativo',obs:''},
+    {id:'e12',candidato:'Lucas Martins',cargo:'Analista Jurídico',cliente:'FinCorp',segmento:'Financeiro',area:'Jurídico',origem:'Indicação',dataContrat:'2025-04-02',sla:27,salario:10500,recrutador:'João',escolaridade:'Pós-graduação',status:'ativo',obs:''},
+  ];
+  salvarLocal();
+  render();
+  toast('📋 12 contratações de exemplo carregadas');
+}
+
+// ─── FECHAR MODAIS CLICANDO FORA ─────────────────────────────────
+document.getElementById('modalContratacao').addEventListener('click', function(e){if(e.target===this)fecharModal();});
+document.getElementById('modalEditar').addEventListener('click', function(e){if(e.target===this)fecharModalEditar();});
+
+// ─── INIT ─────────────────────────────────────────────────────────
+carregarLocal();
+render();
+</script>
+</body>
+</html>

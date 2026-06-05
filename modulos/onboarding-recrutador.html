@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Onboarding de Recrutador | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0.8rem;margin-bottom:1.4rem;}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--scolor,var(--accent));border-radius:2px 2px 0 0;}
+.stat-val{font-size:1.8rem;font-weight:900;font-family:var(--mono);color:var(--text);line-height:1;margin-bottom:0.25rem;}
+.stat-label{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.stat-delta{font-size:0.62rem;font-weight:800;margin-top:0.3rem;}
+.stat-delta.up{color:var(--green);}
+.stat-delta.warn{color:var(--orange);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:290px 1fr;gap:1rem;}
+@media(max-width:1000px){.layout{grid-template-columns:1fr;}}
+.sidebar{display:flex;flex-direction:column;gap:0.7rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* RECRUTADOR SELECTOR */
+.rec-item{padding:0.65rem 0.8rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;margin-bottom:0.4rem;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.75rem;}
+.rec-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.04);}
+.rec-item.ativo{border-color:var(--border2);background:rgba(59,130,246,0.06);}
+.rec-avatar{width:32px;height:32px;border-radius:8px;background:var(--ac,rgba(59,130,246,0.15));display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:900;color:var(--text);flex-shrink:0;border:1px solid var(--ac,rgba(59,130,246,0.3));}
+.rec-nome{font-size:0.74rem;font-weight:700;color:var(--text);}
+.rec-progresso{font-size:0.62rem;color:var(--muted);}
+.rec-bar-wrap{height:3px;background:var(--muted2);border-radius:2px;margin-top:0.3rem;}
+.rec-bar{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.4s ease;}
+
+/* FASE TABS */
+.fase-tabs{display:flex;gap:0.4rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+.fase-tab{font-family:inherit;font-size:0.68rem;font-weight:700;padding:0.42rem 0.9rem;border-radius:9px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:var(--muted);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.4rem;}
+.fase-tab:hover{border-color:rgba(255,255,255,0.15);color:var(--text);}
+.fase-tab.ativa{background:rgba(59,130,246,0.1);border-color:var(--border2);color:var(--accent);}
+.fase-tab .ft-count{font-size:0.6rem;padding:0.08rem 0.35rem;border-radius:99px;background:rgba(59,130,246,0.15);color:var(--accent);}
+.fase-tab.ativa .ft-count{background:rgba(59,130,246,0.25);}
+
+/* FASE HEADER */
+.fase-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;flex-wrap:wrap;gap:0.5rem;}
+.fase-title{font-size:1rem;font-weight:900;display:flex;align-items:center;gap:0.5rem;}
+.fase-sub{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;}
+
+/* PROGRESS BAR GERAL */
+.prog-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1.2rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;}
+.prog-info{flex:1;}
+.prog-titulo{font-size:0.7rem;font-weight:700;color:var(--text2);margin-bottom:0.35rem;}
+.prog-bar-bg{height:8px;background:var(--muted2);border-radius:4px;overflow:hidden;}
+.prog-bar-fill{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.5s ease;}
+.prog-pct{font-size:1rem;font-weight:900;font-family:var(--mono);color:var(--accent);flex-shrink:0;}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:0.45rem;}
+.check-section{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:0.6rem;}
+.check-section-head{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.2rem;cursor:pointer;transition:background 0.15s;}
+.check-section-head:hover{background:rgba(255,255,255,0.02);}
+.cs-left{display:flex;align-items:center;gap:0.7rem;}
+.cs-ico{font-size:1.1rem;}
+.cs-nome{font-size:0.82rem;font-weight:800;color:var(--text);}
+.cs-sub{font-size:0.63rem;color:var(--muted);margin-top:0.1rem;}
+.cs-right{display:flex;align-items:center;gap:0.7rem;}
+.cs-pct{font-size:0.68rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.cs-mini-bar{width:60px;height:4px;background:var(--muted2);border-radius:2px;overflow:hidden;}
+.cs-mini-fill{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 0.3s;}
+.cs-chevron{font-size:0.7rem;color:var(--muted);transition:transform 0.2s;}
+.check-section.aberta .cs-chevron{transform:rotate(180deg);}
+
+.check-section-body{display:none;padding:0 1.2rem 1rem;border-top:1px solid rgba(255,255,255,0.04);}
+.check-section.aberta .check-section-body{display:block;}
+
+.check-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.65rem 0;border-bottom:1px solid rgba(255,255,255,0.03);transition:all 0.15s;}
+.check-item:last-child{border-bottom:none;}
+.check-item:hover{padding-left:0.3rem;}
+.ci-check{width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.02);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin-top:0.1rem;}
+.ci-check.feito{background:var(--green);border-color:var(--green);}
+.ci-check.feito::after{content:'✓';font-size:0.65rem;color:#fff;font-weight:900;}
+.ci-check:hover:not(.feito){border-color:var(--accent);background:rgba(59,130,246,0.08);}
+.ci-body{flex:1;min-width:0;}
+.ci-titulo{font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:0.15rem;transition:color 0.15s;}
+.check-item.feito .ci-titulo{color:var(--muted);text-decoration:line-through;}
+.ci-desc{font-size:0.67rem;color:var(--muted);line-height:1.6;}
+.ci-meta{display:flex;align-items:center;gap:0.5rem;margin-top:0.35rem;flex-wrap:wrap;}
+.ci-tag{font-size:0.56rem;font-weight:800;padding:0.1rem 0.4rem;border-radius:5px;text-transform:uppercase;letter-spacing:0.5px;}
+.ci-prazo{font-size:0.6rem;font-family:var(--mono);color:var(--muted);}
+.ci-resp{font-size:0.6rem;color:var(--muted);}
+.ci-link{font-size:0.62rem;color:var(--accent);cursor:pointer;text-decoration:underline;}
+.ci-link:hover{opacity:0.8;}
+.ci-obs-wrap{margin-top:0.5rem;}
+.ci-obs{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:7px;padding:0.45rem 0.65rem;font-family:inherit;font-size:0.68rem;color:var(--text);outline:none;resize:none;min-height:48px;line-height:1.5;transition:border-color 0.15s;}
+.ci-obs:focus{border-color:var(--border2);}
+.ci-obs::placeholder{color:var(--muted);}
+
+/* CONQUISTAS */
+.conquistas-wrap{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.5rem;}
+.conquista{display:flex;flex-direction:column;align-items:center;gap:0.3rem;padding:0.65rem 0.9rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;min-width:80px;transition:all 0.15s;}
+.conquista.desbloqueada{background:rgba(59,130,246,0.06);border-color:var(--border2);}
+.conquista-ico{font-size:1.3rem;filter:grayscale(1);opacity:0.3;transition:all 0.3s;}
+.conquista.desbloqueada .conquista-ico{filter:grayscale(0);opacity:1;}
+.conquista-nome{font-size:0.56rem;font-weight:800;color:var(--muted);text-align:center;line-height:1.3;}
+.conquista.desbloqueada .conquista-nome{color:var(--accent);}
+
+/* NOTAS */
+.notas-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.9rem;}
+.notas-titulo{font-size:0.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.5rem;}
+textarea.notas-area{width:100%;background:transparent;border:none;font-family:inherit;font-size:0.75rem;color:var(--text2);outline:none;resize:none;min-height:80px;line-height:1.7;}
+textarea.notas-area::placeholder{color:var(--muted);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem;}
+.form-row{margin-bottom:0.9rem;}
+.form-label{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.65rem 0.85rem;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.9rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.1rem;font-size:0.76rem;font-weight:600;color:var(--text);z-index:999;display:none;align-items:center;gap:0.6rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.toast.show{display:flex;}
+.toast.success{border-color:rgba(46,204,113,0.3);}
+.toast.success .toast-ico{color:var(--green);}
+.toast.error{border-color:rgba(231,76,60,0.3);}
+.toast.error .toast-ico{color:var(--red);}
+
+/* CELEBRACAO */
+.celebracao{position:fixed;inset:0;z-index:200;pointer-events:none;display:none;}
+.celebracao.show{display:block;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>GESTÃO DE PESSOAS</div>
+      <div class="hero-title">Onboarding de <span>Recrutador</span></div>
+      <div class="hero-sub">Integre novos recrutadores com um checklist estruturado por fases — do acesso ao sistema até a primeira vaga fechada.</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="imprimirChecklist()">🖨 Imprimir</button>
+      <button class="btn btn-primary" onclick="abrirModal('novo')">+ Novo Recrutador</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card" style="--scolor:var(--accent)">
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-label">Recrutadores em Onboarding</div>
+      <div class="stat-delta up">👥 Ativos no processo</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--green)">
+      <div class="stat-val" id="stat-concluidos">0</div>
+      <div class="stat-label">Onboardings Concluídos</div>
+      <div class="stat-delta up">✅ Integrados com sucesso</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--orange)">
+      <div class="stat-val" id="stat-media">0%</div>
+      <div class="stat-label">Progresso Médio</div>
+      <div class="stat-delta warn">📊 Todos os ativos</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--purple)">
+      <div class="stat-val" id="stat-itens">0</div>
+      <div class="stat-label">Itens Concluídos Hoje</div>
+      <div class="stat-delta up">🎯 No dia</div>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- RECRUTADORES -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">👤 Recrutadores</div>
+          <span class="card-badge" id="badge-rec">0</span>
+        </div>
+        <div id="rec-list"></div>
+      </div>
+
+      <!-- CONQUISTAS -->
+      <div class="card" id="conquistas-card" style="display:none">
+        <div class="card-head">
+          <div class="card-title">🏆 Conquistas</div>
+        </div>
+        <div class="conquistas-wrap" id="conquistas-wrap"></div>
+      </div>
+
+      <!-- NOTAS DO GESTOR -->
+      <div class="card" id="notas-card" style="display:none">
+        <div class="card-head">
+          <div class="card-title">📝 Notas do Gestor</div>
+          <button class="btn btn-ghost btn-sm" onclick="salvarNotas()">Salvar</button>
+        </div>
+        <div class="notas-wrap">
+          <div class="notas-titulo">Observações internas</div>
+          <textarea class="notas-area" id="notas-area" placeholder="Anotações sobre o recrutador, pontos de atenção, evolução..."></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN -->
+    <div id="main-area">
+      <div style="text-align:center;padding:4rem 2rem;color:var(--muted);">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem;">🎓</div>
+        <div style="font-size:0.9rem;font-weight:700;color:var(--text2);margin-bottom:0.3rem;">Selecione um recrutador</div>
+        <div style="font-size:0.75rem;line-height:1.6;">Escolha um recrutador na lista ao lado para ver e gerenciar o checklist de onboarding.</div>
+        <button class="btn btn-primary" style="margin-top:1.2rem" onclick="abrirModal('novo')">+ Cadastrar primeiro recrutador</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL NOVO RECRUTADOR -->
+<div class="modal-overlay" id="modal-novo">
+  <div class="modal">
+    <div class="modal-title">Novo Recrutador</div>
+    <div class="modal-sub">Inicie o checklist de onboarding para um novo membro da equipe.</div>
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Nome completo *</label>
+        <input class="form-input" id="n-nome" placeholder="Ana Beatriz Lima"/>
+      </div>
+      <div>
+        <label class="form-label">E-mail *</label>
+        <input class="form-input" id="n-email" placeholder="ana@orizon.com.br"/>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Cargo</label>
+        <select class="form-input" id="n-cargo">
+          <option value="recrutador_jr">Recrutador Júnior</option>
+          <option value="recrutador_pl" selected>Recrutador Pleno</option>
+          <option value="recrutador_sr">Recrutador Sênior</option>
+          <option value="coord">Coordenador de R&S</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Data de Início *</label>
+        <input class="form-input" id="n-inicio" type="date"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Gestor responsável</label>
+      <input class="form-input" id="n-gestor" placeholder="Nome do gestor / mentor"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Observações iniciais</label>
+      <textarea class="form-input" id="n-obs" rows="2" placeholder="Contexto do recrutador, especialidade, histórico..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-novo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRecrutador()">🚀 Iniciar Onboarding</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="toast-ico">✅</span><span id="toast-msg"></span></div>
+
+<!-- CELEBRACAO -->
+<canvas class="celebracao" id="celebracao"></canvas>
+
+<script>
+// ═══════════════════════════════════════
+// TEMPLATE DO CHECKLIST (FASES)
+// ═══════════════════════════════════════
+const FASES_TEMPLATE = [
+  {
+    id:'f1', ico:'🔑', nome:'Dia 1 — Acesso & Setup', cor:'var(--accent)',
+    sub:'Primeiras horas: acessos, ferramentas e boas-vindas',
+    itens:[
+      {id:'f1_1', titulo:'Receber boas-vindas da equipe e apresentação geral', desc:'Reunião de boas-vindas com o time, tour pelo escritório/virtual, explicação da cultura Orizon.', resp:'Gestor', prazo:'Dia 1', tag:'gestao', tag_cor:'var(--accent)'},
+      {id:'f1_2', titulo:'Criar conta e-mail corporativo', desc:'Configurar e-mail @orizon.com.br, assinatura padrão e alias de apresentação.', resp:'TI / Gestor', prazo:'Dia 1', tag:'acesso', tag_cor:'var(--blue)'},
+      {id:'f1_3', titulo:'Acesso ao ATS Orizon', desc:'Login e senha no sistema ATS, tour guiado pelos módulos principais: Pipeline, Triagem, Dashboard.', resp:'Gestor', prazo:'Dia 1', tag:'sistema', tag_cor:'var(--purple)'},
+      {id:'f1_4', titulo:'Configurar WhatsApp Business / perfil profissional', desc:'Criar perfil profissional, foto e bio padronizada. Adicionar número na agenda do time.', resp:'Recrutador', prazo:'Dia 1', tag:'ferramentas', tag_cor:'var(--green)'},
+      {id:'f1_5', titulo:'Acesso ao LinkedIn Recruiter / perfil otimizado', desc:'Ativar conta Recruiter (se houver licença), foto profissional, headline e resumo de abordagem.', resp:'Recrutador', prazo:'Dia 1', tag:'ferramentas', tag_cor:'var(--green)'},
+      {id:'f1_6', titulo:'Ler o Playbook Orizon — Cultura & Processos', desc:'Documento interno com valores, tom de comunicação, SLAs de resposta e política de feedbacks.', resp:'Recrutador', prazo:'Dia 1', tag:'leitura', tag_cor:'var(--orange)'}
+    ]
+  },
+  {
+    id:'f2', ico:'📚', nome:'Semana 1 — Processos & Produto', cor:'var(--purple)',
+    sub:'Aprender o fluxo completo de recrutamento da Orizon',
+    itens:[
+      {id:'f2_1', titulo:'Treinamento do fluxo de briefing de vaga', desc:'Entender como fazer um briefing rico com o cliente: dealbreakers, cultura, faixa salarial, persona ideal.', resp:'Gestor', prazo:'Dia 2', tag:'processo', tag_cor:'var(--accent)'},
+      {id:'f2_2', titulo:'Shadowing em entrevista com recrutador sênior', desc:'Acompanhar ao menos 2 entrevistas reais como observador. Tomar notas e debriefar depois.', resp:'Recrutador Sênior', prazo:'Dia 3', tag:'prática', tag_cor:'var(--green)'},
+      {id:'f2_3', titulo:'Treinamento em triagem de currículos', desc:'Aprender critérios de triagem por tipo de vaga, uso dos filtros no ATS e registro de feedback.', resp:'Gestor', prazo:'Dia 3', tag:'sistema', tag_cor:'var(--purple)'},
+      {id:'f2_4', titulo:'Aprender o uso do DISC no processo seletivo', desc:'Metodologia DISC: como aplicar, interpretar os perfis e usar na triagem e na devolutiva.', resp:'Gestor', prazo:'Dia 4', tag:'metodologia', tag_cor:'var(--orange)'},
+      {id:'f2_5', titulo:'Treinamento em abordagem ativa (sourcing)', desc:'Técnicas de Boolean search no LinkedIn, abordagem de candidatos passivos, scripts de mensagem.', resp:'Gestor', prazo:'Dia 4', tag:'processo', tag_cor:'var(--accent)'},
+      {id:'f2_6', titulo:'Entender o SLA de retorno para candidatos e clientes', desc:'Prazos máximos: retorno para candidatos, atualização para clientes, registro de andamento no ATS.', resp:'Gestor', prazo:'Dia 5', tag:'processo', tag_cor:'var(--accent)'},
+      {id:'f2_7', titulo:'Conhecer os clientes ativos e seus perfis', desc:'Reunião ou leitura dos briefings dos clientes atuais da Orizon: segmento, porte, cultura, histórico.', resp:'Gestor', prazo:'Dia 5', tag:'clientes', tag_cor:'var(--teal)'}
+    ]
+  },
+  {
+    id:'f3', ico:'🎯', nome:'Semana 2–3 — Primeiras Vagas', cor:'var(--green)',
+    sub:'Colocar a mão na massa com suporte do gestor',
+    itens:[
+      {id:'f3_1', titulo:'Conduzir primeiro briefing com cliente (supervisionado)', desc:'Realizar uma reunião de briefing com cliente real. Gestor presente para apoio e devolutiva posterior.', resp:'Recrutador + Gestor', prazo:'Semana 2', tag:'prática', tag_cor:'var(--green)'},
+      {id:'f3_2', titulo:'Abrir e configurar primeira vaga no ATS', desc:'Criar vaga no sistema com todos os campos: título, requisitos, faixa salarial, pipeline configurado.', resp:'Recrutador', prazo:'Semana 2', tag:'sistema', tag_cor:'var(--purple)'},
+      {id:'f3_3', titulo:'Triagem de ao menos 30 currículos', desc:'Fazer triagem real de candidatos, registrar feedback no ATS e justificar aprovação/reprovação.', resp:'Recrutador', prazo:'Semana 2', tag:'prática', tag_cor:'var(--green)'},
+      {id:'f3_4', titulo:'Conduzir ao menos 3 entrevistas solo', desc:'Entrevistar candidatos de forma independente. Registrar scorecard no ATS e compartilhar com gestor.', resp:'Recrutador', prazo:'Semana 2', tag:'prática', tag_cor:'var(--green)'},
+      {id:'f3_5', titulo:'Apresentar shortlist para cliente', desc:'Montar e apresentar lista de candidatos finalistas ao cliente. Gestor faz revisão antes do envio.', resp:'Recrutador', prazo:'Semana 3', tag:'cliente', tag_cor:'var(--teal)'},
+      {id:'f3_6', titulo:'Dar feedback estruturado a candidatos reprovados', desc:'Usar o módulo de Feedback do ATS para registrar e enviar devolutiva a candidatos não aprovados.', resp:'Recrutador', prazo:'Semana 3', tag:'processo', tag_cor:'var(--accent)'},
+      {id:'f3_7', titulo:'1ª reunião de acompanhamento com gestor (checkpoint)', desc:'Reunião 1:1 de 30 min: o que está indo bem, o que precisa melhorar, dúvidas, suporte necessário.', resp:'Gestor', prazo:'Semana 3', tag:'gestao', tag_cor:'var(--accent)'}
+    ]
+  },
+  {
+    id:'f4', ico:'📊', nome:'30 Dias — Autonomia', cor:'var(--orange)',
+    sub:'Operação independente com métricas acompanhadas',
+    itens:[
+      {id:'f4_1', titulo:'Gerenciar carteira de vagas de forma independente', desc:'Recrutador assume vagas completas sem supervisão contínua. Gestor disponível para dúvidas pontuais.', resp:'Recrutador', prazo:'Dia 30', tag:'autonomia', tag_cor:'var(--orange)'},
+      {id:'f4_2', titulo:'Atingir meta de triagens da semana', desc:'Cumprir o volume mínimo de triagens definido pelo gestor para a 4ª semana.', resp:'Recrutador', prazo:'Dia 30', tag:'meta', tag_cor:'var(--red)'},
+      {id:'f4_3', titulo:'Realizar pelo menos 1 fechamento de vaga', desc:'Ter ao menos um candidato aprovado e contratado pelo cliente neste período.', resp:'Recrutador', prazo:'Dia 30', tag:'meta', tag_cor:'var(--red)'},
+      {id:'f4_4', titulo:'Usar todos os módulos do ATS de forma fluente', desc:'Demonstrar uso autônomo de: Pipeline, Triagem, Scorecard, DISC, Feedback, SLA, Analytics.', resp:'Recrutador', prazo:'Dia 30', tag:'sistema', tag_cor:'var(--purple)'},
+      {id:'f4_5', titulo:'Avaliação de desempenho — 30 dias', desc:'Reunião formal de avaliação do onboarding: pontos fortes, gaps, plano de desenvolvimento individual.', resp:'Gestor', prazo:'Dia 30', tag:'gestao', tag_cor:'var(--accent)'},
+      {id:'f4_6', titulo:'Solicitar NPS do recrutador sobre o onboarding', desc:'Coletar feedback do recrutador sobre a qualidade da integração para melhoria do processo.', resp:'Gestor', prazo:'Dia 30', tag:'melhoria', tag_cor:'var(--green)'}
+    ]
+  }
+];
+
+const CONQUISTAS_DEF = [
+  {id:'c1', ico:'🔑', nome:'Primeiro Acesso', condicao: r => r.progresso >= 5},
+  {id:'c2', ico:'📚', nome:'Aprendiz', condicao: r => r.progresso >= 25},
+  {id:'c3', ico:'🎙', nome:'1ª Entrevista', condicao: r => (r.itens_feitos||[]).includes('f3_4')},
+  {id:'c4', ico:'🤝', nome:'Briefing Feito', condicao: r => (r.itens_feitos||[]).includes('f3_1')},
+  {id:'c5', ico:'🏅', nome:'50% Completo', condicao: r => r.progresso >= 50},
+  {id:'c6', ico:'🔥', nome:'1º Fechamento', condicao: r => (r.itens_feitos||[]).includes('f4_3')},
+  {id:'c7', ico:'⭐', nome:'ATS Expert', condicao: r => (r.itens_feitos||[]).includes('f4_4')},
+  {id:'c8', ico:'🏆', nome:'Integrado!', condicao: r => r.progresso >= 100}
+];
+
+// ═══════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════
+let recrutadores = JSON.parse(localStorage.getItem('orizon_onboarding_recs') || '[]');
+let recAtivo = null;
+
+// Exemplo inicial
+if(recrutadores.length === 0){
+  const hoje = new Date();
+  const sub = (n) => { const d = new Date(hoje); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+  recrutadores = [
+    {
+      id:'r1', nome:'Ana Beatriz Lima', email:'ana@orizon.com.br', cargo:'recrutador_pl',
+      inicio: sub(12), gestor:'Marcos Silva', obs:'Veio de outra consultoria. Ótimo perfil comportamental.',
+      itens_feitos:['f1_1','f1_2','f1_3','f1_4','f1_5','f1_6','f2_1','f2_2','f2_3'],
+      itens_obs:{}, notas:'Evolução acima do esperado! Muito proativa na semana 1.', progresso:0, concluido:false
+    }
+  ];
+  calcularProgresso(recrutadores[0]);
+  salvarRecs();
+}
+
+function salvarRecs(){
+  recrutadores.forEach(r=>calcularProgresso(r));
+  localStorage.setItem('orizon_onboarding_recs', JSON.stringify(recrutadores));
+}
+
+function calcularProgresso(r){
+  const total = FASES_TEMPLATE.reduce((s,f)=>s+f.itens.length,0);
+  r.progresso = Math.round(((r.itens_feitos||[]).length / total) * 100);
+  r.concluido = r.progresso >= 100;
+}
+
+const CARGO_LABEL = {
+  recrutador_jr:'Recrutador Júnior', recrutador_pl:'Recrutador Pleno',
+  recrutador_sr:'Recrutador Sênior', coord:'Coordenador R&S'
+};
+const CORES_REC = ['var(--accent)','var(--purple)','var(--orange)','var(--green)','var(--red)'];
+
+function initials(nome){ return nome.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase(); }
+function diasDesde(data){ return Math.floor((new Date()-new Date(data+'T00:00:00'))/86400000); }
+
+// ═══════════════════════════════════════
+// RENDER SIDEBAR
+// ═══════════════════════════════════════
+function renderSidebar(){
+  const el = document.getElementById('rec-list');
+  document.getElementById('badge-rec').textContent = recrutadores.length;
+  if(!recrutadores.length){
+    el.innerHTML = '<div style="font-size:0.7rem;color:var(--muted);text-align:center;padding:0.5rem 0;">Nenhum recrutador ainda</div>';
+    return;
+  }
+  el.innerHTML = recrutadores.map((r,i)=>`
+    <div class="rec-item ${r.id===recAtivo?'ativo':''}" onclick="selecionarRec('${r.id}')" style="--ac:${CORES_REC[i%5]}22">
+      <div class="rec-avatar" style="--ac:${CORES_REC[i%5]}22;border-color:${CORES_REC[i%5]}44;color:${CORES_REC[i%5]}">${initials(r.nome)}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="rec-nome">${r.nome}</div>
+        <div class="rec-progresso">${r.progresso}% • ${CARGO_LABEL[r.cargo]||r.cargo}</div>
+        <div class="rec-bar-wrap"><div class="rec-bar" style="width:${r.progresso}%"></div></div>
+      </div>
+      ${r.concluido?'<span style="font-size:0.8rem">✅</span>':''}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// RENDER STATS
+// ═══════════════════════════════════════
+function renderStats(){
+  const ativos = recrutadores.filter(r=>!r.concluido).length;
+  const concluidos = recrutadores.filter(r=>r.concluido).length;
+  const media = recrutadores.length ? Math.round(recrutadores.reduce((s,r)=>s+r.progresso,0)/recrutadores.length) : 0;
+  // Itens marcados hoje (simples: contamos do localStorage com data)
+  const hoje = new Date().toISOString().split('T')[0];
+  const itensTodos = JSON.parse(localStorage.getItem('orizon_onboarding_hoje_'+hoje)||'0');
+  document.getElementById('stat-total').textContent = ativos;
+  document.getElementById('stat-concluidos').textContent = concluidos;
+  document.getElementById('stat-media').textContent = media+'%';
+  document.getElementById('stat-itens').textContent = itensTodos;
+}
+
+// ═══════════════════════════════════════
+// RENDER MAIN
+// ═══════════════════════════════════════
+function selecionarRec(id){
+  recAtivo = id;
+  renderSidebar();
+  renderMain();
+}
+
+let faseAtivaId = 'f1';
+
+function renderMain(){
+  const r = recrutadores.find(x=>x.id===recAtivo);
+  if(!r){ document.getElementById('main-area').innerHTML=''; return; }
+  document.getElementById('conquistas-card').style.display='block';
+  document.getElementById('notas-card').style.display='block';
+  document.getElementById('notas-area').value = r.notas||'';
+  renderConquistas(r);
+
+  const totalItens = FASES_TEMPLATE.reduce((s,f)=>s+f.itens.length,0);
+  const feitos = (r.itens_feitos||[]).length;
+  const diasOn = diasDesde(r.inicio);
+
+  // Fase ativa default: primeira com itens pendentes
+  const fasePendente = FASES_TEMPLATE.find(f=>f.itens.some(it=>!(r.itens_feitos||[]).includes(it.id)));
+  if(!FASES_TEMPLATE.find(f=>f.id===faseAtivaId)) faseAtivaId = fasePendente?.id || 'f1';
+
+  // Tabs
+  const tabs = FASES_TEMPLATE.map(f=>{
+    const total = f.itens.length;
+    const done = f.itens.filter(it=>(r.itens_feitos||[]).includes(it.id)).length;
+    const completa = done === total;
+    return `<button class="fase-tab ${f.id===faseAtivaId?'ativa':''}" onclick="mudarFase('${f.id}')" style="${completa?'border-color:rgba(46,204,113,0.3);':''}">
+      ${f.ico} ${f.nome.split(' — ')[0]}
+      <span class="ft-count" style="${completa?'background:rgba(46,204,113,0.15);color:var(--green);':''}">${done}/${total}</span>
+    </button>`;
+  }).join('');
+
+  const fase = FASES_TEMPLATE.find(f=>f.id===faseAtivaId) || FASES_TEMPLATE[0];
+  const fDone = fase.itens.filter(it=>(r.itens_feitos||[]).includes(it.id)).length;
+  const fPct = Math.round(fDone/fase.itens.length*100);
+
+  // Checklist
+  const checklist = fase.itens.map(it=>{
+    const done = (r.itens_feitos||[]).includes(it.id);
+    const obs = (r.itens_obs||{})[it.id]||'';
+    return `<div class="check-item ${done?'feito':''}" id="ci-${it.id}">
+      <div class="ci-check ${done?'feito':''}" onclick="toggleItem('${it.id}')"></div>
+      <div class="ci-body">
+        <div class="ci-titulo">${it.titulo}</div>
+        <div class="ci-desc">${it.desc}</div>
+        <div class="ci-meta">
+          <span class="ci-tag" style="background:${it.tag_cor}22;color:${it.tag_cor};border:1px solid ${it.tag_cor}44">${it.tag}</span>
+          <span class="ci-prazo">📅 ${it.prazo}</span>
+          <span class="ci-resp">👤 ${it.resp}</span>
+        </div>
+        <div class="ci-obs-wrap">
+          <textarea class="ci-obs" placeholder="Anotações sobre este item..." onblur="salvarObsItem('${it.id}',this.value)">${obs}</textarea>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('main-area').innerHTML = `
+    <div class="prog-wrap">
+      <div class="prog-info">
+        <div class="prog-titulo">Progresso geral de ${r.nome} — ${diasOn} dias no onboarding</div>
+        <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${r.progresso}%"></div></div>
+      </div>
+      <div class="prog-pct">${r.progresso}%</div>
+    </div>
+
+    <div class="fase-tabs">${tabs}</div>
+
+    <div class="check-section aberta">
+      <div class="check-section-head" onclick="this.parentElement.classList.toggle('aberta')">
+        <div class="cs-left">
+          <div class="cs-ico">${fase.ico}</div>
+          <div>
+            <div class="cs-nome">${fase.nome}</div>
+            <div class="cs-sub">${fase.sub}</div>
+          </div>
+        </div>
+        <div class="cs-right">
+          <div class="cs-pct">${fPct}%</div>
+          <div class="cs-mini-bar"><div class="cs-mini-fill" style="width:${fPct}%;background:${fase.cor}"></div></div>
+          <div class="cs-chevron">▼</div>
+        </div>
+      </div>
+      <div class="check-section-body">
+        <div class="checklist">${checklist}</div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+      <button class="btn btn-danger btn-sm" onclick="removerRec('${r.id}')">🗑 Remover</button>
+      ${r.concluido?'<span class="card-badge green" style="padding:0.4rem 0.8rem;border-radius:10px;font-size:0.7rem;">🎉 Onboarding Concluído!</span>':''}
+    </div>
+  `;
+}
+
+function mudarFase(id){
+  faseAtivaId = id;
+  renderMain();
+}
+
+// ═══════════════════════════════════════
+// TOGGLE ITEM
+// ═══════════════════════════════════════
+function toggleItem(itemId){
+  const r = recrutadores.find(x=>x.id===recAtivo);
+  if(!r) return;
+  if(!r.itens_feitos) r.itens_feitos = [];
+  const idx = r.itens_feitos.indexOf(itemId);
+  const eraConcluido = r.concluido;
+  if(idx>=0){
+    r.itens_feitos.splice(idx,1);
+  } else {
+    r.itens_feitos.push(itemId);
+    // Registrar item hoje
+    const hoje = new Date().toISOString().split('T')[0];
+    const key = 'orizon_onboarding_hoje_'+hoje;
+    localStorage.setItem(key, String(parseInt(localStorage.getItem(key)||'0')+1));
+  }
+  calcularProgresso(r);
+  salvarRecs();
+  renderStats();
+  renderSidebar();
+
+  // Verificar conquistas
+  renderConquistas(r);
+
+  // Celebrar conclusão
+  if(!eraConcluido && r.concluido) celebrar();
+
+  // Atualizar item na DOM sem re-renderizar tudo
+  const done = r.itens_feitos.includes(itemId);
+  const ciEl = document.getElementById('ci-'+itemId);
+  const checkEl = ciEl?.querySelector('.ci-check');
+  if(ciEl){
+    ciEl.classList.toggle('feito', done);
+    checkEl?.classList.toggle('feito', done);
+  }
+  // Atualizar progress bar
+  const progFill = document.querySelector('.prog-bar-fill');
+  const progPct = document.querySelector('.prog-pct');
+  if(progFill) progFill.style.width = r.progresso+'%';
+  if(progPct) progPct.textContent = r.progresso+'%';
+  // Atualizar tab count
+  mudarFase(faseAtivaId); // re-render só a seção ativa
+}
+
+function salvarObsItem(itemId, valor){
+  const r = recrutadores.find(x=>x.id===recAtivo);
+  if(!r) return;
+  if(!r.itens_obs) r.itens_obs = {};
+  r.itens_obs[itemId] = valor;
+  salvarRecs();
+}
+
+// ═══════════════════════════════════════
+// CONQUISTAS
+// ═══════════════════════════════════════
+function renderConquistas(r){
+  const wrap = document.getElementById('conquistas-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = CONQUISTAS_DEF.map(c=>{
+    const unlocked = c.condicao(r);
+    return `<div class="conquista ${unlocked?'desbloqueada':''}" title="${unlocked?'Desbloqueada!':'Ainda bloqueada'}">
+      <div class="conquista-ico">${c.ico}</div>
+      <div class="conquista-nome">${c.nome}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// SALVAR NOTAS
+// ═══════════════════════════════════════
+function salvarNotas(){
+  const r = recrutadores.find(x=>x.id===recAtivo);
+  if(!r) return;
+  r.notas = document.getElementById('notas-area').value;
+  salvarRecs();
+  toast('Notas salvas!','success');
+}
+
+// ═══════════════════════════════════════
+// MODAL / CRUD
+// ═══════════════════════════════════════
+function abrirModal(tipo){
+  if(tipo==='novo'){
+    document.getElementById('n-nome').value='';
+    document.getElementById('n-email').value='';
+    document.getElementById('n-gestor').value='';
+    document.getElementById('n-obs').value='';
+    document.getElementById('n-inicio').value = new Date().toISOString().split('T')[0];
+    document.getElementById('modal-novo').classList.add('open');
+  }
+}
+
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function salvarRecrutador(){
+  const nome = document.getElementById('n-nome').value.trim();
+  const email = document.getElementById('n-email').value.trim();
+  const inicio = document.getElementById('n-inicio').value;
+  if(!nome||!inicio){ toast('Preencha nome e data de início!','error'); return; }
+
+  const r = {
+    id:'r'+Date.now(), nome, email,
+    cargo: document.getElementById('n-cargo').value,
+    inicio, gestor: document.getElementById('n-gestor').value.trim(),
+    obs: document.getElementById('n-obs').value.trim(),
+    itens_feitos:[], itens_obs:{}, notas:'', progresso:0, concluido:false
+  };
+  recrutadores.push(r);
+  salvarRecs();
+  fecharModal('modal-novo');
+  recAtivo = r.id;
+  faseAtivaId = 'f1';
+  renderAll();
+  toast(`Onboarding de ${nome} iniciado! 🚀`,'success');
+}
+
+function removerRec(id){
+  if(!confirm('Remover este recrutador do onboarding?')) return;
+  recrutadores = recrutadores.filter(x=>x.id!==id);
+  salvarRecs();
+  recAtivo = recrutadores[0]?.id || null;
+  renderAll();
+  toast('Recrutador removido.','success');
+}
+
+// ═══════════════════════════════════════
+// IMPRIMIR
+// ═══════════════════════════════════════
+function imprimirChecklist(){
+  window.print();
+}
+
+// ═══════════════════════════════════════
+// CELEBRAÇÃO (confetti canvas)
+// ═══════════════════════════════════════
+function celebrar(){
+  toast('🎉 Onboarding concluído! Parabéns!','success');
+  const canvas = document.getElementById('celebracao');
+  canvas.classList.add('show');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const particles = Array.from({length:80},()=>({
+    x:Math.random()*canvas.width, y:-20,
+    vx:(Math.random()-0.5)*4, vy:Math.random()*4+2,
+    r:Math.random()*6+3,
+    color:['#3b82f6','#a78bfa','#2ecc71','#f39c12','#a8d85f'][Math.floor(Math.random()*5)],
+    rot:Math.random()*360, rotV:(Math.random()-0.5)*10
+  }));
+  let frame = 0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.color;
+      ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
+      ctx.restore();
+      p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV; p.vy+=0.05;
+    });
+    frame++;
+    if(frame<180) requestAnimationFrame(draw);
+    else{ ctx.clearRect(0,0,canvas.width,canvas.height); canvas.classList.remove('show'); }
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function toast(msg, tipo='success'){
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = `toast show ${tipo}`;
+  el.querySelector('.toast-ico').textContent = tipo==='success'?'✅':'⚠️';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function renderAll(){
+  renderStats();
+  renderSidebar();
+  if(recAtivo) renderMain();
+}
+// Selecionar primeiro automaticamente
+if(recrutadores.length && !recAtivo) recAtivo = recrutadores[0].id;
+renderAll();
+</script>
+</body>
+</html>

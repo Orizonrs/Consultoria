@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Comparativo de Candidatos | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1600px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* FORM */
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.6;}
+
+/* SEÇÃO */
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* CONFIG BAR */
+.config-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;}
+.config-field{flex:1;min-width:160px;}
+
+/* RANKING TOP */
+.ranking-strip{display:grid;gap:0.7rem;margin-bottom:1.2rem;}
+.rank-item{display:flex;align-items:center;gap:0.9rem;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0.9rem 1.2rem;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;}
+.rank-item:hover{border-color:var(--border2);}
+.rank-item.rank-1{border-color:rgba(255,213,0,0.3);background:linear-gradient(135deg,rgba(255,213,0,0.05),var(--card));}
+.rank-item.rank-2{border-color:rgba(192,192,192,0.25);background:linear-gradient(135deg,rgba(192,192,192,0.04),var(--card));}
+.rank-item.rank-3{border-color:rgba(205,127,50,0.25);background:linear-gradient(135deg,rgba(205,127,50,0.04),var(--card));}
+.rank-pos{font-size:1.5rem;font-weight:900;font-family:var(--mono);width:36px;text-align:center;flex-shrink:0;}
+.rank-pos.p1{color:#ffd500;}
+.rank-pos.p2{color:#c0c0c0;}
+.rank-pos.p3{color:#cd7f32;}
+.rank-pos.pn{color:var(--muted);font-size:1rem;}
+.rank-avatar{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;flex-shrink:0;font-family:var(--mono);}
+.rank-info{flex:1;min-width:0;}
+.rank-nome{font-size:0.88rem;font-weight:800;margin-bottom:0.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rank-cargo{font-size:0.62rem;color:var(--muted);}
+.rank-badges{display:flex;gap:0.35rem;margin-top:0.25rem;flex-wrap:wrap;}
+.rank-badge{font-size:0.52rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:6px;}
+.rank-score-block{text-align:right;flex-shrink:0;}
+.rank-score-num{font-size:1.8rem;font-weight:900;font-family:var(--mono);line-height:1;}
+.rank-score-label{font-size:0.55rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.rank-bar{position:absolute;bottom:0;left:0;height:3px;border-radius:0 0 0 14px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+.rank-winner-crown{position:absolute;top:0.6rem;right:0.8rem;font-size:1rem;opacity:0.6;}
+
+/* COMPARATIVO PRINCIPAL - TABELA */
+.comp-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.comp-table{width:100%;border-collapse:collapse;min-width:700px;}
+.comp-table th,.comp-table td{padding:0;vertical-align:top;}
+
+/* CABEÇALHO DE CANDIDATO */
+.cand-col-head{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center;margin:0 0.3rem;position:relative;}
+.cand-col-head.winner{border-color:rgba(255,213,0,0.35);background:linear-gradient(135deg,rgba(255,213,0,0.07),var(--card2));}
+.cand-col-head.loser{opacity:0.65;}
+.cand-avatar-big{width:52px;height:52px;border-radius:12px;margin:0 auto 0.5rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;font-family:var(--mono);}
+.cand-col-nome{font-size:0.82rem;font-weight:800;margin-bottom:0.1rem;}
+.cand-col-cargo{font-size:0.6rem;color:var(--muted);margin-bottom:0.5rem;}
+.cand-col-score{font-size:2rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.2rem;}
+.cand-col-verdict{font-size:0.6rem;font-weight:800;padding:0.2rem 0.7rem;border-radius:99px;display:inline-block;margin-bottom:0.5rem;}
+.cand-winner-tag{font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;padding:0.2rem 0.8rem;border-radius:99px;background:rgba(255,213,0,0.12);color:#ffd500;border:1px solid rgba(255,213,0,0.25);display:inline-block;}
+.cand-col-reco{font-size:0.62rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:8px;display:inline-block;margin-top:0.3rem;}
+
+/* LINHAS DA TABELA */
+.comp-row-label{padding:0.65rem 0.8rem;background:rgba(255,255,255,0.015);border-bottom:1px solid rgba(255,255,255,0.04);white-space:nowrap;}
+.comp-row-label-text{font-size:0.68rem;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:0.4rem;}
+.comp-row-label-sub{font-size:0.56rem;color:var(--muted);margin-top:0.1rem;}
+.comp-row-cell{padding:0.6rem 0.4rem;border-bottom:1px solid rgba(255,255,255,0.03);text-align:center;position:relative;}
+
+/* BARRA DE SCORE NA TABELA */
+.cell-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:0.25rem;}
+.cell-score-val{font-size:0.85rem;font-weight:900;font-family:var(--mono);}
+.cell-bar{width:90%;height:6px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;}
+.cell-bar-fill{height:100%;border-radius:99px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);}
+.cell-winner-dot{width:8px;height:8px;border-radius:50%;background:#ffd500;position:absolute;top:0.5rem;right:0.5rem;box-shadow:0 0 6px rgba(255,213,0,0.5);}
+.cell-estrelas{font-size:0.7rem;letter-spacing:1px;}
+
+/* GROUP HEADER */
+.group-head-row td{padding:0.5rem 0.8rem;}
+.group-head-cell{font-size:0.56rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:rgba(59,130,246,0.45);display:flex;align-items:center;gap:0.5rem;padding-top:0.4rem;}
+
+/* EMPATE / VANTAGEM */
+.vs-badge{font-size:0.55rem;font-weight:800;padding:0.1rem 0.4rem;border-radius:6px;}
+.vs-win{background:rgba(46,204,113,0.12);color:var(--green);}
+.vs-lose{background:rgba(231,76,60,0.08);color:rgba(231,76,60,0.6);}
+.vs-tie{background:rgba(255,255,255,0.05);color:var(--muted);}
+
+/* BLOCO VAZIO */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;text-align:center;}
+.empty-ico{font-size:3rem;opacity:0.3;}
+.empty-title{font-size:1rem;font-weight:800;color:var(--text2);}
+.empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;max-width:380px;}
+
+/* OBSERVAÇÕES FINAIS */
+.obs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.7rem;margin-top:0.8rem;}
+.obs-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.9rem 1rem;}
+.obs-cand-name{font-size:0.7rem;font-weight:800;margin-bottom:0.4rem;display:flex;align-items:center;gap:0.4rem;}
+.obs-tag{font-size:0.55rem;font-weight:800;padding:0.1rem 0.45rem;border-radius:6px;background:rgba(59,130,246,0.1);color:var(--accent);}
+.obs-text{font-size:0.7rem;color:var(--text2);line-height:1.6;}
+.obs-label{font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.25rem;margin-top:0.6rem;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.3rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* CANDIDATO CHIPS NA LISTA */
+.cand-chip{display:flex;align-items:center;gap:0.6rem;padding:0.65rem 0.85rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;margin-bottom:0.4rem;transition:all 0.15s;}
+.cand-chip:hover{border-color:var(--border2);}
+.cand-chip.selected{border-color:var(--accent);background:rgba(59,130,246,0.06);}
+.cand-chip-ava{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem;flex-shrink:0;font-family:var(--mono);}
+.cand-chip-info{flex:1;min-width:0;}
+.cand-chip-nome{font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cand-chip-meta{font-size:0.6rem;color:var(--muted);}
+.cand-chip-score{font-size:0.82rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+.cand-chip-check{font-size:0.9rem;flex-shrink:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.spinner{width:14px;height:14px;border:2px solid var(--muted2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+
+/* IMPRESSÃO */
+@media print{
+  body{background:#fff;color:#111;}
+  .no-print{display:none!important;}
+  .card{border:1px solid #ddd;background:#fff;box-shadow:none;}
+  .page{padding:1rem;}
+}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:700px){
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.25rem;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Seleção & Decisão · Orizon ATS</div>
+      <div class="hero-title">Comparativo de <span>Candidatos</span></div>
+      <div class="hero-sub">Compare finalistas lado a lado · Ranking automático por score · Decisão baseada em dados</div>
+    </div>
+    <div class="hero-right no-print">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModalAdicionar()">+ Adicionar Candidato</button>
+    </div>
+  </div>
+
+  <!-- CONFIG BAR -->
+  <div class="config-bar no-print">
+    <div class="config-field">
+      <label class="form-label">Vaga / Cargo</label>
+      <input class="form-input" id="filtroVaga" placeholder="Filtrar por cargo..." oninput="filtrarPorVaga()"/>
+    </div>
+    <div class="config-field" style="max-width:200px;">
+      <label class="form-label">Ordenar por</label>
+      <select class="form-input" id="ordenacao" onchange="reordenarCandidatos()">
+        <option value="score">Score Final</option>
+        <option value="tec">Score Técnico</option>
+        <option value="comp">Score Comportamental</option>
+        <option value="fit">Fit Cultural</option>
+        <option value="nome">Nome (A-Z)</option>
+      </select>
+    </div>
+    <div class="config-field" style="max-width:180px;">
+      <label class="form-label">Pesos Customizados</label>
+      <select class="form-input" id="pesoPreset" onchange="aplicarPeso()">
+        <option value="padrao">Padrão (40/35/25)</option>
+        <option value="tecnico">Foco Técnico (60/25/15)</option>
+        <option value="comportamental">Foco Comportamental (25/50/25)</option>
+        <option value="cultura">Foco Cultura (25/25/50)</option>
+        <option value="custom">Customizado...</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparTodos()" style="color:var(--red);border-color:rgba(231,76,60,0.2);">🗑 Limpar</button>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div id="emptyState" class="empty-state">
+    <div class="empty-ico">🆚</div>
+    <div class="empty-title">Nenhum candidato adicionado</div>
+    <div class="empty-sub">Adicione ao menos 2 candidatos para gerar o comparativo lado a lado. Você pode importar scorecards já salvos ou adicionar manualmente.</div>
+    <button class="btn btn-primary" onclick="abrirModalAdicionar()">+ Adicionar Primeiro Candidato</button>
+    <button class="btn btn-ghost" onclick="carregarExemplos()" style="margin-top:0.3rem;">📋 Carregar exemplos de demonstração</button>
+  </div>
+
+  <!-- RANKING -->
+  <div id="rankingSection" style="display:none;">
+    <div class="sec"><div class="sec-label">🏆 Ranking Geral por Score</div></div>
+    <div id="rankingList" class="ranking-strip"></div>
+
+    <!-- TABELA COMPARATIVA -->
+    <div class="sec"><div class="sec-label">📊 Comparativo Detalhado</div></div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="comp-table-wrap">
+        <table class="comp-table" id="compTable">
+          <thead id="compTableHead"></thead>
+          <tbody id="compTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- OBSERVAÇÕES / PONTOS FORTES -->
+    <div id="obsSection">
+      <div class="sec"><div class="sec-label">📝 Observações dos Candidatos</div></div>
+      <div class="obs-grid" id="obsList"></div>
+    </div>
+
+    <!-- DECISÃO FINAL -->
+    <div class="sec"><div class="sec-label">🎯 Decisão Final</div></div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📋 Registro de Decisão</div>
+        <button class="btn btn-success no-print" onclick="salvarDecisao()">💾 Salvar Decisão</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem;">
+        <div>
+          <label class="form-label">Candidato Selecionado</label>
+          <select class="form-input" id="decisaoCandidato">
+            <option value="">— Selecionar —</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Motivo da Escolha</label>
+          <select class="form-input" id="decisaoMotivo">
+            <option value="">— Selecionar —</option>
+            <option value="maior_score">Maior score geral</option>
+            <option value="melhor_tecnico">Melhor perfil técnico</option>
+            <option value="melhor_comportamental">Melhor perfil comportamental</option>
+            <option value="melhor_fit">Melhor fit cultural</option>
+            <option value="indicacao_cliente">Indicação do cliente</option>
+            <option value="negociacao">Melhor negociação salarial</option>
+            <option value="disponibilidade">Disponibilidade imediata</option>
+            <option value="outro">Outro motivo</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Justificativa da Decisão</label>
+        <textarea class="form-input" id="decisaoJustificativa" placeholder="Descreva brevemente o que pesou na decisão final, pontos determinantes, alinhamento com o cliente..." style="min-height:80px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL ADICIONAR CANDIDATO -->
+<div class="modal-overlay" id="modalAdicionar">
+  <div class="modal">
+    <div class="modal-title">Adicionar Candidato</div>
+    <div class="modal-sub">Preencha os dados do candidato ou importe de um scorecard salvo</div>
+
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <button class="btn" id="tabManual" onclick="alternarAba('manual')" style="flex:1;justify-content:center;background:rgba(59,130,246,0.1);color:var(--accent);border-color:rgba(59,130,246,0.25);">✏️ Manual</button>
+      <button class="btn btn-ghost" id="tabImportar" onclick="alternarAba('importar')" style="flex:1;justify-content:center;">📂 Importar Scorecard</button>
+    </div>
+
+    <!-- ABA MANUAL -->
+    <div id="abaManual">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+        <div>
+          <label class="form-label">Nome *</label>
+          <input class="form-input" id="mNome" placeholder="Nome completo"/>
+        </div>
+        <div>
+          <label class="form-label">Cargo / Vaga *</label>
+          <input class="form-input" id="mCargo" placeholder="Ex: Gerente de Projetos"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.7rem;margin-top:0.7rem;">
+        <div>
+          <label class="form-label">Score Técnico (%)</label>
+          <input class="form-input" type="number" min="0" max="100" id="mTec" placeholder="0–100" oninput="calcScoreManual()"/>
+        </div>
+        <div>
+          <label class="form-label">Score Comportamental (%)</label>
+          <input class="form-input" type="number" min="0" max="100" id="mComp" placeholder="0–100" oninput="calcScoreManual()"/>
+        </div>
+        <div>
+          <label class="form-label">Fit Cultural (%)</label>
+          <input class="form-input" type="number" min="0" max="100" id="mFit" placeholder="0–100" oninput="calcScoreManual()"/>
+        </div>
+      </div>
+      <div style="margin-top:0.7rem;padding:0.6rem 0.9rem;background:rgba(59,130,246,0.05);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;gap:0.6rem;">
+        <span style="font-size:0.68rem;color:var(--muted);">Score final calculado:</span>
+        <span id="mScorePreview" style="font-size:1rem;font-weight:900;font-family:var(--mono);color:var(--accent);">—</span>
+      </div>
+      <div style="margin-top:0.7rem;">
+        <label class="form-label">Recomendação</label>
+        <select class="form-input" id="mReco">
+          <option value="">— Sem recomendação —</option>
+          <option value="aprovado">✅ Aprovado</option>
+          <option value="segunda">🔄 2ª Fase</option>
+          <option value="reprovado">❌ Reprovado</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.7rem;">
+        <div>
+          <label class="form-label">Pontos Fortes</label>
+          <textarea class="form-input" id="mFortes" placeholder="Destaques positivos..." style="min-height:64px;"></textarea>
+        </div>
+        <div>
+          <label class="form-label">Pontos de Atenção</label>
+          <textarea class="form-input" id="mGaps" placeholder="Lacunas ou preocupações..." style="min-height:64px;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ABA IMPORTAR -->
+    <div id="abaImportar" style="display:none;">
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.8rem;line-height:1.6;">Selecione um ou mais scorecards salvos localmente para importar automaticamente.</div>
+      <div id="listaScorecardsImport" style="max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;">
+        <div style="text-align:center;padding:2rem 0;color:var(--muted);font-size:0.72rem;" id="importVazio">Nenhum scorecard encontrado no histórico local.</div>
+      </div>
+      <div style="margin-top:0.8rem;display:flex;align-items:center;justify-content:space-between;">
+        <span id="importSelecionados" style="font-size:0.68rem;color:var(--muted);">0 selecionados</span>
+        <button class="btn btn-primary" onclick="importarSelecionados()">📥 Importar Selecionados</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnAdicionarModal" onclick="adicionarCandidato()">+ Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PESOS CUSTOM -->
+<div class="modal-overlay" id="modalPesos">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title">⚖️ Pesos Customizados</div>
+    <div class="modal-sub">A soma deve ser 100%. Os scores serão recalculados.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.7rem;">
+      <div>
+        <label class="form-label">Técnico %</label>
+        <input class="form-input" type="number" id="pesoTec" value="40" min="0" max="100" oninput="validarPesos()"/>
+      </div>
+      <div>
+        <label class="form-label">Comportamental %</label>
+        <input class="form-input" type="number" id="pesoComp" value="35" min="0" max="100" oninput="validarPesos()"/>
+      </div>
+      <div>
+        <label class="form-label">Fit Cultural %</label>
+        <input class="form-input" type="number" id="pesoFit" value="25" min="0" max="100" oninput="validarPesos()"/>
+      </div>
+    </div>
+    <div id="pesoSomaDisplay" style="margin-top:0.7rem;font-size:0.72rem;color:var(--green);"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModalPesos()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarPesos()">Aplicar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO GLOBAL ────────────────────────────────────────────────
+let CANDIDATOS = [];
+let PESOS = { tec: 40, comp: 35, fit: 25 };
+let ABA_MODAL = 'manual';
+let IMPORT_SELECIONADOS = new Set();
+
+// ─── CORES POR ÍNDICE ─────────────────────────────────────────────
+const CORES = [
+  { bg:'rgba(59,130,246,0.15)', cor:'#3b82f6' },
+  { bg:'rgba(168,216,95,0.15)', cor:'#a8d85f' },
+  { bg:'rgba(167,139,250,0.15)', cor:'#a78bfa' },
+  { bg:'rgba(243,156,18,0.15)', cor:'#f39c12' },
+  { bg:'rgba(46,204,113,0.15)', cor:'#2ecc71' },
+  { bg:'rgba(231,76,60,0.15)', cor:'#e74c3c' },
+];
+
+function corCandidato(i) { return CORES[i % CORES.length]; }
+
+// ─── SCORE FINAL CALCULADO ────────────────────────────────────────
+function calcScore(c) {
+  const t = c.tec || 0, co = c.comp || 0, f = c.fit || 0;
+  return Math.round((t * PESOS.tec + co * PESOS.comp + f * PESOS.fit) / 100);
+}
+
+function corPorScore(s) {
+  if (s >= 80) return '#2ecc71';
+  if (s >= 65) return '#3b82f6';
+  if (s >= 50) return '#f39c12';
+  return '#e74c3c';
+}
+
+function verdictPorScore(s) {
+  if (s >= 80) return { label:'Excepcional', bg:'rgba(46,204,113,0.1)', cor:'#2ecc71' };
+  if (s >= 65) return { label:'Aprovado', bg:'rgba(59,130,246,0.1)', cor:'#3b82f6' };
+  if (s >= 50) return { label:'Avaliar', bg:'rgba(243,156,18,0.1)', cor:'#f39c12' };
+  return { label:'Abaixo', bg:'rgba(231,76,60,0.1)', cor:'#e74c3c' };
+}
+
+function recoBadge(reco) {
+  const map = {
+    aprovado: { ico:'✅', cor:'#2ecc71', bg:'rgba(46,204,113,0.1)', label:'Aprovado' },
+    segunda: { ico:'🔄', cor:'#f39c12', bg:'rgba(243,156,18,0.1)', label:'2ª Fase' },
+    reprovado: { ico:'❌', cor:'#e74c3c', bg:'rgba(231,76,60,0.1)', label:'Reprovado' },
+  };
+  return map[reco] || null;
+}
+
+// ─── ESTRELAS ─────────────────────────────────────────────────────
+function scoreParaEstrelas(s) {
+  const n = Math.round(s / 20);
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+// ─── RENDER PRINCIPAL ─────────────────────────────────────────────
+function render() {
+  const temCandidatos = CANDIDATOS.length > 0;
+  document.getElementById('emptyState').style.display = temCandidatos ? 'none' : 'flex';
+  document.getElementById('rankingSection').style.display = temCandidatos ? 'block' : 'none';
+
+  if (!temCandidatos) return;
+
+  // Calcular scores e ordenar
+  const ordenacao = document.getElementById('ordenacao').value;
+  const filtroVaga = (document.getElementById('filtroVaga').value || '').toLowerCase();
+
+  let lista = CANDIDATOS
+    .filter(c => !filtroVaga || c.cargo.toLowerCase().includes(filtroVaga))
+    .map((c, originalIdx) => ({ ...c, score: calcScore(c), _originalIdx: originalIdx }));
+
+  lista.sort((a, b) => {
+    if (ordenacao === 'nome') return a.nome.localeCompare(b.nome);
+    if (ordenacao === 'tec') return (b.tec || 0) - (a.tec || 0);
+    if (ordenacao === 'comp') return (b.comp || 0) - (a.comp || 0);
+    if (ordenacao === 'fit') return (b.fit || 0) - (a.fit || 0);
+    return b.score - a.score;
+  });
+
+  renderRanking(lista);
+  renderTabela(lista);
+  renderObs(lista);
+  atualizarSelectDecisao(lista);
+}
+
+// ─── RANKING ──────────────────────────────────────────────────────
+function renderRanking(lista) {
+  const el = document.getElementById('rankingList');
+  const maxScore = Math.max(...lista.map(c => c.score), 1);
+
+  el.innerHTML = lista.map((c, i) => {
+    const cor = corCandidato(c._originalIdx);
+    const posClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+    const posCorClass = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : 'pn';
+    const posLabel = i < 3 ? ['🥇','🥈','🥉'][i] : `${i+1}`;
+    const rb = recoBadge(c.reco);
+    const verd = verdictPorScore(c.score);
+    const barW = Math.round((c.score / maxScore) * 100);
+
+    return `
+    <div class="rank-item ${posClass}" onclick="destacarLinha('${c.id}')">
+      ${i === 0 ? '<div class="rank-winner-crown">👑</div>' : ''}
+      <div class="rank-pos ${posCorClass}">${posLabel}</div>
+      <div class="rank-avatar" style="background:${cor.bg};color:${cor.cor};">${c.nome.charAt(0).toUpperCase()}</div>
+      <div class="rank-info">
+        <div class="rank-nome">${c.nome}</div>
+        <div class="rank-cargo">${c.cargo}</div>
+        <div class="rank-badges">
+          <span class="rank-badge" style="background:rgba(59,130,246,0.1);color:#3b82f6;">Tec ${c.tec||0}%</span>
+          <span class="rank-badge" style="background:rgba(167,139,250,0.1);color:#a78bfa;">Comp ${c.comp||0}%</span>
+          <span class="rank-badge" style="background:rgba(46,204,113,0.1);color:#2ecc71;">Fit ${c.fit||0}%</span>
+          ${rb ? `<span class="rank-badge" style="background:${rb.bg};color:${rb.cor};">${rb.ico} ${rb.label}</span>` : ''}
+        </div>
+      </div>
+      <div class="rank-score-block">
+        <div class="rank-score-num" style="color:${corPorScore(c.score)}">${c.score}</div>
+        <div class="rank-score-label">Score</div>
+      </div>
+      <div class="rank-bar" style="background:${cor.cor};width:${barW}%;opacity:0.4;"></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TABELA COMPARATIVA ───────────────────────────────────────────
+function renderTabela(lista) {
+  const thead = document.getElementById('compTableHead');
+  const tbody = document.getElementById('compTableBody');
+
+  // Cabeçalho
+  const maxScore = Math.max(...lista.map(c => c.score), 1);
+  let headHtml = '<tr><th style="width:180px;padding:0.5rem 0.8rem;"></th>';
+  lista.forEach((c, i) => {
+    const cor = corCandidato(c._originalIdx);
+    const verd = verdictPorScore(c.score);
+    const rb = recoBadge(c.reco);
+    const isWinner = i === 0;
+    headHtml += `
+    <th>
+      <div class="cand-col-head ${isWinner ? 'winner' : ''}">
+        ${isWinner ? '<div style="font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#ffd500;margin-bottom:0.4rem;">👑 MELHOR AVALIADO</div>' : ''}
+        <div class="cand-avatar-big" style="background:${cor.bg};color:${cor.cor};">${c.nome.charAt(0).toUpperCase()}</div>
+        <div class="cand-col-nome">${c.nome}</div>
+        <div class="cand-col-cargo">${c.cargo}</div>
+        <div class="cand-col-score" style="color:${corPorScore(c.score)}">${c.score}<span style="font-size:0.7rem;color:var(--muted);">%</span></div>
+        <div class="cand-col-verdict" style="background:${verd.bg};color:${verd.cor};">${verd.label}</div>
+        ${rb ? `<div><div class="cand-col-reco" style="background:${rb.bg};color:${rb.cor};">${rb.ico} ${rb.label}</div></div>` : ''}
+        <div class="no-print" style="margin-top:0.5rem;">
+          <button class="btn btn-danger" style="font-size:0.6rem;padding:0.25rem 0.6rem;" onclick="removerCandidato('${c.id}')">🗑</button>
+        </div>
+      </div>
+    </th>`;
+  });
+  headHtml += '</tr>';
+  thead.innerHTML = headHtml;
+
+  // Linhas
+  const CRITERIOS = [
+    { grupo: '📊 Scores por Categoria', itens: [
+      { key: 'tec', label: 'Score Técnico', sub: `Peso ${PESOS.tec}%`, tipo: 'barra', cor: '#3b82f6' },
+      { key: 'comp', label: 'Score Comportamental', sub: `Peso ${PESOS.comp}%`, tipo: 'barra', cor: '#a78bfa' },
+      { key: 'fit', label: 'Fit Cultural', sub: `Peso ${PESOS.fit}%`, tipo: 'barra', cor: '#2ecc71' },
+      { key: 'score', label: 'Score Final Ponderado', sub: 'Resultado geral', tipo: 'score_final' },
+    ]},
+    { grupo: '⭐ Avaliação Visual', itens: [
+      { key: 'score_estrelas', label: 'Classificação em Estrelas', sub: 'Baseado no score final', tipo: 'estrelas' },
+      { key: 'reco', label: 'Recomendação do Avaliador', sub: 'Decisão do recrutador', tipo: 'reco' },
+    ]},
+  ];
+
+  let bodyHtml = '';
+  CRITERIOS.forEach(grupo => {
+    // Linha de grupo
+    bodyHtml += `<tr class="group-head-row"><td colspan="${lista.length + 1}" style="padding:0;"><div style="height:1px;background:rgba(59,130,246,0.08);margin:0 0.5rem;"></div></td></tr>`;
+    bodyHtml += `<tr class="group-head-row"><td><div class="group-head-cell">${grupo.grupo}</div></td>${lista.map(()=>'<td></td>').join('')}</tr>`;
+
+    grupo.itens.forEach(criterio => {
+      // Determinar vencedor nesse critério
+      let vals = lista.map(c => {
+        if (criterio.key === 'score') return c.score;
+        if (criterio.key === 'score_estrelas') return c.score;
+        if (criterio.key === 'reco') return c.reco === 'aprovado' ? 3 : c.reco === 'segunda' ? 2 : c.reco === 'reprovado' ? 1 : 0;
+        return c[criterio.key] || 0;
+      });
+      const maxVal = Math.max(...vals);
+
+      bodyHtml += `<tr>
+        <td class="comp-row-label">
+          <div class="comp-row-label-text">${criterio.label}</div>
+          <div class="comp-row-label-sub">${criterio.sub}</div>
+        </td>`;
+
+      lista.forEach((c, i) => {
+        const isWinner = vals[i] === maxVal && vals[i] > 0;
+        const isTie = vals.filter(v => v === maxVal).length > 1;
+        bodyHtml += `<td class="comp-row-cell" id="cell-${c.id}-${criterio.key}">`;
+
+        if (criterio.tipo === 'barra') {
+          const val = c[criterio.key] || 0;
+          bodyHtml += `
+          <div class="cell-bar-wrap">
+            <div class="cell-score-val" style="color:${criterio.cor}">${val}%</div>
+            <div class="cell-bar"><div class="cell-bar-fill" style="width:${val}%;background:${criterio.cor};opacity:0.8;"></div></div>
+            <span class="vs-badge ${isWinner && !isTie ? 'vs-win' : isTie && isWinner ? 'vs-tie' : 'vs-lose'}">${isWinner && !isTie ? '▲ Melhor' : isTie && isWinner ? '= Empate' : '▼'}</span>
+          </div>`;
+        } else if (criterio.tipo === 'score_final') {
+          bodyHtml += `
+          <div style="text-align:center;">
+            <div style="font-size:1.4rem;font-weight:900;font-family:var(--mono);color:${corPorScore(c.score)}">${c.score}%</div>
+            ${isWinner && !isTie ? '<div class="cell-winner-dot"></div>' : ''}
+          </div>`;
+        } else if (criterio.tipo === 'estrelas') {
+          const estrelas = scoreParaEstrelas(c.score);
+          bodyHtml += `<div class="cell-estrelas" style="color:#f59e0b;">${estrelas}</div>`;
+        } else if (criterio.tipo === 'reco') {
+          const rb = recoBadge(c.reco);
+          bodyHtml += rb
+            ? `<div class="cand-col-reco" style="background:${rb.bg};color:${rb.cor};display:inline-block;">${rb.ico} ${rb.label}</div>`
+            : `<div style="font-size:0.65rem;color:var(--muted);">—</div>`;
+        }
+
+        bodyHtml += '</td>';
+      });
+
+      bodyHtml += '</tr>';
+    });
+  });
+
+  tbody.innerHTML = bodyHtml;
+}
+
+// ─── OBSERVAÇÕES ─────────────────────────────────────────────────
+function renderObs(lista) {
+  const temObs = lista.some(c => c.fortes || c.gaps);
+  document.getElementById('obsSection').style.display = temObs ? 'block' : 'none';
+  if (!temObs) return;
+
+  document.getElementById('obsList').innerHTML = lista.filter(c => c.fortes || c.gaps).map((c, i) => {
+    const cor = corCandidato(c._originalIdx);
+    return `
+    <div class="obs-card">
+      <div class="obs-cand-name" style="color:${cor.cor};">${c.nome.charAt(0).toUpperCase()}${c.nome.slice(1)} <span class="obs-tag">${c.cargo}</span></div>
+      ${c.fortes ? `<div class="obs-label">Pontos Fortes</div><div class="obs-text">${c.fortes}</div>` : ''}
+      ${c.gaps ? `<div class="obs-label">Pontos de Atenção</div><div class="obs-text">${c.gaps}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ─── SELECT DECISÃO ───────────────────────────────────────────────
+function atualizarSelectDecisao(lista) {
+  const sel = document.getElementById('decisaoCandidato');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">— Selecionar —</option>' +
+    lista.map(c => `<option value="${c.id}" ${c.id === val ? 'selected' : ''}>${c.nome} (${c.score}%)</option>`).join('');
+}
+
+// ─── MODAL ADICIONAR ──────────────────────────────────────────────
+function abrirModalAdicionar() {
+  limparFormModal();
+  document.getElementById('modalAdicionar').classList.add('open');
+  carregarScorecardsParaImport();
+}
+
+function fecharModal() {
+  document.getElementById('modalAdicionar').classList.remove('open');
+}
+
+function limparFormModal() {
+  ['mNome','mCargo','mTec','mComp','mFit','mFortes','mGaps'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('mReco').value = '';
+  document.getElementById('mScorePreview').textContent = '—';
+  IMPORT_SELECIONADOS.clear();
+  alternarAba('manual');
+}
+
+function alternarAba(aba) {
+  ABA_MODAL = aba;
+  document.getElementById('abaManual').style.display = aba === 'manual' ? 'block' : 'none';
+  document.getElementById('abaImportar').style.display = aba === 'importar' ? 'block' : 'none';
+  document.getElementById('tabManual').style.cssText = aba === 'manual'
+    ? 'flex:1;justify-content:center;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:0.5rem 1rem;cursor:pointer;font-family:inherit;font-size:0.76rem;font-weight:700;display:inline-flex;align-items:center;gap:0.4rem;'
+    : 'flex:1;justify-content:center;background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.5rem 1rem;cursor:pointer;font-family:inherit;font-size:0.76rem;font-weight:700;display:inline-flex;align-items:center;gap:0.4rem;';
+  document.getElementById('tabImportar').style.cssText = aba === 'importar'
+    ? 'flex:1;justify-content:center;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:0.5rem 1rem;cursor:pointer;font-family:inherit;font-size:0.76rem;font-weight:700;display:inline-flex;align-items:center;gap:0.4rem;'
+    : 'flex:1;justify-content:center;background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.5rem 1rem;cursor:pointer;font-family:inherit;font-size:0.76rem;font-weight:700;display:inline-flex;align-items:center;gap:0.4rem;';
+
+  document.getElementById('btnAdicionarModal').style.display = aba === 'manual' ? 'inline-flex' : 'none';
+}
+
+function calcScoreManual() {
+  const t = parseFloat(document.getElementById('mTec').value) || 0;
+  const co = parseFloat(document.getElementById('mComp').value) || 0;
+  const f = parseFloat(document.getElementById('mFit').value) || 0;
+  const s = Math.round((t * PESOS.tec + co * PESOS.comp + f * PESOS.fit) / 100);
+  document.getElementById('mScorePreview').textContent = s + '%';
+  document.getElementById('mScorePreview').style.color = corPorScore(s);
+}
+
+function adicionarCandidato() {
+  const nome = document.getElementById('mNome').value.trim();
+  const cargo = document.getElementById('mCargo').value.trim();
+  if (!nome || !cargo) { toast('⚠️ Preencha Nome e Cargo'); return; }
+
+  const tec = Math.min(100, Math.max(0, parseFloat(document.getElementById('mTec').value) || 0));
+  const comp = Math.min(100, Math.max(0, parseFloat(document.getElementById('mComp').value) || 0));
+  const fit = Math.min(100, Math.max(0, parseFloat(document.getElementById('mFit').value) || 0));
+
+  CANDIDATOS.push({
+    id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    nome, cargo, tec, comp, fit,
+    reco: document.getElementById('mReco').value,
+    fortes: document.getElementById('mFortes').value.trim(),
+    gaps: document.getElementById('mGaps').value.trim(),
+  });
+
+  fecharModal();
+  render();
+  toast(`✅ ${nome} adicionado ao comparativo`);
+}
+
+// ─── IMPORTAR SCORECARDS ──────────────────────────────────────────
+function carregarScorecardsParaImport() {
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('orizon_scorecards') || '[]'); } catch(e) {}
+
+  const el = document.getElementById('listaScorecardsImport');
+  if (!hist.length) {
+    el.innerHTML = '<div style="text-align:center;padding:2rem 0;color:var(--muted);font-size:0.72rem;">Nenhum scorecard encontrado no histórico local.<br>Use a aba Manual para adicionar.</div>';
+    return;
+  }
+
+  IMPORT_SELECIONADOS.clear();
+  el.innerHTML = hist.slice(0, 20).map(h => {
+    const s = h.score_final || 0;
+    const cor = corPorScore(s);
+    return `
+    <div class="cand-chip" id="chip-${h.id}" onclick="toggleImport(${h.id})">
+      <div class="cand-chip-ava" style="background:rgba(59,130,246,0.1);color:#3b82f6;">${(h.candidato||'?').charAt(0)}</div>
+      <div class="cand-chip-info">
+        <div class="cand-chip-nome">${h.candidato}</div>
+        <div class="cand-chip-meta">${h.cargo} · ${h.data_entrevista||'—'}</div>
+      </div>
+      <div class="cand-chip-score" style="color:${cor}">${s}%</div>
+      <div class="cand-chip-check" id="check-${h.id}">⬜</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleImport(id) {
+  if (IMPORT_SELECIONADOS.has(id)) {
+    IMPORT_SELECIONADOS.delete(id);
+    document.getElementById('chip-'+id)?.classList.remove('selected');
+    document.getElementById('check-'+id).textContent = '⬜';
+  } else {
+    IMPORT_SELECIONADOS.add(id);
+    document.getElementById('chip-'+id)?.classList.add('selected');
+    document.getElementById('check-'+id).textContent = '✅';
+  }
+  document.getElementById('importSelecionados').textContent = IMPORT_SELECIONADOS.size + ' selecionados';
+}
+
+function importarSelecionados() {
+  if (!IMPORT_SELECIONADOS.size) { toast('⚠️ Selecione ao menos 1 scorecard'); return; }
+  let hist = [];
+  try { hist = JSON.parse(localStorage.getItem('orizon_scorecards') || '[]'); } catch(e) {}
+
+  let importados = 0;
+  IMPORT_SELECIONADOS.forEach(id => {
+    const h = hist.find(x => x.id === id);
+    if (!h) return;
+    const jaExiste = CANDIDATOS.some(c => c.nome === h.candidato && c.cargo === h.cargo);
+    if (jaExiste) return;
+    CANDIDATOS.push({
+      id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      nome: h.candidato,
+      cargo: h.cargo,
+      tec: h.score_tec || 0,
+      comp: h.score_comp || 0,
+      fit: h.score_fit || 0,
+      reco: h.recomendacao || '',
+      fortes: h.pontos_fortes || '',
+      gaps: h.gaps || '',
+    });
+    importados++;
+  });
+
+  fecharModal();
+  render();
+  toast(`📥 ${importados} scorecard(s) importado(s)`);
+}
+
+// ─── REMOVER ──────────────────────────────────────────────────────
+function removerCandidato(id) {
+  CANDIDATOS = CANDIDATOS.filter(c => c.id !== id);
+  render();
+  toast('🗑 Candidato removido');
+}
+
+function limparTodos() {
+  if (!CANDIDATOS.length) return;
+  if (!confirm('Remover todos os candidatos do comparativo?')) return;
+  CANDIDATOS = [];
+  render();
+  toast('🗑 Comparativo limpo');
+}
+
+// ─── ORDENAÇÃO / FILTRO ───────────────────────────────────────────
+function reordenarCandidatos() { render(); }
+function filtrarPorVaga() { render(); }
+function destacarLinha(id) { /* futuro: scroll até a coluna */ }
+
+// ─── PESOS ────────────────────────────────────────────────────────
+function aplicarPeso() {
+  const preset = document.getElementById('pesoPreset').value;
+  const presets = {
+    padrao: { tec:40, comp:35, fit:25 },
+    tecnico: { tec:60, comp:25, fit:15 },
+    comportamental: { tec:25, comp:50, fit:25 },
+    cultura: { tec:25, comp:25, fit:50 },
+  };
+  if (preset === 'custom') {
+    document.getElementById('modalPesos').classList.add('open');
+    return;
+  }
+  PESOS = presets[preset] || presets.padrao;
+  render();
+  toast(`⚖️ Pesos aplicados: Tec ${PESOS.tec}% / Comp ${PESOS.comp}% / Fit ${PESOS.fit}%`);
+}
+
+function fecharModalPesos() {
+  document.getElementById('modalPesos').classList.remove('open');
+  document.getElementById('pesoPreset').value = 'padrao';
+}
+
+function validarPesos() {
+  const t = parseInt(document.getElementById('pesoTec').value)||0;
+  const c = parseInt(document.getElementById('pesoComp').value)||0;
+  const f = parseInt(document.getElementById('pesoFit').value)||0;
+  const soma = t + c + f;
+  const el = document.getElementById('pesoSomaDisplay');
+  el.textContent = `Soma atual: ${soma}% ${soma === 100 ? '✅' : '— precisa ser 100%'}`;
+  el.style.color = soma === 100 ? 'var(--green)' : 'var(--orange)';
+}
+
+function confirmarPesos() {
+  const t = parseInt(document.getElementById('pesoTec').value)||0;
+  const c = parseInt(document.getElementById('pesoComp').value)||0;
+  const f = parseInt(document.getElementById('pesoFit').value)||0;
+  if (t + c + f !== 100) { toast('⚠️ A soma dos pesos deve ser 100%'); return; }
+  PESOS = { tec:t, comp:c, fit:f };
+  document.getElementById('modalPesos').classList.remove('open');
+  render();
+  toast(`⚖️ Pesos customizados aplicados: ${t}/${c}/${f}`);
+}
+
+// ─── EXPORTAR CSV ─────────────────────────────────────────────────
+function exportarCSV() {
+  if (!CANDIDATOS.length) { toast('⚠️ Nenhum candidato para exportar'); return; }
+  const linhas = [
+    ['Nome', 'Cargo', 'Score Técnico', 'Score Comportamental', 'Fit Cultural', 'Score Final', 'Recomendação', 'Pontos Fortes', 'Gaps'],
+    ...CANDIDATOS.map(c => [
+      c.nome, c.cargo, c.tec, c.comp, c.fit, calcScore(c),
+      c.reco || '—', c.fortes || '—', c.gaps || '—',
+    ])
+  ];
+  const csv = linhas.map(l => l.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'comparativo_candidatos.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado com sucesso');
+}
+
+// ─── SALVAR DECISÃO ───────────────────────────────────────────────
+async function salvarDecisao() {
+  const sel = document.getElementById('decisaoCandidato').value;
+  if (!sel) { toast('⚠️ Selecione o candidato escolhido'); return; }
+  const dados = {
+    candidato_id: sel,
+    candidato_nome: CANDIDATOS.find(c=>c.id===sel)?.nome || '',
+    motivo: document.getElementById('decisaoMotivo').value,
+    justificativa: document.getElementById('decisaoJustificativa').value,
+    candidatos_comparados: CANDIDATOS.map(c => ({ nome:c.nome, cargo:c.cargo, score:calcScore(c) })),
+    pesos: PESOS,
+    data: new Date().toISOString(),
+  };
+
+  try {
+    if (typeof sbPost === 'function') await sbPost('decisoes_candidatos', dados);
+    toast('✅ Decisão salva com sucesso');
+  } catch(e) {
+    localStorage.setItem('orizon_ultima_decisao', JSON.stringify(dados));
+    toast('✅ Decisão salva localmente');
+  }
+}
+
+// ─── EXEMPLOS DE DEMONSTRAÇÃO ────────────────────────────────────
+function carregarExemplos() {
+  CANDIDATOS = [
+    { id:'ex1', nome:'Ana Ferreira', cargo:'Gerente de Projetos', tec:82, comp:78, fit:90, reco:'aprovado', fortes:'Excelente comunicação, liderança natural, experiência em metodologias ágeis', gaps:'Pouca experiência com gestão orçamentária de grande porte' },
+    { id:'ex2', nome:'Bruno Mendes', cargo:'Gerente de Projetos', tec:91, comp:65, fit:70, reco:'segunda', fortes:'Perfil altamente técnico, domínio de ferramentas avançadas, histórico sólido', gaps:'Comunicação com stakeholders pode melhorar, ansioso em situações de pressão' },
+    { id:'ex3', nome:'Carla Souza', cargo:'Gerente de Projetos', tec:75, comp:88, fit:85, reco:'aprovado', fortes:'Ótimo fit cultural, habilidade de mediação e gestão de conflitos, adaptável', gaps:'Precisa fortalecer conhecimentos técnicos em TI' },
+    { id:'ex4', nome:'Diego Alves', cargo:'Gerente de Projetos', tec:68, comp:72, fit:65, reco:'segunda', fortes:'Boa energia, vontade de aprender, histórico em PMO', gaps:'Ainda em desenvolvimento, score abaixo da média para o nível da vaga' },
+  ];
+  render();
+  toast('📋 4 candidatos de exemplo carregados');
+}
+
+// ─── UTILITÁRIOS ─────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// Fechar modais clicando fora
+document.getElementById('modalAdicionar').addEventListener('click', function(e) { if(e.target===this) fecharModal(); });
+document.getElementById('modalPesos').addEventListener('click', function(e) { if(e.target===this) fecharModalPesos(); });
+
+// Init
+render();
+</script>
+</body>
+</html>

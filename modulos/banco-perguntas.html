@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Banco de Perguntas | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;top:-20%;right:-10%;z-index:0;
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;
+}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:280px 1fr;gap:1rem;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:0.6rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+
+/* FILTROS */
+.filtros{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.7rem;}
+.filtro-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.2rem;}
+select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.55rem 0.75rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;}
+select:focus{border-color:var(--border2);}
+select option{background:#1a1a1a;}
+
+/* STATS LATERAIS */
+.stat-mini{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;}
+.stat-mini-label{font-size:0.65rem;color:var(--muted);}
+.stat-mini-val{font-size:0.78rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+
+/* CATEGORIAS CHIP */
+.chips{display:flex;flex-wrap:wrap;gap:0.35rem;}
+.chip{font-size:0.62rem;font-weight:700;padding:0.22rem 0.65rem;border-radius:99px;cursor:pointer;transition:all 0.15s;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:var(--muted);}
+.chip.on{background:rgba(59,130,246,0.15);color:var(--accent);border-color:rgba(59,130,246,0.3);}
+.chip:hover:not(.on){color:var(--text);border-color:rgba(255,255,255,0.15);}
+
+/* MAIN AREA */
+.main-area{}
+.sec{margin-bottom:0.7rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* PERGUNTAS LIST */
+.perguntas-list{display:flex;flex-direction:column;gap:0.55rem;}
+.pergunta-card{
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:1.1rem 1.3rem;cursor:pointer;transition:all 0.18s;position:relative;overflow:hidden;
+}
+.pergunta-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pcolor,var(--accent));border-radius:3px 0 0 3px;}
+.pergunta-card:hover{border-color:var(--border2);transform:translateX(3px);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.pergunta-card.expanded{border-color:var(--border2);background:var(--card2);}
+.pq-head{display:flex;align-items:flex-start;gap:0.75rem;}
+.pq-tipo{flex-shrink:0;margin-top:0.05rem;}
+.pq-tipo-badge{font-size:0.52rem;font-weight:800;padding:0.15rem 0.45rem;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.pq-body{flex:1;min-width:0;}
+.pq-texto{font-size:0.82rem;font-weight:600;line-height:1.5;color:var(--text);margin-bottom:0.4rem;}
+.pq-meta{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;}
+.pq-tag{font-size:0.58rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:6px;background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.07);}
+.pq-cargo{font-size:0.58rem;color:var(--muted);}
+.pq-dif{font-size:0.58rem;font-weight:800;padding:0.1rem 0.4rem;border-radius:6px;}
+.pq-dif.basico{background:rgba(46,204,113,0.1);color:var(--green);}
+.pq-dif.intermediario{background:rgba(243,156,18,0.1);color:var(--orange);}
+.pq-dif.avancado{background:rgba(231,76,60,0.1);color:var(--red);}
+.pq-actions{display:flex;gap:0.4rem;flex-shrink:0;}
+.pq-btn{background:none;border:1px solid rgba(255,255,255,0.07);border-radius:7px;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.7rem;color:var(--muted);transition:all 0.15s;font-family:inherit;}
+.pq-btn:hover{border-color:rgba(59,130,246,0.3);color:var(--accent);}
+.pq-btn.fav.on{color:#f59e0b;border-color:rgba(245,158,11,0.3);}
+
+/* EXPAND AREA */
+.pq-expand{display:none;margin-top:0.85rem;padding-top:0.85rem;border-top:1px solid rgba(255,255,255,0.06);}
+.pergunta-card.expanded .pq-expand{display:block;}
+.pq-resposta-label{font-size:0.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.4rem;}
+.pq-resposta{font-size:0.76rem;color:var(--text2);line-height:1.7;background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.1);border-radius:10px;padding:0.8rem 1rem;}
+.pq-competencias{display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.65rem;}
+.pq-comp{font-size:0.6rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:99px;background:rgba(167,139,250,0.1);color:var(--purple);border:1px solid rgba(167,139,250,0.2);}
+.pq-nivel-wrap{display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem;}
+.pq-nivel-label{font-size:0.6rem;color:var(--muted);}
+.pq-estrelas{display:flex;gap:0.15rem;}
+.estrela{font-size:0.8rem;color:var(--muted2);}
+.estrela.on{color:#f59e0b;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.3rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem;}
+.form-row{margin-bottom:0.9rem;}
+.form-label{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.65rem 0.85rem;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.6;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.9rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.empty-ico{font-size:2.5rem;margin-bottom:0.75rem;}
+.empty-title{font-size:0.85rem;font-weight:700;margin-bottom:0.3rem;color:var(--text2);}
+.empty-sub{font-size:0.72rem;line-height:1.6;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);animation:fadeUp 0.2s ease;}
+.toast.show{display:flex;}
+
+/* LOADING */
+.loading-block{display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--muted);font-size:0.76rem;gap:0.5rem;}
+.spinner{width:16px;height:16px;border:2px solid var(--muted2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+
+/* ANIMS */
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:640px){
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.25rem;}
+  .form-row-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Biblioteca de Entrevistas · Orizon ATS</div>
+      <div class="hero-title">Banco de <span>Perguntas</span></div>
+      <div class="hero-sub">Perguntas técnicas e comportamentais por cargo · Gabarito de resposta · Competências mapeadas</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="exportarPerguntas()">⬇ Exportar</button>
+      <button class="btn btn-primary" onclick="abrirModal()">+ Nova Pergunta</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- BUSCA -->
+      <div class="card" style="padding:1.1rem 1.2rem;">
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" id="busca" placeholder="Buscar perguntas..." oninput="filtrar()"/>
+        </div>
+
+        <div class="filtros">
+          <div class="filtro-label">Cargo</div>
+          <select id="filtroCargo" onchange="filtrar()">
+            <option value="">Todos os cargos</option>
+          </select>
+
+          <div class="filtro-label" style="margin-top:0.5rem;">Tipo</div>
+          <select id="filtroTipo" onchange="filtrar()">
+            <option value="">Todos os tipos</option>
+            <option value="tecnica">Técnica</option>
+            <option value="comportamental">Comportamental</option>
+            <option value="situacional">Situacional</option>
+            <option value="cultura">Cultura/Fit</option>
+          </select>
+
+          <div class="filtro-label" style="margin-top:0.5rem;">Dificuldade</div>
+          <select id="filtroDif" onchange="filtrar()">
+            <option value="">Todas</option>
+            <option value="basico">Básico</option>
+            <option value="intermediario">Intermediário</option>
+            <option value="avancado">Avançado</option>
+          </select>
+        </div>
+
+        <div class="filtro-label">Favoritos</div>
+        <div class="chips" id="chipsFav">
+          <div class="chip on" data-fav="" onclick="toggleFavChip(this)">Todos</div>
+          <div class="chip" data-fav="1" onclick="toggleFavChip(this)">⭐ Favoritos</div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="card" style="padding:1rem 1.2rem;">
+        <div class="card-head" style="margin-bottom:0.7rem;"><div class="card-title">📊 Resumo</div></div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;">
+          <div class="stat-mini"><span class="stat-mini-label">Total de perguntas</span><span class="stat-mini-val" id="statTotal">0</span></div>
+          <div class="stat-mini"><span class="stat-mini-label">Técnicas</span><span class="stat-mini-val" id="statTec" style="color:var(--blue)">0</span></div>
+          <div class="stat-mini"><span class="stat-mini-label">Comportamentais</span><span class="stat-mini-val" id="statComp" style="color:var(--purple)">0</span></div>
+          <div class="stat-mini"><span class="stat-mini-label">Situacionais</span><span class="stat-mini-val" id="statSit" style="color:var(--orange)">0</span></div>
+          <div class="stat-mini"><span class="stat-mini-label">Cultura/Fit</span><span class="stat-mini-val" id="statCult" style="color:var(--green)">0</span></div>
+          <div class="stat-mini"><span class="stat-mini-label">Cargos cobertos</span><span class="stat-mini-val" id="statCargos" style="color:var(--accent2)">0</span></div>
+        </div>
+      </div>
+
+      <!-- AÇÕES RÁPIDAS -->
+      <div class="card" style="padding:1rem 1.2rem;">
+        <div class="card-head" style="margin-bottom:0.7rem;"><div class="card-title">⚡ Ações rápidas</div></div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;">
+          <button class="btn btn-ghost" style="justify-content:flex-start;font-size:0.72rem;" onclick="gerarKit()">📋 Gerar kit de entrevista</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;font-size:0.72rem;" onclick="abrirImportar()">📥 Importar perguntas</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;font-size:0.72rem;" onclick="limparFiltros()">✕ Limpar filtros</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN -->
+    <div class="main-area">
+      <div class="sec"><div class="sec-label">Perguntas · <span id="contadorLabel">carregando...</span></div></div>
+      <div id="listArea">
+        <div class="loading-block"><div class="spinner"></div>Carregando perguntas...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL NOVA PERGUNTA -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitulo">Nova Pergunta</div>
+    <div class="modal-sub">Preencha os campos abaixo para adicionar à biblioteca</div>
+
+    <div class="form-row">
+      <label class="form-label">Pergunta *</label>
+      <textarea class="form-input" id="fPergunta" placeholder="Ex: Descreva uma situação em que você liderou uma equipe em um projeto complexo..." style="min-height:90px;"></textarea>
+    </div>
+
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Cargo / Área *</label>
+        <input class="form-input" id="fCargo" placeholder="Ex: Gerente de Projetos" list="listaCargos"/>
+        <datalist id="listaCargos"></datalist>
+      </div>
+      <div>
+        <label class="form-label">Tipo *</label>
+        <select class="form-input" id="fTipo">
+          <option value="tecnica">Técnica</option>
+          <option value="comportamental">Comportamental</option>
+          <option value="situacional">Situacional</option>
+          <option value="cultura">Cultura/Fit</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Dificuldade</label>
+        <select class="form-input" id="fDif">
+          <option value="basico">Básico</option>
+          <option value="intermediario">Intermediário</option>
+          <option value="avancado">Avançado</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Tempo estimado (min)</label>
+        <input class="form-input" id="fTempo" type="number" placeholder="5" min="1" max="60"/>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">Resposta / Gabarito esperado</label>
+      <textarea class="form-input" id="fResposta" placeholder="Descreva o que espera ouvir em uma resposta ideal..." style="min-height:80px;"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">Competências avaliadas (separadas por vírgula)</label>
+      <input class="form-input" id="fCompetencias" placeholder="Ex: Liderança, Comunicação, Gestão de conflitos"/>
+    </div>
+
+    <div class="form-row">
+      <label class="form-label">Tags adicionais (separadas por vírgula)</label>
+      <input class="form-input" id="fTags" placeholder="Ex: sênior, gestão, estratégia"/>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPergunta()" id="btnSalvar">💾 Salvar Pergunta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KIT -->
+<div class="modal-overlay" id="kitOverlay">
+  <div class="modal">
+    <div class="modal-title">📋 Gerar Kit de Entrevista</div>
+    <div class="modal-sub">Selecione cargo e monte uma lista de perguntas para imprimir ou enviar</div>
+    <div class="form-row">
+      <label class="form-label">Cargo</label>
+      <select class="form-input" id="kitCargo"></select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Quantidade por tipo</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+        <div><label class="form-label" style="font-size:0.58rem;">Técnicas</label><input class="form-input" id="kitQTec" type="number" value="3" min="0" max="10"/></div>
+        <div><label class="form-label" style="font-size:0.58rem;">Comportamentais</label><input class="form-input" id="kitQComp" type="number" value="3" min="0" max="10"/></div>
+        <div><label class="form-label" style="font-size:0.58rem;">Situacionais</label><input class="form-input" id="kitQSit" type="number" value="2" min="0" max="10"/></div>
+        <div><label class="form-label" style="font-size:0.58rem;">Cultura/Fit</label><input class="form-input" id="kitQCult" type="number" value="2" min="0" max="10"/></div>
+      </div>
+    </div>
+    <div id="kitPreview" style="margin-top:0.5rem;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="document.getElementById('kitOverlay').classList.remove('open')">Fechar</button>
+      <button class="btn btn-ghost" onclick="previewKit()">👁 Visualizar</button>
+      <button class="btn btn-primary" onclick="imprimirKit()">🖨 Imprimir</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────
+let PERGUNTAS = [];
+let EDITANDO = null;
+let filtroAtivo = { busca:'', cargo:'', tipo:'', dif:'', fav:'' };
+
+const CORES_TIPO = {
+  tecnica:       { bg:'rgba(52,152,219,0.12)', color:'#3498db', label:'Técnica' },
+  comportamental:{ bg:'rgba(167,139,250,0.12)', color:'#a78bfa', label:'Comportamental' },
+  situacional:   { bg:'rgba(243,156,18,0.12)',  color:'#f39c12', label:'Situacional' },
+  cultura:       { bg:'rgba(46,204,113,0.12)',  color:'#2ecc71', label:'Cultura/Fit' }
+};
+
+// ─── BANCO LOCAL (fallback se Supabase não tiver tabela) ─────────
+const PERGUNTAS_DEFAULT = [
+  { id:1, pergunta:'Descreva um projeto complexo que você liderou do início ao fim. Quais foram os maiores desafios?', cargo:'Gerente de Projetos', tipo:'comportamental', dificuldade:'intermediario', tempo:8, resposta:'Espera-se: estruturação do problema, tomada de decisão sob pressão, gestão de stakeholders, aprendizados.', competencias:['Liderança','Gestão de conflitos','Comunicação'], tags:['gestão','sênior'], favorito:false },
+  { id:2, pergunta:'Como você prioriza tarefas quando tem múltiplas demandas urgentes simultaneamente?', cargo:'Gerente de Projetos', tipo:'situacional', dificuldade:'basico', tempo:5, resposta:'Espera-se: uso de método (ex: matriz de Eisenhower), delegação, comunicação com stakeholders sobre expectativas.', competencias:['Organização','Priorização','Gestão do tempo'], tags:['gestão'], favorito:false },
+  { id:3, pergunta:'Quais ferramentas e metodologias ágeis você já utilizou? Como adaptou para o contexto da empresa?', cargo:'Gerente de Projetos', tipo:'tecnica', dificuldade:'intermediario', tempo:6, resposta:'Espera-se: Scrum, Kanban, Jira, Trello — com exemplos reais de adaptação ao contexto.', competencias:['Metodologia ágil','Adaptabilidade'], tags:['agile','tools'], favorito:true },
+  { id:4, pergunta:'Você precisa demitir um colaborador de alto desempenho por reestruturação. Como conduz essa conversa?', cargo:'Gerente de RH', tipo:'situacional', dificuldade:'avancado', tempo:10, resposta:'Espera-se: empatia, transparência, suporte pós-desligamento, alinhamento com jurídico, foco na dignidade da pessoa.', competencias:['Empatia','Comunicação difícil','Ética'], tags:['desligamento','gestão de pessoas'], favorito:false },
+  { id:5, pergunta:'Como você estrutura um processo seletivo para uma vaga sênior com poucos candidatos no mercado?', cargo:'Gerente de RH', tipo:'tecnica', dificuldade:'avancado', tempo:10, resposta:'Espera-se: sourcing ativo (LinkedIn, indicações), employer branding, pipeline de talentos, agilidade no processo.', competencias:['Recrutamento','Sourcing','Estratégia'], tags:['sênior','talent acquisition'], favorito:true },
+  { id:6, pergunta:'Me conte sobre um momento em que discordou do seu gestor. Como lidou com isso?', cargo:'Analista de RH', tipo:'comportamental', dificuldade:'intermediario', tempo:7, resposta:'Espera-se: assertividade respeitosa, foco em dados/fatos, abertura para ouvir, resultado da situação.', competencias:['Assertividade','Maturidade emocional','Comunicação'], tags:['comportamental'], favorito:false },
+  { id:7, pergunta:'Qual a diferença entre stack de desenvolvimento front-end e back-end? Onde você se posiciona?', cargo:'Desenvolvedor', tipo:'tecnica', dificuldade:'basico', tempo:5, resposta:'Espera-se: clareza conceitual. Frontend (React, Vue, HTML/CSS/JS). Backend (Node, Python, APIs, banco de dados). Posicionamento honesto.', competencias:['Conhecimento técnico','Autoconhecimento'], tags:['tech','dev'], favorito:false },
+  { id:8, pergunta:'Como você explica um problema técnico complexo para alguém não técnico?', cargo:'Desenvolvedor', tipo:'comportamental', dificuldade:'intermediario', tempo:6, resposta:'Espera-se: uso de analogias, foco no impacto e não na solução, empatia com o interlocutor.', competencias:['Comunicação','Simplificação','Empatia'], tags:['soft skills','comunicação'], favorito:false },
+  { id:9, pergunta:'Você tem uma meta agressiva de vendas e percebe que o produto não atende bem ao cliente. O que faz?', cargo:'Executivo de Vendas', tipo:'situacional', dificuldade:'avancado', tempo:8, resposta:'Espera-se: honestidade com o cliente, feedback estruturado para o produto, criatividade para propor solução alternativa, não sacrificar relacionamento por meta de curto prazo.', competencias:['Ética','Foco no cliente','Comunicação'], tags:['vendas','ética'], favorito:false },
+  { id:10, pergunta:'Quais são suas estratégias para prospectar clientes frios que nunca ouviram falar da empresa?', cargo:'Executivo de Vendas', tipo:'tecnica', dificuldade:'intermediario', tempo:7, resposta:'Espera-se: cold calling estruturado, LinkedIn outreach, referências, eventos, conteúdo — com exemplos reais e taxas.', competencias:['Prospecção','Resiliência','Criatividade'], tags:['vendas','outbound'], favorito:false },
+  { id:11, pergunta:'O que te faz querer trabalhar em uma empresa do porte e segmento da nossa?', cargo:'Todos', tipo:'cultura', dificuldade:'basico', tempo:4, resposta:'Espera-se: pesquisa genuína sobre a empresa, alinhamento de valores, clareza sobre o que quer profissionalmente.', competencias:['Motivação','Fit cultural','Autoconhecimento'], tags:['cultura','fit'], favorito:true },
+  { id:12, pergunta:'Como você reage quando recebe um feedback negativo sobre o seu trabalho?', cargo:'Todos', tipo:'comportamental', dificuldade:'basico', tempo:5, resposta:'Espera-se: abertura, curiosidade para entender o feedback, exemplo real de mudança de comportamento.', competencias:['Feedback','Crescimento','Humildade'], tags:['soft skills'], favorito:false },
+];
+
+// ─── INIT ────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const data = await sbGet('perguntas_entrevista', 'order=id.desc');
+    PERGUNTAS = data.length ? data : PERGUNTAS_DEFAULT;
+  } catch(e) {
+    PERGUNTAS = PERGUNTAS_DEFAULT;
+  }
+  popularCargos();
+  renderStats();
+  filtrar();
+}
+
+function popularCargos() {
+  const cargos = [...new Set(PERGUNTAS.map(p => p.cargo))].filter(c => c !== 'Todos').sort();
+  const sel = document.getElementById('filtroCargo');
+  const kit = document.getElementById('kitCargo');
+  const dl  = document.getElementById('listaCargos');
+  cargos.forEach(c => {
+    sel.innerHTML += `<option value="${c}">${c}</option>`;
+    kit.innerHTML += `<option value="${c}">${c}</option>`;
+    dl.innerHTML  += `<option value="${c}">`;
+  });
+  sel.innerHTML += '<option value="Todos">Todos os cargos (geral)</option>';
+}
+
+function renderStats() {
+  document.getElementById('statTotal').textContent = PERGUNTAS.length;
+  document.getElementById('statTec').textContent   = PERGUNTAS.filter(p=>p.tipo==='tecnica').length;
+  document.getElementById('statComp').textContent  = PERGUNTAS.filter(p=>p.tipo==='comportamental').length;
+  document.getElementById('statSit').textContent   = PERGUNTAS.filter(p=>p.tipo==='situacional').length;
+  document.getElementById('statCult').textContent  = PERGUNTAS.filter(p=>p.tipo==='cultura').length;
+  const cargos = new Set(PERGUNTAS.map(p=>p.cargo).filter(c=>c!=='Todos'));
+  document.getElementById('statCargos').textContent = cargos.size;
+}
+
+// ─── FILTRAR ─────────────────────────────────────────────────────
+function filtrar() {
+  filtroAtivo.busca = document.getElementById('busca').value.toLowerCase();
+  filtroAtivo.cargo = document.getElementById('filtroCargo').value;
+  filtroAtivo.tipo  = document.getElementById('filtroTipo').value;
+  filtroAtivo.dif   = document.getElementById('filtroDif').value;
+
+  let res = PERGUNTAS.filter(p => {
+    if (filtroAtivo.busca && !p.pergunta.toLowerCase().includes(filtroAtivo.busca) && !(p.cargo||'').toLowerCase().includes(filtroAtivo.busca)) return false;
+    if (filtroAtivo.cargo && p.cargo !== filtroAtivo.cargo) return false;
+    if (filtroAtivo.tipo  && p.tipo  !== filtroAtivo.tipo)  return false;
+    if (filtroAtivo.dif   && p.dificuldade !== filtroAtivo.dif) return false;
+    if (filtroAtivo.fav === '1' && !p.favorito) return false;
+    return true;
+  });
+
+  document.getElementById('contadorLabel').textContent = `${res.length} pergunta${res.length!==1?'s':''} encontrada${res.length!==1?'s':''}`;
+  renderLista(res);
+}
+
+function limparFiltros() {
+  document.getElementById('busca').value = '';
+  document.getElementById('filtroCargo').value = '';
+  document.getElementById('filtroTipo').value = '';
+  document.getElementById('filtroDif').value = '';
+  filtroAtivo.fav = '';
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  document.querySelector('[data-fav=""]').classList.add('on');
+  filtrar();
+}
+
+function toggleFavChip(el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  filtroAtivo.fav = el.dataset.fav;
+  filtrar();
+}
+
+// ─── RENDER LISTA ────────────────────────────────────────────────
+function renderLista(lista) {
+  const area = document.getElementById('listArea');
+  if (!lista.length) {
+    area.innerHTML = `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-title">Nenhuma pergunta encontrada</div><div class="empty-sub">Tente outros filtros ou adicione novas perguntas à biblioteca</div></div>`;
+    return;
+  }
+
+  area.innerHTML = `<div class="perguntas-list">${lista.map(p => cardPergunta(p)).join('')}</div>`;
+}
+
+function cardPergunta(p) {
+  const t = CORES_TIPO[p.tipo] || CORES_TIPO.tecnica;
+  const difLabel = { basico:'Básico', intermediario:'Intermediário', avancado:'Avançado' };
+  const comps = Array.isArray(p.competencias) ? p.competencias : (p.competencias||'').split(',').map(c=>c.trim()).filter(Boolean);
+  const tags  = Array.isArray(p.tags)         ? p.tags         : (p.tags||'').split(',').map(c=>c.trim()).filter(Boolean);
+  const estrelas = p.dificuldade === 'basico' ? 1 : p.dificuldade === 'intermediario' ? 2 : 3;
+
+  return `
+  <div class="pergunta-card" style="--pcolor:${t.color}" id="pq-${p.id}" onclick="toggleExpand(${p.id})">
+    <div class="pq-head">
+      <div class="pq-tipo">
+        <div class="pq-tipo-badge" style="background:${t.bg};color:${t.color}">${t.label}</div>
+      </div>
+      <div class="pq-body">
+        <div class="pq-texto">${p.pergunta}</div>
+        <div class="pq-meta">
+          <span class="pq-tag">📁 ${p.cargo}</span>
+          <span class="pq-dif ${p.dificuldade}">${difLabel[p.dificuldade]||p.dificuldade}</span>
+          ${p.tempo ? `<span class="pq-cargo">⏱ ${p.tempo} min</span>` : ''}
+          ${tags.map(t=>`<span class="pq-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+      <div class="pq-actions" onclick="event.stopPropagation()">
+        <button class="pq-btn fav ${p.favorito?'on':''}" onclick="toggleFavorito(${p.id})">${p.favorito?'⭐':'☆'}</button>
+        <button class="pq-btn" onclick="editarPergunta(${p.id})">✏️</button>
+        <button class="pq-btn" onclick="deletarPergunta(${p.id})">🗑</button>
+      </div>
+    </div>
+    <div class="pq-expand">
+      ${p.resposta ? `
+        <div class="pq-resposta-label">💡 Gabarito / Resposta esperada</div>
+        <div class="pq-resposta">${p.resposta}</div>
+      ` : ''}
+      ${comps.length ? `
+        <div class="pq-competencias">${comps.map(c=>`<span class="pq-comp">${c}</span>`).join('')}</div>
+      ` : ''}
+      <div class="pq-nivel-wrap">
+        <span class="pq-nivel-label">Dificuldade:</span>
+        <div class="pq-estrelas">
+          ${[1,2,3].map(n=>`<span class="estrela ${n<=estrelas?'on':''}">★</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleExpand(id) {
+  const el = document.getElementById('pq-'+id);
+  el.classList.toggle('expanded');
+}
+
+// ─── FAVORITO ────────────────────────────────────────────────────
+async function toggleFavorito(id) {
+  const p = PERGUNTAS.find(x=>x.id===id);
+  if (!p) return;
+  p.favorito = !p.favorito;
+  try { await sbPatch('perguntas_entrevista', id, { favorito: p.favorito }); } catch(e) {}
+  filtrar();
+  toast(p.favorito ? '⭐ Adicionado aos favoritos' : '☆ Removido dos favoritos');
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────
+function abrirModal(id=null) {
+  EDITANDO = id;
+  const p = id ? PERGUNTAS.find(x=>x.id===id) : null;
+  document.getElementById('modalTitulo').textContent = p ? 'Editar Pergunta' : 'Nova Pergunta';
+  document.getElementById('fPergunta').value    = p ? p.pergunta : '';
+  document.getElementById('fCargo').value       = p ? p.cargo : '';
+  document.getElementById('fTipo').value        = p ? p.tipo : 'tecnica';
+  document.getElementById('fDif').value         = p ? p.dificuldade : 'intermediario';
+  document.getElementById('fTempo').value       = p ? p.tempo : '';
+  document.getElementById('fResposta').value    = p ? p.resposta : '';
+  const comps = p ? (Array.isArray(p.competencias) ? p.competencias.join(', ') : p.competencias||'') : '';
+  const tags  = p ? (Array.isArray(p.tags) ? p.tags.join(', ') : p.tags||'') : '';
+  document.getElementById('fCompetencias').value = comps;
+  document.getElementById('fTags').value         = tags;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function editarPergunta(id) { event.stopPropagation(); abrirModal(id); }
+
+function fecharModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  EDITANDO = null;
+}
+
+async function salvarPergunta() {
+  const pergunta    = document.getElementById('fPergunta').value.trim();
+  const cargo       = document.getElementById('fCargo').value.trim();
+  const tipo        = document.getElementById('fTipo').value;
+  const dificuldade = document.getElementById('fDif').value;
+  const tempo       = parseInt(document.getElementById('fTempo').value)||5;
+  const resposta    = document.getElementById('fResposta').value.trim();
+  const competencias = document.getElementById('fCompetencias').value.split(',').map(c=>c.trim()).filter(Boolean);
+  const tags         = document.getElementById('fTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+
+  if (!pergunta || !cargo) { toast('⚠️ Pergunta e cargo são obrigatórios','red'); return; }
+
+  const dados = { pergunta, cargo, tipo, dificuldade, tempo, resposta, competencias, tags, favorito: false };
+
+  const btn = document.getElementById('btnSalvar');
+  btn.textContent = '⏳ Salvando...'; btn.disabled = true;
+
+  try {
+    if (EDITANDO) {
+      await sbPatch('perguntas_entrevista', EDITANDO, dados);
+      const idx = PERGUNTAS.findIndex(p=>p.id===EDITANDO);
+      if (idx>=0) PERGUNTAS[idx] = { ...PERGUNTAS[idx], ...dados };
+      toast('✅ Pergunta atualizada');
+    } else {
+      const novo = await sbPost('perguntas_entrevista', dados);
+      PERGUNTAS.unshift(novo || { ...dados, id: Date.now() });
+      toast('✅ Pergunta adicionada');
+    }
+  } catch(e) {
+    // local fallback
+    if (EDITANDO) {
+      const idx = PERGUNTAS.findIndex(p=>p.id===EDITANDO);
+      if (idx>=0) PERGUNTAS[idx] = { ...PERGUNTAS[idx], ...dados };
+    } else {
+      PERGUNTAS.unshift({ ...dados, id: Date.now() });
+    }
+    toast('✅ Salvo localmente');
+  }
+
+  btn.textContent = '💾 Salvar Pergunta'; btn.disabled = false;
+  fecharModal();
+  renderStats();
+  filtrar();
+}
+
+async function deletarPergunta(id) {
+  event.stopPropagation();
+  if (!confirm('Remover esta pergunta da biblioteca?')) return;
+  try { await sbDelete('perguntas_entrevista', id); } catch(e) {}
+  PERGUNTAS = PERGUNTAS.filter(p => p.id !== id);
+  renderStats(); filtrar();
+  toast('🗑 Pergunta removida');
+}
+
+// ─── KIT DE ENTREVISTA ───────────────────────────────────────────
+function gerarKit() {
+  document.getElementById('kitOverlay').classList.add('open');
+  document.getElementById('kitPreview').innerHTML = '';
+}
+
+function abrirImportar() {
+  toast('📥 Função de importação em breve');
+}
+
+function previewKit() {
+  const cargo = document.getElementById('kitCargo').value;
+  const qtd = {
+    tecnica: parseInt(document.getElementById('kitQTec').value)||0,
+    comportamental: parseInt(document.getElementById('kitQComp').value)||0,
+    situacional: parseInt(document.getElementById('kitQSit').value)||0,
+    cultura: parseInt(document.getElementById('kitQCult').value)||0,
+  };
+
+  const pool = PERGUNTAS.filter(p => p.cargo === cargo || p.cargo === 'Todos');
+  let kit = [];
+  Object.entries(qtd).forEach(([tipo, n]) => {
+    const desse = pool.filter(p=>p.tipo===tipo);
+    const selecionados = desse.sort(()=>Math.random()-0.5).slice(0,n);
+    kit.push(...selecionados);
+  });
+
+  if (!kit.length) { document.getElementById('kitPreview').innerHTML = '<div style="color:var(--muted);font-size:0.72rem;padding:0.5rem 0;">Nenhuma pergunta encontrada para este cargo/quantidade.</div>'; return; }
+
+  const t = CORES_TIPO;
+  document.getElementById('kitPreview').innerHTML = `
+    <div style="border:1px solid var(--border);border-radius:12px;padding:1rem;max-height:280px;overflow-y:auto;">
+      <div style="font-size:0.6rem;font-weight:800;color:var(--muted);letter-spacing:2px;margin-bottom:0.7rem;">KIT — ${cargo.toUpperCase()} · ${kit.length} PERGUNTAS</div>
+      ${kit.map((p,i)=>`
+        <div style="padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <div style="font-size:0.62rem;color:${(t[p.tipo]||t.tecnica).color};font-weight:700;margin-bottom:0.2rem;">${i+1}. ${(t[p.tipo]||t.tecnica).label}</div>
+          <div style="font-size:0.75rem;line-height:1.5;">${p.pergunta}</div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+function imprimirKit() {
+  const preview = document.getElementById('kitPreview').innerHTML;
+  if (!preview) { previewKit(); return; }
+  const w = window.open('','_blank');
+  w.document.write(`<html><head><title>Kit de Entrevista - Orizon ATS</title>
+  <style>body{font-family:Arial,sans-serif;padding:2rem;color:#111;}h2{margin-bottom:1rem;}
+  .item{padding:0.75rem 0;border-bottom:1px solid #eee;}.tipo{font-size:0.7rem;color:#666;text-transform:uppercase;font-weight:700;margin-bottom:0.2rem;}.pq{font-size:1rem;}</style></head>
+  <body><h2>Kit de Entrevista — ${document.getElementById('kitCargo').value}</h2>
+  <p style="font-size:0.8rem;color:#666;margin-bottom:1.5rem;">Gerado por Orizon ATS · ${new Date().toLocaleDateString('pt-BR')}</p>
+  ${Array.from(document.querySelectorAll('#kitPreview [style*="padding:0.5rem"]')).map((el,i)=>`
+    <div class="item"><div class="tipo">${el.querySelector('[style*="color:"]')?.textContent||''}</div><div class="pq">${el.querySelectorAll('div')[1]?.textContent||''}</div></div>
+  `).join('')}
+  <script>window.print();<\/script></body></html>`);
+}
+
+// ─── EXPORTAR ────────────────────────────────────────────────────
+function exportarPerguntas() {
+  const csv = ['Pergunta,Cargo,Tipo,Dificuldade,Tempo(min),Resposta,Competencias', ...PERGUNTAS.map(p => {
+    const comps = Array.isArray(p.competencias) ? p.competencias.join(' | ') : p.competencias||'';
+    return `"${(p.pergunta||'').replace(/"/g,'""')}","${p.cargo}","${p.tipo}","${p.dificuldade}","${p.tempo}","${(p.resposta||'').replace(/"/g,'""')}","${comps}"`;
+  })].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download = `banco-perguntas-orizon-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  toast('⬇ Exportado com sucesso');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function toast(msg, tipo='blue') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ─── FECHAR MODAL AO CLICAR FORA ─────────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) fecharModal(); });
+document.getElementById('kitOverlay').addEventListener('click', function(e){ if(e.target===this) document.getElementById('kitOverlay').classList.remove('open'); });
+
+init();
+</script>
+</body>
+</html>

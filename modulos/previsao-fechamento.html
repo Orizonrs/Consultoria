@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Previsão de Fechamento de Vaga | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+/* BTNS */
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.2);}
+.btn-orange:hover{background:rgba(243,156,18,0.18);border-color:rgba(243,156,18,0.35);}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.2);}
+.btn-green:hover{background:rgba(46,204,113,0.18);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* SEC */
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:60px;line-height:1.6;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;}
+@media(max-width:1100px){.grid4{grid-template-columns:1fr 1fr;}}
+@media(max-width:960px){.grid2,.grid3,.grid4{grid-template-columns:1fr;}}
+
+/* VAGA CARD */
+.vagas-lista{display:flex;flex-direction:column;gap:0.7rem;}
+.vaga-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+.vaga-card:hover{border-color:var(--border2);transform:translateX(3px);}
+.vaga-card.selecionada{border-color:var(--accent);box-shadow:0 0 0 1px rgba(59,130,246,0.2),0 4px 20px rgba(59,130,246,0.08);}
+.vaga-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.7rem;}
+.vaga-info{}
+.vaga-titulo{font-size:0.88rem;font-weight:800;margin-bottom:0.15rem;}
+.vaga-empresa{font-size:0.7rem;color:var(--text2);}
+.vaga-meta{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.4rem;}
+.tag{font-size:0.58rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:99px;border:1px solid;}
+.tag-blue{background:rgba(59,130,246,0.08);color:var(--accent);border-color:rgba(59,130,246,0.2);}
+.tag-orange{background:rgba(243,156,18,0.08);color:var(--orange);border-color:rgba(243,156,18,0.2);}
+.tag-green{background:rgba(46,204,113,0.08);color:var(--green);border-color:rgba(46,204,113,0.2);}
+.tag-red{background:rgba(231,76,60,0.08);color:var(--red);border-color:rgba(231,76,60,0.2);}
+.tag-purple{background:rgba(167,139,250,0.08);color:var(--purple);border-color:rgba(167,139,250,0.2);}
+.tag-muted{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+
+/* PREVISÃO STATUS */
+.prev-badge{font-size:0.7rem;font-weight:800;padding:0.3rem 0.8rem;border-radius:10px;display:inline-flex;align-items:center;gap:0.35rem;white-space:nowrap;}
+.prev-ok{background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.25);}
+.prev-alerta{background:rgba(243,156,18,0.1);color:var(--orange);border:1px solid rgba(243,156,18,0.25);}
+.prev-critico{background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.25);}
+.prev-indefinido{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);}
+
+/* PROGRESSO SLA */
+.sla-bar-wrap{height:8px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-top:0.5rem;}
+.sla-bar-fill{height:100%;border-radius:99px;transition:width 0.9s cubic-bezier(0.4,0,0.2,1);}
+
+/* DETALHE PAINEL */
+.detalhe-painel{background:var(--card2);border:1px solid var(--border2);border-radius:16px;padding:1.4rem;animation:fadeUp 0.3s ease both;}
+.detalhe-vaga-nome{font-size:1.15rem;font-weight:900;margin-bottom:0.2rem;letter-spacing:-0.3px;}
+.detalhe-empresa{font-size:0.75rem;color:var(--text2);margin-bottom:1rem;}
+
+/* TIMELINE ETAPAS */
+.etapas-timeline{display:flex;flex-direction:column;gap:0;}
+.etapa-row{display:flex;align-items:stretch;gap:0.8rem;padding:0.5rem 0;}
+.etapa-marker{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px;}
+.etapa-dot{width:12px;height:12px;border-radius:50%;border:2px solid;flex-shrink:0;margin-top:3px;}
+.etapa-dot.concluida{background:var(--green);border-color:var(--green);}
+.etapa-dot.atual{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,0.2);}
+.etapa-dot.futura{background:transparent;border-color:var(--muted2);}
+.etapa-linha{flex:1;width:2px;background:rgba(255,255,255,0.06);margin:3px 5px 0;}
+.etapa-row:last-child .etapa-linha{display:none;}
+.etapa-conteudo{flex:1;padding-bottom:0.5rem;}
+.etapa-nome{font-size:0.76rem;font-weight:800;margin-bottom:0.15rem;}
+.etapa-info{font-size:0.65rem;color:var(--text2);display:flex;gap:0.8rem;flex-wrap:wrap;}
+.etapa-prev{font-size:0.65rem;color:var(--purple);font-weight:700;margin-top:0.1rem;}
+
+/* GRAFICO LINHA */
+.chart-wrap{position:relative;width:100%;height:180px;}
+canvas{width:100%!important;}
+
+/* INSIGHT BOX */
+.insight-box{background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:0.9rem 1.1rem;display:flex;gap:0.7rem;align-items:flex-start;margin-bottom:0.7rem;}
+.insight-icon{font-size:1.1rem;flex-shrink:0;margin-top:0.05rem;}
+.insight-text{font-size:0.72rem;line-height:1.6;color:var(--text2);}
+.insight-text strong{color:var(--text);font-weight:700;}
+
+.insight-box.warn{background:rgba(243,156,18,0.04);border-color:rgba(243,156,18,0.2);}
+.insight-box.danger{background:rgba(231,76,60,0.04);border-color:rgba(231,76,60,0.2);}
+.insight-box.ok{background:rgba(46,204,113,0.04);border-color:rgba(46,204,113,0.2);}
+
+/* NOVA VAGA MODAL */
+.modal-bg{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;}
+.modal-bg.open{display:flex;}
+.modal{background:#111;border:1px solid var(--border2);border-radius:18px;padding:1.6rem 1.8rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto;animation:fadeUp 0.25s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.5rem;}
+.form-group{margin-bottom:0.9rem;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
+@media(max-width:600px){.form-row{grid-template-columns:1fr;}}
+
+/* TABELA HISTÓRICO */
+.hist-table{width:100%;border-collapse:collapse;font-size:0.72rem;}
+.hist-table th{font-size:0.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0.5rem 0.8rem;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06);}
+.hist-table td{padding:0.6rem 0.8rem;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text2);}
+.hist-table tr:last-child td{border-bottom:none;}
+.hist-table tr:hover td{background:rgba(255,255,255,0.02);color:var(--text);}
+
+/* COMPARATIVO CARGO */
+.comp-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.55rem;}
+.comp-label{font-size:0.68rem;font-weight:700;color:var(--text2);min-width:160px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.comp-bar-wrap{flex:1;height:22px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;}
+.comp-bar-fill{height:100%;border-radius:6px;transition:width 0.9s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;padding-left:0.6rem;min-width:2px;}
+.comp-bar-val{font-size:0.62rem;font-weight:800;color:rgba(255,255,255,0.9);font-family:var(--mono);}
+.comp-total{font-size:0.68rem;font-weight:800;font-family:var(--mono);color:var(--muted);min-width:50px;text-align:right;flex-shrink:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;background:#1a1a1a;border:1px solid var(--border2);border-radius:12px;padding:0.7rem 1.2rem;font-size:0.76rem;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:all 0.25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.empty-icon{font-size:2.5rem;margin-bottom:0.7rem;opacity:0.4;}
+.empty-text{font-size:0.8rem;}
+
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><div class="hero-eyebrow-dot"></div>ANALYTICS · INTELIGÊNCIA DE PRAZO</div>
+      <div class="hero-title">Previsão de <span>Fechamento</span> de Vaga</div>
+      <div class="hero-sub">Estimativa de encerramento baseada no histórico de SLA por cargo, etapa e recrutador</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="carregarExemplos()">📋 Exemplos</button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">⬇️ CSV</button>
+      <button class="btn btn-primary" onclick="abrirModal()">＋ Nova Vaga</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card"><div class="kpi-num" id="kTotalVagas" style="color:var(--accent)">—</div><div class="kpi-label">Vagas Abertas</div><div class="kpi-sub">em andamento</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kSlaGlobal" style="color:var(--green)">—</div><div class="kpi-label">SLA Médio (dias)</div><div class="kpi-sub">histórico geral</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kNoPrazo" style="color:var(--green)">—</div><div class="kpi-label">No Prazo</div><div class="kpi-sub">dentro da previsão</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kAtrasadas" style="color:var(--orange)">—</div><div class="kpi-label">Em Alerta</div><div class="kpi-sub">&gt;80% do SLA</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kCriticas" style="color:var(--red)">—</div><div class="kpi-label">Críticas</div><div class="kpi-sub">SLA estourado</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kMediaAtual" style="color:var(--purple)">—</div><div class="kpi-label">Dias Médios</div><div class="kpi-sub">vagas em aberto</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label class="form-label">Cargo</label>
+      <select class="form-input" id="fCargo" onchange="renderLista()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Recrutador</label>
+      <select class="form-input" id="fRecrutador" onchange="renderLista()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Cliente</label>
+      <select class="form-input" id="fCliente" onchange="renderLista()"><option value="">Todos</option></select>
+    </div>
+    <div class="filter-field">
+      <label class="form-label">Status</label>
+      <select class="form-input" id="fStatus" onchange="renderLista()">
+        <option value="">Todos</option>
+        <option value="ok">✅ No Prazo</option>
+        <option value="alerta">⚠️ Em Alerta</option>
+        <option value="critico">🔴 Crítico</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost" onclick="limparFiltros()">✕ Limpar</button>
+  </div>
+
+  <!-- CONTEUDO PRINCIPAL -->
+  <div class="grid2" id="mainGrid">
+
+    <!-- LISTA DE VAGAS -->
+    <div>
+      <div class="sec"><div class="sec-label">🗂️ Vagas em Aberto</div></div>
+      <div class="vagas-lista" id="vagasLista">
+        <div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Nenhuma vaga cadastrada.<br>Clique em "+ Nova Vaga" para começar.</div></div>
+      </div>
+    </div>
+
+    <!-- DETALHE -->
+    <div id="detalheWrap">
+      <div class="sec"><div class="sec-label">🔍 Análise Detalhada</div></div>
+      <div class="detalhe-painel" style="background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.06);">
+        <div style="text-align:center;padding:3rem 1rem;color:var(--muted);">
+          <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.3">👈</div>
+          <div style="font-size:0.78rem;">Selecione uma vaga para ver a análise detalhada</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BENCHMARKS -->
+  <div class="sec" style="margin-top:2rem;"><div class="sec-label">📊 SLA Médio por Cargo (Histórico)</div></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">⏱️ Tempo Médio por Cargo</div>
+        <div class="card-badge">histórico</div>
+      </div>
+      <div id="benchCargo"><div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem dados históricos</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">👤 Desempenho por Recrutador</div>
+        <div class="card-badge purple">ranking</div>
+      </div>
+      <div id="benchRecrutador"><div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem dados históricos</div></div></div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO DE FECHADAS -->
+  <div class="sec"><div class="sec-label">✅ Histórico de Vagas Fechadas</div></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">📁 Vagas Encerradas</div>
+      <span id="badgeHistorico" class="card-badge">0 registros</span>
+    </div>
+    <div id="tabelaHistorico">
+      <div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem vagas fechadas ainda</div></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- MODAL NOVA VAGA -->
+<div class="modal-bg" id="modalBg">
+<div class="modal">
+  <div class="modal-title">📋 <span id="modalTitulo">Nova Vaga</span></div>
+  <input type="hidden" id="editId"/>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Cargo *</label>
+      <input class="form-input" id="mCargo" placeholder="Ex: Analista de RH"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cliente / Empresa *</label>
+      <input class="form-input" id="mCliente" placeholder="Ex: TechCorp"/>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Recrutador Responsável *</label>
+      <input class="form-input" id="mRecrutador" placeholder="Ex: Mariana Lima"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data de Abertura *</label>
+      <input class="form-input" id="mDataAbertura" type="date"/>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">SLA Acordado (dias)</label>
+      <input class="form-input" id="mSlaAcordado" type="number" min="1" placeholder="30"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Etapa Atual</label>
+      <select class="form-input" id="mEtapa">
+        <option value="Triagem">Triagem</option>
+        <option value="Entrevista RH">Entrevista RH</option>
+        <option value="Entrevista Técnica">Entrevista Técnica</option>
+        <option value="Entrevista Cliente">Entrevista Cliente</option>
+        <option value="Proposta">Proposta</option>
+        <option value="Fechamento">Fechamento</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-group">
+      <label class="form-label">Nº Candidatos em Pipeline</label>
+      <input class="form-input" id="mCandidatos" type="number" min="0" placeholder="5"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Prioridade</label>
+      <select class="form-input" id="mPrioridade">
+        <option value="Normal">Normal</option>
+        <option value="Alta">Alta</option>
+        <option value="Urgente">Urgente</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Observações</label>
+    <textarea class="form-input" id="mObs" rows="2" placeholder="Contexto adicional, restrições, dealbreakers..."></textarea>
+  </div>
+  <div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:0.5rem;">
+    <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+    <button class="btn btn-primary" onclick="salvarVaga()">💾 Salvar Vaga</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL FECHAR VAGA -->
+<div class="modal-bg" id="modalFecharBg">
+<div class="modal" style="max-width:440px;">
+  <div class="modal-title">✅ Registrar Fechamento</div>
+  <input type="hidden" id="fecharId"/>
+  <div class="form-group">
+    <label class="form-label">Data de Fechamento *</label>
+    <input class="form-input" id="fecharData" type="date"/>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Candidato Contratado</label>
+    <input class="form-input" id="fecharCandidato" placeholder="Nome do aprovado"/>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Motivo do Encerramento</label>
+    <select class="form-input" id="fecharMotivo">
+      <option value="Contratação">Contratação realizada</option>
+      <option value="Cancelada pelo cliente">Cancelada pelo cliente</option>
+      <option value="Vaga congelada">Vaga congelada</option>
+      <option value="Outro">Outro</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Observações do Fechamento</label>
+    <textarea class="form-input" id="fecharObs" rows="2" placeholder="Aprendizados, dificuldades..."></textarea>
+  </div>
+  <div style="display:flex;gap:0.6rem;justify-content:flex-end;margin-top:0.5rem;">
+    <button class="btn btn-ghost" onclick="fecharModalFechar()">Cancelar</button>
+    <button class="btn btn-green" onclick="confirmarFechamento()">✅ Confirmar Fechamento</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DADOS ────────────────────────────────────────────────────────────────────
+const ETAPAS_ORDEM=['Triagem','Entrevista RH','Entrevista Técnica','Entrevista Cliente','Proposta','Fechamento'];
+
+// SLA médio por etapa (dias) — base histórica padrão
+const SLA_ETAPA_BASE={
+  'Triagem':4,
+  'Entrevista RH':5,
+  'Entrevista Técnica':7,
+  'Entrevista Cliente':6,
+  'Proposta':4,
+  'Fechamento':3
+};
+
+let VAGAS=[];
+let HISTORICO=[];
+let vagaSelecionadaId=null;
+
+function slaTotal(cargo){
+  // Tenta calcular baseado no histórico real do cargo
+  const hist=HISTORICO.filter(h=>h.cargo===cargo&&h.diasReais);
+  if(hist.length>=2){return Math.round(hist.reduce((s,h)=>s+h.diasReais,0)/hist.length);}
+  // Fallback: SLA base por tipo de cargo
+  const l=cargo.toLowerCase();
+  if(l.includes('gerente')||l.includes('diretor')||l.includes('coordenador'))return 35;
+  if(l.includes('sênior')||l.includes('senior')||l.includes('especialista'))return 28;
+  if(l.includes('dev')||l.includes('engineer')||l.includes('ti'))return 30;
+  return 25;
+}
+
+function diasAberto(vaga){
+  const abertura=new Date(vaga.dataAbertura);
+  const hoje=new Date();
+  return Math.floor((hoje-abertura)/(1000*60*60*24));
+}
+
+function etapaIdx(etapa){return ETAPAS_ORDEM.indexOf(etapa);}
+
+function diasRestantesEstimados(vaga){
+  const idx=etapaIdx(vaga.etapaAtual);
+  const etapasRestantes=ETAPAS_ORDEM.slice(idx+1);
+  const diasEtapasRestantes=etapasRestantes.reduce((s,e)=>s+(SLA_ETAPA_BASE[e]||4),0);
+  const diasEtapaAtual=SLA_ETAPA_BASE[vaga.etapaAtual]||5;
+  // Metade da etapa atual como estimativa
+  return Math.round(diasEtapasRestantes + diasEtapaAtual * 0.5);
+}
+
+function previsaoData(vaga){
+  const hoje=new Date();
+  const diasRest=diasRestantesEstimados(vaga);
+  const prev=new Date(hoje);
+  prev.setDate(prev.getDate()+diasRest);
+  return prev;
+}
+
+function statusVaga(vaga){
+  const da=diasAberto(vaga);
+  const sla=vaga.slaAcordado||slaTotal(vaga.cargo);
+  const pct=da/sla;
+  if(pct>=1)return 'critico';
+  if(pct>=0.75)return 'alerta';
+  return 'ok';
+}
+
+function pctSla(vaga){
+  const da=diasAberto(vaga);
+  const sla=vaga.slaAcordado||slaTotal(vaga.cargo);
+  return Math.min(100,Math.round((da/sla)*100));
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────────
+function salvarLocal(){localStorage.setItem('pf_vagas',JSON.stringify(VAGAS));localStorage.setItem('pf_historico',JSON.stringify(HISTORICO));}
+function carregarLocal(){
+  try{VAGAS=JSON.parse(localStorage.getItem('pf_vagas')||'[]');}catch{VAGAS=[];}
+  try{HISTORICO=JSON.parse(localStorage.getItem('pf_historico')||'[]');}catch{HISTORICO=[];}
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init(){
+  carregarLocal();
+  document.getElementById('mDataAbertura').value=new Date().toISOString().slice(0,10);
+  populaFiltros();
+  render();
+}
+
+// ─── FILTROS ─────────────────────────────────────────────────────────────────
+function populaFiltros(){
+  const cargos=[...new Set(VAGAS.map(v=>v.cargo))].sort();
+  const recs=[...new Set(VAGAS.map(v=>v.recrutador))].sort();
+  const clientes=[...new Set(VAGAS.map(v=>v.cliente))].sort();
+  preencheSelect('fCargo',cargos);
+  preencheSelect('fRecrutador',recs);
+  preencheSelect('fCliente',clientes);
+}
+function preencheSelect(id,arr){
+  const el=document.getElementById(id);
+  const val=el.value;
+  el.innerHTML='<option value="">Todos</option>';
+  arr.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o);});
+  el.value=val;
+}
+function limparFiltros(){
+  ['fCargo','fRecrutador','fCliente','fStatus'].forEach(id=>document.getElementById(id).value='');
+  renderLista();
+}
+function vagasFiltradas(){
+  const cargo=document.getElementById('fCargo').value;
+  const rec=document.getElementById('fRecrutador').value;
+  const cli=document.getElementById('fCliente').value;
+  const sts=document.getElementById('fStatus').value;
+  return VAGAS.filter(v=>{
+    if(cargo&&v.cargo!==cargo)return false;
+    if(rec&&v.recrutador!==rec)return false;
+    if(cli&&v.cliente!==cli)return false;
+    if(sts&&statusVaga(v)!==sts)return false;
+    return true;
+  });
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  atualizaKpis();
+  renderLista();
+  renderBenchmarks();
+  renderHistorico();
+}
+
+function atualizaKpis(){
+  const total=VAGAS.length;
+  const noPrazo=VAGAS.filter(v=>statusVaga(v)==='ok').length;
+  const alerta=VAGAS.filter(v=>statusVaga(v)==='alerta').length;
+  const critico=VAGAS.filter(v=>statusVaga(v)==='critico').length;
+  const slaGlobal=HISTORICO.length?Math.round(HISTORICO.filter(h=>h.diasReais).reduce((s,h)=>s+h.diasReais,0)/Math.max(1,HISTORICO.filter(h=>h.diasReais).length)):0;
+  const mediaAtual=VAGAS.length?Math.round(VAGAS.reduce((s,v)=>s+diasAberto(v),0)/VAGAS.length):0;
+  document.getElementById('kTotalVagas').textContent=total||'—';
+  document.getElementById('kSlaGlobal').textContent=slaGlobal?slaGlobal+'d':'—';
+  document.getElementById('kNoPrazo').textContent=noPrazo||'—';
+  document.getElementById('kAtrasadas').textContent=alerta||'—';
+  document.getElementById('kCriticas').textContent=critico||'—';
+  document.getElementById('kMediaAtual').textContent=mediaAtual?mediaAtual+'d':'—';
+}
+
+function renderLista(){
+  const lista=document.getElementById('vagasLista');
+  const vagas=vagasFiltradas();
+  if(!vagas.length){
+    lista.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Nenhuma vaga encontrada.</div></div>';
+    return;
+  }
+  // Ordenar: críticos primeiro
+  vagas.sort((a,b)=>{
+    const ord={critico:0,alerta:1,ok:2};
+    return ord[statusVaga(a)]-ord[statusVaga(b)];
+  });
+  lista.innerHTML=vagas.map(v=>cardVaga(v)).join('');
+}
+
+function cardVaga(v){
+  const sts=statusVaga(v);
+  const pct=pctSla(v);
+  const da=diasAberto(v);
+  const sla=v.slaAcordado||slaTotal(v.cargo);
+  const drEst=diasRestantesEstimados(v);
+  const prevDate=previsaoData(v);
+  const prevStr=prevDate.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  const selecionada=vagaSelecionadaId===v.id?'selecionada':'';
+
+  const stsBadge={
+    ok:'<span class="prev-badge prev-ok">✅ No Prazo</span>',
+    alerta:'<span class="prev-badge prev-alerta">⚠️ Em Alerta</span>',
+    critico:'<span class="prev-badge prev-critico">🔴 SLA Estourado</span>',
+  }[sts];
+
+  const corBarra={ok:'var(--green)',alerta:'var(--orange)',critico:'var(--red)'}[sts];
+  const tagPrioridade=v.prioridade==='Urgente'?'tag-red':v.prioridade==='Alta'?'tag-orange':'tag-muted';
+
+  return `
+  <div class="vaga-card ${selecionada}" onclick="selecionarVaga('${v.id}')">
+    <div class="vaga-card-top">
+      <div class="vaga-info">
+        <div class="vaga-titulo">${v.cargo}</div>
+        <div class="vaga-empresa">${v.cliente} · ${v.recrutador}</div>
+        <div class="vaga-meta">
+          <span class="tag ${tagPrioridade}">🔥 ${v.prioridade}</span>
+          <span class="tag tag-blue">📍 ${v.etapaAtual}</span>
+          <span class="tag tag-muted">📅 ${da}d aberta</span>
+          ${v.candidatos?`<span class="tag tag-purple">👥 ${v.candidatos} cands.</span>`:''}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        ${stsBadge}
+        <div style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem;">Previsão: <strong style="color:var(--text2)">${prevStr}</strong></div>
+        <div style="font-size:0.65rem;color:var(--muted);">~${drEst}d restantes</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <div style="font-size:0.6rem;color:var(--muted);min-width:50px;">SLA: ${da}/${sla}d</div>
+      <div class="sla-bar-wrap" style="flex:1;">
+        <div class="sla-bar-fill" style="width:${pct}%;background:${corBarra};"></div>
+      </div>
+      <div style="font-size:0.65rem;font-weight:800;font-family:var(--mono);color:${corBarra};min-width:35px;text-align:right;">${pct}%</div>
+    </div>
+  </div>`;
+}
+
+function selecionarVaga(id){
+  vagaSelecionadaId=vagaSelecionadaId===id?null:id;
+  renderLista();
+  renderDetalhe();
+}
+
+function renderDetalhe(){
+  const wrap=document.getElementById('detalheWrap');
+  if(!vagaSelecionadaId){
+    wrap.innerHTML=`<div class="sec"><div class="sec-label">🔍 Análise Detalhada</div></div>
+    <div class="detalhe-painel" style="background:rgba(255,255,255,0.02);border-color:rgba(255,255,255,0.06);">
+      <div style="text-align:center;padding:3rem 1rem;color:var(--muted);">
+        <div style="font-size:2rem;margin-bottom:0.5rem;opacity:0.3">👈</div>
+        <div style="font-size:0.78rem;">Selecione uma vaga para ver a análise detalhada</div>
+      </div>
+    </div>`;
+    return;
+  }
+  const v=VAGAS.find(x=>x.id===vagaSelecionadaId);
+  if(!v)return;
+
+  const sts=statusVaga(v);
+  const da=diasAberto(v);
+  const sla=v.slaAcordado||slaTotal(v.cargo);
+  const pct=pctSla(v);
+  const drEst=diasRestantesEstimados(v);
+  const prevDate=previsaoData(v);
+  const prevStr=prevDate.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'long'});
+  const corBarra={ok:'var(--green)',alerta:'var(--orange)',critico:'var(--red)'}[sts];
+
+  // Insights
+  const insights=gerarInsights(v,sts,da,sla,drEst);
+
+  // Timeline etapas
+  const idxAtual=etapaIdx(v.etapaAtual);
+  const timelineHTML=ETAPAS_ORDEM.map((etapa,i)=>{
+    let dotClass=i<idxAtual?'concluida':i===idxAtual?'atual':'futura';
+    const slaEt=SLA_ETAPA_BASE[etapa]||4;
+    let info=`SLA base: ${slaEt} dias`;
+    let prev='';
+    if(i<idxAtual){info='✅ Concluída';}
+    else if(i===idxAtual){info=`Em andamento · Estimativa: ${slaEt} dias`;}
+    else{
+      // Calcular data prevista para etapas futuras
+      let diasAte=diasRestantesAteEtapa(v,i);
+      const dEtapa=new Date();
+      dEtapa.setDate(dEtapa.getDate()+diasAte);
+      prev=`Previsão: ${dEtapa.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}`;
+    }
+    return `<div class="etapa-row">
+      <div class="etapa-marker">
+        <div class="etapa-dot ${dotClass}"></div>
+        <div class="etapa-linha"></div>
+      </div>
+      <div class="etapa-conteudo">
+        <div class="etapa-nome" style="color:${i===idxAtual?'var(--accent)':i<idxAtual?'var(--green)':'var(--muted)'}">${etapa}</div>
+        <div class="etapa-info"><span>${info}</span></div>
+        ${prev?`<div class="etapa-prev">📅 ${prev}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Histórico do cargo
+  const histCargo=HISTORICO.filter(h=>h.cargo===v.cargo&&h.diasReais);
+  const slaHistStr=histCargo.length?`${Math.round(histCargo.reduce((s,h)=>s+h.diasReais,0)/histCargo.length)} dias (${histCargo.length} vaga${histCargo.length>1?'s':''})`:'Sem histórico';
+
+  wrap.innerHTML=`
+  <div class="sec"><div class="sec-label">🔍 Análise Detalhada</div></div>
+  <div class="detalhe-painel">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <div>
+        <div class="detalhe-vaga-nome">${v.cargo}</div>
+        <div class="detalhe-empresa">${v.cliente} · ${v.recrutador}</div>
+      </div>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost" style="font-size:0.68rem;" onclick="editarVaga('${v.id}')">✏️ Editar</button>
+        <button class="btn btn-green" style="font-size:0.68rem;" onclick="abrirModalFechar('${v.id}')">✅ Fechar Vaga</button>
+      </div>
+    </div>
+
+    <!-- PREVISÃO DESTAQUE -->
+    <div style="background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem;text-align:center;">
+      <div style="font-size:0.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;">📅 PREVISÃO DE FECHAMENTO</div>
+      <div style="font-size:1.6rem;font-weight:900;font-family:var(--mono);color:var(--accent);margin-bottom:0.1rem;">${prevStr}</div>
+      <div style="font-size:0.72rem;color:var(--text2);">~<strong>${drEst}</strong> dias restantes · SLA histórico: <strong>${slaHistStr}</strong></div>
+    </div>
+
+    <!-- SLA BAR -->
+    <div style="margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+        <span style="font-size:0.65rem;font-weight:700;color:var(--muted);">Consumo do SLA</span>
+        <span style="font-size:0.72rem;font-weight:800;font-family:var(--mono);color:${corBarra};">${da} / ${sla} dias (${pct}%)</span>
+      </div>
+      <div class="sla-bar-wrap" style="height:12px;">
+        <div class="sla-bar-fill" style="width:${pct}%;background:${corBarra};"></div>
+      </div>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div style="margin-bottom:1rem;">${insights}</div>
+
+    <!-- TIMELINE -->
+    <div style="font-size:0.62rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.7rem;">PIPELINE DE ETAPAS</div>
+    <div class="etapas-timeline">${timelineHTML}</div>
+
+    ${v.obs?`<div style="margin-top:1rem;padding:0.7rem 0.9rem;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);font-size:0.7rem;color:var(--text2);line-height:1.6;"><strong style="color:var(--muted);">📝 Obs:</strong> ${v.obs}</div>`:''}
+  </div>`;
+}
+
+function diasRestantesAteEtapa(v,idxAlvo){
+  const idxAtual=etapaIdx(v.etapaAtual);
+  let dias=0;
+  for(let i=idxAtual;i<idxAlvo;i++){
+    dias+=SLA_ETAPA_BASE[ETAPAS_ORDEM[i]]||4;
+  }
+  return dias;
+}
+
+function gerarInsights(v,sts,da,sla,drEst){
+  let html='';
+  if(sts==='critico'){
+    html+=`<div class="insight-box danger"><div class="insight-icon">🔴</div><div class="insight-text"><strong>SLA Estourado:</strong> Esta vaga já ultrapassou o prazo acordado de <strong>${sla} dias</strong>. É necessário acionar o cliente e revisar o processo imediatamente.</div></div>`;
+  } else if(sts==='alerta'){
+    html+=`<div class="insight-box warn"><div class="insight-icon">⚠️</div><div class="insight-text"><strong>Atenção:</strong> ${Math.round(100-(da/sla*100))}% do SLA restante. Com base no histórico, há risco real de estouro se não houver avanço nas próximas etapas.</div></div>`;
+  } else {
+    html+=`<div class="insight-box ok"><div class="insight-icon">✅</div><div class="insight-text"><strong>No prazo:</strong> Vaga dentro do SLA acordado. Continue monitorando para garantir o fechamento dentro da janela.</div></div>`;
+  }
+
+  // Insight de candidatos
+  if(v.candidatos!==undefined&&v.candidatos<3){
+    html+=`<div class="insight-box warn"><div class="insight-icon">👥</div><div class="insight-text"><strong>Pipeline fraco:</strong> Apenas <strong>${v.candidatos||0} candidato(s)</strong> em processo. Recomenda-se pelo menos 3 para garantir opções ao cliente.</div></div>`;
+  }
+
+  // Insight de histórico
+  const histCargo=HISTORICO.filter(h=>h.cargo===v.cargo&&h.diasReais);
+  if(histCargo.length>=2){
+    const mediaHist=Math.round(histCargo.reduce((s,h)=>s+h.diasReais,0)/histCargo.length);
+    if(mediaHist>sla){
+      html+=`<div class="insight-box warn"><div class="insight-icon">📊</div><div class="insight-text"><strong>Alerta histórico:</strong> O SLA real médio para <strong>${v.cargo}</strong> é de <strong>${mediaHist} dias</strong>, acima do acordado. Considere renegociar o prazo com o cliente.</div></div>`;
+    }
+  }
+
+  if(v.prioridade==='Urgente'&&sts!=='ok'){
+    html+=`<div class="insight-box danger"><div class="insight-icon">🚨</div><div class="insight-text"><strong>Urgência:</strong> Esta vaga está marcada como <strong>URGENTE</strong> e não está no prazo. Requer ação imediata do time.</div></div>`;
+  }
+
+  return html;
+}
+
+// ─── BENCHMARKS ──────────────────────────────────────────────────────────────
+function renderBenchmarks(){
+  renderBenchCargo();
+  renderBenchRecrutador();
+}
+
+function renderBenchCargo(){
+  const wrap=document.getElementById('benchCargo');
+  // Combinar histórico + vagas abertas por cargo
+  const dados={};
+  HISTORICO.filter(h=>h.diasReais).forEach(h=>{
+    if(!dados[h.cargo])dados[h.cargo]={total:0,count:0};
+    dados[h.cargo].total+=h.diasReais;
+    dados[h.cargo].count++;
+  });
+  const arr=Object.entries(dados).map(([cargo,d])=>({cargo,media:Math.round(d.total/d.count),count:d.count})).sort((a,b)=>b.media-a.media);
+  if(!arr.length){wrap.innerHTML='<div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem histórico suficiente</div></div>';return;}
+  const max=arr[0].media;
+  wrap.innerHTML=arr.map(x=>{
+    const pct=Math.round((x.media/max)*100);
+    const cor=x.media>35?'var(--red)':x.media>25?'var(--orange)':'var(--green)';
+    return `<div class="comp-row">
+      <div class="comp-label" title="${x.cargo}">${x.cargo}</div>
+      <div class="comp-bar-wrap"><div class="comp-bar-fill" style="width:${pct}%;background:${cor};"><span class="comp-bar-val">${x.media}d</span></div></div>
+      <div class="comp-total" style="color:var(--muted);font-size:0.6rem;">${x.count}v</div>
+    </div>`;
+  }).join('');
+}
+
+function renderBenchRecrutador(){
+  const wrap=document.getElementById('benchRecrutador');
+  const dados={};
+  HISTORICO.filter(h=>h.diasReais&&h.recrutador).forEach(h=>{
+    if(!dados[h.recrutador])dados[h.recrutador]={total:0,count:0};
+    dados[h.recrutador].total+=h.diasReais;
+    dados[h.recrutador].count++;
+  });
+  const arr=Object.entries(dados).map(([rec,d])=>({rec,media:Math.round(d.total/d.count),count:d.count})).sort((a,b)=>a.media-b.media);
+  if(!arr.length){wrap.innerHTML='<div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem histórico suficiente</div></div>';return;}
+  const max=arr[arr.length-1].media;
+  wrap.innerHTML=arr.map((x,i)=>{
+    const pct=Math.round((x.media/max)*100);
+    const cor=i===0?'var(--green)':i===arr.length-1?'var(--red)':'var(--accent)';
+    const medalha=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return `<div class="comp-row">
+      <div class="comp-label">${medalha} ${x.rec}</div>
+      <div class="comp-bar-wrap"><div class="comp-bar-fill" style="width:${pct}%;background:${cor};"><span class="comp-bar-val">${x.media}d</span></div></div>
+      <div class="comp-total" style="color:var(--muted);font-size:0.6rem;">${x.count}v</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── HISTÓRICO TABELA ─────────────────────────────────────────────────────────
+function renderHistorico(){
+  const wrap=document.getElementById('tabelaHistorico');
+  document.getElementById('badgeHistorico').textContent=`${HISTORICO.length} registro${HISTORICO.length!==1?'s':''}`;
+  if(!HISTORICO.length){wrap.innerHTML='<div class="empty"><div class="empty-text" style="font-size:0.72rem;">Sem vagas fechadas ainda</div></div>';return;}
+  const sorted=[...HISTORICO].sort((a,b)=>new Date(b.dataFechamento)-new Date(a.dataFechamento));
+  wrap.innerHTML=`<table class="hist-table">
+    <thead><tr>
+      <th>Cargo</th><th>Cliente</th><th>Recrutador</th>
+      <th>Abertura</th><th>Fechamento</th><th>Dias Reais</th><th>SLA</th><th>Resultado</th><th>Motivo</th>
+    </tr></thead>
+    <tbody>${sorted.map(h=>{
+      const dentroSla=h.diasReais<=(h.slaAcordado||slaTotal(h.cargo));
+      const cor=dentroSla?'var(--green)':'var(--red)';
+      return `<tr>
+        <td style="color:var(--text);font-weight:700;">${h.cargo}</td>
+        <td>${h.cliente||'—'}</td>
+        <td>${h.recrutador||'—'}</td>
+        <td>${formatData(h.dataAbertura)}</td>
+        <td>${formatData(h.dataFechamento)}</td>
+        <td style="color:${cor};font-weight:800;font-family:var(--mono);">${h.diasReais}d</td>
+        <td style="color:var(--muted);font-family:var(--mono);">${h.slaAcordado||slaTotal(h.cargo)}d</td>
+        <td><span class="card-badge ${dentroSla?'green':'red'}">${dentroSla?'✅ No prazo':'⚠️ Estourou'}</span></td>
+        <td style="font-size:0.65rem;color:var(--muted);">${h.motivo||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function formatData(iso){
+  if(!iso)return '—';
+  return new Date(iso).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+}
+
+// ─── MODAL NOVA VAGA ──────────────────────────────────────────────────────────
+function abrirModal(id=null){
+  document.getElementById('editId').value=id||'';
+  document.getElementById('modalTitulo').textContent=id?'Editar Vaga':'Nova Vaga';
+  if(id){
+    const v=VAGAS.find(x=>x.id===id);
+    if(v){
+      document.getElementById('mCargo').value=v.cargo||'';
+      document.getElementById('mCliente').value=v.cliente||'';
+      document.getElementById('mRecrutador').value=v.recrutador||'';
+      document.getElementById('mDataAbertura').value=v.dataAbertura||'';
+      document.getElementById('mSlaAcordado').value=v.slaAcordado||'';
+      document.getElementById('mEtapa').value=v.etapaAtual||'Triagem';
+      document.getElementById('mCandidatos').value=v.candidatos||'';
+      document.getElementById('mPrioridade').value=v.prioridade||'Normal';
+      document.getElementById('mObs').value=v.obs||'';
+    }
+  } else {
+    ['mCargo','mCliente','mRecrutador','mSlaAcordado','mCandidatos','mObs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('mDataAbertura').value=new Date().toISOString().slice(0,10);
+    document.getElementById('mEtapa').value='Triagem';
+    document.getElementById('mPrioridade').value='Normal';
+  }
+  document.getElementById('modalBg').classList.add('open');
+}
+function fecharModal(){document.getElementById('modalBg').classList.remove('open');}
+
+function editarVaga(id){abrirModal(id);}
+
+function salvarVaga(){
+  const cargo=document.getElementById('mCargo').value.trim();
+  const cliente=document.getElementById('mCliente').value.trim();
+  const recrutador=document.getElementById('mRecrutador').value.trim();
+  const dataAbertura=document.getElementById('mDataAbertura').value;
+  if(!cargo){toast('⚠️ Informe o cargo');return;}
+  if(!cliente){toast('⚠️ Informe o cliente');return;}
+  if(!recrutador){toast('⚠️ Informe o recrutador');return;}
+  if(!dataAbertura){toast('⚠️ Informe a data de abertura');return;}
+
+  const editId=document.getElementById('editId').value;
+  const dados={
+    id:editId||'v_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    cargo,cliente,recrutador,dataAbertura,
+    slaAcordado:parseInt(document.getElementById('mSlaAcordado').value)||null,
+    etapaAtual:document.getElementById('mEtapa').value,
+    candidatos:parseInt(document.getElementById('mCandidatos').value)||0,
+    prioridade:document.getElementById('mPrioridade').value,
+    obs:document.getElementById('mObs').value.trim(),
+    criadoEm:new Date().toISOString(),
+  };
+
+  if(editId){const i=VAGAS.findIndex(x=>x.id===editId);if(i!==-1)VAGAS[i]=dados;}
+  else VAGAS.unshift(dados);
+
+  salvarLocal();
+  fecharModal();
+  populaFiltros();
+  render();
+  toast(editId?'✅ Vaga atualizada':'✅ Vaga cadastrada');
+}
+
+// ─── MODAL FECHAR VAGA ────────────────────────────────────────────────────────
+function abrirModalFechar(id){
+  document.getElementById('fecharId').value=id;
+  document.getElementById('fecharData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('fecharCandidato').value='';
+  document.getElementById('fecharObs').value='';
+  document.getElementById('fecharMotivo').value='Contratação';
+  document.getElementById('modalFecharBg').classList.add('open');
+}
+function fecharModalFechar(){document.getElementById('modalFecharBg').classList.remove('open');}
+
+function confirmarFechamento(){
+  const id=document.getElementById('fecharId').value;
+  const dataFechamento=document.getElementById('fecharData').value;
+  if(!dataFechamento){toast('⚠️ Informe a data de fechamento');return;}
+
+  const v=VAGAS.find(x=>x.id===id);
+  if(!v)return;
+
+  const abertura=new Date(v.dataAbertura);
+  const fechamento=new Date(dataFechamento);
+  const diasReais=Math.max(1,Math.floor((fechamento-abertura)/(1000*60*60*24)));
+
+  const registro={
+    id:'h_'+Date.now(),
+    cargo:v.cargo,
+    cliente:v.cliente,
+    recrutador:v.recrutador,
+    dataAbertura:v.dataAbertura,
+    dataFechamento,
+    diasReais,
+    slaAcordado:v.slaAcordado||slaTotal(v.cargo),
+    candidato:document.getElementById('fecharCandidato').value.trim(),
+    motivo:document.getElementById('fecharMotivo').value,
+    obs:document.getElementById('fecharObs').value.trim(),
+    criadoEm:new Date().toISOString(),
+  };
+
+  HISTORICO.unshift(registro);
+  VAGAS=VAGAS.filter(x=>x.id!==id);
+  if(vagaSelecionadaId===id)vagaSelecionadaId=null;
+
+  salvarLocal();
+  fecharModalFechar();
+  populaFiltros();
+  render();
+  renderDetalhe();
+  toast(`✅ Vaga fechada em ${diasReais} dias!`);
+}
+
+// ─── CSV ──────────────────────────────────────────────────────────────────────
+function exportarCSV(){
+  const linhas=[
+    ['Cargo','Cliente','Recrutador','Abertura','Etapa Atual','SLA Acordado','Dias Aberta','% SLA','Status','Previsão Fechamento','Candidatos','Prioridade'],
+    ...VAGAS.map(v=>[
+      v.cargo,v.cliente,v.recrutador,v.dataAbertura,v.etapaAtual,
+      v.slaAcordado||slaTotal(v.cargo),diasAberto(v),pctSla(v)+'%',statusVaga(v),
+      previsaoData(v).toLocaleDateString('pt-BR'),v.candidatos||0,v.prioridade
+    ])
+  ];
+  const csv=linhas.map(l=>l.map(x=>`"${String(x||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='previsao_fechamento.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado');
+}
+
+// ─── EXEMPLOS ─────────────────────────────────────────────────────────────────
+function carregarExemplos(){
+  const ago=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+
+  HISTORICO=[
+    {id:'h1',cargo:'Analista de RH',cliente:'RH Plus',recrutador:'Mariana Lima',dataAbertura:ago(45),dataFechamento:ago(10),diasReais:35,slaAcordado:30,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h2',cargo:'Dev Full Stack',cliente:'StartupX',recrutador:'Pedro Costa',dataAbertura:ago(60),dataFechamento:ago(5),diasReais:55,slaAcordado:45,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h3',cargo:'Gerente Comercial',cliente:'Vendas SA',recrutador:'Mariana Lima',dataAbertura:ago(90),dataFechamento:ago(20),diasReais:70,slaAcordado:60,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h4',cargo:'Analista de RH',cliente:'Infra Co',recrutador:'Pedro Costa',dataAbertura:ago(40),dataFechamento:ago(15),diasReais:25,slaAcordado:30,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h5',cargo:'Coordenador de TI',cliente:'TechCorp',recrutador:'Mariana Lima',dataAbertura:ago(80),dataFechamento:ago(12),diasReais:68,slaAcordado:50,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h6',cargo:'Dev Full Stack',cliente:'TechCorp',recrutador:'Pedro Costa',dataAbertura:ago(50),dataFechamento:ago(8),diasReais:42,slaAcordado:45,motivo:'Contratação',criadoEm:new Date().toISOString()},
+    {id:'h7',cargo:'Analista de Marketing',cliente:'StartupX',recrutador:'Mariana Lima',dataAbertura:ago(35),dataFechamento:ago(3),diasReais:32,slaAcordado:30,motivo:'Contratação',criadoEm:new Date().toISOString()},
+  ];
+
+  VAGAS=[
+    {id:'v1',cargo:'Analista de RH',cliente:'RH Plus',recrutador:'Mariana Lima',dataAbertura:ago(28),slaAcordado:30,etapaAtual:'Entrevista Cliente',candidatos:3,prioridade:'Alta',obs:'Cliente exige fluência em inglês',criadoEm:new Date().toISOString()},
+    {id:'v2',cargo:'Dev Full Stack',cliente:'StartupX',recrutador:'Pedro Costa',dataAbertura:ago(48),slaAcordado:45,etapaAtual:'Proposta',candidatos:2,prioridade:'Urgente',obs:'Stack: React + Node + AWS',criadoEm:new Date().toISOString()},
+    {id:'v3',cargo:'Gerente Comercial',cliente:'Vendas SA',recrutador:'Mariana Lima',dataAbertura:ago(15),slaAcordado:60,etapaAtual:'Entrevista RH',candidatos:8,prioridade:'Normal',obs:'',criadoEm:new Date().toISOString()},
+    {id:'v4',cargo:'Coordenador de TI',cliente:'TechCorp',recrutador:'Pedro Costa',dataAbertura:ago(55),slaAcordado:50,etapaAtual:'Entrevista Técnica',candidatos:1,prioridade:'Alta',obs:'Infraestrutura on-premise, sem home office',criadoEm:new Date().toISOString()},
+    {id:'v5',cargo:'Analista de Marketing',cliente:'Infra Co',recrutador:'Mariana Lima',dataAbertura:ago(8),slaAcordado:30,etapaAtual:'Triagem',candidatos:12,prioridade:'Normal',obs:'Foco em performance e mídia paga',criadoEm:new Date().toISOString()},
+    {id:'v6',cargo:'Dev Full Stack',cliente:'RH Plus',recrutador:'Pedro Costa',dataAbertura:ago(65),slaAcordado:45,etapaAtual:'Fechamento',candidatos:1,prioridade:'Urgente',obs:'Substituto de desligamento emergencial',criadoEm:new Date().toISOString()},
+  ];
+
+  salvarLocal();
+  populaFiltros();
+  vagaSelecionadaId=null;
+  render();
+  renderDetalhe();
+  toast('📋 Exemplos carregados com sucesso!');
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===document.getElementById('modalBg'))fecharModal();});
+document.getElementById('modalFecharBg').addEventListener('click',e=>{if(e.target===document.getElementById('modalFecharBg'))fecharModalFechar();});
+
+init();
+</script>
+</body>
+</html>

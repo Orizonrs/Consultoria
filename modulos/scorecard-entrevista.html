@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Scorecard de Entrevista | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1400px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:320px 1fr;gap:1rem;align-items:start;}
+@media(max-width:1000px){.layout{grid-template-columns:1fr;}}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* FORM */
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+.form-row{margin-bottom:0.8rem;}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.6;}
+
+/* SIDEBAR CANDIDATO */
+.cand-header{display:flex;align-items:center;gap:0.9rem;padding:1rem 1.2rem;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.15);border-radius:14px;margin-bottom:0.8rem;}
+.cand-avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.cand-nome{font-size:0.88rem;font-weight:800;margin-bottom:0.1rem;}
+.cand-cargo{font-size:0.65rem;color:var(--muted);}
+.cand-empresa{font-size:0.62rem;color:var(--accent);font-weight:700;}
+
+/* PLACAR LATERAL */
+.placar-card{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.02));border:1px solid var(--border2);border-radius:16px;padding:1.3rem;text-align:center;margin-bottom:0.7rem;position:relative;overflow:hidden;}
+.placar-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.12),transparent 70%);pointer-events:none;}
+.placar-num{font-size:3.5rem;font-weight:900;line-height:1;font-family:var(--mono);margin-bottom:0.2rem;}
+.placar-label{font-size:0.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+.placar-verdict{font-size:0.78rem;font-weight:800;padding:0.4rem 1rem;border-radius:99px;margin-top:0.7rem;display:inline-block;}
+
+/* COMPETÊNCIA BLOCOS */
+.comp-grid{display:flex;flex-direction:column;gap:0.5rem;}
+.comp-item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.9rem 1rem;transition:border-color 0.15s;}
+.comp-item:hover{border-color:var(--border2);}
+.comp-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.6rem;}
+.comp-nome{font-size:0.76rem;font-weight:800;}
+.comp-peso{font-size:0.58rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:6px;background:rgba(255,255,255,0.05);color:var(--muted);}
+.comp-nota-display{font-size:0.9rem;font-weight:900;font-family:var(--mono);}
+
+/* ESTRELAS DE AVALIAÇÃO */
+.estrelas-wrap{display:flex;gap:0.3rem;margin-bottom:0.5rem;}
+.estrela-btn{background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--muted2);transition:all 0.12s;line-height:1;padding:0;}
+.estrela-btn:hover,.estrela-btn.on{color:#f59e0b;transform:scale(1.15);}
+
+/* BARRA DE SCORE */
+.comp-barra{height:5px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;}
+.comp-barra-fill{height:100%;border-radius:99px;transition:width 0.5s cubic-bezier(0.4,0,0.2,1);}
+
+/* ANOTAÇÃO */
+.comp-obs{width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:0.5rem 0.7rem;font-family:inherit;font-size:0.7rem;color:var(--text2);outline:none;resize:none;min-height:52px;transition:border-color 0.15s;line-height:1.5;}
+.comp-obs:focus{border-color:rgba(59,130,246,0.3);}
+.comp-obs::placeholder{color:var(--muted);}
+
+/* SEÇÃO */
+.sec{margin:1.2rem 0 0.7rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* RESUMO VISUAL */
+.resumo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;}
+.resumo-item{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:0.7rem 0.8rem;text-align:center;}
+.resumo-val{font-size:1.3rem;font-weight:900;font-family:var(--mono);margin-bottom:0.15rem;}
+.resumo-label{font-size:0.58rem;color:var(--muted);font-weight:600;}
+
+/* RECOMENDAÇÃO */
+.reco-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.7rem;}
+.reco-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.8rem 0.5rem;cursor:pointer;text-align:center;transition:all 0.18s;font-family:inherit;}
+.reco-btn:hover{border-color:rgba(255,255,255,0.18);}
+.reco-btn.on-aprovado{background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);}
+.reco-btn.on-segunda{background:rgba(243,156,18,0.1);border-color:rgba(243,156,18,0.3);}
+.reco-btn.on-reprovado{background:rgba(231,76,60,0.1);border-color:rgba(231,76,60,0.3);}
+.reco-ico{font-size:1.3rem;margin-bottom:0.2rem;}
+.reco-label{font-size:0.62rem;font-weight:800;}
+
+/* HISTÓRICO */
+.hist-list{display:flex;flex-direction:column;gap:0.45rem;max-height:300px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.hist-item{display:flex;align-items:center;gap:0.7rem;padding:0.65rem 0.8rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;transition:all 0.15s;}
+.hist-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.03);}
+.hist-avatar{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;}
+.hist-info{flex:1;min-width:0;}
+.hist-nome{font-size:0.75rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hist-meta{font-size:0.6rem;color:var(--muted);}
+.hist-score{font-size:0.82rem;font-weight:900;font-family:var(--mono);flex-shrink:0;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.3rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* IMPRESSÃO */
+@media print{
+  body{background:#fff;color:#111;}
+  .no-print{display:none!important;}
+  .card{border:1px solid #ddd;background:#fff;box-shadow:none;}
+  .page{padding:1rem;}
+}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.spinner{width:14px;height:14px;border:2px solid var(--muted2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scoreAnim{from{opacity:0;transform:scale(0.7)}to{opacity:1;transform:scale(1)}}
+
+@media(max-width:640px){
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.25rem;}
+  .resumo-grid{grid-template-columns:1fr 1fr;}
+  .reco-btns{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Avaliação Estruturada · Orizon ATS</div>
+      <div class="hero-title">Scorecard de <span>Entrevista</span></div>
+      <div class="hero-sub">Avalie competências com peso por critério · Gabarito automático · Histórico por candidato</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost no-print" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost no-print" onclick="abrirNovoModal()">+ Novo Scorecard</button>
+      <button class="btn btn-primary no-print" id="btnSalvar" onclick="salvarScorecard()">💾 Salvar Avaliação</button>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div>
+      <!-- CANDIDATO ATIVO -->
+      <div id="candidatoHeader" class="cand-header">
+        <div class="cand-avatar" id="candAva">👤</div>
+        <div>
+          <div class="cand-nome" id="candNome">Selecione um candidato</div>
+          <div class="cand-cargo" id="candCargo">—</div>
+          <div class="cand-empresa" id="candEmpresa">—</div>
+        </div>
+      </div>
+
+      <!-- PLACAR -->
+      <div class="placar-card">
+        <div class="placar-num" id="placarNum" style="color:var(--accent)">—</div>
+        <div class="placar-label">Score Final</div>
+        <div class="placar-verdict" id="placarVerdict" style="background:rgba(255,255,255,0.05);color:var(--muted)">Preencha as competências</div>
+      </div>
+
+      <!-- RESUMO POR CATEGORIA -->
+      <div class="card" style="margin-bottom:0.7rem;">
+        <div class="card-head"><div class="card-title">📊 Por categoria</div></div>
+        <div class="resumo-grid" id="resumoGrid">
+          <div class="resumo-item"><div class="resumo-val" id="rTec" style="color:var(--blue)">—</div><div class="resumo-label">Técnico</div></div>
+          <div class="resumo-item"><div class="resumo-val" id="rComp" style="color:var(--purple)">—</div><div class="resumo-label">Comportamental</div></div>
+          <div class="resumo-item"><div class="resumo-val" id="rFit" style="color:var(--green)">—</div><div class="resumo-label">Fit Cultural</div></div>
+        </div>
+      </div>
+
+      <!-- RECOMENDAÇÃO -->
+      <div class="card" style="margin-bottom:0.7rem;">
+        <div class="card-head"><div class="card-title">🎯 Recomendação</div></div>
+        <div class="reco-btns">
+          <button class="reco-btn" id="reco-aprovado" onclick="setReco('aprovado')">
+            <div class="reco-ico">✅</div>
+            <div class="reco-label" style="color:var(--green)">Aprovado</div>
+          </button>
+          <button class="reco-btn" id="reco-segunda" onclick="setReco('segunda')">
+            <div class="reco-ico">🔄</div>
+            <div class="reco-label" style="color:var(--orange)">2ª Fase</div>
+          </button>
+          <button class="reco-btn" id="reco-reprovado" onclick="setReco('reprovado')">
+            <div class="reco-ico">❌</div>
+            <div class="reco-label" style="color:var(--red)">Reprovado</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO -->
+      <div class="card no-print">
+        <div class="card-head"><div class="card-title">🕐 Scorecards Recentes</div><div class="card-badge" id="histCount">0</div></div>
+        <div class="hist-list" id="histList">
+          <div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.72rem;">Nenhum scorecard salvo ainda</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN: COMPETÊNCIAS -->
+    <div>
+
+      <!-- INFO DA ENTREVISTA -->
+      <div class="card" style="margin-bottom:0.7rem;">
+        <div class="card-head"><div class="card-title">📋 Dados da Entrevista</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.7rem;">
+          <div class="form-row" style="margin:0;">
+            <label class="form-label">Entrevistador</label>
+            <input class="form-input" id="entrevistador" placeholder="Seu nome"/>
+          </div>
+          <div class="form-row" style="margin:0;">
+            <label class="form-label">Data</label>
+            <input class="form-input" type="date" id="dataEntrevista"/>
+          </div>
+          <div class="form-row" style="margin:0;">
+            <label class="form-label">Tipo</label>
+            <select class="form-input" id="tipoEntrevista">
+              <option value="triagem">Triagem</option>
+              <option value="tecnica">Técnica</option>
+              <option value="comportamental">Comportamental</option>
+              <option value="final">Final / Decisão</option>
+              <option value="cultura">Cultura</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPETÊNCIAS TÉCNICAS -->
+      <div class="sec"><div class="sec-label">🔧 Competências Técnicas · peso 40%</div></div>
+      <div class="comp-grid" id="compTec"></div>
+
+      <!-- COMPETÊNCIAS COMPORTAMENTAIS -->
+      <div class="sec"><div class="sec-label">🧠 Competências Comportamentais · peso 35%</div></div>
+      <div class="comp-grid" id="compComp"></div>
+
+      <!-- FIT CULTURAL -->
+      <div class="sec"><div class="sec-label">🌱 Fit Cultural · peso 25%</div></div>
+      <div class="comp-grid" id="compFit"></div>
+
+      <!-- OBSERVAÇÕES GERAIS -->
+      <div class="sec"><div class="sec-label">📝 Observações Gerais</div></div>
+      <div class="card">
+        <div class="form-row" style="margin-bottom:0.7rem;">
+          <label class="form-label">Pontos fortes observados</label>
+          <textarea class="form-input" id="obsPontosFOrtes" placeholder="Liste os destaques positivos do candidato durante a entrevista..." style="min-height:80px;"></textarea>
+        </div>
+        <div class="form-row" style="margin-bottom:0.7rem;">
+          <label class="form-label">Pontos de atenção / gaps</label>
+          <textarea class="form-input" id="obsGaps" placeholder="Lacunas, preocupações ou itens que merecem atenção..." style="min-height:80px;"></textarea>
+        </div>
+        <div class="form-row" style="margin:0;">
+          <label class="form-label">Próximos passos sugeridos</label>
+          <textarea class="form-input" id="obsProximos" placeholder="Ex: Agendar entrevista técnica, solicitar case, proposta salarial..." style="min-height:60px;"></textarea>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO CANDIDATO -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Novo Scorecard</div>
+    <div class="modal-sub">Preencha os dados do candidato para iniciar a avaliação</div>
+    <div class="form-row">
+      <label class="form-label">Nome do candidato *</label>
+      <input class="form-input" id="mCandNome" placeholder="Ex: João Silva"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+      <div class="form-row">
+        <label class="form-label">Vaga / Cargo *</label>
+        <input class="form-input" id="mCandCargo" placeholder="Ex: Gerente de Projetos"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Empresa cliente</label>
+        <input class="form-input" id="mCandEmpresa" placeholder="Ex: Empresa ABC"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Template de competências</label>
+      <select class="form-input" id="mTemplate">
+        <option value="generico">Genérico (padrão)</option>
+        <option value="lideranca">Liderança / Gestão</option>
+        <option value="comercial">Comercial / Vendas</option>
+        <option value="tech">Tecnologia / Dev</option>
+        <option value="rh">Recursos Humanos</option>
+        <option value="operacional">Operacional / Analista</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="iniciarScorecard()">▶ Iniciar Avaliação</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── TEMPLATES DE COMPETÊNCIAS ───────────────────────────────────
+const TEMPLATES = {
+  generico: {
+    tec:  [
+      { id:'t1', nome:'Conhecimento técnico da área', peso:3 },
+      { id:'t2', nome:'Uso de ferramentas / sistemas', peso:2 },
+      { id:'t3', nome:'Experiência prática comprovada', peso:3 },
+    ],
+    comp: [
+      { id:'c1', nome:'Comunicação verbal e escrita', peso:3 },
+      { id:'c2', nome:'Trabalho em equipe', peso:2 },
+      { id:'c3', nome:'Resolução de problemas', peso:3 },
+      { id:'c4', nome:'Proatividade e iniciativa', peso:2 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Alinhamento de valores', peso:3 },
+      { id:'f2', nome:'Motivação para o cargo/empresa', peso:2 },
+      { id:'f3', nome:'Adaptabilidade / perfil de crescimento', peso:2 },
+    ],
+  },
+  lideranca: {
+    tec:  [
+      { id:'t1', nome:'Gestão de projetos e prazos', peso:3 },
+      { id:'t2', nome:'Conhecimento em metodologias ágeis', peso:2 },
+      { id:'t3', nome:'Visão estratégica e de negócio', peso:3 },
+    ],
+    comp: [
+      { id:'c1', nome:'Liderança e influência', peso:3 },
+      { id:'c2', nome:'Gestão de conflitos', peso:3 },
+      { id:'c3', nome:'Comunicação com stakeholders', peso:2 },
+      { id:'c4', nome:'Desenvolvimento de pessoas', peso:2 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Fit com a cultura de liderança', peso:3 },
+      { id:'f2', nome:'Senso de dono e responsabilidade', peso:3 },
+      { id:'f3', nome:'Humildade e abertura ao feedback', peso:2 },
+    ],
+  },
+  comercial: {
+    tec:  [
+      { id:'t1', nome:'Técnicas de vendas e negociação', peso:3 },
+      { id:'t2', nome:'Prospecção ativa (outbound/inbound)', peso:2 },
+      { id:'t3', nome:'Conhecimento do mercado / produto', peso:3 },
+    ],
+    comp: [
+      { id:'c1', nome:'Resiliência e tolerância ao não', peso:3 },
+      { id:'c2', nome:'Foco em metas e resultados', peso:3 },
+      { id:'c3', nome:'Escuta ativa e empatia com cliente', peso:2 },
+      { id:'c4', nome:'Organização e gestão de pipeline', peso:2 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Energia e entusiasmo', peso:3 },
+      { id:'f2', nome:'Ética nas negociações', peso:3 },
+      { id:'f3', nome:'Ambição controlada / foco no cliente', peso:2 },
+    ],
+  },
+  tech: {
+    tec:  [
+      { id:'t1', nome:'Stack técnico principal', peso:3 },
+      { id:'t2', nome:'Qualidade de código e boas práticas', peso:3 },
+      { id:'t3', nome:'Lógica e resolução de problemas', peso:3 },
+      { id:'t4', nome:'Experiência com deploys e infra', peso:2 },
+    ],
+    comp: [
+      { id:'c1', nome:'Comunicação técnica para não-técnicos', peso:3 },
+      { id:'c2', nome:'Trabalho colaborativo (PR, code review)', peso:2 },
+      { id:'c3', nome:'Autonomia e gestão de tarefas', peso:2 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Curiosidade e aprendizado contínuo', peso:3 },
+      { id:'f2', nome:'Alinhamento com a cultura de eng.', peso:2 },
+      { id:'f3', nome:'Foco em qualidade vs velocidade', peso:2 },
+    ],
+  },
+  rh: {
+    tec:  [
+      { id:'t1', nome:'Processos de R&S', peso:3 },
+      { id:'t2', nome:'Legislação trabalhista básica', peso:2 },
+      { id:'t3', nome:'DHO / Treinamento & Desenvolvimento', peso:2 },
+    ],
+    comp: [
+      { id:'c1', nome:'Escuta ativa e empatia', peso:3 },
+      { id:'c2', nome:'Gestão de conflitos interpessoais', peso:3 },
+      { id:'c3', nome:'Capacidade analítica (dados de pessoas)', peso:2 },
+      { id:'c4', nome:'Discrição e ética profissional', peso:3 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Orientação a pessoas e propósito', peso:3 },
+      { id:'f2', nome:'Parceria com áreas de negócio', peso:2 },
+      { id:'f3', nome:'Capacidade de influenciar sem autoridade', peso:2 },
+    ],
+  },
+  operacional: {
+    tec:  [
+      { id:'t1', nome:'Domínio de ferramentas Office/planilhas', peso:2 },
+      { id:'t2', nome:'Experiência nos processos da área', peso:3 },
+      { id:'t3', nome:'Capacidade analítica e de relatórios', peso:2 },
+    ],
+    comp: [
+      { id:'c1', nome:'Organização e atenção a detalhes', peso:3 },
+      { id:'c2', nome:'Cumprimento de prazos', peso:3 },
+      { id:'c3', nome:'Comunicação clara e objetiva', peso:2 },
+      { id:'c4', nome:'Flexibilidade e multitarefa', peso:2 },
+    ],
+    fit:  [
+      { id:'f1', nome:'Comprometimento com a entrega', peso:3 },
+      { id:'f2', nome:'Alinhamento com a cultura da empresa', peso:2 },
+      { id:'f3', nome:'Abertura para aprendizado', peso:2 },
+    ],
+  },
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let CANDIDATO = { nome:'', cargo:'', empresa:'' };
+let NOTAS = {};
+let OBS = {};
+let RECOMENDACAO = null;
+let TEMPLATE_ATIVO = 'generico';
+let HISTORICO = [];
+
+// ─── INIT ────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('dataEntrevista').value = new Date().toISOString().slice(0,10);
+  carregarHistorico();
+  renderCompetencias(TEMPLATES.generico);
+}
+
+// ─── RENDER COMPETÊNCIAS ─────────────────────────────────────────
+function renderCompetencias(tmpl) {
+  renderGrupo('compTec',  tmpl.tec,  'tec');
+  renderGrupo('compComp', tmpl.comp, 'comp');
+  renderGrupo('compFit',  tmpl.fit,  'fit');
+  atualizarScore();
+}
+
+function renderGrupo(containerId, comps, grupo) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = comps.map(c => `
+    <div class="comp-item" id="ci-${c.id}">
+      <div class="comp-head">
+        <div class="comp-nome">${c.nome}</div>
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="comp-peso">peso ${c.peso}</div>
+          <div class="comp-nota-display" id="nd-${c.id}" style="color:var(--muted)">—</div>
+        </div>
+      </div>
+      <div class="estrelas-wrap" id="est-${c.id}">
+        ${[1,2,3,4,5].map(n=>`<button class="estrela-btn" data-id="${c.id}" data-val="${n}" onclick="setNota('${c.id}',${n},'${grupo}',${c.peso})">★</button>`).join('')}
+      </div>
+      <div class="comp-barra"><div class="comp-barra-fill" id="bar-${c.id}" style="width:0%;background:var(--muted2)"></div></div>
+      <textarea class="comp-obs" id="obs-${c.id}" placeholder="Anotações sobre essa competência..." onchange="salvarObs('${c.id}')"></textarea>
+    </div>
+  `).join('');
+}
+
+// ─── NOTAS ───────────────────────────────────────────────────────
+function setNota(id, val, grupo, peso) {
+  NOTAS[id] = { val, grupo, peso };
+
+  // visual estrelas
+  const wrap = document.getElementById('est-'+id);
+  wrap.querySelectorAll('.estrela-btn').forEach(b => {
+    b.classList.toggle('on', parseInt(b.dataset.val) <= val);
+  });
+
+  // nota display
+  const labels = ['','Fraco','Regular','Bom','Ótimo','Excelente'];
+  const cores = ['','var(--red)','var(--orange)','var(--blue)','var(--accent)','var(--green)'];
+  document.getElementById('nd-'+id).textContent = `${val}/5`;
+  document.getElementById('nd-'+id).style.color = cores[val];
+
+  // barra
+  const bar = document.getElementById('bar-'+id);
+  bar.style.width = (val/5*100)+'%';
+  bar.style.background = val<=2 ? 'var(--red)' : val===3 ? 'var(--orange)' : val===4 ? 'var(--accent)' : 'var(--green)';
+
+  atualizarScore();
+}
+
+function salvarObs(id) {
+  OBS[id] = document.getElementById('obs-'+id)?.value || '';
+}
+
+// ─── SCORE CALCULATION ───────────────────────────────────────────
+function atualizarScore() {
+  const tmpl = TEMPLATES[TEMPLATE_ATIVO];
+
+  function calcGrupo(comps) {
+    let soma = 0, pesoTotal = 0;
+    comps.forEach(c => {
+      if (NOTAS[c.id]) {
+        soma += NOTAS[c.id].val * c.peso;
+        pesoTotal += c.peso * 5;
+      }
+    });
+    return pesoTotal > 0 ? Math.round((soma / pesoTotal) * 100) : null;
+  }
+
+  const sTec  = calcGrupo(tmpl.tec);
+  const sComp = calcGrupo(tmpl.comp);
+  const sFit  = calcGrupo(tmpl.fit);
+
+  document.getElementById('rTec').textContent  = sTec  !== null ? sTec+'%'  : '—';
+  document.getElementById('rComp').textContent = sComp !== null ? sComp+'%' : '—';
+  document.getElementById('rFit').textContent  = sFit  !== null ? sFit+'%'  : '—';
+
+  // score ponderado geral
+  let scoreFinal = null;
+  if (sTec !== null || sComp !== null || sFit !== null) {
+    let soma = 0, pesos = 0;
+    if (sTec  !== null) { soma += sTec  * 0.40; pesos += 0.40; }
+    if (sComp !== null) { soma += sComp * 0.35; pesos += 0.35; }
+    if (sFit  !== null) { soma += sFit  * 0.25; pesos += 0.25; }
+    scoreFinal = Math.round(soma / pesos);
+  }
+
+  const numEl = document.getElementById('placarNum');
+  const verdEl = document.getElementById('placarVerdict');
+
+  if (scoreFinal !== null) {
+    numEl.textContent = scoreFinal+'%';
+    numEl.style.color = scoreFinal >= 80 ? 'var(--green)' : scoreFinal >= 60 ? 'var(--accent)' : scoreFinal >= 40 ? 'var(--orange)' : 'var(--red)';
+    numEl.style.animation = 'scoreAnim 0.3s ease';
+    setTimeout(()=>numEl.style.animation='',300);
+
+    if (scoreFinal >= 80)      { verdEl.textContent='🏆 Candidato excepcional'; verdEl.style.background='rgba(46,204,113,0.12)'; verdEl.style.color='var(--green)'; }
+    else if (scoreFinal >= 65) { verdEl.textContent='✅ Aprovado para próxima fase'; verdEl.style.background='rgba(59,130,246,0.12)'; verdEl.style.color='var(--accent)'; }
+    else if (scoreFinal >= 50) { verdEl.textContent='🔄 Avaliar com cautela'; verdEl.style.background='rgba(243,156,18,0.12)'; verdEl.style.color='var(--orange)'; }
+    else                       { verdEl.textContent='❌ Perfil abaixo do esperado'; verdEl.style.background='rgba(231,76,60,0.12)'; verdEl.style.color='var(--red)'; }
+  } else {
+    numEl.textContent = '—';
+    numEl.style.color = 'var(--accent)';
+    verdEl.textContent = 'Preencha as competências';
+    verdEl.style.background = 'rgba(255,255,255,0.05)';
+    verdEl.style.color = 'var(--muted)';
+  }
+}
+
+// ─── RECOMENDAÇÃO ─────────────────────────────────────────────────
+function setReco(tipo) {
+  RECOMENDACAO = tipo;
+  ['aprovado','segunda','reprovado'].forEach(t => {
+    document.getElementById('reco-'+t).className = 'reco-btn' + (t===tipo ? ` on-${t}` : '');
+  });
+}
+
+// ─── MODAL ───────────────────────────────────────────────────────
+function abrirNovoModal() {
+  document.getElementById('mCandNome').value = '';
+  document.getElementById('mCandCargo').value = '';
+  document.getElementById('mCandEmpresa').value = '';
+  document.getElementById('mTemplate').value = 'generico';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('mCandNome').focus(), 100);
+}
+
+function fecharModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+function iniciarScorecard() {
+  const nome = document.getElementById('mCandNome').value.trim();
+  const cargo = document.getElementById('mCandCargo').value.trim();
+  if (!nome || !cargo) { toast('⚠️ Nome e cargo são obrigatórios','orange'); return; }
+
+  CANDIDATO = {
+    nome,
+    cargo,
+    empresa: document.getElementById('mCandEmpresa').value.trim()
+  };
+  TEMPLATE_ATIVO = document.getElementById('mTemplate').value;
+  NOTAS = {}; OBS = {}; RECOMENDACAO = null;
+
+  // atualizar UI candidato
+  document.getElementById('candAva').textContent = nome.charAt(0).toUpperCase();
+  document.getElementById('candNome').textContent = nome;
+  document.getElementById('candCargo').textContent = cargo;
+  document.getElementById('candEmpresa').textContent = CANDIDATO.empresa || 'Empresa não informada';
+
+  // resetar recos
+  ['aprovado','segunda','reprovado'].forEach(t => {
+    document.getElementById('reco-'+t).className = 'reco-btn';
+  });
+
+  // limpar obs
+  document.getElementById('obsPontosFOrtes').value = '';
+  document.getElementById('obsGaps').value = '';
+  document.getElementById('obsProximos').value = '';
+
+  renderCompetencias(TEMPLATES[TEMPLATE_ATIVO]);
+  fecharModal();
+  toast('✅ Scorecard iniciado para ' + nome);
+}
+
+// ─── SALVAR ──────────────────────────────────────────────────────
+async function salvarScorecard() {
+  if (!CANDIDATO.nome) { toast('⚠️ Inicie um scorecard primeiro','orange'); return; }
+
+  const tmpl = TEMPLATES[TEMPLATE_ATIVO];
+  function calcGrupo(comps) {
+    let soma = 0, pesoTotal = 0;
+    comps.forEach(c => {
+      if (NOTAS[c.id]) { soma += NOTAS[c.id].val * c.peso; pesoTotal += c.peso * 5; }
+    });
+    return pesoTotal > 0 ? Math.round((soma/pesoTotal)*100) : 0;
+  }
+
+  const sTec  = calcGrupo(tmpl.tec);
+  const sComp = calcGrupo(tmpl.comp);
+  const sFit  = calcGrupo(tmpl.fit);
+  const scoreFinal = Math.round((sTec*0.40 + sComp*0.35 + sFit*0.25) / (sTec||sComp||sFit ? 1 : 1));
+
+  const dados = {
+    candidato: CANDIDATO.nome,
+    cargo: CANDIDATO.cargo,
+    empresa: CANDIDATO.empresa,
+    entrevistador: document.getElementById('entrevistador').value,
+    data_entrevista: document.getElementById('dataEntrevista').value,
+    tipo_entrevista: document.getElementById('tipoEntrevista').value,
+    template: TEMPLATE_ATIVO,
+    notas: NOTAS,
+    score_tec: sTec, score_comp: sComp, score_fit: sFit,
+    score_final: scoreFinal,
+    recomendacao: RECOMENDACAO,
+    pontos_fortes: document.getElementById('obsPontosFOrtes').value,
+    gaps: document.getElementById('obsGaps').value,
+    proximos_passos: document.getElementById('obsProximos').value,
+    criado_em: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('btnSalvar');
+  btn.innerHTML = '<div class="spinner"></div> Salvando...'; btn.disabled = true;
+
+  try {
+    await sbPost('scorecards_entrevista', dados);
+    toast('✅ Scorecard salvo com sucesso');
+  } catch(e) {
+    toast('✅ Salvo localmente');
+  }
+
+  // salvar local
+  HISTORICO.unshift({ ...dados, id: Date.now() });
+  if (HISTORICO.length > 20) HISTORICO.pop();
+  localStorage.setItem('orizon_scorecards', JSON.stringify(HISTORICO));
+  renderHistorico();
+
+  btn.innerHTML = '💾 Salvar Avaliação'; btn.disabled = false;
+}
+
+// ─── HISTÓRICO ───────────────────────────────────────────────────
+function carregarHistorico() {
+  try {
+    HISTORICO = JSON.parse(localStorage.getItem('orizon_scorecards') || '[]');
+  } catch(e) { HISTORICO = []; }
+  renderHistorico();
+}
+
+function renderHistorico() {
+  const el = document.getElementById('histList');
+  document.getElementById('histCount').textContent = HISTORICO.length;
+  if (!HISTORICO.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.72rem;">Nenhum scorecard salvo ainda</div>';
+    return;
+  }
+  el.innerHTML = HISTORICO.slice(0,8).map(h => {
+    const cor = h.score_final >= 80 ? 'var(--green)' : h.score_final >= 60 ? 'var(--accent)' : h.score_final >= 40 ? 'var(--orange)' : 'var(--red)';
+    return `
+      <div class="hist-item" onclick="carregarScorecard(${h.id})">
+        <div class="hist-avatar">${(h.candidato||'?').charAt(0)}</div>
+        <div class="hist-info">
+          <div class="hist-nome">${h.candidato}</div>
+          <div class="hist-meta">${h.cargo} · ${h.data_entrevista||'—'}</div>
+        </div>
+        <div class="hist-score" style="color:${cor}">${h.score_final||'—'}%</div>
+      </div>`;
+  }).join('');
+}
+
+function carregarScorecard(id) {
+  const h = HISTORICO.find(x=>x.id===id);
+  if (!h) return;
+  CANDIDATO = { nome:h.candidato, cargo:h.cargo, empresa:h.empresa||'' };
+  TEMPLATE_ATIVO = h.template || 'generico';
+  NOTAS = h.notas || {};
+  RECOMENDACAO = h.recomendacao;
+
+  document.getElementById('candAva').textContent = h.candidato.charAt(0).toUpperCase();
+  document.getElementById('candNome').textContent = h.candidato;
+  document.getElementById('candCargo').textContent = h.cargo;
+  document.getElementById('candEmpresa').textContent = h.empresa||'—';
+  document.getElementById('entrevistador').value = h.entrevistador||'';
+  document.getElementById('dataEntrevista').value = h.data_entrevista||'';
+  document.getElementById('tipoEntrevista').value = h.tipo_entrevista||'triagem';
+  document.getElementById('obsPontosFOrtes').value = h.pontos_fortes||'';
+  document.getElementById('obsGaps').value = h.gaps||'';
+  document.getElementById('obsProximos').value = h.proximos_passos||'';
+
+  renderCompetencias(TEMPLATES[TEMPLATE_ATIVO]);
+
+  // re-aplicar notas
+  Object.entries(NOTAS).forEach(([id, n]) => {
+    const tmpl = TEMPLATES[TEMPLATE_ATIVO];
+    const all = [...tmpl.tec, ...tmpl.comp, ...tmpl.fit];
+    const comp = all.find(c=>c.id===id);
+    const grupo = tmpl.tec.find(c=>c.id===id) ? 'tec' : tmpl.comp.find(c=>c.id===id) ? 'comp' : 'fit';
+    if (comp) setNota(id, n.val, grupo, comp.peso);
+    if (OBS[id] && document.getElementById('obs-'+id)) document.getElementById('obs-'+id).value = OBS[id];
+  });
+
+  if (RECOMENDACAO) setReco(RECOMENDACAO);
+  toast('📂 Scorecard carregado: ' + h.candidato);
+}
+
+// ─── UTILITÁRIOS ─────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e){ if(e.target===this) fecharModal(); });
+
+init();
+</script>
+</body>
+</html>

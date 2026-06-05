@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Histórico de Rejeição | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* FORM */
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:70px;line-height:1.6;}
+
+/* SEÇÃO */
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:2rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+
+/* GRÁFICO MOTIVOS */
+.motivo-chart{display:flex;flex-direction:column;gap:0.45rem;}
+.motivo-row{display:flex;align-items:center;gap:0.7rem;}
+.motivo-label-txt{font-size:0.68rem;font-weight:600;color:var(--text2);min-width:180px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.motivo-bar-wrap{flex:1;height:20px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;position:relative;}
+.motivo-bar-fill{height:100%;border-radius:6px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;padding-left:0.5rem;}
+.motivo-bar-pct{font-size:0.6rem;font-weight:800;color:rgba(255,255,255,0.8);font-family:var(--mono);}
+.motivo-count{font-size:0.68rem;font-weight:800;font-family:var(--mono);color:var(--muted);min-width:24px;text-align:right;flex-shrink:0;}
+
+/* ETAPA CHART */
+.etapa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:0.5rem;}
+.etapa-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.8rem;text-align:center;cursor:pointer;transition:all 0.15s;}
+.etapa-card:hover,.etapa-card.ativa{border-color:var(--border2);background:rgba(59,130,246,0.04);}
+.etapa-num{font-size:1.5rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.etapa-label{font-size:0.6rem;font-weight:700;color:var(--muted);}
+.etapa-pct{font-size:0.55rem;color:rgba(59,130,246,0.6);margin-top:0.1rem;}
+
+/* LISTA DE REJEIÇÕES */
+.lista-header{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.5fr 0.8fr 80px;gap:0.5rem;padding:0.5rem 0.9rem;font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
+.rejeicao-item{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.5fr 0.8fr 80px;gap:0.5rem;padding:0.75rem 0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background 0.15s;cursor:pointer;}
+.rejeicao-item:hover{background:rgba(255,255,255,0.02);}
+.rej-nome-col{display:flex;align-items:center;gap:0.6rem;}
+.rej-avatar{width:30px;height:30px;border-radius:8px;background:rgba(231,76,60,0.1);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;flex-shrink:0;font-family:var(--mono);}
+.rej-nome{font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rej-cargo{font-size:0.6rem;color:var(--muted);}
+.rej-etapa-badge{font-size:0.6rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:6px;white-space:nowrap;}
+.rej-motivo-badge{font-size:0.6rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.rej-data{font-size:0.65rem;color:var(--muted);font-family:var(--mono);}
+.rej-acoes{display:flex;gap:0.3rem;justify-content:flex-end;}
+
+/* TAG TALENT POOL */
+.tp-tag{font-size:0.52rem;font-weight:800;padding:0.1rem 0.45rem;border-radius:6px;background:rgba(168,216,95,0.1);color:var(--accent2);border:1px solid rgba(168,216,95,0.2);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.3rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.form-row{margin-bottom:0.8rem;}
+
+/* DETALHE LATERAL */
+.detalhe-panel{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:var(--card2);border-left:1px solid var(--border2);z-index:90;overflow-y:auto;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);padding:1.5rem;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.detalhe-panel.open{right:0;}
+.detalhe-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.3rem 0.7rem;cursor:pointer;font-family:inherit;font-size:0.72rem;color:var(--muted);}
+.detalhe-close:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+.detalhe-ava{width:56px;height:56px;border-radius:14px;background:rgba(231,76,60,0.12);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;font-family:var(--mono);margin-bottom:0.8rem;}
+.detalhe-nome{font-size:1.1rem;font-weight:900;margin-bottom:0.1rem;}
+.detalhe-cargo{font-size:0.72rem;color:var(--muted);margin-bottom:1rem;}
+.detalhe-field{margin-bottom:0.8rem;}
+.detalhe-field-label{font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.2rem;}
+.detalhe-field-val{font-size:0.76rem;color:var(--text2);line-height:1.6;}
+
+/* EMPTY */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;text-align:center;}
+.empty-ico{font-size:3rem;opacity:0.3;}
+.empty-title{font-size:1rem;font-weight:800;color:var(--text2);}
+.empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;max-width:380px;}
+
+/* PAGINAÇÃO */
+.paginacao{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 0.9rem;border-top:1px solid rgba(255,255,255,0.05);}
+.pag-info{font-size:0.65rem;color:var(--muted);}
+.pag-btns{display:flex;gap:0.4rem;}
+.pag-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.3rem 0.7rem;cursor:pointer;font-family:inherit;font-size:0.7rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
+.pag-btn:hover:not(:disabled){background:rgba(255,255,255,0.08);color:var(--text);}
+.pag-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.pag-btn.active{background:rgba(59,130,246,0.12);color:var(--accent);border-color:rgba(59,130,246,0.25);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+.spinner{width:14px;height:14px;border:2px solid var(--muted2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;flex-shrink:0;}
+
+/* IMPRESSÃO */
+@media print{
+  body{background:#fff;color:#111;}
+  .no-print{display:none!important;}
+  .card{border:1px solid #ddd;background:#fff;}
+  .page{padding:1rem;}
+  .detalhe-panel{display:none;}
+}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:900px){
+  .lista-header,.rejeicao-item{grid-template-columns:2fr 1fr 1fr 40px;}
+  .col-motivo-full,.col-data{display:none;}
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero-title{font-size:1.25rem;}
+  .detalhe-panel{width:100%;right:-100%;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Funil & Inteligência · Orizon ATS</div>
+      <div class="hero-title">Histórico de <span>Rejeição</span></div>
+      <div class="hero-sub">Registre motivos por etapa · Identifique padrões · Mantenha talentos no pool</div>
+    </div>
+    <div class="hero-right no-print">
+      <button class="btn btn-ghost" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModalNovo()">+ Registrar Rejeição</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip" id="kpiStrip">
+    <div class="kpi-card"><div class="kpi-num" id="kpiTotal" style="color:var(--red)">0</div><div class="kpi-label">Total Rejeitados</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiEtapaTop" style="color:var(--orange)">—</div><div class="kpi-label">Etapa c/ Mais Rejeições</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiMotivoTop" style="color:var(--purple)">—</div><div class="kpi-label">Motivo Mais Frequente</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiTalentPool" style="color:var(--accent2)">0</div><div class="kpi-label">No Talent Pool</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiMes" style="color:var(--accent)">0</div><div class="kpi-label">Esse Mês</div></div>
+  </div>
+
+  <!-- ANÁLISE POR ETAPA E MOTIVO -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:1rem;">
+
+    <!-- Rejeições por etapa -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🔀 Rejeições por Etapa do Funil</div>
+        <div class="card-badge" id="badgeEtapas">0 etapas</div>
+      </div>
+      <div class="etapa-grid" id="etapaGrid"></div>
+    </div>
+
+    <!-- Top motivos -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📊 Top Motivos de Rejeição</div>
+        <button class="btn btn-ghost no-print" style="font-size:0.65rem;padding:0.3rem 0.7rem;" onclick="toggleVerTodos()" id="btnVerTodos">Ver todos</button>
+      </div>
+      <div class="motivo-chart" id="motivoChart"></div>
+    </div>
+
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar no-print">
+    <div class="filter-field">
+      <label class="form-label">Buscar candidato</label>
+      <input class="form-input" id="filtroBusca" placeholder="Nome ou cargo..." oninput="aplicarFiltros()"/>
+    </div>
+    <div class="filter-field" style="max-width:160px;">
+      <label class="form-label">Etapa</label>
+      <select class="form-input" id="filtroEtapa" onchange="aplicarFiltros()">
+        <option value="">Todas as etapas</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:180px;">
+      <label class="form-label">Motivo</label>
+      <select class="form-input" id="filtroMotivo" onchange="aplicarFiltros()">
+        <option value="">Todos os motivos</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:150px;">
+      <label class="form-label">Talent Pool</label>
+      <select class="form-input" id="filtroTP" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+        <option value="sim">✅ No Talent Pool</option>
+        <option value="nao">Fora do Pool</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:150px;">
+      <label class="form-label">Período</label>
+      <select class="form-input" id="filtroPeriodo" onchange="aplicarFiltros()">
+        <option value="">Todos</option>
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- LISTA -->
+  <div class="card" style="padding:0;overflow:hidden;" id="listaCard">
+    <div class="card-head" style="padding:0.9rem 1.1rem 0;">
+      <div class="card-title">📋 Registro de Rejeições <span id="countFiltrado" class="card-badge" style="margin-left:0.4rem;">0</span></div>
+      <div style="display:flex;gap:0.5rem;align-items:center;">
+        <select class="form-input no-print" id="ordenacaoLista" style="width:auto;font-size:0.68rem;padding:0.3rem 0.7rem;" onchange="aplicarFiltros()">
+          <option value="data_desc">Mais recentes</option>
+          <option value="data_asc">Mais antigos</option>
+          <option value="nome">Nome A-Z</option>
+          <option value="etapa">Por etapa</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="listaVazia" class="empty-state" style="display:none;">
+      <div class="empty-ico">🔍</div>
+      <div class="empty-title">Nenhum resultado encontrado</div>
+      <div class="empty-sub">Tente ajustar os filtros ou limpe a busca.</div>
+    </div>
+
+    <div id="listaEmpty" class="empty-state">
+      <div class="empty-ico">📭</div>
+      <div class="empty-title">Nenhuma rejeição registrada ainda</div>
+      <div class="empty-sub">Registre as rejeições do funil para identificar padrões e manter bons candidatos no talent pool.</div>
+      <button class="btn btn-primary" onclick="abrirModalNovo()">+ Registrar Primeira Rejeição</button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()" style="margin-top:0.3rem;">📋 Carregar exemplos</button>
+    </div>
+
+    <div id="listaHeader" class="lista-header" style="display:none;">
+      <div>Candidato</div>
+      <div>Etapa</div>
+      <div class="col-motivo-full">Motivo</div>
+      <div class="col-data">Observação</div>
+      <div>Data</div>
+      <div></div>
+    </div>
+    <div id="listaItens"></div>
+    <div id="paginacaoWrap" class="paginacao" style="display:none;">
+      <div class="pag-info" id="pagInfo"></div>
+      <div class="pag-btns" id="pagBtns"></div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- PAINEL DE DETALHE -->
+<div class="detalhe-panel no-print" id="detalhePanel">
+  <button class="detalhe-close" onclick="fecharDetalhe()">✕ Fechar</button>
+  <div id="detalheContent"></div>
+</div>
+
+<!-- MODAL NOVO REGISTRO -->
+<div class="modal-overlay" id="modalNovo">
+  <div class="modal">
+    <div class="modal-title" id="modalNovoTitle">Registrar Rejeição</div>
+    <div class="modal-sub">Preencha os dados do candidato e o motivo da saída do processo</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Nome do Candidato *</label>
+        <input class="form-input" id="nNome" placeholder="Nome completo"/>
+      </div>
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Cargo / Vaga *</label>
+        <input class="form-input" id="nCargo" placeholder="Ex: Analista de RH"/>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.7rem;">
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Empresa Cliente</label>
+        <input class="form-input" id="nEmpresa" placeholder="Ex: Empresa ABC"/>
+      </div>
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Data da Rejeição</label>
+        <input class="form-input" type="date" id="nData"/>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.7rem;">
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Etapa em que saiu *</label>
+        <select class="form-input" id="nEtapa">
+          <option value="">— Selecionar —</option>
+          <option value="Triagem de Currículo">Triagem de Currículo</option>
+          <option value="Entrevista Inicial">Entrevista Inicial</option>
+          <option value="Entrevista Técnica">Entrevista Técnica</option>
+          <option value="Entrevista com Gestor">Entrevista com Gestor</option>
+          <option value="Entrevista Final">Entrevista Final</option>
+          <option value="Proposta / Oferta">Proposta / Oferta</option>
+          <option value="Exame Admissional">Exame Admissional</option>
+          <option value="Desistência">Desistência</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Motivo Principal *</label>
+        <select class="form-input" id="nMotivo" onchange="toggleMotivoCustom()">
+          <option value="">— Selecionar —</option>
+          <optgroup label="📋 Perfil & Qualificação">
+            <option value="Perfil técnico insuficiente">Perfil técnico insuficiente</option>
+            <option value="Falta de experiência">Falta de experiência</option>
+            <option value="Formação acadêmica não compatível">Formação acadêmica não compatível</option>
+            <option value="Idioma insuficiente">Idioma insuficiente</option>
+          </optgroup>
+          <optgroup label="🧠 Comportamental & Fit">
+            <option value="Fit cultural inadequado">Fit cultural inadequado</option>
+            <option value="Perfil comportamental não aderente">Perfil comportamental não aderente</option>
+            <option value="Comunicação abaixo do esperado">Comunicação abaixo do esperado</option>
+            <option value="Postura inadequada na entrevista">Postura inadequada na entrevista</option>
+          </optgroup>
+          <optgroup label="💰 Negociação">
+            <option value="Pretensão salarial acima do orçamento">Pretensão salarial acima do orçamento</option>
+            <option value="Benefícios incompatíveis">Benefícios incompatíveis</option>
+            <option value="Contraproposta do emprego atual">Contraproposta do emprego atual</option>
+          </optgroup>
+          <optgroup label="🏃 Desistência do Candidato">
+            <option value="Candidato desistiu sem justificativa">Candidato desistiu sem justificativa</option>
+            <option value="Aceitou outra oferta">Aceitou outra oferta</option>
+            <option value="Mudança de planos pessoais">Mudança de planos pessoais</option>
+            <option value="Não compareceu à entrevista">Não compareceu à entrevista</option>
+          </optgroup>
+          <optgroup label="🏢 Decisão do Cliente">
+            <option value="Perfil não aprovado pelo gestor">Perfil não aprovado pelo gestor</option>
+            <option value="Vaga cancelada pelo cliente">Vaga cancelada pelo cliente</option>
+            <option value="Vaga congelada">Vaga congelada</option>
+            <option value="Candidato interno aprovado">Candidato interno aprovado</option>
+          </optgroup>
+          <optgroup label="🔧 Outro">
+            <option value="Disponibilidade incompatível">Disponibilidade incompatível</option>
+            <option value="Localização / home office">Localização / home office</option>
+            <option value="Outro motivo">Outro motivo</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div id="motivoCustomWrap" style="display:none;margin-top:0.7rem;">
+      <label class="form-label">Especifique o motivo</label>
+      <input class="form-input" id="nMotivoCustom" placeholder="Descreva o motivo específico..."/>
+    </div>
+
+    <div style="margin-top:0.7rem;">
+      <label class="form-label">Observação / Detalhe</label>
+      <textarea class="form-input" id="nObs" placeholder="Contexto adicional, percepções da entrevista, pontos que podem ser melhorados pelo candidato..." style="min-height:72px;"></textarea>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-top:0.7rem;">
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Fonte / Origem</label>
+        <select class="form-input" id="nOrigem">
+          <option value="">— Não informado —</option>
+          <option value="LinkedIn">LinkedIn</option>
+          <option value="Indicação">Indicação</option>
+          <option value="Site / Portal">Site / Portal</option>
+          <option value="Indeed">Indeed</option>
+          <option value="Catho">Catho</option>
+          <option value="Banco Interno">Banco Interno</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Feedback Enviado?</label>
+        <select class="form-input" id="nFeedback">
+          <option value="nao">Não enviado</option>
+          <option value="sim">Sim, enviado</option>
+          <option value="pendente">Pendente</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:0.8rem;padding:0.8rem 1rem;background:rgba(168,216,95,0.05);border:1px solid rgba(168,216,95,0.15);border-radius:10px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:0.72rem;font-weight:800;color:var(--accent2);">🌟 Talent Pool</div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:0.1rem;">Candidato tem potencial para vagas futuras?</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+        <input type="checkbox" id="nTalentPool" style="width:16px;height:16px;accent-color:var(--accent2);cursor:pointer;"/>
+        <span style="font-size:0.72rem;font-weight:700;color:var(--accent2);">Sim, adicionar ao pool</span>
+      </label>
+    </div>
+
+    <input type="hidden" id="nEditId"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModalNovo()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRejeicao()">💾 Salvar Registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DADOS & ESTADO ───────────────────────────────────────────────
+let REJEICOES = [];
+let FILTRADO  = [];
+let PAGINA    = 1;
+let VER_TODOS_MOTIVOS = false;
+const POR_PAGINA = 15;
+
+// ─── ETAPAS CONFIG ────────────────────────────────────────────────
+const ETAPA_COR = {
+  'Triagem de Currículo':    { bg:'rgba(59,130,246,0.1)', cor:'#3b82f6' },
+  'Entrevista Inicial':      { bg:'rgba(167,139,250,0.1)', cor:'#a78bfa' },
+  'Entrevista Técnica':      { bg:'rgba(243,156,18,0.1)', cor:'#f39c12' },
+  'Entrevista com Gestor':   { bg:'rgba(46,204,113,0.1)', cor:'#2ecc71' },
+  'Entrevista Final':        { bg:'rgba(52,152,219,0.1)', cor:'#3498db' },
+  'Proposta / Oferta':       { bg:'rgba(231,76,60,0.1)', cor:'#e74c3c' },
+  'Exame Admissional':       { bg:'rgba(168,216,95,0.1)', cor:'#a8d85f' },
+  'Desistência':             { bg:'rgba(85,85,85,0.15)', cor:'#888' },
+};
+
+function etapaCor(e) { return ETAPA_COR[e] || { bg:'rgba(255,255,255,0.07)', cor:'#aaa' }; }
+
+// ─── INIT ─────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('nData').value = new Date().toISOString().slice(0,10);
+  carregarLocal();
+  render();
+}
+
+// ─── LOCAL STORAGE ────────────────────────────────────────────────
+function carregarLocal() {
+  try { REJEICOES = JSON.parse(localStorage.getItem('orizon_rejeicoes') || '[]'); } catch(e) { REJEICOES = []; }
+}
+function salvarLocal() {
+  localStorage.setItem('orizon_rejeicoes', JSON.stringify(REJEICOES));
+}
+
+// ─── RENDER GLOBAL ────────────────────────────────────────────────
+function render() {
+  atualizarKPIs();
+  renderEtapas();
+  renderMotivos();
+  popularFiltrosSelect();
+  aplicarFiltros();
+}
+
+// ─── KPIs ─────────────────────────────────────────────────────────
+function atualizarKPIs() {
+  document.getElementById('kpiTotal').textContent = REJEICOES.length;
+
+  const agora = new Date();
+  const mes = REJEICOES.filter(r => {
+    const d = new Date(r.data);
+    return d.getFullYear() === agora.getFullYear() && d.getMonth() === agora.getMonth();
+  }).length;
+  document.getElementById('kpiMes').textContent = mes;
+
+  const tp = REJEICOES.filter(r => r.talent_pool).length;
+  document.getElementById('kpiTalentPool').textContent = tp;
+
+  // Etapa mais frequente
+  const contEtapas = {};
+  REJEICOES.forEach(r => contEtapas[r.etapa] = (contEtapas[r.etapa]||0)+1);
+  const topEtapa = Object.entries(contEtapas).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('kpiEtapaTop').textContent = topEtapa ? topEtapa[1] : '—';
+  document.getElementById('kpiEtapaTop').title = topEtapa ? topEtapa[0] : '';
+
+  // Motivo mais frequente
+  const contMotivos = {};
+  REJEICOES.forEach(r => contMotivos[r.motivo] = (contMotivos[r.motivo]||0)+1);
+  const topMotivo = Object.entries(contMotivos).sort((a,b)=>b[1]-a[1])[0];
+  const kpiMotivoEl = document.getElementById('kpiMotivoTop');
+  if (topMotivo) {
+    const partes = topMotivo[0].split(' ');
+    kpiMotivoEl.textContent = partes.slice(0,2).join(' ') + (partes.length > 2 ? '…' : '');
+    kpiMotivoEl.title = topMotivo[0] + ' (' + topMotivo[1] + 'x)';
+  } else {
+    kpiMotivoEl.textContent = '—';
+  }
+}
+
+// ─── CHART ETAPAS ─────────────────────────────────────────────────
+function renderEtapas() {
+  const cont = {};
+  REJEICOES.forEach(r => cont[r.etapa] = (cont[r.etapa]||0)+1);
+  const total = REJEICOES.length || 1;
+  const etapas = Object.entries(cont).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('badgeEtapas').textContent = etapas.length + ' etapas';
+  const el = document.getElementById('etapaGrid');
+
+  if (!etapas.length) {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.72rem;">Sem dados ainda</div>';
+    return;
+  }
+
+  el.innerHTML = etapas.map(([etapa, count]) => {
+    const cor = etapaCor(etapa);
+    const pct = Math.round((count/total)*100);
+    return `
+    <div class="etapa-card" onclick="filtrarEtapaClick('${etapa}')" title="${etapa}">
+      <div class="etapa-num" style="color:${cor.cor}">${count}</div>
+      <div class="etapa-label">${etapa.split(' ').slice(0,2).join(' ')}</div>
+      <div class="etapa-pct">${pct}% do total</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── CHART MOTIVOS ────────────────────────────────────────────────
+function renderMotivos() {
+  const cont = {};
+  REJEICOES.forEach(r => cont[r.motivo] = (cont[r.motivo]||0)+1);
+  const total = REJEICOES.length || 1;
+  let motivos = Object.entries(cont).sort((a,b)=>b[1]-a[1]);
+
+  const el = document.getElementById('motivoChart');
+  if (!motivos.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1.5rem 0;color:var(--muted);font-size:0.72rem;">Sem dados ainda</div>';
+    return;
+  }
+
+  const exibir = VER_TODOS_MOTIVOS ? motivos : motivos.slice(0,6);
+  const maxCount = motivos[0][1];
+
+  const cores = ['#e74c3c','#f39c12','#a78bfa','#3b82f6','#2ecc71','#3498db','#a8d85f','#e91e63','#ff9800','#00bcd4'];
+
+  el.innerHTML = exibir.map(([motivo, count], i) => {
+    const pct = Math.round((count/total)*100);
+    const barW = Math.round((count/maxCount)*100);
+    const cor = cores[i % cores.length];
+    return `
+    <div class="motivo-row">
+      <div class="motivo-label-txt" title="${motivo}">${motivo}</div>
+      <div class="motivo-bar-wrap">
+        <div class="motivo-bar-fill" style="width:${barW}%;background:${cor};">
+          ${barW > 20 ? `<span class="motivo-bar-pct">${pct}%</span>` : ''}
+        </div>
+      </div>
+      <div class="motivo-count">${count}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleVerTodos() {
+  VER_TODOS_MOTIVOS = !VER_TODOS_MOTIVOS;
+  document.getElementById('btnVerTodos').textContent = VER_TODOS_MOTIVOS ? 'Ver menos' : 'Ver todos';
+  renderMotivos();
+}
+
+// ─── POPULAR SELECTS DE FILTRO ────────────────────────────────────
+function popularFiltrosSelect() {
+  const etapas = [...new Set(REJEICOES.map(r=>r.etapa))].sort();
+  const motivos = [...new Set(REJEICOES.map(r=>r.motivo))].sort();
+
+  const selEtapa = document.getElementById('filtroEtapa');
+  const selMotivo = document.getElementById('filtroMotivo');
+  const valEtapa = selEtapa.value;
+  const valMotivo = selMotivo.value;
+
+  selEtapa.innerHTML = '<option value="">Todas as etapas</option>' + etapas.map(e=>`<option value="${e}" ${e===valEtapa?'selected':''}>${e}</option>`).join('');
+  selMotivo.innerHTML = '<option value="">Todos os motivos</option>' + motivos.map(m=>`<option value="${m}" ${m===valMotivo?'selected':''}>${m}</option>`).join('');
+}
+
+// ─── FILTROS & ORDENAÇÃO ──────────────────────────────────────────
+function aplicarFiltros() {
+  const busca   = document.getElementById('filtroBusca').value.toLowerCase();
+  const etapa   = document.getElementById('filtroEtapa').value;
+  const motivo  = document.getElementById('filtroMotivo').value;
+  const tp      = document.getElementById('filtroTP').value;
+  const periodo = parseInt(document.getElementById('filtroPeriodo').value) || 0;
+  const ord     = document.getElementById('ordenacaoLista').value;
+  const agora   = Date.now();
+
+  FILTRADO = REJEICOES.filter(r => {
+    if (busca && !r.nome.toLowerCase().includes(busca) && !r.cargo.toLowerCase().includes(busca)) return false;
+    if (etapa && r.etapa !== etapa) return false;
+    if (motivo && r.motivo !== motivo) return false;
+    if (tp === 'sim' && !r.talent_pool) return false;
+    if (tp === 'nao' && r.talent_pool) return false;
+    if (periodo) {
+      const diff = (agora - new Date(r.data).getTime()) / (1000*60*60*24);
+      if (diff > periodo) return false;
+    }
+    return true;
+  });
+
+  FILTRADO.sort((a,b) => {
+    if (ord === 'data_desc') return new Date(b.data) - new Date(a.data);
+    if (ord === 'data_asc')  return new Date(a.data) - new Date(b.data);
+    if (ord === 'nome')      return a.nome.localeCompare(b.nome);
+    if (ord === 'etapa')     return a.etapa.localeCompare(b.etapa);
+    return 0;
+  });
+
+  PAGINA = 1;
+  renderLista();
+}
+
+function filtrarEtapaClick(etapa) {
+  document.getElementById('filtroEtapa').value = etapa;
+  aplicarFiltros();
+  document.getElementById('filtroEtapa').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function limparFiltros() {
+  ['filtroBusca','filtroEtapa','filtroMotivo','filtroTP','filtroPeriodo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.tagName === 'INPUT') el.value = ''; else el.value = '';
+  });
+  aplicarFiltros();
+}
+
+// ─── RENDER LISTA ─────────────────────────────────────────────────
+function renderLista() {
+  const total = FILTRADO.length;
+  document.getElementById('countFiltrado').textContent = total;
+
+  const listaEmpty = document.getElementById('listaEmpty');
+  const listaVazia = document.getElementById('listaVazia');
+  const listaHeader = document.getElementById('listaHeader');
+  const listaItens  = document.getElementById('listaItens');
+  const pagWrap     = document.getElementById('paginacaoWrap');
+
+  if (!REJEICOES.length) {
+    listaEmpty.style.display = 'flex';
+    listaVazia.style.display = 'none';
+    listaHeader.style.display = 'none';
+    listaItens.innerHTML = '';
+    pagWrap.style.display = 'none';
+    return;
+  }
+
+  listaEmpty.style.display = 'none';
+
+  if (!total) {
+    listaVazia.style.display = 'flex';
+    listaHeader.style.display = 'none';
+    listaItens.innerHTML = '';
+    pagWrap.style.display = 'none';
+    return;
+  }
+
+  listaVazia.style.display = 'none';
+  listaHeader.style.display = 'grid';
+
+  const inicio = (PAGINA - 1) * POR_PAGINA;
+  const fim    = Math.min(inicio + POR_PAGINA, total);
+  const pagina = FILTRADO.slice(inicio, fim);
+
+  listaItens.innerHTML = pagina.map(r => {
+    const ec = etapaCor(r.etapa);
+    const dataFormatada = r.data ? new Date(r.data + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+    return `
+    <div class="rejeicao-item" onclick="abrirDetalhe('${r.id}')">
+      <div class="rej-nome-col">
+        <div class="rej-avatar">${r.nome.charAt(0).toUpperCase()}</div>
+        <div>
+          <div class="rej-nome">${r.nome} ${r.talent_pool ? '<span class="tp-tag">🌟 Pool</span>' : ''}</div>
+          <div class="rej-cargo">${r.cargo}${r.empresa ? ' · ' + r.empresa : ''}</div>
+        </div>
+      </div>
+      <div><span class="rej-etapa-badge" style="background:${ec.bg};color:${ec.cor};">${r.etapa}</span></div>
+      <div class="col-motivo-full"><span class="rej-motivo-badge" style="background:rgba(231,76,60,0.08);color:rgba(231,76,60,0.8);border:1px solid rgba(231,76,60,0.15);">${r.motivo}</span></div>
+      <div class="col-data" style="font-size:0.65rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;" title="${r.obs||''}">${r.obs||'—'}</div>
+      <div class="rej-data">${dataFormatada}</div>
+      <div class="rej-acoes no-print">
+        <button class="btn btn-ghost" style="padding:0.25rem 0.5rem;font-size:0.65rem;" onclick="event.stopPropagation();editarRejeicao('${r.id}')">✏️</button>
+        <button class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.65rem;" onclick="event.stopPropagation();confirmarExcluir('${r.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Paginação
+  const totalPags = Math.ceil(total / POR_PAGINA);
+  pagWrap.style.display = totalPags > 1 ? 'flex' : 'none';
+  if (totalPags > 1) {
+    document.getElementById('pagInfo').textContent = `Exibindo ${inicio+1}–${fim} de ${total}`;
+    let btnsHtml = `<button class="pag-btn" onclick="irPagina(${PAGINA-1})" ${PAGINA===1?'disabled':''}>‹ Ant</button>`;
+    for (let p = Math.max(1,PAGINA-2); p <= Math.min(totalPags,PAGINA+2); p++) {
+      btnsHtml += `<button class="pag-btn ${p===PAGINA?'active':''}" onclick="irPagina(${p})">${p}</button>`;
+    }
+    btnsHtml += `<button class="pag-btn" onclick="irPagina(${PAGINA+1})" ${PAGINA===totalPags?'disabled':''}>Próx ›</button>`;
+    document.getElementById('pagBtns').innerHTML = btnsHtml;
+  }
+}
+
+function irPagina(p) {
+  const totalPags = Math.ceil(FILTRADO.length / POR_PAGINA);
+  if (p < 1 || p > totalPags) return;
+  PAGINA = p;
+  renderLista();
+  document.getElementById('listaCard').scrollIntoView({ behavior:'smooth' });
+}
+
+// ─── PAINEL DE DETALHE ────────────────────────────────────────────
+function abrirDetalhe(id) {
+  const r = REJEICOES.find(x=>x.id===id);
+  if (!r) return;
+  const ec = etapaCor(r.etapa);
+  const dataFormatada = r.data ? new Date(r.data + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit'}) : '—';
+
+  document.getElementById('detalheContent').innerHTML = `
+    <div class="detalhe-ava">${r.nome.charAt(0).toUpperCase()}</div>
+    <div class="detalhe-nome">${r.nome} ${r.talent_pool ? '<span class="tp-tag">🌟 Talent Pool</span>' : ''}</div>
+    <div class="detalhe-cargo">${r.cargo}${r.empresa ? ' · ' + r.empresa : ''}</div>
+
+    <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem;">
+      <span class="rej-etapa-badge" style="background:${ec.bg};color:${ec.cor};">${r.etapa}</span>
+      <span class="rej-motivo-badge" style="background:rgba(231,76,60,0.08);color:rgba(231,76,60,0.8);border:1px solid rgba(231,76,60,0.15);">${r.motivo}</span>
+    </div>
+
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:1rem;"></div>
+
+    <div class="detalhe-field">
+      <div class="detalhe-field-label">Data da Rejeição</div>
+      <div class="detalhe-field-val">${dataFormatada}</div>
+    </div>
+    ${r.obs ? `<div class="detalhe-field"><div class="detalhe-field-label">Observação</div><div class="detalhe-field-val">${r.obs}</div></div>` : ''}
+    ${r.origem ? `<div class="detalhe-field"><div class="detalhe-field-label">Origem / Fonte</div><div class="detalhe-field-val">${r.origem}</div></div>` : ''}
+    <div class="detalhe-field">
+      <div class="detalhe-field-label">Feedback ao Candidato</div>
+      <div class="detalhe-field-val">${r.feedback === 'sim' ? '✅ Enviado' : r.feedback === 'pendente' ? '⏳ Pendente' : '❌ Não enviado'}</div>
+    </div>
+
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin:1rem 0;"></div>
+    <div style="display:flex;gap:0.5rem;">
+      <button class="btn btn-ghost" style="flex:1;justify-content:center;" onclick="editarRejeicao('${r.id}');fecharDetalhe()">✏️ Editar</button>
+      <button class="btn btn-danger" style="flex:1;justify-content:center;" onclick="confirmarExcluir('${r.id}');fecharDetalhe()">🗑 Excluir</button>
+    </div>
+    ${!r.talent_pool ? `<button class="btn btn-success" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="toggleTalentPool('${r.id}')">🌟 Adicionar ao Talent Pool</button>` : `<button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="toggleTalentPool('${r.id}')">Remover do Talent Pool</button>`}
+  `;
+
+  document.getElementById('detalhePanel').classList.add('open');
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalhePanel').classList.remove('open');
+}
+
+function toggleTalentPool(id) {
+  const r = REJEICOES.find(x=>x.id===id);
+  if (!r) return;
+  r.talent_pool = !r.talent_pool;
+  salvarLocal();
+  render();
+  abrirDetalhe(id);
+  toast(r.talent_pool ? '🌟 Adicionado ao Talent Pool' : 'Removido do Talent Pool');
+}
+
+// ─── MODAL NOVO / EDITAR ──────────────────────────────────────────
+function abrirModalNovo() {
+  document.getElementById('nEditId').value = '';
+  document.getElementById('modalNovoTitle').textContent = 'Registrar Rejeição';
+  limparFormNovo();
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function fecharModalNovo() {
+  document.getElementById('modalNovo').classList.remove('open');
+}
+
+function limparFormNovo() {
+  ['nNome','nCargo','nEmpresa','nObs','nMotivoCustom'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('nData').value = new Date().toISOString().slice(0,10);
+  document.getElementById('nEtapa').value = '';
+  document.getElementById('nMotivo').value = '';
+  document.getElementById('nOrigem').value = '';
+  document.getElementById('nFeedback').value = 'nao';
+  document.getElementById('nTalentPool').checked = false;
+  document.getElementById('motivoCustomWrap').style.display = 'none';
+}
+
+function editarRejeicao(id) {
+  const r = REJEICOES.find(x=>x.id===id);
+  if (!r) return;
+  document.getElementById('nEditId').value = id;
+  document.getElementById('modalNovoTitle').textContent = 'Editar Rejeição';
+  document.getElementById('nNome').value = r.nome;
+  document.getElementById('nCargo').value = r.cargo;
+  document.getElementById('nEmpresa').value = r.empresa || '';
+  document.getElementById('nData').value = r.data || '';
+  document.getElementById('nEtapa').value = r.etapa;
+  document.getElementById('nMotivo').value = r.motivo;
+  document.getElementById('nObs').value = r.obs || '';
+  document.getElementById('nOrigem').value = r.origem || '';
+  document.getElementById('nFeedback').value = r.feedback || 'nao';
+  document.getElementById('nTalentPool').checked = !!r.talent_pool;
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function toggleMotivoCustom() {
+  const val = document.getElementById('nMotivo').value;
+  document.getElementById('motivoCustomWrap').style.display = val === 'Outro motivo' ? 'block' : 'none';
+}
+
+async function salvarRejeicao() {
+  const nome  = document.getElementById('nNome').value.trim();
+  const cargo = document.getElementById('nCargo').value.trim();
+  const etapa = document.getElementById('nEtapa').value;
+  let motivo  = document.getElementById('nMotivo').value;
+
+  if (!nome || !cargo)   { toast('⚠️ Preencha Nome e Cargo'); return; }
+  if (!etapa)            { toast('⚠️ Selecione a etapa'); return; }
+  if (!motivo)           { toast('⚠️ Selecione o motivo'); return; }
+
+  if (motivo === 'Outro motivo') {
+    const custom = document.getElementById('nMotivoCustom').value.trim();
+    if (custom) motivo = custom;
+  }
+
+  const editId = document.getElementById('nEditId').value;
+  const dados = {
+    id: editId || 'rej_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    nome, cargo,
+    empresa:     document.getElementById('nEmpresa').value.trim(),
+    data:        document.getElementById('nData').value,
+    etapa, motivo,
+    obs:         document.getElementById('nObs').value.trim(),
+    origem:      document.getElementById('nOrigem').value,
+    feedback:    document.getElementById('nFeedback').value,
+    talent_pool: document.getElementById('nTalentPool').checked,
+    criado_em:   new Date().toISOString(),
+  };
+
+  if (editId) {
+    const idx = REJEICOES.findIndex(x=>x.id===editId);
+    if (idx !== -1) REJEICOES[idx] = dados;
+  } else {
+    REJEICOES.unshift(dados);
+  }
+
+  salvarLocal();
+
+  try {
+    if (typeof sbPost === 'function') await sbPost('rejeicoes_candidatos', dados);
+  } catch(e) {}
+
+  fecharModalNovo();
+  render();
+  toast(editId ? '✅ Rejeição atualizada' : '✅ Rejeição registrada com sucesso');
+}
+
+function confirmarExcluir(id) {
+  const r = REJEICOES.find(x=>x.id===id);
+  if (!r) return;
+  if (!confirm(`Excluir o registro de "${r.nome}"?\nEsta ação não pode ser desfeita.`)) return;
+  REJEICOES = REJEICOES.filter(x=>x.id!==id);
+  salvarLocal();
+  render();
+  toast('🗑 Registro excluído');
+}
+
+// ─── CSV ──────────────────────────────────────────────────────────
+function exportarCSV() {
+  if (!REJEICOES.length) { toast('⚠️ Nenhum dado para exportar'); return; }
+  const linhas = [
+    ['Nome','Cargo','Empresa','Data','Etapa','Motivo','Observação','Origem','Feedback','Talent Pool'],
+    ...REJEICOES.map(r => [
+      r.nome, r.cargo, r.empresa||'', r.data, r.etapa, r.motivo,
+      r.obs||'', r.origem||'', r.feedback||'', r.talent_pool?'Sim':'Não'
+    ])
+  ];
+  const csv = linhas.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='historico_rejeicao.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado');
+}
+
+// ─── EXEMPLOS ────────────────────────────────────────────────────
+function carregarExemplos() {
+  const hoje = new Date();
+  const daysAgo = d => new Date(hoje-d*86400000).toISOString().slice(0,10);
+  REJEICOES = [
+    { id:'e1', nome:'Lucas Andrade', cargo:'Analista de Marketing', empresa:'ABC Corp', data:daysAgo(2), etapa:'Entrevista com Gestor', motivo:'Perfil comportamental não aderente', obs:'Candidato demonstrou pouca proatividade e comunicação travada sob pressão.', origem:'LinkedIn', feedback:'sim', talent_pool:false },
+    { id:'e2', nome:'Fernanda Costa', cargo:'Desenvolvedora Full Stack', empresa:'Tech Start', data:daysAgo(5), etapa:'Entrevista Técnica', motivo:'Perfil técnico insuficiente', obs:'Bom raciocínio lógico mas stack principal não atende. Potencial para back-end Jr.', origem:'Indicação', feedback:'sim', talent_pool:true },
+    { id:'e3', nome:'Ricardo Melo', cargo:'Gerente Comercial', empresa:'Vendas SA', data:daysAgo(8), etapa:'Proposta / Oferta', motivo:'Pretensão salarial acima do orçamento', obs:'Excelente candidato. Pretensão 40% acima do budget. Guardar para vaga sênior.', origem:'LinkedIn', feedback:'pendente', talent_pool:true },
+    { id:'e4', nome:'Juliana Pires', cargo:'Analista de RH', empresa:'RH Plus', data:daysAgo(10), etapa:'Triagem de Currículo', motivo:'Falta de experiência', obs:'Recém formada, experiência abaixo do mínimo de 2 anos exigido.', origem:'Site / Portal', feedback:'nao', talent_pool:false },
+    { id:'e5', nome:'Marcos Teixeira', cargo:'Coordenador de Projetos', empresa:'Obras Ltda', data:daysAgo(14), etapa:'Entrevista Final', motivo:'Aceitou outra oferta', obs:'Candidato excelente, foi contratado por concorrente. Manter contato.', origem:'Indicação', feedback:'sim', talent_pool:true },
+    { id:'e6', nome:'Patrícia Lima', cargo:'Desenvolvedora Full Stack', empresa:'Tech Start', data:daysAgo(18), etapa:'Entrevista Inicial', motivo:'Comunicação abaixo do esperado', obs:'Dificuldade de comunicação técnica para não técnicos.', origem:'Indeed', feedback:'sim', talent_pool:false },
+    { id:'e7', nome:'Carlos Vieira', cargo:'Analista Financeiro', empresa:'Finance Co', data:daysAgo(22), etapa:'Entrevista com Gestor', motivo:'Perfil não aprovado pelo gestor', obs:'Gestor preferiu candidato com background em M&A.', origem:'LinkedIn', feedback:'sim', talent_pool:false },
+    { id:'e8', nome:'Aline Santos', cargo:'Gerente de RH', empresa:'People Group', data:daysAgo(30), etapa:'Desistência', motivo:'Mudança de planos pessoais', obs:'Candidata mudará de cidade.', origem:'Banco Interno', feedback:'nao', talent_pool:false },
+  ];
+  salvarLocal();
+  render();
+  toast('📋 8 registros de exemplo carregados');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modalNovo').addEventListener('click', e => { if(e.target===document.getElementById('modalNovo')) fecharModalNovo(); });
+
+init();
+</script>
+</body>
+</html>

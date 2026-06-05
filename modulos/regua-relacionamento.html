@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Régua de Relacionamento | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;top:-20%;right:-10%;z-index:0;
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;
+}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+.btn-orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.btn-orange:hover{background:rgba(243,156,18,0.2);}
+
+/* STATS TOP */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:0.8rem;margin-bottom:1.4rem;}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--scolor,var(--accent));border-radius:2px 2px 0 0;}
+.stat-val{font-size:1.8rem;font-weight:900;font-family:var(--mono);color:var(--text);line-height:1;margin-bottom:0.25rem;}
+.stat-label{font-size:0.65rem;color:var(--muted);font-weight:600;}
+.stat-delta{font-size:0.62rem;font-weight:800;margin-top:0.3rem;}
+.stat-delta.up{color:var(--green);}
+.stat-delta.warn{color:var(--orange);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:1rem;}
+@media(max-width:1000px){.layout{grid-template-columns:1fr;}}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:0.7rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* SEARCH */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+
+select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.55rem 0.75rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;}
+select:focus{border-color:var(--border2);}
+select option{background:#1a1a1a;}
+
+.filtro-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.2rem;display:block;margin-top:0.7rem;}
+
+/* AGENDA DO DIA */
+.agenda-item{padding:0.65rem 0.8rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;margin-bottom:0.4rem;display:flex;align-items:flex-start;gap:0.65rem;cursor:pointer;transition:all 0.15s;}
+.agenda-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.04);}
+.agenda-dot{width:8px;height:8px;border-radius:50%;background:var(--acolor,var(--accent));flex-shrink:0;margin-top:0.25rem;}
+.agenda-nome{font-size:0.74rem;font-weight:700;color:var(--text);}
+.agenda-acao{font-size:0.63rem;color:var(--muted);}
+.agenda-hora{font-size:0.6rem;font-family:var(--mono);color:var(--muted);margin-top:0.2rem;}
+
+/* RÉGUA PIPELINE */
+.regua-wrap{margin-bottom:1.4rem;}
+.regua-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;margin-bottom:0.8rem;}
+.regua-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+.regua-etapas{display:flex;gap:0;overflow-x:auto;padding-bottom:0.5rem;}
+.regua-etapa{flex:1;min-width:120px;padding:0.8rem 0.9rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);position:relative;cursor:pointer;transition:all 0.15s;}
+.regua-etapa:first-child{border-radius:12px 0 0 12px;}
+.regua-etapa:last-child{border-radius:0 12px 12px 0;}
+.regua-etapa:not(:first-child){border-left:none;}
+.regua-etapa.ativa{background:rgba(59,130,246,0.08);border-color:var(--border2);}
+.regua-etapa:hover:not(.ativa){background:rgba(255,255,255,0.04);}
+.re-nome{font-size:0.63rem;font-weight:800;color:var(--text);margin-bottom:0.2rem;}
+.re-count{font-size:1rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.re-sub{font-size:0.55rem;color:var(--muted);}
+.re-bar{height:3px;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;margin-top:0.5rem;width:var(--bw,40%);}
+
+/* TALENTOS LIST */
+.talentos-list{display:flex;flex-direction:column;gap:0.5rem;}
+.talento-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.3rem;transition:all 0.18s;position:relative;overflow:hidden;}
+.talento-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tcolor,var(--accent));border-radius:3px 0 0 3px;}
+.talento-card:hover{border-color:var(--border2);box-shadow:0 6px 20px rgba(0,0,0,0.3);}
+.talento-top{display:flex;align-items:flex-start;gap:0.9rem;margin-bottom:0.75rem;}
+.talento-avatar{width:40px;height:40px;border-radius:10px;background:var(--acolor,rgba(59,130,246,0.15));display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:900;color:var(--text);flex-shrink:0;border:1px solid var(--acolor,rgba(59,130,246,0.3));}
+.talento-info{flex:1;min-width:0;}
+.talento-nome{font-size:0.88rem;font-weight:800;color:var(--text);margin-bottom:0.15rem;}
+.talento-cargo{font-size:0.7rem;color:var(--muted);margin-bottom:0.3rem;}
+.talento-badges{display:flex;flex-wrap:wrap;gap:0.3rem;}
+.tbadge{font-size:0.55rem;font-weight:800;padding:0.12rem 0.45rem;border-radius:6px;text-transform:uppercase;letter-spacing:0.5px;}
+.talento-actions{display:flex;gap:0.4rem;flex-shrink:0;flex-wrap:wrap;align-items:flex-start;}
+
+/* TIMELINE DE CONTATOS */
+.timeline{margin-top:0.8rem;padding-top:0.8rem;border-top:1px solid rgba(255,255,255,0.05);}
+.tl-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.55rem;}
+.tl-items{display:flex;gap:0;overflow-x:auto;padding-bottom:0.3rem;}
+.tl-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem;min-width:72px;position:relative;}
+.tl-item:not(:last-child)::after{content:'';position:absolute;top:9px;left:50%;width:100%;height:1px;background:rgba(255,255,255,0.07);z-index:0;}
+.tl-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--dcolor,rgba(255,255,255,0.15));background:var(--dbg,rgba(255,255,255,0.04));display:flex;align-items:center;justify-content:center;font-size:0.55rem;z-index:1;position:relative;}
+.tl-dot.feito{--dcolor:var(--green);--dbg:rgba(46,204,113,0.15);}
+.tl-dot.pendente{--dcolor:var(--orange);--dbg:rgba(243,156,18,0.15);}
+.tl-dot.futuro{--dcolor:rgba(255,255,255,0.1);--dbg:rgba(255,255,255,0.02);}
+.tl-tipo{font-size:0.55rem;color:var(--muted);text-align:center;line-height:1.3;}
+.tl-data{font-size:0.5rem;font-family:var(--mono);color:var(--muted);text-align:center;}
+
+/* PROXIMO CONTATO */
+.proximo-wrap{margin-top:0.75rem;padding:0.7rem 0.9rem;background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.1);border-radius:10px;display:flex;align-items:center;gap:0.7rem;}
+.proximo-ico{font-size:1rem;flex-shrink:0;}
+.proximo-info{flex:1;min-width:0;}
+.proximo-titulo{font-size:0.72rem;font-weight:700;color:var(--text);}
+.proximo-sub{font-size:0.63rem;color:var(--muted);}
+.proximo-prazo{font-size:0.63rem;font-family:var(--mono);padding:0.2rem 0.5rem;border-radius:6px;font-weight:700;flex-shrink:0;}
+.prazo-ok{background:rgba(46,204,113,0.1);color:var(--green);}
+.prazo-warn{background:rgba(243,156,18,0.1);color:var(--orange);}
+.prazo-late{background:rgba(231,76,60,0.1);color:var(--red);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;animation:fadeUp 0.2s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem;}
+.form-row{margin-bottom:0.9rem;}
+.form-label{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.35rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.65rem 0.85rem;font-family:inherit;font-size:0.78rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+textarea.form-input{resize:vertical;min-height:80px;line-height:1.6;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;margin-bottom:0.9rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,0.06);}
+
+/* TEMPLATE MENSAGEM */
+.template-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-top:0.5rem;}
+.template-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.6rem;}
+.template-tipo{font-size:0.6rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+.template-text{font-size:0.74rem;color:var(--text2);line-height:1.7;white-space:pre-line;}
+.template-var{color:var(--accent);font-weight:700;}
+
+/* RADIO BUTTONS */
+.radio-group{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.radio-opt{position:relative;}
+.radio-opt input{position:absolute;opacity:0;width:0;height:0;}
+.radio-opt label{display:flex;align-items:center;gap:0.35rem;padding:0.4rem 0.75rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;font-size:0.72rem;font-weight:600;color:var(--muted);transition:all 0.15s;}
+.radio-opt input:checked + label{background:rgba(59,130,246,0.1);border-color:var(--border2);color:var(--accent);}
+.radio-opt label:hover{border-color:rgba(255,255,255,0.15);color:var(--text);}
+
+/* TAGS INPUT */
+.tags-wrap{display:flex;flex-wrap:wrap;gap:0.35rem;padding:0.5rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;cursor:text;}
+.tag-item{font-size:0.65rem;font-weight:700;padding:0.18rem 0.5rem 0.18rem 0.6rem;background:rgba(59,130,246,0.15);color:var(--accent);border-radius:6px;display:flex;align-items:center;gap:0.35rem;}
+.tag-remove{cursor:pointer;opacity:0.6;font-size:0.7rem;}
+.tag-remove:hover{opacity:1;}
+.tags-input{border:none;background:transparent;font-family:inherit;font-size:0.74rem;color:var(--text);outline:none;min-width:80px;flex:1;}
+
+/* EMPTY */
+.empty{text-align:center;padding:3rem;color:var(--muted);}
+.empty-ico{font-size:2.5rem;margin-bottom:0.75rem;}
+.empty-title{font-size:0.85rem;font-weight:700;color:var(--text2);margin-bottom:0.3rem;}
+.empty-sub{font-size:0.72rem;line-height:1.6;}
+
+/* NOTIFY TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.1rem;font-size:0.76rem;font-weight:600;color:var(--text);z-index:999;display:none;align-items:center;gap:0.6rem;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:fadeUp 0.2s ease;}
+.toast.show{display:flex;}
+.toast.success{border-color:rgba(46,204,113,0.3);}
+.toast.success .toast-ico{color:var(--green);}
+.toast.error{border-color:rgba(231,76,60,0.3);}
+.toast.error .toast-ico{color:var(--red);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>CRM DE TALENTOS</div>
+      <div class="hero-title">Régua de <span>Relacionamento</span></div>
+      <div class="hero-sub">Mantenha talentos passivos aquecidos — automatize toques, registre histórico e reative na hora certa.</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModal('novo')">+ Adicionar Talento</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card" style="--scolor:var(--accent)">
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-label">Talentos na Régua</div>
+      <div class="stat-delta up">🔵 Banco ativo</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--orange)">
+      <div class="stat-val" id="stat-hoje">0</div>
+      <div class="stat-label">Toques Hoje</div>
+      <div class="stat-delta warn">📅 Aguardando contato</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--red)">
+      <div class="stat-val" id="stat-atrasados">0</div>
+      <div class="stat-label">Contatos Atrasados</div>
+      <div class="stat-delta" id="delta-atrasados">⚠ Verificar urgente</div>
+    </div>
+    <div class="stat-card" style="--scolor:var(--green)">
+      <div class="stat-val" id="stat-reativados">0</div>
+      <div class="stat-label">Reativados (30d)</div>
+      <div class="stat-delta up">✅ Reconvertidos ao funil</div>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- FILTROS -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">🔍 Filtros</div>
+        </div>
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" id="busca" placeholder="Buscar talento, cargo..." oninput="renderTalentos()"/>
+        </div>
+        <label class="filtro-label">Etapa da Régua</label>
+        <select id="filtro-etapa" onchange="renderTalentos()">
+          <option value="">Todas etapas</option>
+          <option value="novo">Novo cadastro</option>
+          <option value="1_toque">1º Toque (7 dias)</option>
+          <option value="2_toque">2º Toque (30 dias)</option>
+          <option value="3_toque">3º Toque (90 dias)</option>
+          <option value="quente">Quente — reativar</option>
+          <option value="reativado">Reativado ao funil</option>
+        </select>
+        <label class="filtro-label">Área de Atuação</label>
+        <select id="filtro-area" onchange="renderTalentos()">
+          <option value="">Todas áreas</option>
+          <option value="rh">RH & Gente</option>
+          <option value="comercial">Comercial / Vendas</option>
+          <option value="tech">Tecnologia / Dev</option>
+          <option value="financeiro">Financeiro</option>
+          <option value="operacoes">Operações</option>
+          <option value="marketing">Marketing</option>
+          <option value="juridico">Jurídico</option>
+        </select>
+        <label class="filtro-label">Próximo Toque</label>
+        <select id="filtro-prazo" onchange="renderTalentos()">
+          <option value="">Qualquer prazo</option>
+          <option value="hoje">Hoje</option>
+          <option value="semana">Essa semana</option>
+          <option value="atrasado">Atrasado</option>
+        </select>
+      </div>
+
+      <!-- AGENDA DO DIA -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📅 Agenda Hoje</div>
+          <span class="card-badge orange" id="badge-agenda">0</span>
+        </div>
+        <div id="agenda-list">
+          <div style="font-size:0.7rem;color:var(--muted);text-align:center;padding:1rem 0;">Nenhum toque hoje</div>
+        </div>
+      </div>
+
+      <!-- TEMPLATES DE MENSAGEM -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">💬 Templates</div>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModal('template')">+ Novo</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.4rem;" id="templates-list">
+          <!-- preenchido por JS -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAIN AREA -->
+    <div>
+
+      <!-- RÉGUA PIPELINE -->
+      <div class="regua-wrap">
+        <div class="regua-label">Régua de Contatos</div>
+        <div class="regua-etapas" id="regua-etapas">
+          <!-- preenchido por JS -->
+        </div>
+      </div>
+
+      <!-- TALENTOS LIST -->
+      <div class="talentos-list" id="talentos-list">
+        <!-- preenchido por JS -->
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO TALENTO -->
+<div class="modal-overlay" id="modal-novo">
+  <div class="modal">
+    <div class="modal-title" id="modal-novo-title">Adicionar Talento Passivo</div>
+    <div class="modal-sub">Cadastre profissionais que foram bem no processo mas não foram aprovados agora.</div>
+    <div class="form-row-2">
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Nome completo *</label>
+        <input class="form-input" id="n-nome" placeholder="João Silva"/>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <label class="form-label">Cargo pretendido *</label>
+        <input class="form-input" id="n-cargo" placeholder="Gerente de Projetos"/>
+      </div>
+    </div>
+    <div class="form-row-2" style="margin-top:0.9rem">
+      <div>
+        <label class="form-label">LinkedIn / E-mail</label>
+        <input class="form-input" id="n-contato" placeholder="linkedin.com/in/joao"/>
+      </div>
+      <div>
+        <label class="form-label">WhatsApp</label>
+        <input class="form-input" id="n-whatsapp" placeholder="(51) 99999-9999"/>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div>
+        <label class="form-label">Área de Atuação *</label>
+        <select class="form-input" id="n-area">
+          <option value="rh">RH & Gente</option>
+          <option value="comercial">Comercial / Vendas</option>
+          <option value="tech">Tecnologia / Dev</option>
+          <option value="financeiro">Financeiro</option>
+          <option value="operacoes">Operações</option>
+          <option value="marketing">Marketing</option>
+          <option value="juridico">Jurídico</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Nível</label>
+        <select class="form-input" id="n-nivel">
+          <option value="junior">Júnior</option>
+          <option value="pleno">Pleno</option>
+          <option value="senior">Sênior</option>
+          <option value="especialista">Especialista</option>
+          <option value="lideranca">Liderança</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Vaga de origem (processo anterior)</label>
+      <input class="form-input" id="n-vaga" placeholder="Analista RH – Cliente ABC"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Por que não foi aprovado agora</label>
+      <textarea class="form-input" id="n-motivo" rows="2" placeholder="Ex: Salário acima da faixa, contratamos internamente..."></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Pontos fortes (tags)</label>
+      <div class="tags-wrap" id="tags-wrap" onclick="document.getElementById('tag-input').focus()">
+        <input type="text" class="tags-input" id="tag-input" placeholder="Digite e pressione Enter" onkeydown="addTag(event)"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Observações internas</label>
+      <textarea class="form-input" id="n-obs" rows="2" placeholder="Notas sobre o perfil, expectativas, fit cultural..."></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Frequência de Toque na Régua</label>
+      <div class="radio-group">
+        <div class="radio-opt"><input type="radio" name="freq" id="f1" value="7,30,90" checked><label for="f1">📅 7 / 30 / 90 dias</label></div>
+        <div class="radio-opt"><input type="radio" name="freq" id="f2" value="15,45,120"><label for="f2">📅 15 / 45 / 120 dias</label></div>
+        <div class="radio-opt"><input type="radio" name="freq" id="f3" value="30,60,180"><label for="f3">📅 30 / 60 / 180 dias</label></div>
+        <div class="radio-opt"><input type="radio" name="freq" id="f4" value="manual"><label for="f4">🔧 Manual</label></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-novo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTalento()">✅ Salvar Talento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REGISTRAR CONTATO -->
+<div class="modal-overlay" id="modal-contato">
+  <div class="modal">
+    <div class="modal-title">Registrar Contato</div>
+    <div class="modal-sub" id="modal-contato-sub">Registre o toque realizado com o talento.</div>
+    <div class="form-row">
+      <label class="form-label">Canal do contato</label>
+      <div class="radio-group">
+        <div class="radio-opt"><input type="radio" name="canal" id="c1" value="whatsapp" checked><label for="c1">💬 WhatsApp</label></div>
+        <div class="radio-opt"><input type="radio" name="canal" id="c2" value="linkedin"><label for="c2">💼 LinkedIn</label></div>
+        <div class="radio-opt"><input type="radio" name="canal" id="c3" value="email"><label for="c3">📧 E-mail</label></div>
+        <div class="radio-opt"><input type="radio" name="canal" id="c4" value="ligacao"><label for="c4">📞 Ligação</label></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Resposta do candidato</label>
+      <div class="radio-group">
+        <div class="radio-opt"><input type="radio" name="resp" id="r1" value="sem_resposta" checked><label for="r1">⏳ Sem resposta</label></div>
+        <div class="radio-opt"><input type="radio" name="resp" id="r2" value="respondeu"><label for="r2">✅ Respondeu</label></div>
+        <div class="radio-opt"><input type="radio" name="resp" id="r3" value="interessado"><label for="r3">🔥 Interessado agora</label></div>
+        <div class="radio-opt"><input type="radio" name="resp" id="r4" value="nao_disponivel"><label for="r4">🚫 Não disponível</label></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Anotações do contato</label>
+      <textarea class="form-input" id="c-obs" rows="3" placeholder="O que foi falado, tom da conversa, expectativas..."></textarea>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Próximo toque em (dias)</label>
+      <input class="form-input" id="c-proximo" type="number" placeholder="30" value="30"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-contato')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarContato()">📝 Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TEMPLATE -->
+<div class="modal-overlay" id="modal-template">
+  <div class="modal">
+    <div class="modal-title">Criar Template de Mensagem</div>
+    <div class="modal-sub">Use <span style="color:var(--accent)">{{nome}}</span>, <span style="color:var(--accent)">{{cargo}}</span>, <span style="color:var(--accent)">{{recrutador}}</span> como variáveis dinâmicas.</div>
+    <div class="form-row">
+      <label class="form-label">Nome do template</label>
+      <input class="form-input" id="t-nome" placeholder="Toque inicial — WhatsApp"/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Canal</label>
+      <select class="form-input" id="t-canal">
+        <option value="whatsapp">WhatsApp</option>
+        <option value="linkedin">LinkedIn</option>
+        <option value="email">E-mail</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Mensagem</label>
+      <textarea class="form-input" id="t-msg" rows="5" placeholder="Olá {{nome}}, tudo bem? Aqui é {{recrutador}} da Orizon..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-template')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTemplate()">💾 Salvar Template</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span class="toast-ico">✅</span><span id="toast-msg"></span></div>
+
+<script>
+// ═══════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════
+let talentos = JSON.parse(localStorage.getItem('orizon_talentos_passivos') || '[]');
+let templates = JSON.parse(localStorage.getItem('orizon_templates_regua') || '[]');
+let tagsTmp = [];
+let contatoAtual = null;
+let editandoId = null;
+
+// Dados de exemplo
+if(talentos.length === 0){
+  const hoje = new Date();
+  const sub = (d,n)=>{ const dd=new Date(d); dd.setDate(dd.getDate()-n); return dd.toISOString().split('T')[0]; };
+  const add = (d,n)=>{ const dd=new Date(d); dd.setDate(dd.getDate()+n); return dd.toISOString().split('T')[0]; };
+  const h = hoje.toISOString().split('T')[0];
+
+  talentos = [
+    {
+      id:'t1', nome:'Marina Costa', cargo:'Analista de RH Sênior', area:'rh', nivel:'senior',
+      contato:'linkedin.com/in/marinacosta', whatsapp:'(51) 99111-2222',
+      vaga:'Coordenadora RH – TechPark', motivo:'Salário acima da faixa no momento',
+      tags:['People Analytics','DISC','E-Social'], obs:'Perfil excelente, muito comunicativa. Já tem proposta em andamento.',
+      freq:'7,30,90', etapa:'2_toque', reativado:false,
+      cadastro: sub(hoje,35),
+      historico:[
+        {data:sub(hoje,35),tipo:'Cadastro',canal:'sistema',resposta:'—',obs:'Adicionada após processo Coordenadora RH'},
+        {data:sub(hoje,28),tipo:'1º Toque',canal:'whatsapp',resposta:'respondeu',obs:'Respondeu! Está aberta a oportunidades em 3 meses'}
+      ],
+      proximo_toque: add(hoje,2)
+    },
+    {
+      id:'t2', nome:'Rafael Mendes', cargo:'Desenvolvedor Full Stack', area:'tech', nivel:'pleno',
+      contato:'linkedin.com/in/rafamendes', whatsapp:'(51) 98222-3333',
+      vaga:'Dev Backend – Fintech Alpha', motivo:'Optaram por candidato com mais experiência em Go',
+      tags:['React','Node.js','TypeScript','AWS'], obs:'Ótimo nos testes técnicos. Ficou em 2º lugar.',
+      freq:'7,30,90', etapa:'1_toque', reativado:false,
+      cadastro: sub(hoje,5),
+      historico:[
+        {data:sub(hoje,5),tipo:'Cadastro',canal:'sistema',resposta:'—',obs:'Adicionado após processo Dev Backend'}
+      ],
+      proximo_toque: add(hoje,0) // hoje
+    },
+    {
+      id:'t3', nome:'Juliana Rocha', cargo:'Gerente Comercial', area:'comercial', nivel:'lideranca',
+      contato:'juliana.rocha@email.com', whatsapp:'(51) 97333-4444',
+      vaga:'Dir. de Vendas – Construtora Beta', motivo:'Preferiram perfil com experiência em construção civil',
+      tags:['Gestão de times','Salesforce','B2B'], obs:'Já trabalhou no setor imobiliário, pode ser uma saída.',
+      freq:'30,60,180', etapa:'quente', reativado:false,
+      cadastro: sub(hoje,95),
+      historico:[
+        {data:sub(hoje,95),tipo:'Cadastro',canal:'sistema',resposta:'—',obs:''},
+        {data:sub(hoje,65),tipo:'1º Toque',canal:'linkedin',resposta:'sem_resposta',obs:'Mensagem enviada, sem retorno'},
+        {data:sub(hoje,35),tipo:'2º Toque',canal:'email',resposta:'respondeu',obs:'Quer conversar! Disponível em 60 dias'},
+        {data:sub(hoje,5),tipo:'3º Toque',canal:'whatsapp',resposta:'interessado',obs:'🔥 Está procurando! Solicitou vagas abertas'}
+      ],
+      proximo_toque: h // hoje
+    },
+    {
+      id:'t4', nome:'Pedro Alves', cargo:'Analista Financeiro', area:'financeiro', nivel:'pleno',
+      contato:'pedro.alves@email.com', whatsapp:'(51) 96444-5555',
+      vaga:'Controller – Grupo Meridian', motivo:'Vaga cancelada pelo cliente',
+      tags:['Excel avançado','Power BI','Contabilidade'], obs:'',
+      freq:'7,30,90', etapa:'3_toque', reativado:false,
+      cadastro: sub(hoje,100),
+      historico:[
+        {data:sub(hoje,100),tipo:'Cadastro',canal:'sistema',resposta:'—',obs:''},
+        {data:sub(hoje,93),tipo:'1º Toque',canal:'whatsapp',resposta:'respondeu',obs:'OK, aguardando novas vagas'},
+        {data:sub(hoje,63),tipo:'2º Toque',canal:'linkedin',resposta:'sem_resposta',obs:''}
+      ],
+      proximo_toque: sub(hoje,3) // atrasado
+    }
+  ];
+  salvarTalentos();
+}
+
+if(templates.length === 0){
+  templates = [
+    {
+      id:'tmpl1', nome:'1º Toque — WhatsApp', canal:'whatsapp',
+      msg:'Olá {{nome}}! Tudo bem?\n\nAqui é {{recrutador}} da Orizon. Trabalhamos juntos no processo de {{vaga}} há um tempo atrás.\n\nEstou mapeando profissionais de {{cargo}} para projetos novos — você ainda está aberta a oportunidades? 😊'
+    },
+    {
+      id:'tmpl2', nome:'Reativação — LinkedIn', canal:'linkedin',
+      msg:'Oi {{nome}}, tudo bem? 👋\n\nPassou um tempo desde nosso último contato no processo de {{vaga}}. Tenho uma oportunidade bem interessante na área de {{cargo}} que pode fazer sentido para o seu momento.\n\nPodemos trocar uma ideia essa semana?'
+    },
+    {
+      id:'tmpl3', nome:'Toque quente — Vaga aberta', canal:'whatsapp',
+      msg:'{{nome}}! 🔥\n\nAcabou de abrir uma vaga de {{cargo}} que parece perfeita para o seu perfil.\n\nTem interesse em saber mais? Posso compartilhar os detalhes agora!'
+    }
+  ];
+  localStorage.setItem('orizon_templates_regua', JSON.stringify(templates));
+}
+
+function salvarTalentos(){
+  localStorage.setItem('orizon_talentos_passivos', JSON.stringify(talentos));
+}
+
+// ═══════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════
+const ETAPAS_CONFIG = {
+  'novo':     {label:'Novo', color:'var(--muted)', emoji:'🆕'},
+  '1_toque':  {label:'1º Toque', color:'var(--blue)', emoji:'📩'},
+  '2_toque':  {label:'2º Toque', color:'var(--accent)', emoji:'📩'},
+  '3_toque':  {label:'3º Toque', color:'var(--purple)', emoji:'📩'},
+  'quente':   {label:'Quente 🔥', color:'var(--orange)', emoji:'🔥'},
+  'reativado':{label:'Reativado', color:'var(--green)', emoji:'✅'}
+};
+const AREAS_LABEL = {rh:'RH & Gente',comercial:'Comercial',tech:'Tecnologia',financeiro:'Financeiro',operacoes:'Operações',marketing:'Marketing',juridico:'Jurídico'};
+const NIVEIS_LABEL = {junior:'Júnior',pleno:'Pleno',senior:'Sênior',especialista:'Especialista',lideranca:'Liderança'};
+const AREA_COLORS = {rh:'var(--purple)',comercial:'var(--orange)',tech:'var(--accent)',financeiro:'var(--green)',operacoes:'var(--blue)',marketing:'#e91e8c',juridico:'var(--red)'};
+
+function diasParaData(data){
+  if(!data) return null;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const d = new Date(data+'T00:00:00'); d.setHours(0,0,0,0);
+  return Math.round((d - hoje) / 86400000);
+}
+
+function formatarData(data){
+  if(!data) return '—';
+  const [y,m,d] = data.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function prazoInfo(data){
+  const dias = diasParaData(data);
+  if(dias === null) return {label:'—', cls:''};
+  if(dias < 0) return {label:`${Math.abs(dias)}d atraso`, cls:'prazo-late'};
+  if(dias === 0) return {label:'Hoje!', cls:'prazo-warn'};
+  if(dias <= 3) return {label:`em ${dias}d`, cls:'prazo-warn'};
+  return {label:`em ${dias}d`, cls:'prazo-ok'};
+}
+
+// ═══════════════════════════════════
+// RENDER RÉGUA
+// ═══════════════════════════════════
+function renderRegua(){
+  const counts = {};
+  Object.keys(ETAPAS_CONFIG).forEach(k=>counts[k]=0);
+  talentos.forEach(t=>{ if(counts[t.etapa]!==undefined) counts[t.etapa]++; });
+  const total = talentos.length || 1;
+  const el = document.getElementById('regua-etapas');
+  el.innerHTML = Object.entries(ETAPAS_CONFIG).map(([key,cfg])=>`
+    <div class="regua-etapa ${key}" onclick="filtrarEtapa('${key}')" title="Filtrar por ${cfg.label}">
+      <div class="re-nome">${cfg.emoji} ${cfg.label}</div>
+      <div class="re-count">${counts[key]}</div>
+      <div class="re-sub">talentos</div>
+      <div class="re-bar" style="--bw:${Math.max(10,counts[key]/total*100)}%;background:${cfg.color}"></div>
+    </div>
+  `).join('');
+}
+
+function filtrarEtapa(etapa){
+  document.getElementById('filtro-etapa').value = etapa;
+  renderTalentos();
+}
+
+// ═══════════════════════════════════
+// RENDER STATS
+// ═══════════════════════════════════
+function renderStats(){
+  const hoje = new Date().toISOString().split('T')[0];
+  const hojeCount = talentos.filter(t=>t.proximo_toque === hoje).length;
+  const atrasados = talentos.filter(t=>t.proximo_toque && t.proximo_toque < hoje && t.etapa !== 'reativado').length;
+  const reativados = talentos.filter(t=>{
+    if(t.etapa !== 'reativado') return false;
+    const ultimo = t.historico[t.historico.length-1];
+    if(!ultimo) return false;
+    const diff = diasParaData(ultimo.data);
+    return diff >= -30;
+  }).length;
+  document.getElementById('stat-total').textContent = talentos.length;
+  document.getElementById('stat-hoje').textContent = hojeCount;
+  document.getElementById('stat-atrasados').textContent = atrasados;
+  document.getElementById('stat-reativados').textContent = reativados;
+  document.getElementById('badge-agenda').textContent = hojeCount + atrasados;
+}
+
+// ═══════════════════════════════════
+// RENDER AGENDA
+// ═══════════════════════════════════
+function renderAgenda(){
+  const hoje = new Date().toISOString().split('T')[0];
+  const urgentes = talentos.filter(t=>
+    t.etapa !== 'reativado' && t.proximo_toque && t.proximo_toque <= hoje
+  ).sort((a,b)=>a.proximo_toque.localeCompare(b.proximo_toque));
+
+  const el = document.getElementById('agenda-list');
+  if(!urgentes.length){
+    el.innerHTML = '<div style="font-size:0.7rem;color:var(--muted);text-align:center;padding:1rem 0;">🎉 Nada pendente hoje!</div>';
+    return;
+  }
+  el.innerHTML = urgentes.map(t=>{
+    const cfg = ETAPAS_CONFIG[t.etapa] || {};
+    const atrasado = t.proximo_toque < hoje;
+    return `<div class="agenda-item" onclick="abrirContato('${t.id}')" style="--acolor:${atrasado?'var(--red)':'var(--orange)'}">
+      <div class="agenda-dot"></div>
+      <div>
+        <div class="agenda-nome">${t.nome}</div>
+        <div class="agenda-acao">${cfg.emoji||''} ${cfg.label||t.etapa} • ${t.cargo}</div>
+        <div class="agenda-hora">${atrasado?'⚠ ATRASADO':'📅 Hoje'} • ${formatarData(t.proximo_toque)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// RENDER TEMPLATES
+// ═══════════════════════════════════
+function renderTemplates(){
+  const el = document.getElementById('templates-list');
+  const canal_ico = {whatsapp:'💬',linkedin:'💼',email:'📧'};
+  el.innerHTML = templates.map(t=>`
+    <div style="padding:0.6rem 0.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;cursor:pointer;transition:all 0.15s;" onclick="copiarTemplate('${t.id}')" title="Clique para copiar">
+      <div style="font-size:0.68rem;font-weight:700;color:var(--text);margin-bottom:0.15rem;">${canal_ico[t.canal]||'💬'} ${t.nome}</div>
+      <div style="font-size:0.6rem;color:var(--muted);">Clique para copiar</div>
+    </div>
+  `).join('');
+}
+
+function copiarTemplate(id){
+  const t = templates.find(x=>x.id===id);
+  if(!t) return;
+  // Substituição genérica de exemplo
+  const msg = t.msg.replace(/\{\{nome\}\}/g,'[Nome]').replace(/\{\{recrutador\}\}/g,'[Recrutador]').replace(/\{\{cargo\}\}/g,'[Cargo]').replace(/\{\{vaga\}\}/g,'[Vaga]');
+  navigator.clipboard.writeText(msg).then(()=>toast('Template copiado!','success'));
+}
+
+// ═══════════════════════════════════
+// RENDER TALENTOS
+// ═══════════════════════════════════
+function renderTalentos(){
+  const busca = document.getElementById('busca').value.toLowerCase();
+  const filtroEtapa = document.getElementById('filtro-etapa').value;
+  const filtroArea = document.getElementById('filtro-area').value;
+  const filtroPrazo = document.getElementById('filtro-prazo').value;
+  const hoje = new Date().toISOString().split('T')[0];
+
+  let lista = talentos.filter(t=>{
+    if(busca && !`${t.nome} ${t.cargo} ${(t.tags||[]).join(' ')}`.toLowerCase().includes(busca)) return false;
+    if(filtroEtapa && t.etapa !== filtroEtapa) return false;
+    if(filtroArea && t.area !== filtroArea) return false;
+    if(filtroPrazo === 'hoje' && t.proximo_toque !== hoje) return false;
+    if(filtroPrazo === 'semana'){
+      const d = diasParaData(t.proximo_toque);
+      if(d===null||d<0||d>7) return false;
+    }
+    if(filtroPrazo === 'atrasado' && (!t.proximo_toque || t.proximo_toque >= hoje)) return false;
+    return true;
+  });
+
+  const el = document.getElementById('talentos-list');
+  if(!lista.length){
+    el.innerHTML = `<div class="empty"><div class="empty-ico">🔍</div><div class="empty-title">Nenhum talento encontrado</div><div class="empty-sub">Ajuste os filtros ou adicione novos talentos à régua.</div></div>`;
+    return;
+  }
+
+  el.innerHTML = lista.map(t=>{
+    const cfg = ETAPAS_CONFIG[t.etapa]||{label:t.etapa,color:'var(--muted)',emoji:''};
+    const aColor = AREA_COLORS[t.area]||'var(--accent)';
+    const prazo = prazoInfo(t.proximo_toque);
+    const initials = t.nome.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+    const proximoContato = t.historico[t.historico.length-1];
+
+    const tl = (t.historico||[]).map((h,i)=>{
+      const ico = {Cadastro:'📋','1º Toque':'1','2º Toque':'2','3º Toque':'3'}[h.tipo]||'📝';
+      const cls = h.resposta==='interessado'?'feito':h.resposta==='respondeu'?'feito':h.tipo==='Cadastro'?'feito':'futuro';
+      return `<div class="tl-item">
+        <div class="tl-dot ${cls}">${typeof ico==='string'&&ico.length===1?ico:ico}</div>
+        <div class="tl-tipo">${h.tipo}</div>
+        <div class="tl-data">${formatarData(h.data)}</div>
+      </div>`;
+    }).join('');
+
+    // Próximo contato pendente
+    const proximo = t.proximo_toque && t.etapa !== 'reativado' ? `
+      <div class="proximo-wrap">
+        <div class="proximo-ico">📅</div>
+        <div class="proximo-info">
+          <div class="proximo-titulo">Próximo toque — ${cfg.label}</div>
+          <div class="proximo-sub">${formatarData(t.proximo_toque)} • ${t.whatsapp||t.contato}</div>
+        </div>
+        <div class="proximo-prazo ${prazo.cls}">${prazo.label}</div>
+      </div>` : '';
+
+    return `<div class="talento-card" style="--tcolor:${cfg.color}">
+      <div class="talento-top">
+        <div class="talento-avatar" style="--acolor:${aColor}22;border-color:${aColor}44;color:${aColor}">${initials}</div>
+        <div class="talento-info">
+          <div class="talento-nome">${t.nome}</div>
+          <div class="talento-cargo">${t.cargo} • ${NIVEIS_LABEL[t.nivel]||t.nivel} • ${AREAS_LABEL[t.area]||t.area}</div>
+          <div class="talento-badges">
+            <span class="tbadge" style="background:${cfg.color}22;color:${cfg.color};border:1px solid ${cfg.color}44">${cfg.emoji} ${cfg.label}</span>
+            ${(t.tags||[]).slice(0,3).map(tag=>`<span class="tbadge" style="background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid rgba(255,255,255,0.07)">${tag}</span>`).join('')}
+          </div>
+        </div>
+        <div class="talento-actions">
+          <button class="btn btn-green btn-sm" onclick="abrirContato('${t.id}')">📝 Registrar Toque</button>
+          ${t.etapa!=='reativado'?`<button class="btn btn-primary btn-sm" onclick="reativarTalento('${t.id}')">🔄 Reativar</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="editarTalento('${t.id}')">✏</button>
+          <button class="btn btn-danger btn-sm" onclick="removerTalento('${t.id}')">🗑</button>
+        </div>
+      </div>
+
+      ${t.vaga?`<div style="font-size:0.68rem;color:var(--muted);margin-bottom:0.6rem;">📌 Veio de: <span style="color:var(--text2)">${t.vaga}</span> ${t.motivo?'• '+t.motivo:''}</div>`:''}
+
+      <div class="timeline">
+        <div class="tl-label">Histórico de Contatos</div>
+        <div class="tl-items">${tl}</div>
+      </div>
+
+      ${proximo}
+
+      ${t.obs?`<div style="margin-top:0.65rem;font-size:0.7rem;color:var(--muted);background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:0.55rem 0.75rem;line-height:1.6;">💡 ${t.obs}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// AÇÕES
+// ═══════════════════════════════════
+function addTag(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const v = e.target.value.trim();
+    if(!v || tagsTmp.includes(v)) return;
+    tagsTmp.push(v);
+    renderTags();
+    e.target.value = '';
+  }
+}
+
+function renderTags(){
+  const wrap = document.getElementById('tags-wrap');
+  const input = document.getElementById('tag-input');
+  wrap.innerHTML = '';
+  tagsTmp.forEach((t,i)=>{
+    const span = document.createElement('div');
+    span.className = 'tag-item';
+    span.innerHTML = `${t}<span class="tag-remove" onclick="removeTag(${i})">✕</span>`;
+    wrap.appendChild(span);
+  });
+  wrap.appendChild(input);
+  input.focus();
+}
+
+function removeTag(i){
+  tagsTmp.splice(i,1);
+  renderTags();
+}
+
+function abrirModal(tipo, id=null){
+  if(tipo==='novo'){
+    editandoId = null;
+    tagsTmp = [];
+    document.getElementById('n-nome').value='';
+    document.getElementById('n-cargo').value='';
+    document.getElementById('n-contato').value='';
+    document.getElementById('n-whatsapp').value='';
+    document.getElementById('n-vaga').value='';
+    document.getElementById('n-motivo').value='';
+    document.getElementById('n-obs').value='';
+    document.getElementById('modal-novo-title').textContent='Adicionar Talento Passivo';
+    renderTags();
+    document.getElementById('modal-novo').classList.add('open');
+  } else if(tipo==='template'){
+    document.getElementById('t-nome').value='';
+    document.getElementById('t-msg').value='';
+    document.getElementById('modal-template').classList.add('open');
+  }
+}
+
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function editarTalento(id){
+  const t = talentos.find(x=>x.id===id);
+  if(!t) return;
+  editandoId = id;
+  tagsTmp = [...(t.tags||[])];
+  document.getElementById('n-nome').value=t.nome||'';
+  document.getElementById('n-cargo').value=t.cargo||'';
+  document.getElementById('n-contato').value=t.contato||'';
+  document.getElementById('n-whatsapp').value=t.whatsapp||'';
+  document.getElementById('n-area').value=t.area||'rh';
+  document.getElementById('n-nivel').value=t.nivel||'pleno';
+  document.getElementById('n-vaga').value=t.vaga||'';
+  document.getElementById('n-motivo').value=t.motivo||'';
+  document.getElementById('n-obs').value=t.obs||'';
+  document.getElementById('modal-novo-title').textContent='Editar Talento';
+  renderTags();
+  document.getElementById('modal-novo').classList.add('open');
+}
+
+function salvarTalento(){
+  const nome = document.getElementById('n-nome').value.trim();
+  const cargo = document.getElementById('n-cargo').value.trim();
+  if(!nome||!cargo){ toast('Preencha nome e cargo!','error'); return; }
+
+  const freq = document.querySelector('input[name="freq"]:checked')?.value || '7,30,90';
+  const hoje = new Date().toISOString().split('T')[0];
+
+  if(editandoId){
+    const idx = talentos.findIndex(x=>x.id===editandoId);
+    if(idx>=0){
+      talentos[idx] = {...talentos[idx],
+        nome, cargo,
+        contato:document.getElementById('n-contato').value.trim(),
+        whatsapp:document.getElementById('n-whatsapp').value.trim(),
+        area:document.getElementById('n-area').value,
+        nivel:document.getElementById('n-nivel').value,
+        vaga:document.getElementById('n-vaga').value.trim(),
+        motivo:document.getElementById('n-motivo').value.trim(),
+        obs:document.getElementById('n-obs').value.trim(),
+        tags:[...tagsTmp], freq
+      };
+    }
+    toast('Talento atualizado!','success');
+  } else {
+    const freqDias = freq !== 'manual' ? parseInt(freq.split(',')[0]) : 7;
+    const d = new Date(); d.setDate(d.getDate()+freqDias);
+    const proximo = d.toISOString().split('T')[0];
+
+    talentos.push({
+      id:'t'+Date.now(), nome, cargo,
+      contato:document.getElementById('n-contato').value.trim(),
+      whatsapp:document.getElementById('n-whatsapp').value.trim(),
+      area:document.getElementById('n-area').value,
+      nivel:document.getElementById('n-nivel').value,
+      vaga:document.getElementById('n-vaga').value.trim(),
+      motivo:document.getElementById('n-motivo').value.trim(),
+      obs:document.getElementById('n-obs').value.trim(),
+      tags:[...tagsTmp], freq, etapa:'novo', reativado:false,
+      cadastro:hoje,
+      historico:[{data:hoje,tipo:'Cadastro',canal:'sistema',resposta:'—',obs:'Adicionado à régua de relacionamento'}],
+      proximo_toque: proximo
+    });
+    toast('Talento adicionado à régua!','success');
+  }
+
+  salvarTalentos();
+  fecharModal('modal-novo');
+  renderAll();
+}
+
+function abrirContato(id){
+  contatoAtual = id;
+  const t = talentos.find(x=>x.id===id);
+  document.getElementById('modal-contato-sub').textContent = `Registrando toque com ${t?.nome||id}`;
+  document.getElementById('c-obs').value='';
+  document.getElementById('c-proximo').value='30';
+  document.getElementById('modal-contato').classList.add('open');
+}
+
+function salvarContato(){
+  const t = talentos.find(x=>x.id===contatoAtual);
+  if(!t) return;
+  const canal = document.querySelector('input[name="canal"]:checked')?.value||'whatsapp';
+  const resp = document.querySelector('input[name="resp"]:checked')?.value||'sem_resposta';
+  const obs = document.getElementById('c-obs').value.trim();
+  const dias = parseInt(document.getElementById('c-proximo').value)||30;
+
+  const toques = t.historico.filter(h=>h.tipo.includes('Toque')).length;
+  const tipoToque = `${toques+1}º Toque`;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  t.historico.push({data:hoje, tipo:tipoToque, canal, resposta:resp, obs});
+
+  // Atualizar etapa
+  if(resp === 'interessado'){ t.etapa = 'quente'; }
+  else if(resp === 'nao_disponivel'){ t.etapa = 'reativado'; t.proximo_toque = null; }
+  else {
+    const n = toques+1;
+    if(n===1) t.etapa='1_toque';
+    else if(n===2) t.etapa='2_toque';
+    else t.etapa='3_toque';
+    const d = new Date(); d.setDate(d.getDate()+dias);
+    t.proximo_toque = d.toISOString().split('T')[0];
+  }
+
+  salvarTalentos();
+  fecharModal('modal-contato');
+  toast('Toque registrado!','success');
+  renderAll();
+}
+
+function reativarTalento(id){
+  const t = talentos.find(x=>x.id===id);
+  if(!t) return;
+  const hoje = new Date().toISOString().split('T')[0];
+  t.etapa = 'reativado';
+  t.reativado = true;
+  t.proximo_toque = null;
+  t.historico.push({data:hoje,tipo:'Reativação',canal:'sistema',resposta:'interessado',obs:'Talento reativado ao funil de recrutamento'});
+  salvarTalentos();
+  toast('Talento reativado ao funil! 🎉','success');
+  renderAll();
+}
+
+function removerTalento(id){
+  if(!confirm('Remover este talento da régua?')) return;
+  talentos = talentos.filter(x=>x.id!==id);
+  salvarTalentos();
+  renderAll();
+  toast('Talento removido.','success');
+}
+
+function salvarTemplate(){
+  const nome = document.getElementById('t-nome').value.trim();
+  const msg = document.getElementById('t-msg').value.trim();
+  if(!nome||!msg){ toast('Preencha nome e mensagem!','error'); return; }
+  templates.push({id:'tmpl'+Date.now(), nome, canal:document.getElementById('t-canal').value, msg});
+  localStorage.setItem('orizon_templates_regua', JSON.stringify(templates));
+  fecharModal('modal-template');
+  toast('Template salvo!','success');
+  renderTemplates();
+}
+
+function exportarCSV(){
+  const headers = ['Nome','Cargo','Área','Nível','Etapa','Próximo Toque','Contato','WhatsApp','Vaga Origem','Tags'];
+  const rows = talentos.map(t=>[
+    t.nome, t.cargo, AREAS_LABEL[t.area]||t.area, NIVEIS_LABEL[t.nivel]||t.nivel,
+    ETAPAS_CONFIG[t.etapa]?.label||t.etapa, t.proximo_toque||'—', t.contato||'', t.whatsapp||'',
+    t.vaga||'', (t.tags||[]).join('; ')
+  ]);
+  const csv = [headers,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}));
+  a.download = 'regua_talentos.csv';
+  a.click();
+  toast('CSV exportado!','success');
+}
+
+// ═══════════════════════════════════
+// TOAST
+// ═══════════════════════════════════
+function toast(msg, tipo='success'){
+  const el = document.getElementById('toast');
+  const ico = document.querySelector('.toast-ico');
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = `toast show ${tipo}`;
+  ico.textContent = tipo==='success'?'✅':'⚠️';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+// Fechar modal ao clicar fora
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+function renderAll(){
+  renderStats();
+  renderRegua();
+  renderAgenda();
+  renderTemplates();
+  renderTalentos();
+}
+renderAll();
+</script>
+</body>
+</html>

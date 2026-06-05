@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Comissionamento | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-green:hover{background:rgba(46,204,113,0.2);}
+.btn-orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.btn-sm{padding:0.32rem 0.7rem;font-size:0.68rem;}
+
+/* TABS */
+.tabs-nav{display:flex;gap:0.4rem;margin-bottom:1.5rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:0.35rem;}
+.tab-btn{flex:1;font-family:inherit;font-size:0.72rem;font-weight:700;padding:0.55rem 0.8rem;border-radius:10px;border:none;cursor:pointer;transition:all 0.18s;color:var(--muted);background:transparent;text-align:center;}
+.tab-btn.on{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 4px 12px rgba(59,130,246,0.25);}
+.tab-btn:hover:not(.on){color:var(--text);background:rgba(255,255,255,0.04);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:290px 1fr;gap:1rem;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}}
+.sidebar{display:flex;flex-direction:column;gap:0.6rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* SEARCH / SELECT */
+.search-wrap{position:relative;margin-bottom:0.7rem;}
+.search-wrap input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.75rem 0.6rem 2.2rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.search-wrap input:focus{border-color:var(--border2);}
+.search-wrap input::placeholder{color:var(--muted);}
+.search-ico{position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);font-size:0.8rem;pointer-events:none;}
+.filtros{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.7rem;}
+.filtro-label{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.2rem;}
+select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.55rem 0.75rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;cursor:pointer;transition:border-color 0.18s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;}
+select:focus{border-color:var(--border2);}
+select option{background:#1a1a1a;}
+
+/* STAT MINI */
+.stat-mini{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;margin-bottom:0.4rem;}
+.stat-mini-label{font-size:0.65rem;color:var(--muted);}
+.stat-mini-val{font-size:0.78rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.stat-mini-val.green{color:var(--green);}
+.stat-mini-val.orange{color:var(--orange);}
+.stat-mini-val.red{color:var(--red);}
+
+/* STATS TOP */
+.stats-top{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+@media(max-width:700px){.stats-top{grid-template-columns:repeat(2,1fr);}}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;position:relative;overflow:hidden;}
+.stat-card::before{content:attr(data-icon);position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);font-size:2.2rem;opacity:0.07;}
+.sc-lbl{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);margin-bottom:0.4rem;}
+.sc-val{font-size:1.5rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.2rem;}
+.sc-sub{font-size:0.62rem;color:var(--muted);}
+
+/* RECRUTADOR ITEM */
+.rec-item{display:flex;align-items:center;gap:0.7rem;padding:0.65rem 0.85rem;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:0.4rem;}
+.rec-item:hover{border-color:var(--border2);background:rgba(59,130,246,0.05);}
+.rec-item.ativo{border-color:var(--border2);background:rgba(59,130,246,0.08);}
+.ri-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:800;flex-shrink:0;}
+.ri-info{flex:1;min-width:0;}
+.ri-nome{font-size:0.74rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ri-val{font-size:0.62rem;font-weight:900;font-family:var(--mono);color:var(--green);}
+.ri-status{font-size:0.52rem;font-weight:800;padding:0.14rem 0.4rem;border-radius:6px;}
+.ri-status.pago{background:rgba(46,204,113,0.1);color:var(--green);}
+.ri-status.pendente{background:rgba(243,156,18,0.1);color:var(--orange);}
+.ri-status.parcial{background:rgba(59,130,246,0.1);color:var(--accent);}
+
+/* MAIN AREA */
+.main-area{display:flex;flex-direction:column;gap:1rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;margin-bottom:0.8rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* PERFIL COMISSÃO */
+.perfil-comissao{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;margin-bottom:1.2rem;padding-bottom:1.2rem;border-bottom:1px solid var(--border);}
+.pc-avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;border:2px solid var(--border2);}
+.pc-info{flex:1;}
+.pc-nome{font-size:1.05rem;font-weight:900;margin-bottom:0.15rem;}
+.pc-meta{font-size:0.68rem;color:var(--muted);}
+.pc-badges{display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.4rem;}
+
+/* RESUMO FINANCEIRO */
+.resumo-fin{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;}
+@media(max-width:600px){.resumo-fin{grid-template-columns:1fr 1fr;}}
+.rf-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.85rem 1rem;text-align:center;}
+.rf-label{font-size:0.58rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+.rf-val{font-size:1.2rem;font-weight:900;font-family:var(--mono);}
+
+/* BARRA META */
+.meta-wrap{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.9rem 1.1rem;margin-bottom:1rem;}
+.meta-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;}
+.meta-title{font-size:0.72rem;font-weight:800;}
+.meta-pct{font-size:0.8rem;font-weight:900;font-family:var(--mono);}
+.meta-bar{height:10px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;margin-bottom:0.4rem;}
+.meta-bar-fill{height:100%;border-radius:99px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.meta-labels{display:flex;justify-content:space-between;font-size:0.6rem;color:var(--muted);}
+
+/* TABELA FECHAMENTOS */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.74rem;}
+thead tr{border-bottom:1px solid var(--border2);}
+th{font-size:0.58rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:rgba(59,130,246,0.5);padding:0.5rem 0.75rem;text-align:left;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;}
+tbody tr:hover{background:rgba(255,255,255,0.025);}
+td{padding:0.6rem 0.75rem;color:var(--text2);vertical-align:middle;}
+td.bold{font-weight:700;color:var(--text);}
+td.money{font-family:var(--mono);font-weight:800;}
+td.green{color:var(--green);}
+td.orange{color:var(--orange);}
+td.red{color:var(--red);}
+td.muted{color:var(--muted);font-size:0.68rem;}
+.td-status{font-size:0.6rem;font-weight:800;padding:0.18rem 0.55rem;border-radius:6px;white-space:nowrap;display:inline-block;}
+.td-status.pago{background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.2);}
+.td-status.pendente{background:rgba(243,156,18,0.1);color:var(--orange);border:1px solid rgba(243,156,18,0.2);}
+.td-status.cancelado{background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.2);}
+.td-status.parcial{background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}
+.form-group{display:flex;flex-direction:column;gap:0.35rem;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:0.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(59,130,246,0.6);}
+.form-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.85rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+.form-input::placeholder{color:var(--muted);}
+textarea.form-input{resize:vertical;min-height:65px;}
+
+/* CALCULADORA */
+.calc-wrap{background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(167,139,250,0.03));border:1px solid var(--border2);border-radius:16px;padding:1.3rem 1.5rem;}
+.calc-resultado{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px;padding:1rem 1.3rem;margin-top:1rem;}
+.calc-linha{display:flex;justify-content:space-between;align-items:center;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.calc-linha:last-child{border-bottom:none;padding-top:0.6rem;margin-top:0.3rem;}
+.calc-desc{font-size:0.72rem;color:var(--text2);}
+.calc-val{font-size:0.78rem;font-weight:800;font-family:var(--mono);}
+.calc-total-linha .calc-desc{font-size:0.78rem;font-weight:800;color:var(--text);}
+.calc-total-linha .calc-val{font-size:1.1rem;color:var(--green);}
+
+/* REGRAS CARD */
+.regra-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem 0.9rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:10px;margin-bottom:0.5rem;}
+.regra-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.regra-info{flex:1;}
+.regra-titulo{font-size:0.74rem;font-weight:800;margin-bottom:0.15rem;}
+.regra-desc{font-size:0.65rem;color:var(--muted);line-height:1.5;}
+.regra-val{font-size:0.8rem;font-weight:900;font-family:var(--mono);color:var(--accent);flex-shrink:0;}
+
+/* RANKING */
+.rank-item{display:flex;align-items:center;gap:0.85rem;padding:0.8rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;margin-bottom:0.5rem;transition:all 0.15s;}
+.rank-item:hover{border-color:var(--border2);}
+.rank-pos{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:900;flex-shrink:0;}
+.rank-pos.p1{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;}
+.rank-pos.p2{background:linear-gradient(135deg,#9ca3af,#d1d5db);color:#000;}
+.rank-pos.p3{background:linear-gradient(135deg,#92400e,#b45309);color:#fff;}
+.rank-pos.pn{background:rgba(255,255,255,0.07);color:var(--muted);}
+.rank-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;flex-shrink:0;}
+.rank-info{flex:1;}
+.rank-nome{font-size:0.78rem;font-weight:800;}
+.rank-sub{font-size:0.63rem;color:var(--muted);}
+.rank-val{text-align:right;}
+.rank-comissao{font-size:0.92rem;font-weight:900;font-family:var(--mono);color:var(--green);}
+.rank-fechamentos{font-size:0.62rem;color:var(--muted);}
+.rank-bar-wrap{flex:1;max-width:80px;height:5px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+.rank-bar-fill{height:100%;border-radius:99px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.modal-title{font-size:1rem;font-weight:800;}
+.modal-close{background:none;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.3rem 0.55rem;cursor:pointer;color:var(--muted);font-size:0.8rem;transition:all 0.15s;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-foot{display:flex;justify-content:flex-end;gap:0.5rem;margin-top:1.5rem;}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:3rem 1rem;}
+.empty-ico{font-size:3rem;margin-bottom:0.8rem;opacity:0.3;}
+.empty-title{font-size:0.9rem;font-weight:800;margin-bottom:0.3rem;}
+.empty-desc{font-size:0.72rem;color:var(--muted);}
+
+/* ANIMAÇÕES */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(59,130,246,0.2);border-radius:99px;}
+@media print{body::before,body::after,nav,.hero-right,.tabs-nav,.btn-primary,.modal-overlay{display:none!important;}.page{padding:0;}}
+
+/* CHIPS PERIODO */
+.chips-periodo{display:flex;gap:0.35rem;margin-bottom:1rem;}
+.chip-p{font-size:0.65rem;font-weight:700;padding:0.3rem 0.8rem;border-radius:99px;cursor:pointer;transition:all 0.15s;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:var(--muted);}
+.chip-p.on{background:rgba(59,130,246,0.15);color:var(--accent);border-color:rgba(59,130,246,0.3);}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>GESTÃO FINANCEIRA</div>
+      <div class="hero-title">💰 <span>Comissionamento</span></div>
+      <div class="hero-sub">Cálculo automático e controle de comissões por recrutador e fechamento</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">📊 Exportar CSV</button>
+      <button class="btn btn-primary" onclick="abrirModal('modal-fechamento')">＋ Registrar Fechamento</button>
+    </div>
+  </div>
+
+  <!-- STATS TOP -->
+  <div class="stats-top">
+    <div class="stat-card" data-icon="💰">
+      <div class="sc-lbl">Total a Pagar</div>
+      <div class="sc-val" id="stat-total-pagar" style="color:var(--green)">R$ 0</div>
+      <div class="sc-sub" id="stat-total-pagar-sub">no período</div>
+    </div>
+    <div class="stat-card" data-icon="✅">
+      <div class="sc-lbl">Já Pago</div>
+      <div class="sc-val" id="stat-pago" style="color:var(--accent)">R$ 0</div>
+      <div class="sc-sub">quitado</div>
+    </div>
+    <div class="stat-card" data-icon="⏳">
+      <div class="sc-lbl">Pendente</div>
+      <div class="sc-val" id="stat-pendente" style="color:var(--orange)">R$ 0</div>
+      <div class="sc-sub">aguardando pagamento</div>
+    </div>
+    <div class="stat-card" data-icon="🏆">
+      <div class="sc-lbl">Top Recrutador</div>
+      <div class="sc-val" id="stat-top" style="color:var(--purple);font-size:1rem;">—</div>
+      <div class="sc-sub" id="stat-top-sub">no período</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-nav">
+    <button class="tab-btn on" onclick="trocarTab('painel',this)">📋 Painel Geral</button>
+    <button class="tab-btn" onclick="trocarTab('recrutador',this)">👤 Por Recrutador</button>
+    <button class="tab-btn" onclick="trocarTab('calculadora',this)">🧮 Calculadora</button>
+    <button class="tab-btn" onclick="trocarTab('ranking',this)">🏆 Ranking</button>
+    <button class="tab-btn" onclick="trocarTab('regras',this)">📜 Regras</button>
+  </div>
+
+  <!-- ============ TAB: PAINEL ============ -->
+  <div id="tab-painel">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-head"><div class="card-title">🔍 Filtros</div></div>
+          <div class="filtros">
+            <div class="filtro-label">Período</div>
+            <select id="filtro-mes" onchange="renderPainel()">
+              <option value="">Todos</option>
+            </select>
+            <div class="filtro-label">Recrutador</div>
+            <select id="filtro-rec" onchange="renderPainel()">
+              <option value="">Todos</option>
+            </select>
+            <div class="filtro-label">Status</div>
+            <select id="filtro-status" onchange="renderPainel()">
+              <option value="">Todos</option>
+              <option value="pendente">Pendente</option>
+              <option value="pago">Pago</option>
+              <option value="parcial">Parcial</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+          <div id="sidebar-mini-stats"></div>
+        </div>
+      </div>
+      <div class="main-area">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">📋 Fechamentos</div>
+            <div class="card-badge" id="badge-count">0</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Candidato</th>
+                  <th>Cargo / Cliente</th>
+                  <th>Recrutador</th>
+                  <th>Fechamento</th>
+                  <th>Fee / Base</th>
+                  <th>% Comissão</th>
+                  <th>💰 Comissão</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-painel"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: POR RECRUTADOR ============ -->
+  <div id="tab-recrutador" style="display:none;">
+    <div class="layout">
+      <div class="sidebar">
+        <div class="card">
+          <div class="card-head"><div class="card-title">👥 Recrutadores</div></div>
+          <div class="search-wrap">
+            <span class="search-ico">🔎</span>
+            <input type="text" id="busca-rec" placeholder="Buscar recrutador..." oninput="renderListaRec()"/>
+          </div>
+          <div id="lista-recrutadores"></div>
+        </div>
+      </div>
+      <div class="main-area">
+        <div id="detalhe-rec-vazio" class="card">
+          <div class="empty-state">
+            <div class="empty-ico">👤</div>
+            <div class="empty-title">Selecione um recrutador</div>
+            <div class="empty-desc">Clique na lista ao lado para ver o detalhamento completo</div>
+          </div>
+        </div>
+        <div id="detalhe-rec" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: CALCULADORA ============ -->
+  <div id="tab-calculadora" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="calc-wrap">
+        <div class="card-head" style="margin-bottom:1rem;">
+          <div class="card-title">🧮 Calculadora de Comissão</div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <div class="form-label">Tipo de Cobrança</div>
+            <select id="calc-tipo" onchange="calcular()">
+              <option value="fee">Fee sobre salário anual (%)</option>
+              <option value="mensalidade">Mensalidade fixa (R$)</option>
+              <option value="reposicao">Reposição garantida (%)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Salário Mensal (R$)</div>
+            <input class="form-input" id="calc-salario" type="number" placeholder="Ex: 8000" oninput="calcular()"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Fee / % Cobrado do Cliente</div>
+            <input class="form-input" id="calc-fee" type="number" placeholder="Ex: 25" step="0.5" oninput="calcular()"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">% Comissão Recrutador</div>
+            <input class="form-input" id="calc-pct" type="number" placeholder="Ex: 30" step="1" oninput="calcular()"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Bônus por Prazo? (R$)</div>
+            <input class="form-input" id="calc-bonus" type="number" placeholder="Ex: 500" oninput="calcular()"/>
+          </div>
+          <div class="form-group">
+            <div class="form-label">Desconto / Multa (R$)</div>
+            <input class="form-input" id="calc-desconto" type="number" placeholder="Ex: 0" oninput="calcular()"/>
+          </div>
+        </div>
+        <div class="calc-resultado" id="calc-resultado">
+          <div class="calc-linha"><span class="calc-desc">Preencha os campos acima</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-head"><div class="card-title">⚡ Simulação Rápida</div></div>
+          <p style="font-size:0.72rem;color:var(--muted);margin-bottom:0.8rem;">Clique em um cenário para carregar na calculadora:</p>
+          <div class="regra-item" style="cursor:pointer;" onclick="simular(8000,25,30,0,0,'fee')">
+            <div class="regra-ico" style="background:rgba(59,130,246,0.1);">📊</div>
+            <div class="regra-info"><div class="regra-titulo">Perfil Sênior — R$8k</div><div class="regra-desc">Fee 25% · Comissão recrutador 30%</div></div>
+            <div class="regra-val">~R$720</div>
+          </div>
+          <div class="regra-item" style="cursor:pointer;" onclick="simular(5000,20,25,0,0,'fee')">
+            <div class="regra-ico" style="background:rgba(46,204,113,0.1);">📈</div>
+            <div class="regra-info"><div class="regra-titulo">Perfil Pleno — R$5k</div><div class="regra-desc">Fee 20% · Comissão recrutador 25%</div></div>
+            <div class="regra-val">~R$300</div>
+          </div>
+          <div class="regra-item" style="cursor:pointer;" onclick="simular(12000,30,35,500,0,'fee')">
+            <div class="regra-ico" style="background:rgba(167,139,250,0.1);">🏆</div>
+            <div class="regra-info"><div class="regra-titulo">Gestão / Diretoria — R$12k</div><div class="regra-desc">Fee 30% · Comissão 35% + R$500 bônus</div></div>
+            <div class="regra-val">~R$1.814</div>
+          </div>
+          <div class="regra-item" style="cursor:pointer;" onclick="simular(6000,3500,28,0,0,'mensalidade')">
+            <div class="regra-ico" style="background:rgba(243,156,18,0.1);">🔄</div>
+            <div class="regra-info"><div class="regra-titulo">Mensalidade Fixa — R$3.500</div><div class="regra-desc">Mensalidade fixa · Comissão recrutador 28%</div></div>
+            <div class="regra-val">~R$980</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: RANKING ============ -->
+  <div id="tab-ranking" style="display:none;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🏆 Ranking de Comissionamento</div>
+        <div style="display:flex;gap:0.4rem;">
+          <select id="rank-mes" onchange="renderRanking()" style="width:auto;padding:0.3rem 0.6rem;font-size:0.7rem;"></select>
+        </div>
+      </div>
+      <div class="chips-periodo" id="rank-chips">
+        <div class="chip-p on" onclick="trocarRankMetrica('comissao',this)">💰 Comissão</div>
+        <div class="chip-p" onclick="trocarRankMetrica('fechamentos',this)">🎯 Fechamentos</div>
+        <div class="chip-p" onclick="trocarRankMetrica('fee',this)">📊 Fee Total</div>
+      </div>
+      <div id="lista-ranking"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAB: REGRAS ============ -->
+  <div id="tab-regras" style="display:none;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">📜 Tabela de Comissões</div>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModal('modal-regra')">✏️ Editar</button>
+        </div>
+        <div id="lista-regras"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">ℹ️ Política de Pagamento</div></div>
+        <div style="font-size:0.74rem;color:var(--text2);line-height:1.8;display:flex;flex-direction:column;gap:0.6rem;">
+          <div class="regra-item">
+            <div class="regra-ico" style="background:rgba(59,130,246,0.1);">📅</div>
+            <div class="regra-info">
+              <div class="regra-titulo">Prazo de Pagamento</div>
+              <div class="regra-desc">Comissões são pagas até o 5º dia útil do mês seguinte ao fechamento confirmado.</div>
+            </div>
+          </div>
+          <div class="regra-item">
+            <div class="regra-ico" style="background:rgba(46,204,113,0.1);">✅</div>
+            <div class="regra-info">
+              <div class="regra-titulo">Confirmação de Fechamento</div>
+              <div class="regra-desc">O fechamento é confirmado após o candidato completar os primeiros 30 dias na empresa cliente.</div>
+            </div>
+          </div>
+          <div class="regra-item">
+            <div class="regra-ico" style="background:rgba(243,156,18,0.1);">⚠️</div>
+            <div class="regra-info">
+              <div class="regra-titulo">Garantia de Reposição</div>
+              <div class="regra-desc">Em caso de desligamento em até 90 dias, a Orizon oferece reposição gratuita. A comissão do recrutador original não é estornada.</div>
+            </div>
+          </div>
+          <div class="regra-item">
+            <div class="regra-ico" style="background:rgba(167,139,250,0.1);">🏆</div>
+            <div class="regra-info">
+              <div class="regra-titulo">Bônus de Performance</div>
+              <div class="regra-desc">Recrutadores que fecham 5+ vagas no mês recebem bônus de R$500. Acima de 8 vagas: R$1.200 de bônus.</div>
+            </div>
+          </div>
+          <div class="regra-item">
+            <div class="regra-ico" style="background:rgba(231,76,60,0.1);">❌</div>
+            <div class="regra-info">
+              <div class="regra-titulo">Cancelamento</div>
+              <div class="regra-desc">Fechamentos cancelados antes da confirmação (30d) não geram comissão. Após confirmação, a comissão é mantida.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL: REGISTRAR FECHAMENTO -->
+<div class="modal-overlay" id="modal-fechamento">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">➕ Registrar Fechamento</div>
+      <button class="modal-close" onclick="fecharModal('modal-fechamento')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <div class="form-label">Nome do Candidato</div>
+        <input class="form-input" id="nf-candidato" placeholder="Ex: Ana Paula Souza"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Cargo Fechado</div>
+        <input class="form-input" id="nf-cargo" placeholder="Ex: Gerente de TI"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Empresa Cliente</div>
+        <input class="form-input" id="nf-cliente" placeholder="Ex: Acme Ltda"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Recrutador Responsável</div>
+        <select id="nf-recrutador" class="form-input" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 0.75rem center;appearance:none;"></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Data do Fechamento</div>
+        <input class="form-input" id="nf-data" type="date"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Tipo de Cobrança</div>
+        <select class="form-input" id="nf-tipo" onchange="atualizarCamposTipo()" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 0.75rem center;appearance:none;">
+          <option value="fee">Fee sobre salário anual (%)</option>
+          <option value="mensalidade">Mensalidade fixa (R$)</option>
+          <option value="reposicao">Reposição (%)</option>
+        </select>
+      </div>
+      <div class="form-group" id="grupo-salario">
+        <div class="form-label">Salário Mensal (R$)</div>
+        <input class="form-input" id="nf-salario" type="number" placeholder="Ex: 8000" oninput="calcularModal()"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label" id="label-fee">Fee / % do Cliente</div>
+        <input class="form-input" id="nf-fee" type="number" placeholder="Ex: 25" step="0.5" oninput="calcularModal()"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">% Comissão Recrutador</div>
+        <input class="form-input" id="nf-pct" type="number" placeholder="Ex: 30" value="30" oninput="calcularModal()"/>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Bônus (R$)</div>
+        <input class="form-input" id="nf-bonus" type="number" placeholder="0" value="0" oninput="calcularModal()"/>
+      </div>
+      <div class="form-group full">
+        <div class="form-label">💰 Comissão Calculada</div>
+        <div style="background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);border-radius:10px;padding:0.7rem 1rem;font-family:var(--mono);font-size:1.1rem;font-weight:900;color:var(--green);" id="modal-comissao-calc">R$ 0,00</div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Status</div>
+        <select class="form-input" id="nf-status" style="background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 0.75rem center;appearance:none;">
+          <option value="pendente">Pendente</option>
+          <option value="pago">Pago</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Observações</div>
+        <input class="form-input" id="nf-obs" placeholder="Notas adicionais..."/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="fecharModal('modal-fechamento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarFechamento()">✅ Salvar Fechamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR REGRAS -->
+<div class="modal-overlay" id="modal-regra">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📜 Editar Tabela de Comissões</div>
+      <button class="modal-close" onclick="fecharModal('modal-regra')">✕</button>
+    </div>
+    <p style="font-size:0.72rem;color:var(--muted);margin-bottom:1rem;">Defina os percentuais padrão de comissão por nível de cargo.</p>
+    <div id="form-regras"></div>
+    <div style="margin-top:1rem;">
+      <button class="btn btn-ghost btn-sm" onclick="adicionarRegra()">＋ Adicionar Nível</button>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="fecharModal('modal-regra')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRegras()">✅ Salvar Regras</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="position:fixed;bottom:1.5rem;right:1.5rem;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1.1rem;font-size:0.75rem;font-weight:700;color:var(--text);z-index:9999;transform:translateY(80px);opacity:0;transition:all 0.3s;max-width:300px;"></div>
+
+<script>
+// ============ DADOS ============
+const COLORS = ['#3b82f6','#a78bfa','#2ecc71','#f39c12','#e74c3c','#ec4899','#06b6d4','#84cc16'];
+
+let recrutadores = JSON.parse(localStorage.getItem('orizon_com_recs') || 'null') || [
+  {id:'r1',nome:'Carla Mendes',cor:COLORS[0]},
+  {id:'r2',nome:'Juliana Souza',cor:COLORS[1]},
+  {id:'r3',nome:'Pedro Alves',cor:COLORS[2]},
+  {id:'r4',nome:'Marcos Lima',cor:COLORS[3]},
+  {id:'r5',nome:'Ana Ferreira',cor:COLORS[4]},
+];
+
+let fechamentos = JSON.parse(localStorage.getItem('orizon_com_fech') || 'null') || gerarExemplos();
+let regras = JSON.parse(localStorage.getItem('orizon_com_regras') || 'null') || [
+  {id:'rg1',nivel:'Assistente / Analista Jr.',fee:20,comissao:25},
+  {id:'rg2',nivel:'Analista Pleno / Sr.',fee:22,comissao:28},
+  {id:'rg3',nivel:'Especialista / Coordenador',fee:25,comissao:30},
+  {id:'rg4',nivel:'Gerente / Diretor',fee:30,comissao:35},
+  {id:'rg5',nivel:'C-Level / VP',fee:33,comissao:38},
+];
+
+let rankMetrica = 'comissao';
+let recSelecionado = null;
+
+function gerarExemplos(){
+  const hoje = new Date();
+  const mesAnt = (m,y) => { const d=new Date(y,m-1,15); return d.toISOString().split('T')[0]; };
+  const thisY = hoje.getFullYear();
+  const thisM = hoje.getMonth()+1;
+  const lastM = thisM === 1 ? 12 : thisM-1;
+  const lastY = thisM === 1 ? thisY-1 : thisY;
+  return [
+    {id:'f1',candidato:'Ana Lima',cargo:'Analista de Marketing',cliente:'TechCorp',recrutadorId:'r1',data:mesAnt(thisM,thisY),tipo:'fee',salario:6000,fee:22,pct:28,bonus:0,comissao:CalcularComissao('fee',6000,22,28,0),status:'pago',obs:''},
+    {id:'f2',candidato:'Bruno Ramos',cargo:'Dev Backend Sr.',cliente:'Acme Ltda',recrutadorId:'r2',data:mesAnt(thisM,thisY),tipo:'fee',salario:10000,fee:25,pct:30,bonus:500,comissao:CalcularComissao('fee',10000,25,30,500),status:'pago',obs:''},
+    {id:'f3',candidato:'Carla Nunes',cargo:'Gerente de RH',cliente:'GlobalNet',recrutadorId:'r1',data:mesAnt(thisM,thisY),tipo:'fee',salario:12000,fee:30,pct:35,bonus:0,comissao:CalcularComissao('fee',12000,30,35,0),status:'pendente',obs:'Aguardando fatura'},
+    {id:'f4',candidato:'Diego Souza',cargo:'Analista Pleno',cliente:'Localiza',recrutadorId:'r3',data:mesAnt(thisM,thisY),tipo:'mensalidade',salario:0,fee:3500,pct:28,bonus:0,comissao:CalcularComissao('mensalidade',0,3500,28,0),status:'pago',obs:''},
+    {id:'f5',candidato:'Eduarda Melo',cargo:'Coordenadora de Vendas',cliente:'DataTech',recrutadorId:'r2',data:mesAnt(thisM,thisY),tipo:'fee',salario:8500,fee:25,pct:30,bonus:0,comissao:CalcularComissao('fee',8500,25,30,0),status:'parcial',obs:'50% pago'},
+    {id:'f6',candidato:'Felipe Rocha',cargo:'Diretor Financeiro',cliente:'Banco Sul',recrutadorId:'r4',data:mesAnt(lastM,lastY),tipo:'fee',salario:20000,fee:30,pct:35,bonus:1200,comissao:CalcularComissao('fee',20000,30,35,1200),status:'pago',obs:''},
+    {id:'f7',candidato:'Gabi Costa',cargo:'Analista Jr.',cliente:'Retail SA',recrutadorId:'r5',data:mesAnt(lastM,lastY),tipo:'fee',salario:4500,fee:20,pct:25,bonus:0,comissao:CalcularComissao('fee',4500,20,25,0),status:'pago',obs:''},
+    {id:'f8',candidato:'Henrique Leal',cargo:'Especialista em BI',cliente:'DataTech',recrutadorId:'r1',data:mesAnt(lastM,lastY),tipo:'fee',salario:9000,fee:25,pct:30,bonus:500,comissao:CalcularComissao('fee',9000,25,30,500),status:'pendente',obs:''},
+  ];
+}
+
+function CalcularComissao(tipo, salario, fee, pct, bonus){
+  let base = 0;
+  if(tipo === 'fee') base = salario * 12 * (fee/100);
+  else if(tipo === 'mensalidade') base = fee; // fee = valor da mensalidade
+  else if(tipo === 'reposicao') base = salario * (fee/100);
+  return Math.round((base * (pct/100)) + (bonus || 0));
+}
+
+function salvarDados(){
+  localStorage.setItem('orizon_com_recs', JSON.stringify(recrutadores));
+  localStorage.setItem('orizon_com_fech', JSON.stringify(fechamentos));
+  localStorage.setItem('orizon_com_regras', JSON.stringify(regras));
+}
+
+// ============ UTILITÁRIOS ============
+function fmtMoeda(v){ return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtMoedaShort(v){
+  if(v >= 1000) return 'R$ '+(v/1000).toFixed(1)+'k';
+  return 'R$ '+v;
+}
+function initials(nome){ return nome.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase(); }
+function mesLabel(dateStr){
+  const [y,m] = dateStr.split('-');
+  return new Date(y,m-1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+function mesKey(dateStr){ return dateStr.substring(0,7); }
+
+function toast(msg, tipo='ok'){
+  const t = document.getElementById('toast');
+  t.style.background = tipo==='erro'?'rgba(231,76,60,0.15)':tipo==='aviso'?'rgba(243,156,18,0.15)':'rgba(46,204,113,0.12)';
+  t.style.borderColor = tipo==='erro'?'rgba(231,76,60,0.4)':tipo==='aviso'?'rgba(243,156,18,0.4)':'rgba(46,204,113,0.3)';
+  t.textContent = msg;
+  t.style.opacity='1'; t.style.transform='translateY(0)';
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(80px)'; }, 3000);
+}
+
+function getNomeRec(id){ const r=recrutadores.find(x=>x.id===id); return r?r.nome:'—'; }
+function getCorRec(id){ const r=recrutadores.find(x=>x.id===id); return r?r.cor:'#555'; }
+
+// ============ STATS GLOBAIS ============
+function atualizarStats(){
+  const mes = document.getElementById('filtro-mes')?.value || '';
+  const lista = mes ? fechamentos.filter(f=>mesKey(f.data)===mes) : fechamentos;
+
+  const totalPagar = lista.reduce((s,f)=>s+(f.status!=='cancelado'?f.comissao:0),0);
+  const totalPago = lista.filter(f=>f.status==='pago').reduce((s,f)=>s+f.comissao,0);
+  const totalPendente = lista.filter(f=>f.status==='pendente'||f.status==='parcial').reduce((s,f)=>s+f.comissao,0);
+
+  document.getElementById('stat-total-pagar').textContent = fmtMoeda(totalPagar);
+  document.getElementById('stat-pago').textContent = fmtMoeda(totalPago);
+  document.getElementById('stat-pendente').textContent = fmtMoeda(totalPendente);
+
+  // Top recrutador
+  const byRec = {};
+  lista.forEach(f=>{
+    if(f.status==='cancelado') return;
+    byRec[f.recrutadorId] = (byRec[f.recrutadorId]||0) + f.comissao;
+  });
+  const topId = Object.entries(byRec).sort((a,b)=>b[1]-a[1])[0];
+  if(topId){
+    document.getElementById('stat-top').textContent = getNomeRec(topId[0]).split(' ')[0];
+    document.getElementById('stat-top-sub').textContent = fmtMoeda(topId[1]);
+  }
+}
+
+// ============ POPULATE SELECTS ============
+function popularSelects(){
+  const meses = [...new Set(fechamentos.map(f=>mesKey(f.data)))].sort().reverse();
+  const selMes = document.getElementById('filtro-mes');
+  selMes.innerHTML = '<option value="">Todos</option>' + meses.map(m=>`<option value="${m}">${mesLabel(m+'-01')}</option>`).join('');
+
+  const rankMes = document.getElementById('rank-mes');
+  if(rankMes) rankMes.innerHTML = '<option value="">Todos</option>' + meses.map(m=>`<option value="${m}">${mesLabel(m+'-01')}</option>`).join('');
+
+  const selRec = document.getElementById('filtro-rec');
+  selRec.innerHTML = '<option value="">Todos</option>' + recrutadores.map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
+
+  // Modal
+  const nfRec = document.getElementById('nf-recrutador');
+  nfRec.innerHTML = recrutadores.map(r=>`<option value="${r.id}">${r.nome}</option>`).join('');
+}
+
+// ============ TAB: PAINEL ============
+function renderPainel(){
+  const mes = document.getElementById('filtro-mes').value;
+  const rec = document.getElementById('filtro-rec').value;
+  const status = document.getElementById('filtro-status').value;
+  atualizarStats();
+
+  let lista = fechamentos.filter(f=>{
+    if(mes && mesKey(f.data) !== mes) return false;
+    if(rec && f.recrutadorId !== rec) return false;
+    if(status && f.status !== status) return false;
+    return true;
+  });
+
+  document.getElementById('badge-count').textContent = lista.length;
+
+  // Sidebar mini stats
+  const total = lista.reduce((s,f)=>s+(f.status!=='cancelado'?f.comissao:0),0);
+  const pago = lista.filter(f=>f.status==='pago').reduce((s,f)=>s+f.comissao,0);
+  const pend = lista.filter(f=>f.status==='pendente').reduce((s,f)=>s+f.comissao,0);
+  document.getElementById('sidebar-mini-stats').innerHTML = `
+    <div class="stat-mini"><span class="stat-mini-label">Total</span><span class="stat-mini-val">${fmtMoedaShort(total)}</span></div>
+    <div class="stat-mini"><span class="stat-mini-label">Pago</span><span class="stat-mini-val green">${fmtMoedaShort(pago)}</span></div>
+    <div class="stat-mini"><span class="stat-mini-label">Pendente</span><span class="stat-mini-val orange">${fmtMoedaShort(pend)}</span></div>
+    <div class="stat-mini"><span class="stat-mini-label">Fechamentos</span><span class="stat-mini-val">${lista.length}</span></div>`;
+
+  const tbody = document.getElementById('tabela-painel');
+  if(!lista.length){
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:2rem;color:var(--muted);">Nenhum fechamento encontrado</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = lista.map(f=>{
+    const cor = getCorRec(f.recrutadorId);
+    const feeLabel = f.tipo==='fee'?`${f.fee}% fee`:f.tipo==='mensalidade'?'Mensalidade':'Reposição';
+    const baseLabel = f.tipo==='fee'?fmtMoedaShort(f.salario*12):fmtMoedaShort(f.fee);
+    return `<tr>
+      <td class="bold">${f.candidato}</td>
+      <td><div class="bold">${f.cargo}</div><div class="muted" style="font-size:0.65rem;">${f.cliente}</div></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <div style="width:24px;height:24px;border-radius:50%;background:${cor}22;color:${cor};display:flex;align-items:center;justify-content:center;font-size:0.58rem;font-weight:800;">${initials(getNomeRec(f.recrutadorId))}</div>
+          <span>${getNomeRec(f.recrutadorId)}</span>
+        </div>
+      </td>
+      <td class="muted">${new Date(f.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+      <td><div class="muted" style="font-size:0.65rem;">${feeLabel}</div><div class="bold">${baseLabel}</div></td>
+      <td class="bold">${f.pct}%</td>
+      <td class="money green">${fmtMoeda(f.comissao)}</td>
+      <td><span class="td-status ${f.status}">${f.status.charAt(0).toUpperCase()+f.status.slice(1)}</span></td>
+      <td>
+        <div style="display:flex;gap:0.3rem;">
+          ${f.status==='pendente'?`<button class="btn btn-green btn-sm" onclick="marcarPago('${f.id}')">✅ Pagar</button>`:''}
+          <button class="btn btn-danger btn-sm" onclick="removerFechamento('${f.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function marcarPago(id){
+  const f = fechamentos.find(x=>x.id===id);
+  if(f){ f.status='pago'; salvarDados(); renderPainel(); toast('✅ Comissão marcada como paga!'); }
+}
+function removerFechamento(id){
+  if(!confirm('Remover este fechamento?')) return;
+  fechamentos = fechamentos.filter(x=>x.id!==id);
+  salvarDados(); renderPainel(); atualizarStats(); toast('Fechamento removido','aviso');
+}
+
+// ============ TAB: POR RECRUTADOR ============
+function renderListaRec(){
+  const busca = document.getElementById('busca-rec').value.toLowerCase();
+  const lista = recrutadores.filter(r=>!busca||r.nome.toLowerCase().includes(busca));
+  const container = document.getElementById('lista-recrutadores');
+
+  container.innerHTML = lista.map(r=>{
+    const fechs = fechamentos.filter(f=>f.recrutadorId===r.id && f.status!=='cancelado');
+    const total = fechs.reduce((s,f)=>s+f.comissao,0);
+    const pago = fechs.filter(f=>f.status==='pago').reduce((s,f)=>s+f.comissao,0);
+    const pend = total - pago;
+    const statusClass = pend > 0 ? 'pendente' : 'pago';
+    return `<div class="rec-item ${recSelecionado===r.id?'ativo':''}" onclick="selecionarRec('${r.id}')">
+      <div class="ri-avatar" style="background:${r.cor}22;color:${r.cor};">${initials(r.nome)}</div>
+      <div class="ri-info">
+        <div class="ri-nome">${r.nome}</div>
+        <div class="ri-val">${fmtMoedaShort(total)} · ${fechs.length} fech.</div>
+      </div>
+      <div class="ri-status ${statusClass}">${statusClass==='pago'?'Quitado':'Pendente'}</div>
+    </div>`;
+  }).join('');
+}
+
+function selecionarRec(id){
+  recSelecionado = id;
+  renderListaRec();
+  const r = recrutadores.find(x=>x.id===id);
+  if(!r) return;
+
+  const fechs = fechamentos.filter(f=>f.recrutadorId===id);
+  const ativos = fechs.filter(f=>f.status!=='cancelado');
+  const totalFee = ativos.reduce((s,f)=>{
+    const base = f.tipo==='fee'?f.salario*12*(f.fee/100):f.fee;
+    return s+base;
+  },0);
+  const totalComissao = ativos.reduce((s,f)=>s+f.comissao,0);
+  const pago = ativos.filter(f=>f.status==='pago').reduce((s,f)=>s+f.comissao,0);
+  const pendente = totalComissao - pago;
+
+  // Meta: 5 fechamentos = meta mínima
+  const metaFechs = 5;
+  const pctMeta = Math.min(100, Math.round((ativos.length/metaFechs)*100));
+  const metaColor = pctMeta>=100?'var(--green)':pctMeta>=60?'var(--orange)':'var(--red)';
+
+  document.getElementById('detalhe-rec-vazio').style.display = 'none';
+  const det = document.getElementById('detalhe-rec');
+  det.style.display = 'flex';
+  det.style.flexDirection = 'column';
+  det.style.gap = '1rem';
+
+  det.innerHTML = `
+    <div class="card">
+      <div class="perfil-comissao">
+        <div class="pc-avatar" style="background:${r.cor}22;color:${r.cor};">${initials(r.nome)}</div>
+        <div class="pc-info">
+          <div class="pc-nome">${r.nome}</div>
+          <div class="pc-meta">${ativos.length} fechamentos totais</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:1.4rem;font-weight:900;font-family:var(--mono);color:var(--green);">${fmtMoeda(totalComissao)}</div>
+          <div style="font-size:0.62rem;color:var(--muted);">comissão total</div>
+        </div>
+      </div>
+      <div class="resumo-fin">
+        <div class="rf-card"><div class="rf-label">Fee Gerado</div><div class="rf-val" style="color:var(--accent);">${fmtMoeda(totalFee)}</div></div>
+        <div class="rf-card"><div class="rf-label">Já Pago</div><div class="rf-val" style="color:var(--green);">${fmtMoeda(pago)}</div></div>
+        <div class="rf-card"><div class="rf-label">Pendente</div><div class="rf-val" style="color:var(--orange);">${fmtMoeda(pendente)}</div></div>
+      </div>
+      <div class="meta-wrap">
+        <div class="meta-head">
+          <div class="meta-title">🎯 Meta de Fechamentos (mín. ${metaFechs}/mês)</div>
+          <div class="meta-pct" style="color:${metaColor};">${ativos.length} / ${metaFechs} — ${pctMeta}%</div>
+        </div>
+        <div class="meta-bar"><div class="meta-bar-fill" style="width:${pctMeta}%;background:${metaColor};"></div></div>
+        <div class="meta-labels"><span>0</span><span>${metaFechs} vagas</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title">📋 Histórico de Fechamentos</div><div class="card-badge">${fechs.length}</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Candidato</th><th>Cargo / Cliente</th><th>Data</th><th>Fee</th><th>Comissão</th><th>Status</th></tr></thead>
+          <tbody>
+            ${fechs.map(f=>`<tr>
+              <td class="bold">${f.candidato}</td>
+              <td><div class="bold">${f.cargo}</div><div class="muted" style="font-size:0.65rem;">${f.cliente}</div></td>
+              <td class="muted">${new Date(f.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+              <td class="bold">${f.tipo==='fee'?f.fee+'%':fmtMoedaShort(f.fee)}</td>
+              <td class="money green">${fmtMoeda(f.comissao)}</td>
+              <td><span class="td-status ${f.status}">${f.status.charAt(0).toUpperCase()+f.status.slice(1)}</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ============ CALCULADORA ============
+function calcular(){
+  const tipo = document.getElementById('calc-tipo').value;
+  const salario = parseFloat(document.getElementById('calc-salario').value)||0;
+  const fee = parseFloat(document.getElementById('calc-fee').value)||0;
+  const pct = parseFloat(document.getElementById('calc-pct').value)||0;
+  const bonus = parseFloat(document.getElementById('calc-bonus').value)||0;
+  const desconto = parseFloat(document.getElementById('calc-desconto').value)||0;
+
+  let baseCliente = 0;
+  let labelBase = '';
+  if(tipo==='fee'){ baseCliente = salario*12*(fee/100); labelBase=`R$${salario.toLocaleString('pt-BR')} × 12 × ${fee}%`; }
+  else if(tipo==='mensalidade'){ baseCliente = fee; labelBase='Mensalidade fixa'; }
+  else { baseCliente = salario*(fee/100); labelBase=`R$${salario.toLocaleString('pt-BR')} × ${fee}%`; }
+
+  const comissaoBruta = baseCliente*(pct/100);
+  const comissaoFinal = Math.max(0, comissaoBruta + bonus - desconto);
+
+  document.getElementById('calc-resultado').innerHTML = `
+    <div class="calc-linha"><span class="calc-desc">Base do Cliente (${labelBase})</span><span class="calc-val" style="color:var(--accent);">${fmtMoeda(baseCliente)}</span></div>
+    <div class="calc-linha"><span class="calc-desc">Comissão bruta (${pct}% da base)</span><span class="calc-val">${fmtMoeda(comissaoBruta)}</span></div>
+    ${bonus?`<div class="calc-linha"><span class="calc-desc">+ Bônus</span><span class="calc-val" style="color:var(--green);">+${fmtMoeda(bonus)}</span></div>`:''}
+    ${desconto?`<div class="calc-linha"><span class="calc-desc">- Desconto / Multa</span><span class="calc-val" style="color:var(--red);">-${fmtMoeda(desconto)}</span></div>`:''}
+    <div class="calc-linha calc-total-linha"><span class="calc-desc">💰 Comissão Final</span><span class="calc-val">${fmtMoeda(comissaoFinal)}</span></div>`;
+}
+
+function simular(salario, fee, pct, bonus, desconto, tipo){
+  document.getElementById('calc-tipo').value = tipo;
+  document.getElementById('calc-salario').value = salario;
+  document.getElementById('calc-fee').value = fee;
+  document.getElementById('calc-pct').value = pct;
+  document.getElementById('calc-bonus').value = bonus;
+  document.getElementById('calc-desconto').value = desconto;
+  calcular();
+  trocarTab('calculadora', document.querySelector('.tab-btn:nth-child(3)'));
+}
+
+// ============ RANKING ============
+function trocarRankMetrica(m, el){
+  rankMetrica = m;
+  document.querySelectorAll('#rank-chips .chip-p').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderRanking();
+}
+
+function renderRanking(){
+  const mes = document.getElementById('rank-mes')?.value||'';
+  let lista = mes ? fechamentos.filter(f=>mesKey(f.data)===mes && f.status!=='cancelado') : fechamentos.filter(f=>f.status!=='cancelado');
+
+  const byRec = {};
+  recrutadores.forEach(r=>{ byRec[r.id]={fechamentos:0,comissao:0,fee:0}; });
+  lista.forEach(f=>{
+    if(!byRec[f.recrutadorId]) return;
+    byRec[f.recrutadorId].fechamentos++;
+    byRec[f.recrutadorId].comissao += f.comissao;
+    const base = f.tipo==='fee'?f.salario*12*(f.fee/100):f.fee;
+    byRec[f.recrutadorId].fee += base;
+  });
+
+  const sorted = recrutadores.map(r=>({...r,...byRec[r.id]})).sort((a,b)=>b[rankMetrica]-a[rankMetrica]);
+  const maxVal = sorted[0]?.[rankMetrica]||1;
+
+  const posClass = ['p1','p2','p3'];
+  document.getElementById('lista-ranking').innerHTML = sorted.map((r,i)=>{
+    const val = r[rankMetrica];
+    const pct = Math.round((val/maxVal)*100);
+    const displayVal = rankMetrica==='fechamentos' ? r.fechamentos+' fech.' : fmtMoeda(val);
+    return `<div class="rank-item" style="animation:fadeUp 0.3s ease ${i*0.05}s both">
+      <div class="rank-pos ${posClass[i]||'pn'}">${i+1}</div>
+      <div class="rank-avatar" style="background:${r.cor}22;color:${r.cor};">${initials(r.nome)}</div>
+      <div class="rank-info">
+        <div class="rank-nome">${r.nome}</div>
+        <div class="rank-sub">${r.fechamentos} fechamentos · ${fmtMoeda(r.comissao)}</div>
+        <div style="margin-top:4px;height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:${r.cor};border-radius:99px;"></div></div>
+      </div>
+      <div class="rank-val">
+        <div class="rank-comissao" style="color:${r.cor};">${displayVal}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ REGRAS ============
+function renderRegras(){
+  document.getElementById('lista-regras').innerHTML = regras.map(r=>`
+    <div class="regra-item">
+      <div class="regra-ico" style="background:rgba(59,130,246,0.1);">📊</div>
+      <div class="regra-info">
+        <div class="regra-titulo">${r.nivel}</div>
+        <div class="regra-desc">Fee cliente: ${r.fee}% · Comissão recrutador: ${r.comissao}%</div>
+      </div>
+      <div class="regra-val">${r.comissao}%</div>
+    </div>`).join('');
+
+  document.getElementById('form-regras').innerHTML = regras.map((r,i)=>`
+    <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:0.5rem;align-items:center;margin-bottom:0.5rem;">
+      <input class="form-input" value="${r.nivel}" id="regra-nivel-${i}" placeholder="Nível"/>
+      <input class="form-input" style="width:70px;" type="number" value="${r.fee}" id="regra-fee-${i}" placeholder="Fee%"/>
+      <input class="form-input" style="width:70px;" type="number" value="${r.comissao}" id="regra-pct-${i}" placeholder="Com%"/>
+      <button class="btn btn-danger btn-sm" onclick="removerRegra(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function adicionarRegra(){
+  regras.push({id:'rg'+Date.now(),nivel:'Novo Nível',fee:20,comissao:25});
+  renderRegras();
+}
+function removerRegra(i){ regras.splice(i,1); renderRegras(); }
+function salvarRegras(){
+  regras = regras.map((r,i)=>({...r,
+    nivel: document.getElementById(`regra-nivel-${i}`)?.value||r.nivel,
+    fee: parseFloat(document.getElementById(`regra-fee-${i}`)?.value)||r.fee,
+    comissao: parseFloat(document.getElementById(`regra-pct-${i}`)?.value)||r.comissao,
+  }));
+  salvarDados();
+  renderRegras();
+  fecharModal('modal-regra');
+  toast('✅ Regras salvas!');
+}
+
+// ============ MODAL FECHAMENTO ============
+function atualizarCamposTipo(){
+  const tipo = document.getElementById('nf-tipo').value;
+  const grupoSal = document.getElementById('grupo-salario');
+  const labelFee = document.getElementById('label-fee');
+  grupoSal.style.display = tipo==='mensalidade' ? 'none' : 'flex';
+  labelFee.textContent = tipo==='mensalidade' ? 'Valor da Mensalidade (R$)' : tipo==='reposicao' ? '% Reposição' : 'Fee % do Cliente';
+  calcularModal();
+}
+
+function calcularModal(){
+  const tipo = document.getElementById('nf-tipo').value;
+  const salario = parseFloat(document.getElementById('nf-salario').value)||0;
+  const fee = parseFloat(document.getElementById('nf-fee').value)||0;
+  const pct = parseFloat(document.getElementById('nf-pct').value)||0;
+  const bonus = parseFloat(document.getElementById('nf-bonus').value)||0;
+  const val = CalcularComissao(tipo, salario, fee, pct, bonus);
+  document.getElementById('modal-comissao-calc').textContent = fmtMoeda(val);
+}
+
+function salvarFechamento(){
+  const candidato = document.getElementById('nf-candidato').value.trim();
+  const cargo = document.getElementById('nf-cargo').value.trim();
+  const cliente = document.getElementById('nf-cliente').value.trim();
+  const recrutadorId = document.getElementById('nf-recrutador').value;
+  const data = document.getElementById('nf-data').value;
+  const tipo = document.getElementById('nf-tipo').value;
+  const salario = parseFloat(document.getElementById('nf-salario').value)||0;
+  const fee = parseFloat(document.getElementById('nf-fee').value)||0;
+  const pct = parseFloat(document.getElementById('nf-pct').value)||30;
+  const bonus = parseFloat(document.getElementById('nf-bonus').value)||0;
+  const status = document.getElementById('nf-status').value;
+  const obs = document.getElementById('nf-obs').value;
+
+  if(!candidato||!cargo||!data){ toast('Preencha os campos obrigatórios','erro'); return; }
+
+  const comissao = CalcularComissao(tipo, salario, fee, pct, bonus);
+  fechamentos.push({id:'f'+Date.now(),candidato,cargo,cliente,recrutadorId,data,tipo,salario,fee,pct,bonus,comissao,status,obs});
+  salvarDados(); popularSelects(); renderPainel(); atualizarStats();
+  fecharModal('modal-fechamento'); toast('✅ Fechamento registrado! Comissão: '+fmtMoeda(comissao));
+}
+
+// ============ MODAL / TAB ============
+function abrirModal(id){ document.getElementById(id).classList.add('open'); }
+function fecharModal(id){ document.getElementById(id).classList.remove('open'); }
+document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-overlay')) fecharModal(e.target.id); });
+
+function trocarTab(tab, el){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if(el) el.classList.add('on');
+  ['painel','recrutador','calculadora','ranking','regras'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = t===tab?'block':'none';
+  });
+  if(tab==='recrutador') renderListaRec();
+  if(tab==='ranking') renderRanking();
+  if(tab==='regras') renderRegras();
+}
+
+// ============ EXPORT ============
+function exportarCSV(){
+  const linhas = [['Candidato','Cargo','Cliente','Recrutador','Data','Tipo','Salário','Fee%','Com%','Bônus','Comissão Total','Status']];
+  fechamentos.forEach(f=>{
+    linhas.push([f.candidato,f.cargo,f.cliente,getNomeRec(f.recrutadorId),f.data,f.tipo,f.salario,f.fee,f.pct,f.bonus,f.comissao,f.status]);
+  });
+  const csv = linhas.map(l=>l.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='comissionamento_orizon.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============ INIT ============
+document.getElementById('nf-data').value = new Date().toISOString().split('T')[0];
+popularSelects();
+atualizarStats();
+renderPainel();
+</script>
+</body>
+</html>

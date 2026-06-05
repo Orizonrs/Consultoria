@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Análise de Desistência | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--yellow:#f1c40f;--blue:#3498db;
+  --purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;--cyan:#06b6d4;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:800px;height:800px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* HERO */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.8rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--red);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+.card-badge.cyan{background:rgba(6,182,212,0.1);color:var(--cyan);border-color:rgba(6,182,212,0.25);}
+
+.sec{margin:1.4rem 0 0.8rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* KPI */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:0.7rem;margin-bottom:1.2rem;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;text-align:center;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;}
+.kpi-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.kpi-card::before{content:'';position:absolute;top:-30px;right:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.07),transparent 70%);pointer-events:none;}
+.kpi-num{font-size:1.9rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.kpi-label{font-size:0.58rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.kpi-sub{font-size:0.58rem;color:var(--muted);margin-top:0.2rem;}
+
+/* FILTROS */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.3rem;margin-bottom:1rem;display:flex;align-items:flex-end;gap:0.8rem;flex-wrap:wrap;}
+.filter-field{flex:1;min-width:140px;}
+.form-label{font-size:0.6rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;display:block;}
+.form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;padding:0.6rem 0.8rem;font-family:inherit;font-size:0.76rem;color:var(--text);outline:none;transition:border-color 0.18s;}
+.form-input:focus{border-color:var(--border2);}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23555'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;cursor:pointer;}
+select.form-input option{background:#1a1a1a;}
+textarea.form-input{resize:vertical;min-height:60px;line-height:1.6;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr;}}
+
+/* BARRAS */
+.bar-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.55rem;}
+.bar-label{font-size:0.68rem;font-weight:600;color:var(--text2);min-width:175px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-wrap{flex:1;height:22px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;transition:width 0.9s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;padding-left:0.5rem;}
+.bar-val{font-size:0.6rem;font-weight:800;color:rgba(255,255,255,0.85);font-family:var(--mono);}
+.bar-count{font-size:0.68rem;font-weight:800;font-family:var(--mono);color:var(--muted);min-width:28px;text-align:right;flex-shrink:0;}
+
+/* ETAPA TILES */
+.etapa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:0.5rem;}
+.etapa-tile{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.85rem 0.7rem;text-align:center;cursor:pointer;transition:all 0.15s;}
+.etapa-tile:hover,.etapa-tile.ativa{border-color:var(--border2);background:rgba(59,130,246,0.05);}
+.etapa-tile-num{font-size:1.6rem;font-weight:900;font-family:var(--mono);line-height:1;margin-bottom:0.15rem;}
+.etapa-tile-label{font-size:0.58rem;font-weight:700;color:var(--muted);line-height:1.3;}
+.etapa-tile-pct{font-size:0.52rem;color:var(--accent);margin-top:0.15rem;font-family:var(--mono);}
+
+/* TIMELINE VISUAL */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-item{display:flex;gap:1rem;position:relative;}
+.tl-item:not(:last-child) .tl-line{position:absolute;left:15px;top:32px;bottom:-8px;width:2px;background:rgba(255,255,255,0.05);}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;border:2px solid;}
+.tl-body{flex:1;padding-bottom:1.2rem;}
+.tl-title{font-size:0.76rem;font-weight:700;margin-bottom:0.1rem;}
+.tl-sub{font-size:0.62rem;color:var(--muted);}
+
+/* LISTA CANDIDATOS */
+.lista-header{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.2fr 1fr 70px;gap:0.5rem;padding:0.5rem 0.9rem;font-size:0.55rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid rgba(255,255,255,0.05);}
+.lista-item{display:grid;grid-template-columns:2fr 1.2fr 1.2fr 1.2fr 1fr 70px;gap:0.5rem;padding:0.75rem 0.9rem;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center;transition:background 0.15s;cursor:pointer;}
+.lista-item:hover{background:rgba(255,255,255,0.02);}
+.cand-avatar{width:30px;height:30px;border-radius:8px;background:rgba(231,76,60,0.1);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;flex-shrink:0;font-family:var(--mono);}
+.cand-nome{font-size:0.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cand-cargo{font-size:0.6rem;color:var(--muted);}
+.pill{font-size:0.6rem;font-weight:700;padding:0.15rem 0.55rem;border-radius:6px;white-space:nowrap;}
+
+/* PAGINAÇÃO */
+.paginacao{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 0.9rem;border-top:1px solid rgba(255,255,255,0.05);}
+.pag-info{font-size:0.65rem;color:var(--muted);}
+.pag-btns{display:flex;gap:0.4rem;}
+.pag-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:0.3rem 0.7rem;cursor:pointer;font-family:inherit;font-size:0.7rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
+.pag-btn:hover:not(:disabled){background:rgba(255,255,255,0.08);color:var(--text);}
+.pag-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.pag-btn.ativo{background:rgba(59,130,246,0.12);color:var(--accent);border-color:rgba(59,130,246,0.25);}
+
+/* ALERTA */
+.alerta-item{display:flex;align-items:center;gap:0.8rem;padding:0.7rem 0.9rem;background:rgba(231,76,60,0.04);border:1px solid rgba(231,76,60,0.12);border-radius:10px;margin-bottom:0.5rem;}
+.alerta-item.warn{background:rgba(243,156,18,0.04);border-color:rgba(243,156,18,0.12);}
+.alerta-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.alerta-txt{flex:1;font-size:0.72rem;font-weight:600;}
+
+/* EMPTY */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;gap:1rem;text-align:center;}
+.empty-ico{font-size:3rem;opacity:0.3;}
+.empty-title{font-size:1rem;font-weight:800;color:var(--text2);}
+.empty-sub{font-size:0.75rem;color:var(--muted);line-height:1.6;max-width:360px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:2rem;backdrop-filter:blur(4px);overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:1.8rem 2rem;width:100%;max-width:560px;animation:fadeUp 0.2s ease;position:relative;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.25rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;}
+.modal-actions{display:flex;justify-content:flex-end;gap:0.6rem;margin-top:1.3rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.form-row{margin-bottom:0.85rem;}
+
+/* DETALHE LATERAL */
+.detalhe-panel{position:fixed;top:0;right:-440px;width:420px;height:100vh;background:var(--card2);border-left:1px solid var(--border2);z-index:90;overflow-y:auto;transition:right 0.3s cubic-bezier(0.4,0,0.2,1);padding:1.5rem;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.detalhe-panel.open{right:0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:200;background:var(--card2);border:1px solid var(--border2);border-radius:12px;padding:0.8rem 1.2rem;font-size:0.76rem;font-weight:600;display:none;gap:0.5rem;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.toast.show{display:flex;}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:900px){
+  .lista-header,.lista-item{grid-template-columns:2fr 1fr 1fr 50px;}
+  .col-hide{display:none;}
+  .page{padding:0.9rem 0.85rem 4rem;}
+  .hero-title{font-size:1.25rem;}
+  .detalhe-panel{width:100%;right:-100%;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span> Analytics · Funil · Orizon ATS</div>
+      <div class="hero-title">Análise de <span>Desistência</span></div>
+      <div class="hero-sub">Identifique onde e por que candidatos abandonam o processo · Reduza o ghosting · Aja antes que aconteça</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="togglePeriodo()">⏱ <span id="btnPeriodo">Últimos 90 dias</span></button>
+      <button class="btn btn-ghost" onclick="exportarCSV()">📤 Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="carregarExemplos()">📋 Carregar Exemplos</button>
+      <button class="btn btn-primary" onclick="abrirModal()">+ Registrar Desistência</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="kpi-num" id="kpiTotal" style="color:var(--red)">0</div><div class="kpi-label">Total Desistências</div><div class="kpi-sub" id="kpiTotalSub">no período</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiTaxa" style="color:var(--orange)">—</div><div class="kpi-label">Taxa de Desistência</div><div class="kpi-sub">% do funil total</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiEtapaCritica" style="color:var(--purple)">—</div><div class="kpi-label">Etapa Crítica</div><div class="kpi-sub" id="kpiEtapaCriticaSub">mais abandonos</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiMotivoPrincipal" style="color:var(--cyan)">—</div><div class="kpi-label">Motivo Principal</div><div class="kpi-sub" id="kpiMotivoSub">mais frequente</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiGhosting" style="color:var(--yellow)">0</div><div class="kpi-label">Ghosting</div><div class="kpi-sub">sem justificativa</div></div>
+    <div class="kpi-card"><div class="kpi-num" id="kpiMes" style="color:var(--accent)">0</div><div class="kpi-label">Esse Mês</div><div class="kpi-sub">desistências recentes</div></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-field">
+      <label class="form-label">Buscar candidato / vaga</label>
+      <input class="form-input" id="fBusca" placeholder="Nome, cargo, empresa..." oninput="aplicarFiltros()"/>
+    </div>
+    <div class="filter-field" style="max-width:170px;">
+      <label class="form-label">Etapa</label>
+      <select class="form-input" id="fEtapa" onchange="aplicarFiltros()">
+        <option value="">Todas as etapas</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:180px;">
+      <label class="form-label">Motivo</label>
+      <select class="form-input" id="fMotivo" onchange="aplicarFiltros()">
+        <option value="">Todos os motivos</option>
+      </select>
+    </div>
+    <div class="filter-field" style="max-width:160px;">
+      <label class="form-label">Origem</label>
+      <select class="form-input" id="fOrigem" onchange="aplicarFiltros()">
+        <option value="">Todas as origens</option>
+      </select>
+    </div>
+    <div>
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-ghost" onclick="limparFiltros()">✕ Limpar</button>
+    </div>
+  </div>
+
+  <!-- ALERTAS RISCO -->
+  <div id="alertasWrap" style="margin-bottom:1rem;"></div>
+
+  <!-- ANÁLISE POR ETAPA + MOTIVOS -->
+  <div class="grid2" style="margin-bottom:1rem;">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">🚪 Desistências por Etapa do Funil</div>
+        <div class="card-badge red" id="badgeEtapas">0 etapas</div>
+      </div>
+      <div class="etapa-grid" id="etapaGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">💬 Top Motivos de Desistência</div>
+        <button class="btn btn-ghost" id="btnVerTodos" style="font-size:0.65rem;padding:0.3rem 0.7rem;" onclick="toggleVerTodos()">Ver todos</button>
+      </div>
+      <div id="motivosChart"></div>
+    </div>
+
+  </div>
+
+  <!-- TEMPO ATÉ DESISTÊNCIA + ANÁLISE POR ORIGEM -->
+  <div class="grid2" style="margin-bottom:1rem;">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">⏳ Tempo Médio até Desistir por Etapa</div>
+        <div class="card-badge cyan">dias no processo</div>
+      </div>
+      <div id="tempoChart"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">📌 Desistências por Origem do Candidato</div>
+        <div class="card-badge purple" id="badgeOrigens">0 origens</div>
+      </div>
+      <div id="origemChart"></div>
+    </div>
+
+  </div>
+
+  <!-- LISTA DE DESISTÊNCIAS -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:1.1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+      <div class="card-title">📋 Registro de Desistências</div>
+      <div class="card-badge" id="badgeLista">0 registros</div>
+    </div>
+    <div class="lista-header">
+      <div>Candidato</div>
+      <div>Etapa</div>
+      <div>Motivo</div>
+      <div class="col-hide">Origem</div>
+      <div class="col-hide">Data</div>
+      <div style="text-align:right;">Ações</div>
+    </div>
+    <div id="listaDesistencias"></div>
+    <div class="paginacao" id="paginacao" style="display:none;">
+      <div class="pag-info" id="pagInfo"></div>
+      <div class="pag-btns" id="pagBtns"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NOVO REGISTRO -->
+<div class="modal-overlay" id="modalNovo">
+  <div class="modal">
+    <button onclick="fecharModal()" style="position:absolute;top:1.2rem;right:1.2rem;background:rgba(255,255,255,0.06);border:none;color:var(--muted);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    <div style="font-size:0.55rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:0.3rem;">Registrar</div>
+    <div class="modal-title">Nova Desistência</div>
+    <div class="modal-sub">Documente candidatos que abandonaram o processo seletivo</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Nome do Candidato *</label>
+        <input class="form-input" id="nNome" placeholder="Nome completo"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Cargo / Vaga *</label>
+        <input class="form-input" id="nCargo" placeholder="Ex: Analista de RH"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Cliente / Empresa</label>
+        <input class="form-input" id="nEmpresa" placeholder="Empresa contratante"/>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Data da Desistência *</label>
+        <input class="form-input" type="date" id="nData"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Etapa em que Desistiu *</label>
+        <select class="form-input" id="nEtapa">
+          <option value="">— Selecionar —</option>
+          <option>Triagem de Currículo</option>
+          <option>Entrevista Inicial (RH)</option>
+          <option>Teste / Avaliação</option>
+          <option>Entrevista Técnica</option>
+          <option>Entrevista com Gestor</option>
+          <option>Entrevista Final</option>
+          <option>Proposta / Oferta</option>
+          <option>Exame Admissional</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Dias no Processo</label>
+        <input class="form-input" type="number" id="nDias" placeholder="Ex: 12" min="0"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row">
+        <label class="form-label">Motivo Principal *</label>
+        <select class="form-input" id="nMotivo" onchange="toggleMotivoCustom()">
+          <option value="">— Selecionar —</option>
+          <optgroup label="🏃 Desistência do Candidato">
+            <option>Aceitou outra oferta</option>
+            <option>Contraproposta do emprego atual</option>
+            <option>Mudança de planos pessoais</option>
+            <option>Não compareceu / Ghosting</option>
+            <option>Desistiu sem justificativa</option>
+            <option>Processo muito demorado</option>
+          </optgroup>
+          <optgroup label="💰 Negociação">
+            <option>Pretensão salarial incompatível</option>
+            <option>Benefícios abaixo do esperado</option>
+            <option>Localização / home office</option>
+          </optgroup>
+          <optgroup label="📋 Fit com a Vaga">
+            <option>Escopo da função diferente do esperado</option>
+            <option>Cultura da empresa não alinhada</option>
+            <option>Falta de perspectiva de crescimento</option>
+          </optgroup>
+          <optgroup label="🔧 Outros">
+            <option>Problema pessoal / familiar</option>
+            <option>Saúde</option>
+            <option>Outro motivo</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Origem do Candidato</label>
+        <select class="form-input" id="nOrigem">
+          <option value="">— Não informado —</option>
+          <option>LinkedIn</option>
+          <option>Indicação</option>
+          <option>Site / Portal</option>
+          <option>Indeed</option>
+          <option>Catho</option>
+          <option>Banco Interno</option>
+          <option>Outro</option>
+        </select>
+      </div>
+    </div>
+    <div id="motivoCustomWrap" style="display:none;" class="form-row">
+      <label class="form-label">Especifique o motivo</label>
+      <input class="form-input" id="nMotivoCustom" placeholder="Descreva o motivo específico..."/>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Observações / Contexto</label>
+      <textarea class="form-input" id="nObs" placeholder="O que foi dito, sinais anteriores, situação geral..."></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Feedback Enviado?</label>
+        <select class="form-input" id="nFeedback">
+          <option value="nao">Não enviado</option>
+          <option value="sim">Sim, enviado</option>
+          <option value="pendente">Pendente</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin:0;">
+        <label class="form-label">Retorno Futuro?</label>
+        <select class="form-input" id="nRetorno">
+          <option value="nao">Não</option>
+          <option value="sim">Sim — manter contato</option>
+          <option value="talvez">Talvez</option>
+        </select>
+      </div>
+    </div>
+    <input type="hidden" id="nEditId"/>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar Registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETALHE LATERAL -->
+<div class="detalhe-panel" id="detalhePanel">
+  <button onclick="fecharDetalhe()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.3rem 0.7rem;cursor:pointer;font-family:inherit;font-size:0.72rem;color:var(--muted);">✕ Fechar</button>
+  <div id="detalheContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── ESTADO ───────────────────────────────────────────────────────
+let DADOS = [];
+let FILTRADO = [];
+let PAGINA = 1;
+let VER_TODOS = false;
+let PERIODO = 90;
+const POR_PAGINA = 15;
+
+// ─── CORES POR ETAPA ─────────────────────────────────────────────
+const ETAPA_COR = {
+  'Triagem de Currículo':       '#06b6d4',
+  'Entrevista Inicial (RH)':    '#3b82f6',
+  'Teste / Avaliação':          '#8b5cf6',
+  'Entrevista Técnica':         '#a78bfa',
+  'Entrevista com Gestor':      '#f59e0b',
+  'Entrevista Final':           '#f97316',
+  'Proposta / Oferta':          '#ef4444',
+  'Exame Admissional':          '#a8d85f',
+};
+
+// ─── INIT ────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('nData').value = new Date().toISOString().slice(0,10);
+  carregarLocal();
+  render();
+}
+
+function carregarLocal() {
+  try { DADOS = JSON.parse(localStorage.getItem('orizon_desistencias') || '[]'); } catch(e){ DADOS = []; }
+}
+
+function salvarLocal() {
+  localStorage.setItem('orizon_desistencias', JSON.stringify(DADOS));
+}
+
+function togglePeriodo() {
+  const opts = [30,60,90,180,365];
+  const idx = opts.indexOf(PERIODO);
+  PERIODO = opts[(idx+1) % opts.length];
+  const map = {30:'Últimos 30 dias',60:'Últimos 60 dias',90:'Últimos 90 dias',180:'Últimos 6 meses',365:'Último ano'};
+  document.getElementById('btnPeriodo').textContent = map[PERIODO];
+  render();
+}
+
+// ─── FILTROS ─────────────────────────────────────────────────────
+function popularFiltrosSelect() {
+  const etapas  = [...new Set(DADOS.map(d=>d.etapa).filter(Boolean))].sort();
+  const motivos = [...new Set(DADOS.map(d=>d.motivo).filter(Boolean))].sort();
+  const origens = [...new Set(DADOS.map(d=>d.origem).filter(Boolean))].sort();
+
+  const sel = (id, arr, cur) => {
+    const el = document.getElementById(id);
+    const prev = el.value;
+    el.innerHTML = `<option value="">Todos</option>` + arr.map(v=>`<option${v===prev?' selected':''}>${v}</option>`).join('');
+  };
+  sel('fEtapa', etapas);
+  sel('fMotivo', motivos);
+  sel('fOrigem', origens);
+}
+
+function dadosPeriodo() {
+  const corte = new Date(); corte.setDate(corte.getDate() - PERIODO);
+  return DADOS.filter(d => !d.data || new Date(d.data) >= corte);
+}
+
+function aplicarFiltros() {
+  const busca   = document.getElementById('fBusca').value.toLowerCase();
+  const etapa   = document.getElementById('fEtapa').value;
+  const motivo  = document.getElementById('fMotivo').value;
+  const origem  = document.getElementById('fOrigem').value;
+
+  FILTRADO = dadosPeriodo().filter(d => {
+    if (busca && !`${d.nome} ${d.cargo} ${d.empresa}`.toLowerCase().includes(busca)) return false;
+    if (etapa && d.etapa !== etapa) return false;
+    if (motivo && d.motivo !== motivo) return false;
+    if (origem && d.origem !== origem) return false;
+    return true;
+  });
+  PAGINA = 1;
+  renderLista();
+}
+
+function limparFiltros() {
+  document.getElementById('fBusca').value = '';
+  document.getElementById('fEtapa').value = '';
+  document.getElementById('fMotivo').value = '';
+  document.getElementById('fOrigem').value = '';
+  aplicarFiltros();
+}
+
+// ─── RENDER GLOBAL ───────────────────────────────────────────────
+function render() {
+  popularFiltrosSelect();
+  aplicarFiltros();
+  renderKPIs();
+  renderAlertas();
+  renderEtapas();
+  renderMotivos();
+  renderTempo();
+  renderOrigem();
+}
+
+// ─── KPIs ────────────────────────────────────────────────────────
+function renderKPIs() {
+  const base = dadosPeriodo();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth();
+  const anoAtual = hoje.getFullYear();
+
+  const total = base.length;
+  const ghosting = base.filter(d => d.motivo === 'Não compareceu / Ghosting' || d.motivo === 'Desistiu sem justificativa').length;
+  const desMes = base.filter(d => {
+    if (!d.data) return false;
+    const dt = new Date(d.data);
+    return dt.getMonth() === mesAtual && dt.getFullYear() === anoAtual;
+  }).length;
+
+  // etapa crítica
+  const porEtapa = {};
+  base.forEach(d => { if(d.etapa) porEtapa[d.etapa] = (porEtapa[d.etapa]||0)+1; });
+  const etapaCrit = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1])[0];
+
+  // motivo principal
+  const porMotivo = {};
+  base.forEach(d => { if(d.motivo) porMotivo[d.motivo] = (porMotivo[d.motivo]||0)+1; });
+  const motivoPrincipal = Object.entries(porMotivo).sort((a,b)=>b[1]-a[1])[0];
+
+  // taxa estimada
+  const totalFunil = Math.max(total * 4, 1); // estimativa
+  const taxa = total > 0 ? Math.round((total / totalFunil) * 100) : 0;
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiTotalSub').textContent = `no período de ${PERIODO} dias`;
+  document.getElementById('kpiTaxa').textContent = total > 0 ? taxa+'%' : '—';
+  document.getElementById('kpiEtapaCritica').textContent = etapaCrit ? etapaCrit[1] : '—';
+  document.getElementById('kpiEtapaCriticaSub').textContent = etapaCrit ? etapaCrit[0].split(' ')[0] : 'mais abandonos';
+  document.getElementById('kpiMotivoPrincipal').textContent = motivoPrincipal ? motivoPrincipal[1] : '—';
+  document.getElementById('kpiMotivoSub').textContent = motivoPrincipal ? motivoPrincipal[0].substring(0,18)+'...' : 'mais frequente';
+  document.getElementById('kpiGhosting').textContent = ghosting;
+  document.getElementById('kpiMes').textContent = desMes;
+}
+
+// ─── ALERTAS ────────────────────────────────────────────────────
+function renderAlertas() {
+  const base = dadosPeriodo();
+  const wrap = document.getElementById('alertasWrap');
+  const alertas = [];
+
+  const porEtapa = {};
+  base.forEach(d => { if(d.etapa) porEtapa[d.etapa] = (porEtapa[d.etapa]||0)+1; });
+
+  Object.entries(porEtapa).forEach(([etapa, qtd]) => {
+    if (qtd >= 5) alertas.push({ tipo:'crit', msg: `<strong>${qtd} desistências</strong> na etapa <strong>${etapa}</strong> — avaliar gargalo no processo`, badge: qtd+'x' });
+    else if (qtd >= 3) alertas.push({ tipo:'warn', msg: `<strong>${qtd} desistências</strong> na etapa <strong>${etapa}</strong> no período`, badge: qtd+'x' });
+  });
+
+  const ghosting = base.filter(d => d.motivo === 'Não compareceu / Ghosting').length;
+  if (ghosting >= 3) alertas.push({ tipo:'crit', msg: `<strong>${ghosting} casos de ghosting</strong> detectados — revisar comunicação e follow-up`, badge: ghosting+'x' });
+
+  const semFeedback = base.filter(d => d.feedback === 'nao').length;
+  if (semFeedback >= 3) alertas.push({ tipo:'warn', msg: `<strong>${semFeedback} candidatos</strong> desistiram sem receber feedback — oportunidade de melhoria de NPS`, badge: semFeedback+'x' });
+
+  if (!alertas.length) { wrap.innerHTML = ''; return; }
+
+  wrap.innerHTML = alertas.map(a => `
+    <div class="alerta-item ${a.tipo==='warn'?'warn':''}">
+      <div class="alerta-dot" style="background:${a.tipo==='crit'?'var(--red)':'var(--orange)'}"></div>
+      <div class="alerta-txt">${a.msg}</div>
+      <div class="card-badge ${a.tipo==='crit'?'red':'orange'}">${a.badge}</div>
+    </div>
+  `).join('');
+}
+
+// ─── ETAPAS ─────────────────────────────────────────────────────
+function renderEtapas() {
+  const base = dadosPeriodo();
+  const porEtapa = {};
+  base.forEach(d => { if(d.etapa) porEtapa[d.etapa] = (porEtapa[d.etapa]||0)+1; });
+  const total = base.length || 1;
+  const entries = Object.entries(porEtapa).sort((a,b)=>b[1]-a[1]);
+
+  document.getElementById('badgeEtapas').textContent = entries.length + ' etapas';
+
+  const grid = document.getElementById('etapaGrid');
+  if (!entries.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.72rem;">Sem dados</div>';
+    return;
+  }
+  grid.innerHTML = entries.map(([etapa,qtd]) => {
+    const cor = ETAPA_COR[etapa] || '#aaa';
+    const pct = Math.round((qtd/total)*100);
+    return `<div class="etapa-tile" style="border-color:${cor}22;" onclick="filtrarEtapa('${etapa}')">
+      <div class="etapa-tile-num" style="color:${cor}">${qtd}</div>
+      <div class="etapa-tile-label">${etapa}</div>
+      <div class="etapa-tile-pct">${pct}% do total</div>
+    </div>`;
+  }).join('');
+}
+
+function filtrarEtapa(etapa) {
+  document.getElementById('fEtapa').value = etapa;
+  aplicarFiltros();
+}
+
+// ─── MOTIVOS ────────────────────────────────────────────────────
+function renderMotivos() {
+  const base = dadosPeriodo();
+  const porMotivo = {};
+  base.forEach(d => { if(d.motivo) porMotivo[d.motivo] = (porMotivo[d.motivo]||0)+1; });
+  let entries = Object.entries(porMotivo).sort((a,b)=>b[1]-a[1]);
+  if (!VER_TODOS) entries = entries.slice(0,7);
+  const max = entries[0]?.[1] || 1;
+  const total = base.length || 1;
+
+  const cores = ['#ef4444','#f97316','#f59e0b','#8b5cf6','#3b82f6','#06b6d4','#a8d85f'];
+
+  const wrap = document.getElementById('motivosChart');
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.72rem;">Sem dados</div>';
+    return;
+  }
+  wrap.innerHTML = entries.map(([motivo,qtd],i) => {
+    const pct = Math.round((qtd/max)*100);
+    const cor = cores[i % cores.length];
+    return `<div class="bar-row">
+      <div class="bar-label" title="${motivo}">${motivo}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${cor}cc;"><span class="bar-val">${Math.round((qtd/total)*100)}%</span></div></div>
+      <div class="bar-count">${qtd}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleVerTodos() {
+  VER_TODOS = !VER_TODOS;
+  document.getElementById('btnVerTodos').textContent = VER_TODOS ? 'Ver menos' : 'Ver todos';
+  renderMotivos();
+}
+
+// ─── TEMPO ──────────────────────────────────────────────────────
+function renderTempo() {
+  const base = dadosPeriodo().filter(d => d.dias > 0);
+  const porEtapa = {};
+  base.forEach(d => {
+    if (!d.etapa || !d.dias) return;
+    if (!porEtapa[d.etapa]) porEtapa[d.etapa] = [];
+    porEtapa[d.etapa].push(Number(d.dias));
+  });
+  const entries = Object.entries(porEtapa)
+    .map(([etapa,arr]) => [etapa, Math.round(arr.reduce((s,v)=>s+v,0)/arr.length)])
+    .sort((a,b)=>b[1]-a[1]);
+
+  const max = entries[0]?.[1] || 1;
+  const wrap = document.getElementById('tempoChart');
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.72rem;">Registre dias no processo para visualizar</div>';
+    return;
+  }
+  wrap.innerHTML = entries.map(([etapa,media]) => {
+    const pct = Math.round((media/max)*100);
+    const cor = media > 14 ? 'var(--red)' : media > 7 ? 'var(--orange)' : 'var(--cyan)';
+    return `<div class="bar-row">
+      <div class="bar-label" title="${etapa}">${etapa}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${cor};opacity:0.8;"><span class="bar-val">${media}d</span></div></div>
+      <div class="bar-count" style="color:${cor}">${media}d</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── ORIGENS ────────────────────────────────────────────────────
+function renderOrigem() {
+  const base = dadosPeriodo();
+  const porOrigem = {};
+  base.forEach(d => {
+    const o = d.origem || 'Não informado';
+    porOrigem[o] = (porOrigem[o]||0)+1;
+  });
+  const entries = Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]);
+  const max = entries[0]?.[1] || 1;
+  const total = base.length || 1;
+  const cores = ['#3b82f6','#a78bfa','#06b6d4','#f59e0b','#ef4444','#a8d85f','#f97316'];
+
+  document.getElementById('badgeOrigens').textContent = entries.length + ' origens';
+
+  const wrap = document.getElementById('origemChart');
+  if (!entries.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);font-size:0.72rem;">Sem dados</div>';
+    return;
+  }
+  wrap.innerHTML = entries.map(([origem,qtd],i) => {
+    const pct = Math.round((qtd/max)*100);
+    const cor = cores[i % cores.length];
+    return `<div class="bar-row">
+      <div class="bar-label">${origem}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${cor}cc;"><span class="bar-val">${Math.round((qtd/total)*100)}%</span></div></div>
+      <div class="bar-count">${qtd}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── LISTA ──────────────────────────────────────────────────────
+function renderLista() {
+  const total = FILTRADO.length;
+  const inicio = (PAGINA-1)*POR_PAGINA;
+  const pagina = FILTRADO.slice(inicio, inicio+POR_PAGINA);
+
+  document.getElementById('badgeLista').textContent = total + ' registros';
+
+  const lista = document.getElementById('listaDesistencias');
+  if (!total) {
+    lista.innerHTML = `<div class="empty-state"><div class="empty-ico">🚪</div><div class="empty-title">Nenhuma desistência registrada</div><div class="empty-sub">Registre candidatos que abandonaram o processo para identificar padrões e melhorar a experiência.</div><button class="btn btn-primary" onclick="abrirModal()">+ Registrar primeira desistência</button></div>`;
+    document.getElementById('paginacao').style.display = 'none';
+    return;
+  }
+
+  lista.innerHTML = pagina.map(d => {
+    const cor = ETAPA_COR[d.etapa] || '#aaa';
+    const ini = d.nome ? d.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase() : '?';
+    const motivoCor = d.motivo === 'Não compareceu / Ghosting' ? 'var(--yellow)' :
+                      d.motivo === 'Aceitou outra oferta' ? 'var(--green)' :
+                      d.motivo === 'Pretensão salarial incompatível' ? 'var(--orange)' : 'var(--muted)';
+    return `<div class="lista-item" onclick="abrirDetalhe('${d.id}')">
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <div class="cand-avatar">${ini}</div>
+        <div><div class="cand-nome">${d.nome||'—'}</div><div class="cand-cargo">${d.cargo||'—'}${d.empresa?' · '+d.empresa:''}</div></div>
+      </div>
+      <div><span class="pill" style="background:${cor}20;color:${cor}">${d.etapa||'—'}</span></div>
+      <div><span class="pill" style="background:rgba(255,255,255,0.05);color:${motivoCor};max-width:160px;display:inline-block;overflow:hidden;text-overflow:ellipsis;" title="${d.motivo||''}">${d.motivo||'—'}</span></div>
+      <div class="col-hide" style="font-size:0.68rem;color:var(--muted)">${d.origem||'—'}</div>
+      <div class="col-hide" style="font-size:0.65rem;color:var(--muted);font-family:var(--mono)">${d.data||'—'}</div>
+      <div style="display:flex;gap:0.3rem;justify-content:flex-end;">
+        <button class="btn btn-ghost" style="padding:0.25rem 0.5rem;font-size:0.65rem;" onclick="event.stopPropagation();editarItem('${d.id}')">✏️</button>
+        <button class="btn btn-danger" style="padding:0.25rem 0.5rem;font-size:0.65rem;" onclick="event.stopPropagation();excluir('${d.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // paginação
+  const totalPags = Math.ceil(total/POR_PAGINA);
+  const pag = document.getElementById('paginacao');
+  if (totalPags > 1) {
+    pag.style.display = 'flex';
+    document.getElementById('pagInfo').textContent = `${inicio+1}–${Math.min(inicio+POR_PAGINA,total)} de ${total}`;
+    let btns = `<button class="pag-btn" onclick="mudarPag(${PAGINA-1})" ${PAGINA===1?'disabled':''}>‹</button>`;
+    for (let p=1;p<=totalPags;p++) {
+      if (totalPags <= 7 || Math.abs(p-PAGINA)<=1 || p===1 || p===totalPags) {
+        btns += `<button class="pag-btn${p===PAGINA?' ativo':''}" onclick="mudarPag(${p})">${p}</button>`;
+      }
+    }
+    btns += `<button class="pag-btn" onclick="mudarPag(${PAGINA+1})" ${PAGINA===totalPags?'disabled':''}>›</button>`;
+    document.getElementById('pagBtns').innerHTML = btns;
+  } else {
+    pag.style.display = 'none';
+  }
+}
+
+function mudarPag(p) {
+  PAGINA = p;
+  renderLista();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ─── MODAL ──────────────────────────────────────────────────────
+function abrirModal(id) {
+  document.getElementById('nEditId').value = '';
+  document.getElementById('nNome').value = '';
+  document.getElementById('nCargo').value = '';
+  document.getElementById('nEmpresa').value = '';
+  document.getElementById('nData').value = new Date().toISOString().slice(0,10);
+  document.getElementById('nEtapa').value = '';
+  document.getElementById('nDias').value = '';
+  document.getElementById('nMotivo').value = '';
+  document.getElementById('nMotivoCustom').value = '';
+  document.getElementById('motivoCustomWrap').style.display = 'none';
+  document.getElementById('nOrigem').value = '';
+  document.getElementById('nObs').value = '';
+  document.getElementById('nFeedback').value = 'nao';
+  document.getElementById('nRetorno').value = 'nao';
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function fecharModal() {
+  document.getElementById('modalNovo').classList.remove('open');
+}
+
+function toggleMotivoCustom() {
+  const v = document.getElementById('nMotivo').value;
+  document.getElementById('motivoCustomWrap').style.display = v === 'Outro motivo' ? 'block' : 'none';
+}
+
+function editarItem(id) {
+  const d = DADOS.find(x=>x.id===id);
+  if (!d) return;
+  document.getElementById('nEditId').value = d.id;
+  document.getElementById('nNome').value = d.nome || '';
+  document.getElementById('nCargo').value = d.cargo || '';
+  document.getElementById('nEmpresa').value = d.empresa || '';
+  document.getElementById('nData').value = d.data || '';
+  document.getElementById('nEtapa').value = d.etapa || '';
+  document.getElementById('nDias').value = d.dias || '';
+  document.getElementById('nMotivo').value = d.motivo || '';
+  document.getElementById('nOrigem').value = d.origem || '';
+  document.getElementById('nObs').value = d.obs || '';
+  document.getElementById('nFeedback').value = d.feedback || 'nao';
+  document.getElementById('nRetorno').value = d.retorno || 'nao';
+  document.getElementById('motivoCustomWrap').style.display = 'none';
+  document.getElementById('modalNovo').classList.add('open');
+}
+
+function salvar() {
+  const nome  = document.getElementById('nNome').value.trim();
+  const cargo = document.getElementById('nCargo').value.trim();
+  const etapa = document.getElementById('nEtapa').value;
+  let motivo  = document.getElementById('nMotivo').value;
+
+  if (!nome)   { toast('⚠️ Informe o nome do candidato'); return; }
+  if (!cargo)  { toast('⚠️ Informe o cargo / vaga'); return; }
+  if (!etapa)  { toast('⚠️ Selecione a etapa'); return; }
+  if (!motivo) { toast('⚠️ Selecione o motivo'); return; }
+  if (motivo === 'Outro motivo') {
+    const c = document.getElementById('nMotivoCustom').value.trim();
+    if (c) motivo = c;
+  }
+
+  const editId = document.getElementById('nEditId').value;
+  const item = {
+    id: editId || 'des_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+    nome, cargo,
+    empresa:   document.getElementById('nEmpresa').value.trim(),
+    data:      document.getElementById('nData').value,
+    etapa, motivo,
+    dias:      Number(document.getElementById('nDias').value) || 0,
+    origem:    document.getElementById('nOrigem').value,
+    obs:       document.getElementById('nObs').value.trim(),
+    feedback:  document.getElementById('nFeedback').value,
+    retorno:   document.getElementById('nRetorno').value,
+    criado_em: new Date().toISOString(),
+  };
+
+  if (editId) {
+    const idx = DADOS.findIndex(x=>x.id===editId);
+    if (idx !== -1) DADOS[idx] = item;
+  } else {
+    DADOS.unshift(item);
+  }
+
+  salvarLocal();
+
+  try {
+    if (typeof sbPost === 'function') sbPost('desistencias_candidatos', item).catch(()=>{});
+  } catch(e){}
+
+  fecharModal();
+  render();
+  toast(editId ? '✅ Registro atualizado' : '✅ Desistência registrada');
+}
+
+function excluir(id) {
+  const d = DADOS.find(x=>x.id===id);
+  if (!d) return;
+  if (!confirm(`Excluir registro de "${d.nome}"?\nEsta ação não pode ser desfeita.`)) return;
+  DADOS = DADOS.filter(x=>x.id!==id);
+  salvarLocal();
+  render();
+  toast('🗑 Registro excluído');
+}
+
+// ─── DETALHE LATERAL ────────────────────────────────────────────
+function abrirDetalhe(id) {
+  const d = DADOS.find(x=>x.id===id);
+  if (!d) return;
+  const cor = ETAPA_COR[d.etapa] || '#aaa';
+  const ini = d.nome.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
+  const retornoMap = { sim:'🔄 Manter contato', nao:'❌ Não', talvez:'🤔 Talvez' };
+  const feedbackMap = { sim:'✅ Enviado', nao:'❌ Não enviado', pendente:'⏳ Pendente' };
+
+  document.getElementById('detalheContent').innerHTML = `
+    <div style="width:52px;height:52px;border-radius:14px;background:rgba(231,76,60,0.12);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:900;margin-bottom:0.8rem;font-family:var(--mono);">${ini}</div>
+    <div style="font-size:1.1rem;font-weight:900;margin-bottom:0.1rem;">${d.nome}</div>
+    <div style="font-size:0.72rem;color:var(--muted);margin-bottom:1.2rem;">${d.cargo}${d.empresa?' · '+d.empresa:''}</div>
+
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;">Detalhes da Desistência</div>
+      ${campo('Etapa', `<span style="background:${cor}20;color:${cor};padding:0.15rem 0.55rem;border-radius:6px;font-size:0.68rem;font-weight:700;">${d.etapa||'—'}</span>`)}
+      ${campo('Motivo', d.motivo||'—')}
+      ${campo('Data', d.data||'—')}
+      ${campo('Dias no Processo', d.dias ? d.dias+'d' : '—')}
+      ${campo('Origem', d.origem||'—')}
+    </div>
+
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.8rem;">Pós-Processo</div>
+      ${campo('Feedback', feedbackMap[d.feedback]||'—')}
+      ${campo('Retorno Futuro', retornoMap[d.retorno]||'—')}
+    </div>
+
+    ${d.obs ? `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:0.55rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:0.5rem;">Observações</div>
+      <div style="font-size:0.74rem;color:var(--text2);line-height:1.6;">${d.obs}</div>
+    </div>` : ''}
+
+    <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="editarItem('${d.id}');fecharDetalhe()">✏️ Editar</button>
+      <button class="btn btn-danger" style="flex:1;" onclick="excluir('${d.id}');fecharDetalhe()">🗑 Excluir</button>
+    </div>
+  `;
+  document.getElementById('detalhePanel').classList.add('open');
+}
+
+function campo(label, val) {
+  return `<div style="display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+    <span style="font-size:0.62rem;font-weight:700;color:var(--muted);">${label}</span>
+    <span style="font-size:0.74rem;font-weight:700;color:var(--text2);text-align:right;max-width:200px;">${val}</span>
+  </div>`;
+}
+
+function fecharDetalhe() {
+  document.getElementById('detalhePanel').classList.remove('open');
+}
+
+// ─── CSV ────────────────────────────────────────────────────────
+function exportarCSV() {
+  if (!DADOS.length) { toast('⚠️ Nenhum dado para exportar'); return; }
+  const linhas = [
+    ['Nome','Cargo','Empresa','Data','Etapa','Motivo','Dias no Processo','Origem','Feedback','Retorno','Observação'],
+    ...DADOS.map(d => [d.nome,d.cargo,d.empresa||'',d.data,d.etapa,d.motivo,d.dias||'',d.origem||'',d.feedback||'',d.retorno||'',d.obs||''])
+  ];
+  const csv = linhas.map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='analise_desistencia.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('📤 CSV exportado com sucesso');
+}
+
+// ─── EXEMPLOS ───────────────────────────────────────────────────
+function carregarExemplos() {
+  const hoje = new Date();
+  const d = n => new Date(hoje-n*86400000).toISOString().slice(0,10);
+  DADOS = [
+    { id:'ex1', nome:'Lucas Andrade', cargo:'Analista de Marketing', empresa:'ABC Corp', data:d(3), etapa:'Proposta / Oferta', motivo:'Aceitou outra oferta', dias:18, origem:'LinkedIn', obs:'Candidato excelente. Recebeu oferta de concorrente com salário 20% maior na reta final.', feedback:'sim', retorno:'sim' },
+    { id:'ex2', nome:'Fernanda Costa', cargo:'Dev Full Stack', empresa:'Tech Start', data:d(6), etapa:'Entrevista Final', motivo:'Processo muito demorado', dias:32, origem:'Indicação', obs:'Candidata mencionou que demorou muito entre etapas. Processo total de 32 dias.', feedback:'sim', retorno:'talvez' },
+    { id:'ex3', nome:'Ricardo Melo', cargo:'Gerente Comercial', empresa:'Vendas SA', data:d(9), etapa:'Entrevista com Gestor', motivo:'Não compareceu / Ghosting', dias:14, origem:'LinkedIn', obs:'Confirmou a entrevista na véspera e não apareceu. Não retornou ligações.', feedback:'nao', retorno:'nao' },
+    { id:'ex4', nome:'Juliana Pires', cargo:'Analista de RH', empresa:'RH Plus', data:d(12), etapa:'Proposta / Oferta', motivo:'Pretensão salarial incompatível', dias:21, origem:'Site / Portal', obs:'Pretensão 35% acima do budget aprovado. Não houve espaço para negociação.', feedback:'sim', retorno:'nao' },
+    { id:'ex5', nome:'Marcos Teixeira', cargo:'Coordenador de TI', empresa:'Obras Ltda', data:d(17), etapa:'Entrevista Técnica', motivo:'Não compareceu / Ghosting', dias:8, origem:'Indeed', obs:'Sumiu após a triagem telefônica sem justificativa.', feedback:'nao', retorno:'nao' },
+    { id:'ex6', nome:'Patrícia Lima', cargo:'Analista Financeiro', empresa:'Finance Co', data:d(21), etapa:'Entrevista com Gestor', motivo:'Contraproposta do emprego atual', dias:16, origem:'LinkedIn', obs:'Empresa atual fez contraproposta de promoção. Candidata decidiu ficar.', feedback:'sim', retorno:'sim' },
+    { id:'ex7', nome:'Carlos Vieira', cargo:'UX Designer', empresa:'Studio UX', data:d(25), etapa:'Entrevista Inicial (RH)', motivo:'Escopo da função diferente do esperado', dias:5, origem:'LinkedIn', obs:'Candidato esperava uma posição mais estratégica. Escopo era mais operacional.', feedback:'sim', retorno:'nao' },
+    { id:'ex8', nome:'Aline Santos', cargo:'Gerente de RH', empresa:'People Group', data:d(28), etapa:'Proposta / Oferta', motivo:'Benefícios abaixo do esperado', dias:24, origem:'Banco Interno', obs:'Plano de saúde e vale-refeição abaixo da expectativa do mercado.', feedback:'sim', retorno:'talvez' },
+    { id:'ex9', nome:'Bruno Ramos', cargo:'Analista de Dados', empresa:'Data Corp', data:d(35), etapa:'Entrevista Técnica', motivo:'Aceitou outra oferta', dias:12, origem:'LinkedIn', obs:'Grande empresa do setor fez oferta durante nosso processo técnico.', feedback:'sim', retorno:'sim' },
+    { id:'ex10', nome:'Camila Freitas', cargo:'Assistente Comercial', empresa:'Vendas SA', data:d(40), etapa:'Triagem de Currículo', motivo:'Desistiu sem justificativa', dias:2, origem:'Indeed', obs:'Não respondeu após envio do convite para entrevista.', feedback:'nao', retorno:'nao' },
+  ];
+  salvarLocal();
+  render();
+  toast('📋 10 registros de exemplo carregados');
+}
+
+// ─── UTILS ──────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modalNovo').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalNovo')) fecharModal();
+});
+
+init();
+</script>
+</body>
+</html>
