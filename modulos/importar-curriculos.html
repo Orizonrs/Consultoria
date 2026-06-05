@@ -944,7 +944,11 @@ Retorne APENAS este JSON válido (sem markdown, sem texto fora do JSON):
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
     body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: mensagens })
   });
   if (!resp.ok) throw new Error('API Claude: ' + resp.status);
@@ -1001,7 +1005,6 @@ async function processarCurriculo(f) {
         keywords_encontradas: dados.keywords_encontradas?.length ? dados.keywords_encontradas.join(' | ') : null,
         keywords_ausentes:    dados.keywords_ausentes?.length    ? dados.keywords_ausentes.join(' | ')    : null,
         atualizado_em:        agora,
-        fonte_curriculo:      'importacao_vinculada',
       };
       // Se extraiu email/telefone e o candidato não tinha, atualiza também
       if (dados.email && dados.email.includes('@')) patchPayload.email_externo = dados.email.toLowerCase().trim();
@@ -1060,7 +1063,6 @@ async function processarCurriculo(f) {
         email_externo:     dados.email   ? dados.email.toLowerCase().trim() : null,
         tel_externo:       dados.telefone || null,
         no_banco:          true,
-        fonte:             'importacao',
         // Fit Currículo — mesmos campos que entrevista.html grava na Etapa 0
         score_curriculo:   dados.score_curriculo   ?? null,
         nivel_curriculo:   dados.nivel_curriculo   || null,
