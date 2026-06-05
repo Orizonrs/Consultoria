@@ -872,109 +872,62 @@ async function lerArquivo(arquivo) {
 
 // Extrai dados do currículo via Edge Function do Supabase (server-side, sem CORS)
 async function extrairComIA(arquivo, vagaAlvo) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error('Supabase não configurado');
+
   const lido = await lerArquivo(arquivo);
-
-  // Monta o texto do currículo para enviar à edge
-  let curriculoTexto = '';
-  let curriculoB64 = null;
-  let curriculoMediaType = null;
-
-  if (lido.tipo === 'texto') {
-    curriculoTexto = (lido.conteudo || '').slice(0, 14000);
-  } else if (lido.tipo === 'binario' && lido.dataUrl) {
-    // PDF/DOCX: envia base64 para a edge extrair o texto server-side
-    const [, base64] = lido.dataUrl.split(',');
-    curriculoB64 = base64;
-    curriculoMediaType = lido.ext === 'pdf' ? 'application/pdf'
-      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    curriculoTexto = `[Arquivo ${lido.ext?.toUpperCase()}: ${arquivo.name}]`;
-  }
-
   const vagaCtx = vagaAlvo && vagaAlvo !== 'Banco de Talentos' ? vagaAlvo : 'Banco de Talentos Geral';
 
-  // Prompt completo que a edge vai usar como prompt de análise
-  const promptFitCurriculo = `Você é um recrutador sênior com 20+ anos de experiência em triagem e seleção de candidatos.
-Analise o currículo abaixo e retorne APENAS um JSON válido sem nenhum texto fora dele.
+  // Monta payload para a nova edge analisar-curriculo
+  const payload = {
+    nome_arquivo: arquivo.name,
+    vaga: vagaCtx,
+    curriculo_texto: '',
+    curriculo_b64: null,
+    curriculo_media_type: null,
+  };
 
-VAGA DE REFERÊNCIA: ${vagaCtx}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REGRA DE OURO: Dois candidatos com a MESMA palavra-chave têm pesos COMPLETAMENTE DIFERENTES.
-O que diferencia candidatos é VOLUME, ESCALA, RESULTADO e ESPECIFICIDADE — não a palavra-chave em si.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-DIMENSÕES (nota 0-10 cada):
-1. IMPACTO QUANTIFICÁVEL (peso 25%) — números, volumes, metas com contexto
-2. VERBOS DE AÇÃO (peso 15%) — implementei/liderei vs auxiliei/participei
-3. PROGRESSÃO DE CARREIRA (peso 15%) — crescimento de cargo ao longo do tempo
-4. PROFUNDIDADE TÉCNICA (peso 15%) — ferramentas e processos específicos
-5. ALINHAMENTO COM A VAGA (peso 30%) — cobertura real dos requisitos
-
-score_bruto = (d1×25 + d2×15 + d3×15 + d4×15 + d5×30) / 10
-score_curriculo = min(score_bruto, d5×10 + 5) → inteiro 0-100
-nivel_curriculo: 0-19=Muito Baixo, 20-34=Baixo, 35-54=Médio, 55-69=Intermediário, 70-91=Alto, 92-100=Excelente
-
-CURRÍCULO:
-${curriculoTexto}
-
-Retorne APENAS este JSON (sem markdown, sem texto fora):
-{"nome":"<nome completo>","email":"<email ou null>","telefone":"<tel ou null>","cargo":"<cargo principal>","area":"<área>","score_curriculo":<0-100>,"nivel_curriculo":"<nivel>","notas_dimensoes":{"impacto_quantificavel":<0-10>,"verbos_protagonismo":<0-10>,"progressao_trajetoria":<0-10>,"profundidade_especificidade":<0-10>,"alinhamento_vaga":<0-10>},"resumo_curriculo":"<2-3 frases>","diferenciais_detectados":["..."],"lacunas_identificadas":["..."],"keywords_encontradas":["..."],"keywords_ausentes":["..."],"tempo_experiencia_detectado":"<ex: 5 anos>","nivel_formacao_detectado":"<ex: Superior em Administração>"}`;
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    throw new Error('Supabase não configurado');
+  if (lido.tipo === 'texto') {
+    payload.curriculo_texto = (lido.conteudo || '').slice(0, 14000);
+  } else if (lido.tipo === 'binario' && lido.dataUrl) {
+    const [, base64] = lido.dataUrl.split(',');
+    payload.curriculo_b64 = base64;
+    payload.curriculo_media_type = lido.ext === 'pdf'
+      ? 'application/pdf'
+      : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   }
 
-  // Tenta a Edge Function analisar-candidato
-  // Envia o prompt completo no campo "entrevista" e candidato vazio
-  // A edge usa esses campos para montar a chamada à Anthropic server-side
-  const edgeResp = await fetch(`${SUPABASE_URL}/functions/v1/analisar-candidato`, {
+  addLog(`🤖 Enviando para analisar-curriculo (${vagaCtx})...`, 'info');
+
+  const edgeResp = await fetch(`${SUPABASE_URL}/functions/v1/analisar-curriculo`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + SUPABASE_KEY,
     },
-    body: JSON.stringify({
-      modo: 'fit_curriculo',
-      candidato: { nome: arquivo.name.replace(/\.[^.]+$/, '') },
-      entrevista: promptFitCurriculo,
-      vaga_dados: { titulo: vagaCtx },
-      ...(curriculoB64 ? { curriculo_b64: curriculoB64, curriculo_media_type: curriculoMediaType } : {}),
-    }),
+    body: JSON.stringify(payload),
   });
 
+  const rawText = await edgeResp.text();
+
   if (!edgeResp.ok) {
-    const errTxt = await edgeResp.text().catch(() => '');
-    throw new Error(`Edge Function retornou ${edgeResp.status}: ${errTxt.slice(0, 200)}`);
+    throw new Error(`analisar-curriculo retornou ${edgeResp.status}: ${rawText.slice(0, 300)}`);
   }
 
-  const edgeData = await edgeResp.json();
+  let edgeData;
+  try { edgeData = JSON.parse(rawText); }
+  catch(_) { throw new Error(`Resposta não é JSON válido: ${rawText.slice(0, 200)}`); }
 
-  // Extrai o JSON de qualquer campo que a edge retornar
-  const candidatos = [
-    edgeData?.resultado,
-    edgeData?.curriculo,
-    edgeData?.analise,
-    edgeData?.resposta,
-    edgeData?.content,
-    edgeData?.text,
-    edgeData,
-  ];
-
-  for (const cand of candidatos) {
-    if (!cand) continue;
-    if (typeof cand === 'object' && typeof cand.score_curriculo !== 'undefined') return cand;
-    if (typeof cand === 'string') {
-      const cleaned = cand.replace(/```json|```/g, '').trim();
-      const match = cleaned.match(/\{[\s\S]*\}/);
-      if (match) {
-        try { const parsed = JSON.parse(match[0]); if (typeof parsed.score_curriculo !== 'undefined') return parsed; } catch(_) {}
-      }
-    }
+  if (edgeData.ok === false) {
+    throw new Error(`Edge Function erro: ${edgeData.error || 'desconhecido'}`);
   }
 
-  throw new Error('Edge Function não retornou JSON de fit_curriculo esperado');
+  const resultado = edgeData.resultado ?? edgeData;
+  if (typeof resultado.score_curriculo === 'undefined') {
+    throw new Error(`JSON sem score_curriculo. Campos: ${Object.keys(resultado).join(', ')}`);
+  }
+
+  return resultado;
 }
-
 // Fallback local se a IA falhar
 function extrairFallback(arquivo) {
   const nomeBase = arquivo.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase());
