@@ -14,7 +14,7 @@ window.__ccAuthReady = async function () {
     const session = res.data?.session || null;
 
     if (!session) {
-      const origem = encodeURIComponent(window.location.pathname);
+      const origem = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.replace('/contratos/login.html?next=' + origem);
       return;
     }
@@ -29,6 +29,10 @@ window.__ccAuthReady = async function () {
       await sb.auth.signOut();
       window.location.replace('/contratos/login.html');
     };
+
+    if (typeof window.__ccAuthReady._callback === 'function') {
+      window.__ccAuthReady._callback(sb, session);
+    }
 
   } catch(e) {
     console.error('[cc-auth] Exceção:', e);
