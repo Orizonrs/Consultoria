@@ -877,14 +877,8 @@ async function extrairComIA(arquivo, vagaAlvo) {
   const lido = await lerArquivo(arquivo);
   const vagaCtx = vagaAlvo && vagaAlvo !== 'Banco de Talentos' ? vagaAlvo : 'Banco de Talentos Geral';
 
-  // Monta payload para a nova edge analisar-curriculo
-  const payload = {
-    nome_arquivo: arquivo.name,
-    vaga: vagaCtx,
-    curriculo_texto: '',
-    curriculo_b64: null,
-    curriculo_media_type: null,
-  };
+  // Monta payload — envia texto OU base64, a edge resolve internamente
+  const payload = { nome_arquivo: arquivo.name, vaga: vagaCtx };
 
   if (lido.tipo === 'texto') {
     payload.curriculo_texto = (lido.conteudo || '').slice(0, 14000);
@@ -894,37 +888,32 @@ async function extrairComIA(arquivo, vagaAlvo) {
     payload.curriculo_media_type = lido.ext === 'pdf'
       ? 'application/pdf'
       : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    addLog(`📄 ${lido.ext?.toUpperCase()} detectado — extraindo texto server-side...`, 'info');
   }
 
-  addLog(`🤖 Enviando para analisar-curriculo (${vagaCtx})...`, 'info');
+  addLog(`🤖 Analisando com IA (vaga: ${vagaCtx})...`, 'info');
 
   const edgeResp = await fetch(`${SUPABASE_URL}/functions/v1/analisar-curriculo`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-    },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
     body: JSON.stringify(payload),
   });
 
   const rawText = await edgeResp.text();
 
   if (!edgeResp.ok) {
-    throw new Error(`analisar-curriculo retornou ${edgeResp.status}: ${rawText.slice(0, 300)}`);
+    throw new Error(`analisar-curriculo ${edgeResp.status}: ${rawText.slice(0, 300)}`);
   }
 
   let edgeData;
   try { edgeData = JSON.parse(rawText); }
-  catch(_) { throw new Error(`Resposta não é JSON válido: ${rawText.slice(0, 200)}`); }
+  catch(_) { throw new Error(`Resposta inválida: ${rawText.slice(0, 200)}`); }
 
-  if (edgeData.ok === false) {
-    throw new Error(`Edge Function erro: ${edgeData.error || 'desconhecido'}`);
-  }
+  if (edgeData.ok === false) throw new Error(edgeData.error || 'Erro na edge function');
 
   const resultado = edgeData.resultado ?? edgeData;
-  if (typeof resultado.score_curriculo === 'undefined') {
-    throw new Error(`JSON sem score_curriculo. Campos: ${Object.keys(resultado).join(', ')}`);
-  }
+  if (typeof resultado.score_curriculo === 'undefined')
+    throw new Error(`score_curriculo ausente. Campos: ${Object.keys(resultado).join(', ')}`);
 
   return resultado;
 }
