@@ -1042,6 +1042,75 @@ CREATE POLICY IF NOT EXISTS "allow_anon_all" ON entrevistados_assign
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════
+     MODAL SCORE CV — Via IA ou Nota Manual
+══════════════════════════════════════════════════════ -->
+<div class="overlay-modal" id="modalScoreCV" style="display:none;" onclick="if(event.target===this)fecharModalScoreCV()">
+  <div class="modal-box" style="max-width:500px;">
+    <button class="modal-close" onclick="fecharModalScoreCV()">✕</button>
+    <div style="font-size:1.4rem;margin-bottom:0.4rem;">📄</div>
+    <h3 style="color:#3b82f6;margin-bottom:0.15rem;">Score do Currículo</h3>
+    <p class="modal-sub" id="scoreCvNomeLabel" style="margin-bottom:1rem;">—</p>
+
+    <!-- ABAS -->
+    <div style="display:flex;gap:0.3rem;margin-bottom:1.1rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.25rem;">
+      <button id="scoreCvTabIA"     onclick="scoreCvSwitch('ia')"     style="flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;background:rgba(59,130,246,0.2);color:#3b82f6;transition:all 0.15s;">🤖 Via IA</button>
+      <button id="scoreCvTabManual" onclick="scoreCvSwitch('manual')" style="flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;background:transparent;color:#666;transition:all 0.15s;">✏️ Nota Manual</button>
+    </div>
+
+    <!-- PAINEL IA -->
+    <div id="scoreCvPanelIA">
+      <div id="scoreCvIaInfo" style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:0.75rem 1rem;font-size:0.76rem;color:#93c5fd;line-height:1.6;margin-bottom:1rem;">
+        A IA analisa o currículo completo (experiências, formação, habilidades) e pontua de 0 a 100 com base em 5 dimensões: impacto, protagonismo, progressão, profundidade e alinhamento com a vaga.
+      </div>
+      <div id="scoreCvIaAtual" style="display:none;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.6rem 1rem;margin-bottom:0.8rem;font-size:0.76rem;color:#aaa;"></div>
+      <button id="scoreCvIaBtn" onclick="executarScoreCvIA()" style="width:100%;background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border:none;border-radius:10px;padding:0.75rem;font-family:inherit;font-size:0.86rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;">
+        🤖 Calcular com IA
+      </button>
+      <p style="font-size:0.63rem;color:#444;margin-top:0.5rem;text-align:center;">Usa a edge function <code>analisar-candidato</code>. Se a IA falhar, usa heurística local.</p>
+    </div>
+
+    <!-- PAINEL MANUAL -->
+    <div id="scoreCvPanelManual" style="display:none;">
+      <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);border-radius:10px;padding:0.75rem 1rem;font-size:0.76rem;color:#c4b5fd;line-height:1.6;margin-bottom:1rem;">
+        Atribua um score baseado na sua leitura do currículo. Útil quando a IA não está disponível ou quando você já conhece o candidato.
+      </div>
+
+      <!-- Slider + valor -->
+      <div style="margin-bottom:1rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+          <span style="font-size:0.7rem;font-weight:700;color:#aaa;">Score do Currículo</span>
+          <span id="scoreCvManualVal" style="font-size:1.3rem;font-weight:900;color:#3b82f6;font-family:monospace;min-width:50px;text-align:right;">50%</span>
+        </div>
+        <input type="range" id="scoreCvManualSlider" min="0" max="100" value="50"
+          oninput="scoreCvSliderChange(this.value)"
+          style="width:100%;accent-color:#3b82f6;height:6px;cursor:pointer;margin-bottom:0.4rem;"/>
+        <div style="display:flex;justify-content:space-between;font-size:0.58rem;color:#555;">
+          <span>0 — Baixo</span><span>40 — Médio</span><span>65 — Alto</span><span>80 — Excelente</span>
+        </div>
+      </div>
+
+      <!-- Nível calculado automaticamente -->
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.8rem;padding:0.5rem 0.8rem;background:rgba(255,255,255,0.04);border-radius:8px;">
+        <span style="font-size:0.7rem;color:#666;">Nível calculado:</span>
+        <span id="scoreCvManualNivel" style="font-size:0.76rem;font-weight:800;color:#3b82f6;">Médio</span>
+      </div>
+
+      <!-- Justificativa -->
+      <div style="margin-bottom:1rem;">
+        <label style="font-size:0.68rem;font-weight:700;color:#666;display:block;margin-bottom:0.4rem;">Justificativa (opcional)</label>
+        <textarea id="scoreCvManualJustif" rows="3" placeholder="Ex: Forte experiência em gestão, mas sem dados quantitativos..."
+          style="width:100%;background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.55rem 0.7rem;color:#f0f0f0;font-family:inherit;font-size:0.73rem;resize:vertical;outline:none;line-height:1.5;"></textarea>
+      </div>
+
+      <button onclick="salvarScoreCvManual()" style="width:100%;background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:none;border-radius:10px;padding:0.75rem;font-family:inherit;font-size:0.86rem;font-weight:800;cursor:pointer;">
+        💾 Salvar Nota Manual
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
@@ -2803,16 +2872,13 @@ function candCard(h){
 footBtns += `<button class="btn-sm" onclick="abrirModalAgendamento('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.email_externo||'')}','${esc(h.vaga||'')}')" style="background:rgba(52,211,153,0.1);color:#34d399;border-color:rgba(52,211,153,0.3);font-weight:800;" title="Agendar entrevista">📅 Agendar</button>`;
 footBtns += `<button class="btn-sm" onclick="abrirParecerCard('${esc(h.id)}')" style="background:rgba(167,139,250,0.1);color:#c4b5fd;border-color:rgba(167,139,250,0.3);" title="Parecer Final do Candidato"><img src="imagens/parecer3.png" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;" alt=""> Parecer${h.parecer_final_link ? ' ✅' : ''}</button>`;
 if(h.curriculo_url) footBtns += `<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);"><img src="imagens/curriculos1253.png" alt="Currículo" style="width:14px;height:14px;">Currículo</a>`;
-if (h.entrevista_json) {
+if (true) {  // Score CV — disponível para todos os candidatos
   const _jaTemScore = h.score_curriculo != null;
-  const _recalcLabel = _jaTemScore ? `🔄 Recalc. CV` : `⚡ Calcular CV`;
-  const _recalcStyle = _jaTemScore
+  const _scLabel = _jaTemScore ? `🔄 CV ${h.score_curriculo}%` : `📄 Score CV`;
+  const _scStyle = _jaTemScore
     ? `background:rgba(59,130,246,0.07);color:#3b82f6;border-color:rgba(59,130,246,0.2);`
     : `background:rgba(243,156,18,0.12);color:#f39c12;border-color:rgba(243,156,18,0.35);font-weight:800;`;
-  const _recalcTitle = _jaTemScore
-    ? `Score atual: ${h.score_curriculo}% (${h.nivel_curriculo||'?'}). Clique para recalcular com IA.`
-    : `Currículo preenchido mas ainda sem score. Clique para calcular com IA.`;
-  footBtns += `<button class="btn-sm" onclick="recalcularCurriculo('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.vaga||'')}',this)" style="${_recalcStyle}" title="${_recalcTitle}">${_recalcLabel}</button>`;
+  footBtns += `<button class="btn-sm" onclick="abrirModalScoreCV('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.vaga||'')}',this)" style="${_scStyle}">${_scLabel}</button>`;
 }
 if(h.link_externo) footBtns += `<a class="btn-sm" href="${esc(h.link_externo)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(10,102,194,0.1);color:#0A66C2;border-color:rgba(10,102,194,0.25);"><img src="imagens/linkedin2323232.png" alt="LinkedIn" style="width:14px;height:14px;">LinkedIn</a>`;
 if(h.email_externo) footBtns += `<button class="btn-sm" onclick="abrirEmail('${esc(h.email_externo)}','${esc(h.nome||'')}')" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.2);"><img src="imagens/correspondencia2563.png" alt="Email" style="width:14px;height:14px;">Email</button>`;
@@ -2857,7 +2923,18 @@ footBtns += h.recomendacao_doc_url
   if(!jaEmInbox) _g2.push(`<button class="btn-sm" onclick="moverParaInbox('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(79,168,232,0.12);color:#4fa8e8;border-color:rgba(79,168,232,0.35);font-weight:800;" title="Mover para Caixa de Entrada — organizar para distribuição">📥 C. Entrada</button>`);
 
   // GRUPO 3 — Comunicação / Docs
-  if(h.entrevista_json){ const _jaTemScore=h.score_curriculo!=null; _g3.push(`<button class="btn-sm" onclick="recalcularCurriculo('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.vaga||'')}',this)" style="${_jaTemScore?'background:rgba(59,130,246,0.07);color:#3b82f6;border-color:rgba(59,130,246,0.2);':'background:rgba(243,156,18,0.12);color:#f39c12;border-color:rgba(243,156,18,0.35);font-weight:800;'}">${_jaTemScore?'🔄 Recalc. CV':'⚡ Calcular CV'}</button>`); }
+  // Botão Score CV — aparece para TODOS (importado por CV ou por entrevista)
+  {
+    const _jaTemScore = h.score_curriculo != null;
+    const _scLabel = _jaTemScore ? `🔄 CV ${h.score_curriculo}%` : `📄 Score CV`;
+    const _scStyle = _jaTemScore
+      ? `background:rgba(59,130,246,0.07);color:#3b82f6;border-color:rgba(59,130,246,0.2);`
+      : `background:rgba(243,156,18,0.12);color:#f39c12;border-color:rgba(243,156,18,0.35);font-weight:800;`;
+    const _scTitle = _jaTemScore
+      ? `Score: ${h.score_curriculo}% (${h.nivel_curriculo||'?'}) · Clique para recalcular ou editar`
+      : `Calcular score do currículo via IA ou inserir nota manual`;
+    _g3.push(`<button class="btn-sm" onclick="abrirModalScoreCV('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.vaga||'')}',this)" style="${_scStyle}" title="${_scTitle}">${_scLabel}</button>`);
+  }
   if(h.link_externo) _g3.push(`<a class="btn-sm" href="${esc(h.link_externo)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(10,102,194,0.1);color:#0A66C2;border-color:rgba(10,102,194,0.25);"><img src="imagens/linkedin2323232.png" alt="LinkedIn" style="width:14px;height:14px;">LinkedIn</a>`);
   if(h.curriculo_url) {
     _g3.push(`<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);"><img src="imagens/curriculos1253.png" alt="Currículo" style="width:14px;height:14px;">Currículo</a>`);
@@ -6709,6 +6786,145 @@ window.addEventListener('message', e=>{
     </div>
   </div>
 </div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// MODAL SCORE CV — Via IA ou Nota Manual
+// ══════════════════════════════════════════════════════════════════
+let _scoreCvId   = null;
+let _scoreCvNome = null;
+let _scoreCvVaga = null;
+let _scoreCvBtn  = null;
+
+function abrirModalScoreCV(id, nome, vaga, btnEl) {
+  _scoreCvId   = id;
+  _scoreCvNome = nome;
+  _scoreCvVaga = vaga || '';
+  _scoreCvBtn  = btnEl;
+  document.getElementById('scoreCvNomeLabel').textContent = nome + (vaga ? ' · ' + vaga : '');
+
+  // Preenche status atual se já tem score
+  const h = _allCands ? _allCands.find(x => String(x.id) === String(id)) : null;
+  const atualDiv = document.getElementById('scoreCvIaAtual');
+  if (h && h.score_curriculo != null) {
+    const sc = parseInt(h.score_curriculo);
+    const cc = sc >= 65 ? '#3b82f6' : sc >= 40 ? '#f39c12' : '#e74c3c';
+    atualDiv.style.display = 'block';
+    atualDiv.innerHTML = `Score atual: <strong style="color:${cc};font-size:0.9rem;">${sc}%</strong> <span style="color:#555;">(${h.nivel_curriculo || '?'})</span> — clique para recalcular.`;
+    // Preenche slider com valor atual
+    document.getElementById('scoreCvManualSlider').value = sc;
+    scoreCvSliderChange(sc);
+  } else {
+    atualDiv.style.display = 'none';
+    document.getElementById('scoreCvManualSlider').value = 50;
+    scoreCvSliderChange(50);
+  }
+  if (h && h.resumo_curriculo) {
+    document.getElementById('scoreCvManualJustif').value = h.resumo_curriculo;
+  } else {
+    document.getElementById('scoreCvManualJustif').value = '';
+  }
+
+  scoreCvSwitch('ia');
+  document.getElementById('modalScoreCV').style.display = 'flex';
+}
+
+function fecharModalScoreCV() {
+  document.getElementById('modalScoreCV').style.display = 'none';
+  _scoreCvId = _scoreCvNome = _scoreCvVaga = _scoreCvBtn = null;
+}
+
+function scoreCvSwitch(tab) {
+  const isIA = tab === 'ia';
+  document.getElementById('scoreCvPanelIA').style.display     = isIA ? 'block' : 'none';
+  document.getElementById('scoreCvPanelManual').style.display = isIA ? 'none'  : 'block';
+  document.getElementById('scoreCvTabIA').style.background     = isIA ? 'rgba(59,130,246,0.2)' : 'transparent';
+  document.getElementById('scoreCvTabIA').style.color          = isIA ? '#3b82f6' : '#666';
+  document.getElementById('scoreCvTabManual').style.background = isIA ? 'transparent' : 'rgba(167,139,250,0.2)';
+  document.getElementById('scoreCvTabManual').style.color      = isIA ? '#666' : '#a78bfa';
+}
+
+function scoreCvSliderChange(val) {
+  val = parseInt(val);
+  const cc = val >= 65 ? '#3b82f6' : val >= 40 ? '#f39c12' : '#e74c3c';
+  const nivel = val >= 80 ? 'Excelente' : val >= 65 ? 'Alto' : val >= 40 ? 'Médio' : 'Baixo';
+  document.getElementById('scoreCvManualVal').textContent = val + '%';
+  document.getElementById('scoreCvManualVal').style.color = cc;
+  document.getElementById('scoreCvManualNivel').textContent = nivel;
+  document.getElementById('scoreCvManualNivel').style.color = cc;
+}
+
+// ── Salvar nota manual ──
+async function salvarScoreCvManual() {
+  if (!_scoreCvId) return;
+  const sc = parseInt(document.getElementById('scoreCvManualSlider').value);
+  const nivel = sc >= 80 ? 'Excelente' : sc >= 65 ? 'Alto' : sc >= 40 ? 'Médio' : 'Baixo';
+  const justif = (document.getElementById('scoreCvManualJustif').value || '').trim() || null;
+
+  const patch = {
+    score_curriculo: sc,
+    nivel_curriculo: nivel,
+    resumo_curriculo: justif,
+  };
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_scoreCvId)}`,
+      { method: 'PATCH', headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'},
+        body: JSON.stringify(patch) }
+    );
+    if (!res.ok) throw new Error('Supabase ' + res.status);
+    const idx = _allCands ? _allCands.findIndex(x => String(x.id) === String(_scoreCvId)) : -1;
+    if (idx >= 0) Object.assign(_allCands[idx], patch);
+    if (_scoreCvBtn) {
+      const cc = sc >= 65 ? '#3b82f6' : sc >= 40 ? '#f39c12' : '#e74c3c';
+      _scoreCvBtn.innerHTML = `🔄 CV ${sc}%`;
+      _scoreCvBtn.style.background = 'rgba(59,130,246,0.07)';
+      _scoreCvBtn.style.color = '#3b82f6';
+      _scoreCvBtn.style.borderColor = 'rgba(59,130,246,0.2)';
+      _scoreCvBtn.title = `Score: ${sc}% (${nivel}) — Manual · Clique para editar`;
+    }
+    mostrarToast(`✅ ${_scoreCvNome}: Score manual ${sc}% (${nivel}) salvo!`);
+    fecharModalScoreCV();
+    setTimeout(() => filtrarCands && filtrarCands(), 1200);
+  } catch(e) {
+    mostrarToast('❌ Erro ao salvar: ' + e.message, true);
+  }
+}
+
+// ── Calcular via IA (chama recalcularCurriculo existente) ──
+async function executarScoreCvIA() {
+  if (!_scoreCvId) return;
+  const btn = document.getElementById('scoreCvIaBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Calculando...';
+  btn.style.opacity = '0.6';
+
+  // Usa um botão fake para repassar o estado ao recalcularCurriculo
+  const fakeBtnEl = { innerHTML: '', disabled: false, style: {}, title: '' };
+  try {
+    await recalcularCurriculo(_scoreCvId, _scoreCvNome, _scoreCvVaga, fakeBtnEl);
+    // Atualiza o botão do card
+    if (_scoreCvBtn) {
+      const h = _allCands ? _allCands.find(x => String(x.id) === String(_scoreCvId)) : null;
+      if (h && h.score_curriculo != null) {
+        _scoreCvBtn.innerHTML = `🔄 CV ${h.score_curriculo}%`;
+        _scoreCvBtn.style.background = 'rgba(59,130,246,0.07)';
+        _scoreCvBtn.style.color = '#3b82f6';
+        _scoreCvBtn.style.borderColor = 'rgba(59,130,246,0.2)';
+        _scoreCvBtn.title = `Score: ${h.score_curriculo}% (${h.nivel_curriculo||'?'}) · Clique para recalcular`;
+      }
+    }
+    fecharModalScoreCV();
+  } catch(e) {
+    mostrarToast('❌ Erro na IA: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🤖 Calcular com IA';
+    btn.style.opacity = '';
+  }
+}
+</script>
 
 </body>
 </html>
