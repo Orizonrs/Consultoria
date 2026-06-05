@@ -1055,7 +1055,7 @@ CREATE POLICY IF NOT EXISTS "allow_anon_all" ON entrevistados_assign
     <!-- ABAS -->
     <div style="display:flex;gap:0.3rem;margin-bottom:1.1rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.25rem;">
       <button id="scoreCvTabIA"     onclick="scoreCvSwitch('ia')"     style="flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;background:rgba(59,130,246,0.2);color:#3b82f6;transition:all 0.15s;">🤖 Via IA</button>
-      <button id="scoreCvTabManual" onclick="scoreCvSwitch('manual')" style="flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;background:transparent;color:#666;transition:all 0.15s;">✏️ Nota Manual</button>
+      <button id="scoreCvTabManual" onclick="scoreCvSwitch('manual')" style="flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;background:transparent;color:#888;transition:all 0.15s;">✏️ Nota Manual</button>
     </div>
 
     <!-- PAINEL IA -->
@@ -1073,7 +1073,13 @@ CREATE POLICY IF NOT EXISTS "allow_anon_all" ON entrevistados_assign
     <!-- PAINEL MANUAL -->
     <div id="scoreCvPanelManual" style="display:none;">
       <div style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.18);border-radius:10px;padding:0.75rem 1rem;font-size:0.76rem;color:#c4b5fd;line-height:1.6;margin-bottom:1rem;">
-        Atribua um score baseado na sua leitura do currículo. Útil quando a IA não está disponível ou quando você já conhece o candidato.
+        Atribua a nota do currículo com base na sua própria avaliação. É uma das métricas de triagem — quanto melhor o currículo, maior o score.
+      </div>
+
+      <!-- Aviso quando candidato não tem CV em arquivo -->
+      <div id="scoreCvSemCvAviso" style="display:none;background:rgba(243,156,18,0.07);border:1px solid rgba(243,156,18,0.25);border-radius:10px;padding:0.65rem 0.9rem;font-size:0.72rem;color:#f59e0b;line-height:1.55;margin-bottom:1rem;">
+        📋 Este candidato veio pelo fluxo de entrevista — sem arquivo de currículo para análise automática.<br>
+        <span style="color:#888;font-size:0.68rem;">Atribua a nota com base na sua leitura do perfil ou do currículo impresso.</span>
       </div>
 
       <!-- Slider + valor -->
@@ -6232,12 +6238,14 @@ async function recalcularCurriculo(id, nome, vaga, btnEl) {
     let entrevistaJson = null;
     try { entrevistaJson = h.entrevista_json ? JSON.parse(h.entrevista_json) : null; } catch(e) {}
 
-    const exp  = entrevistaJson?.experiencias || [];
-    const cursos = entrevistaJson?.cursos     || [];
+    const exp    = entrevistaJson?.experiencias || [];
+    const cursos = entrevistaJson?.cursos       || [];
     const certs  = entrevistaJson?.certificados || [];
     const habs   = entrevistaJson?.habilidades  || [];
 
     let blocoCurriculo = '';
+
+    // Dados estruturados da entrevista
     if (exp.length) {
       blocoCurriculo += 'EXPERIÊNCIAS PROFISSIONAIS:\n';
       exp.forEach((e, i) => {
@@ -6245,21 +6253,20 @@ async function recalcularCurriculo(id, nome, vaga, btnEl) {
         if (e.atividades) blocoCurriculo += `   Atividades: ${e.atividades}\n`;
       });
     }
-    if (cursos.length)  blocoCurriculo += '\nFORMAÇÃO / CURSOS:\n' + cursos.map((c,i)=>`${i+1}. ${c}`).join('\n') + '\n';
-    if (certs.length)   blocoCurriculo += '\nCERTIFICADOS:\n' + certs.map((c,i)=>`${i+1}. ${c}`).join('\n') + '\n';
-    if (habs.length)    blocoCurriculo += '\nHABILIDADES: ' + habs.join(', ') + '\n';
+    if (cursos.length) blocoCurriculo += '\nFORMAÇÃO / CURSOS:\n' + cursos.map((c,i)=>`${i+1}. ${c}`).join('\n') + '\n';
+    if (certs.length)  blocoCurriculo += '\nCERTIFICADOS:\n'      + certs.map((c,i)=>`${i+1}. ${c}`).join('\n') + '\n';
+    if (habs.length)   blocoCurriculo += '\nHABILIDADES: ' + habs.join(', ') + '\n';
 
-    // Inclui texto livre do resumo se não houver estruturado
-    if (!blocoCurriculo.trim() && h.resumo_curriculo) {
-      blocoCurriculo = 'RESUMO DO CURRÍCULO:\n' + h.resumo_curriculo;
-    }
+    // Dados de candidatos importados por currículo (sem entrevista_json)
+    if (h.cargo)                blocoCurriculo += `\nCARGO / ÁREA: ${h.cargo}\n`;
+    if (h.keywords_encontradas) blocoCurriculo += `\nKEYWORDS DETECTADAS: ${h.keywords_encontradas}\n`;
+    if (h.keywords_ausentes)    blocoCurriculo += `KEYWORDS AUSENTES: ${h.keywords_ausentes}\n`;
+    if (h.resumo_curriculo && !blocoCurriculo.includes(h.resumo_curriculo))
+      blocoCurriculo += `\nRESUMO / NOTAS:\n${h.resumo_curriculo}\n`;
 
+    // Último recurso: usa nome + vaga como contexto mínimo para a IA inferir
     if (!blocoCurriculo.trim()) {
-      mostrarToast('⚠️ Candidato sem dados de currículo para recalcular', true);
-      btnEl.disabled = false;
-      btnEl.innerHTML = original;
-      btnEl.style.opacity = '';
-      return;
+      blocoCurriculo = `CANDIDATO: ${h.nome || nome}\nVAGA DESEJADA: ${h.vaga || vaga || 'não especificada'}\n(Sem texto de currículo — avalie com base no alinhamento do cargo com a vaga)`;
     }
 
     // 3. Monta contexto da vaga
@@ -6825,7 +6832,37 @@ function abrirModalScoreCV(id, nome, vaga, btnEl) {
     document.getElementById('scoreCvManualJustif').value = '';
   }
 
-  scoreCvSwitch('ia');
+  // Detecta se candidato tem dados de currículo para a IA analisar
+  const _temDadosIA = !!(
+    (h && h.entrevista_json) ||
+    (h && h.keywords_encontradas) ||
+    (h && h.resumo_curriculo)
+  );
+
+  // Mostra/esconde aba IA conforme disponibilidade de dados
+  const tabIA = document.getElementById('scoreCvTabIA');
+  const tabManual = document.getElementById('scoreCvTabManual');
+  const infoIA = document.getElementById('scoreCvIaInfo');
+
+  if (_temDadosIA) {
+    tabIA.style.display = '';
+    infoIA.innerHTML = 'A IA analisa o currículo completo (experiências, formação, habilidades) e pontua de 0 a 100 com base em 5 dimensões: impacto, protagonismo, progressão, profundidade e alinhamento com a vaga.';
+    scoreCvSwitch('ia');
+  } else {
+    // Candidato do fluxo normal (DISC + entrevista) sem currículo em arquivo
+    // IA não tem texto para analisar — abre direto em Nota Manual
+    tabIA.style.display = 'none';
+    infoIA.innerHTML = '';
+    scoreCvSwitch('manual');
+    // Mostra aviso no painel manual explicando o motivo
+    const avisoEl = document.getElementById('scoreCvSemCvAviso');
+    if (avisoEl) avisoEl.style.display = 'block';
+  }
+
+  // Garante que aviso some quando tem dados
+  const avisoEl2 = document.getElementById('scoreCvSemCvAviso');
+  if (avisoEl2 && _temDadosIA) avisoEl2.style.display = 'none';
+
   document.getElementById('modalScoreCV').style.display = 'flex';
 }
 
@@ -6838,10 +6875,16 @@ function scoreCvSwitch(tab) {
   const isIA = tab === 'ia';
   document.getElementById('scoreCvPanelIA').style.display     = isIA ? 'block' : 'none';
   document.getElementById('scoreCvPanelManual').style.display = isIA ? 'none'  : 'block';
-  document.getElementById('scoreCvTabIA').style.background     = isIA ? 'rgba(59,130,246,0.2)' : 'transparent';
-  document.getElementById('scoreCvTabIA').style.color          = isIA ? '#3b82f6' : '#666';
-  document.getElementById('scoreCvTabManual').style.background = isIA ? 'transparent' : 'rgba(167,139,250,0.2)';
-  document.getElementById('scoreCvTabManual').style.color      = isIA ? '#666' : '#a78bfa';
+  const tabIA = document.getElementById('scoreCvTabIA');
+  const tabM  = document.getElementById('scoreCvTabManual');
+  if (tabIA) {
+    tabIA.style.background = isIA ? 'rgba(59,130,246,0.2)' : 'transparent';
+    tabIA.style.color      = isIA ? '#3b82f6' : '#888';
+  }
+  if (tabM) {
+    tabM.style.background = isIA ? 'transparent' : 'rgba(167,139,250,0.2)';
+    tabM.style.color      = isIA ? '#888' : '#a78bfa';
+  }
 }
 
 function scoreCvSliderChange(val) {
@@ -6879,14 +6922,14 @@ async function salvarScoreCvManual() {
     if (_scoreCvBtn) {
       const cc = sc >= 65 ? '#3b82f6' : sc >= 40 ? '#f39c12' : '#e74c3c';
       _scoreCvBtn.innerHTML = `🔄 CV ${sc}%`;
-      _scoreCvBtn.style.background = 'rgba(59,130,246,0.07)';
-      _scoreCvBtn.style.color = '#3b82f6';
-      _scoreCvBtn.style.borderColor = 'rgba(59,130,246,0.2)';
+      _scoreCvBtn.style.background = `${cc}12`;
+      _scoreCvBtn.style.color = cc;
+      _scoreCvBtn.style.borderColor = `${cc}33`;
       _scoreCvBtn.title = `Score: ${sc}% (${nivel}) — Manual · Clique para editar`;
     }
     mostrarToast(`✅ ${_scoreCvNome}: Score manual ${sc}% (${nivel}) salvo!`);
     fecharModalScoreCV();
-    setTimeout(() => filtrarCands && filtrarCands(), 1200);
+    setTimeout(() => filtrarCands && filtrarCands(), 800);
   } catch(e) {
     mostrarToast('❌ Erro ao salvar: ' + e.message, true);
   }

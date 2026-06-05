@@ -497,6 +497,13 @@ body::after{
             </div>
           </div>
           <div class="cfg-item">
+            <div class="cfg-label">Score do Currículo via IA</div>
+            <div class="cfg-toggle">
+              <span class="cfg-toggle-label">Calcular Fit Currículo automaticamente com IA (desative para importar mais rápido)</span>
+              <label class="toggle-sw"><input type="checkbox" id="togScoreIA" checked/><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="cfg-item">
             <div class="cfg-label">Avaliação DISC Automática</div>
             <div class="cfg-toggle">
               <span class="cfg-toggle-label">Inferir perfil DISC com base no texto do currículo</span>
@@ -984,15 +991,40 @@ async function processarCurriculo(f) {
   const vagaAlvo = (_cfgVagaEl?.options[_cfgVagaEl.selectedIndex]?.text || _cfgVagaEl?.value || 'Banco de Talentos').replace(/^—.*—$/, 'Banco de Talentos');
   let dados;
 
+  const _usarIA     = document.getElementById('togIA')?.checked !== false;
+  const _usarScoreIA = document.getElementById('togScoreIA')?.checked !== false;
+
   if (f.arquivo) {
-    try {
-      addLog(`🤖 IA analisando ${f.nome}...`, 'info');
-      dados = await extrairComIA(f.arquivo, vagaAlvo);
-      addLog(`📊 Score currículo: ${dados.score_curriculo ?? '?'}% (${dados.nivel_curriculo || '?'})`, 'info');
-    } catch(e) {
-      addLog(`⚠️ IA falhou (${e.message}) — score estimado`, 'warn');
-      dados = extrairFallback(f.arquivo);
-      addLog(`📊 Score estimado (heurística): ${dados.score_curriculo}% (${dados.nivel_curriculo}) — clique em "Score CV" para recalcular com IA`, 'warn');
+    if (_usarIA) {
+      try {
+        addLog(`🤖 IA analisando ${f.nome}...`, 'info');
+        dados = await extrairComIA(f.arquivo, vagaAlvo);
+        if (!_usarScoreIA) {
+          // Extrai dados mas zera o score — será dado manualmente depois
+          dados.score_curriculo = null;
+          dados.nivel_curriculo = null;
+          addLog(`📋 Dados extraídos por IA. Score CV desativado — use o botão "📄 Dar Nota" para pontuar.`, 'info');
+        } else {
+          addLog(`📊 Score currículo: ${dados.score_curriculo ?? '?'}% (${dados.nivel_curriculo || '?'})`, 'info');
+        }
+      } catch(e) {
+        addLog(`⚠️ IA falhou (${e.message}) — usando heurística local`, 'warn');
+        dados = extrairFallback(f.arquivo);
+        if (!_usarScoreIA) { dados.score_curriculo = null; dados.nivel_curriculo = null; }
+        else addLog(`📊 Score estimado (heurística): ${dados.score_curriculo}% (${dados.nivel_curriculo}) — clique em "Score CV" para recalcular com IA`, 'warn');
+      }
+    } else {
+      // Sem IA: extrai apenas nome do arquivo, sem chamar nenhuma API
+      addLog(`✋ IA desativada — importando ${f.nome} sem análise automática`, 'warn');
+      const nomeArq = f.nome.replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').replace(/CV/gi, '').trim();
+      dados = {
+        nome: nomeArq, email: null, telefone: null, cargo: null, area: null,
+        score_curriculo: null, nivel_curriculo: null, resumo_curriculo: null,
+        diferenciais_detectados: [], lacunas_identificadas: [],
+        keywords_encontradas: [], keywords_ausentes: [],
+        _semIA: true
+      };
+      addLog(`📋 Importado sem IA: "${nomeArq}". Use "📄 Dar Nota" para pontuar manualmente.`, 'info');
     }
   } else {
     const nomeUrl = f.nome.replace(/^LinkedIn:\s*/i,'').trim();
@@ -1009,16 +1041,19 @@ async function processarCurriculo(f) {
     try {
       const agora = new Date().toISOString();
       const patchPayload = {
-        score_curriculo:      dados.score_curriculo   ?? null,
-        nivel_curriculo:      dados.nivel_curriculo   || null,
-        resumo_curriculo:     dados.resumo_curriculo  || null,
-        nota_exp_curriculo:   dados.notas_dimensoes?.progressao_trajetoria       ?? null,
-        nota_form_curriculo:  dados.notas_dimensoes?.alinhamento_vaga            ?? null,
-        nota_tec_curriculo:   dados.notas_dimensoes?.profundidade_especificidade ?? null,
-        keywords_encontradas: dados.keywords_encontradas?.length ? dados.keywords_encontradas.join(' | ') : null,
-        keywords_ausentes:    dados.keywords_ausentes?.length    ? dados.keywords_ausentes.join(' | ')    : null,
-        atualizado_em:        agora,
+        atualizado_em: agora,
       };
+      // Só atualiza score se a IA calculou um — evita apagar score manual existente
+      if (dados.score_curriculo != null) {
+        patchPayload.score_curriculo      = dados.score_curriculo;
+        patchPayload.nivel_curriculo      = dados.nivel_curriculo || null;
+        patchPayload.resumo_curriculo     = dados.resumo_curriculo || null;
+        patchPayload.nota_exp_curriculo   = dados.notas_dimensoes?.progressao_trajetoria       ?? null;
+        patchPayload.nota_form_curriculo  = dados.notas_dimensoes?.alinhamento_vaga            ?? null;
+        patchPayload.nota_tec_curriculo   = dados.notas_dimensoes?.profundidade_especificidade ?? null;
+      }
+      if (dados.keywords_encontradas?.length) patchPayload.keywords_encontradas = dados.keywords_encontradas.join(' | ');
+      if (dados.keywords_ausentes?.length)    patchPayload.keywords_ausentes    = dados.keywords_ausentes.join(' | ');
       // Se extraiu email/telefone e o candidato não tinha, atualiza também
       if (dados.email && dados.email.includes('@')) patchPayload.email_externo = dados.email.toLowerCase().trim();
       if (dados.telefone) patchPayload.tel_externo = dados.telefone;
@@ -1029,7 +1064,11 @@ async function processarCurriculo(f) {
       );
 
       if (patchRes.ok) {
-        addLog(`✅ Fit Currículo aplicado a ${f.vinculadoNome}: ${dados.score_curriculo ?? '—'}% (${dados.nivel_curriculo || '?'})`, 'ok');
+        if (dados.score_curriculo != null) {
+          addLog(`✅ Currículo vinculado a ${f.vinculadoNome}: Score ${dados.score_curriculo}% (${dados.nivel_curriculo || '?'})`, 'ok');
+        } else {
+          addLog(`✅ Currículo vinculado a ${f.vinculadoNome}. Use "📄 Dar Nota" para pontuar o currículo.`, 'ok');
+        }
         return {
           ...f, status:'ok', nome:f.vinculadoNome,
           email:dados.email||'', tel:dados.telefone||'',
