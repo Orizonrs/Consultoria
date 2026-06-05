@@ -18,7 +18,7 @@
 :root{--primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;--bg:#080808;--bg2:#0d0d0d;--card:#111111;--card2:#161616;--border:rgba(59,130,246,0.12);--border2:rgba(59,130,246,0.28);--text:#f0f0f0;--muted:#666;--muted2:#333;--red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--radius:14px;}
 .sb-head{padding:1.1rem 0.85rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;flex-shrink:0;}
 .sb-logo-ico{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,rgba(30,64,175,.35),rgba(59,130,246,.18));border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 2px 10px rgba(59,130,246,.15);}
-.sb-logo-ico img{width:44px;height:44px;object-fit:contain;}
+.sb-logo-ico img{width:32px;height:32px;object-fit:contain;}
 .sb-logo-txt{overflow:hidden;white-space:nowrap;}
 .sb-logo-name{font-size:1.18rem;font-weight:900;line-height:1.2;letter-spacing:-.3px;}
 .sb-logo-name span{color:var(--accent);}
@@ -476,19 +476,11 @@ document.getElementById('sb-toggle')?.addEventListener('click',()=>{const s=docu
 // __ccAuthReady é chamada pelo cc-auth.js após SDK carregado + sessão válida
 window.__ccAuthReady = async function() {
   try {
-    // Tenta KEY1 primeiro, fallback para KEY2
-    const KEYS = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1eWNlbnFnZ3drZmh2b3lubmhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMTM1NTEsImV4cCI6MjA4OTc4OTU1MX0.Tg-XchEyLov6xZuILhqUE1f9XRhcCdGXejyHXS6kW8c', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveW9nZWRzZ3J2ZHV5Z2pzZ3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MDEwNDksImV4cCI6MjA4OTM3NzA0OX0.IUyEh5SZLz_j5nf2k9-xelbxthcvSJ8oX0mAbqtuLF4'];
-    const URL  = 'https://huycenqggwkfhvoynnhi.supabase.co';
-    let session = null;
-    for (const key of KEYS) {
-      try {
-        sb = window.supabase.createClient(URL, key);
-        const res = await sb.auth.getSession();
-        if (res.data?.session) { session = res.data.session; break; }
-      } catch(e) { console.warn('key failed:', e); }
-    }
+    sb = window.supabase.createClient('https://yunoxkembhskpnprffoi.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms');
+    const res = await sb.auth.getSession();
+    const session = res.data?.session || null;
     if (!session) {
-      window.location.replace('./login.html?next=' + encodeURIComponent(window.location.pathname));
+      window.location.replace('/Consultoria/contratos/login.html?next=' + encodeURIComponent(window.location.pathname));
       return;
     }
     const u = session.user;
@@ -496,7 +488,7 @@ window.__ccAuthReady = async function() {
     const eEl = document.getElementById('user-email');
     if (nEl) nEl.textContent = u.user_metadata?.nome || u.user_metadata?.full_name || u.email.split('@')[0];
     if (eEl) eEl.textContent = u.email;
-    window.ccLogout = async () => { await sb.auth.signOut(); window.location.replace('./login.html'); };
+    window.ccLogout = async () => { await sb.auth.signOut(); window.location.replace('/Consultoria/contratos/login.html'); };
     populaAnoSel(); atualizarData(); setInterval(atualizarData, 60000); setTipo('receita'); carregarDados();
     sb.channel('balanco-realtime').on('postgres_changes',{event:'*',schema:'public',table:TABLE},()=>carregarDados()).subscribe();
   } catch(e) { console.error('[balanco]', e); }
