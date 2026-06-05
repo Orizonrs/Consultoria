@@ -728,8 +728,13 @@ const obsKey=`disc_obs_${nome}_${vaga}_${dom}`;
 const obsAtual=localStorage.getItem(obsKey)||'';
 
 // ── HISTÓRICO (Supabase) ─────────────────────────────────────
-const SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+let SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
+let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+// ── Recebe credenciais do shell via localStorage + postMessage ──
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+})();
 
 async function salvarNoSupabase(){
   try{

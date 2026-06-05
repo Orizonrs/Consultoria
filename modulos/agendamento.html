@@ -446,8 +446,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 /* ═══════════════════════════════════════════════
    CONFIGURAÇÃO — edite apenas estas duas linhas
    ═══════════════════════════════════════════════ */
-const SUPABASE_URL = 'OrizonSec._url';
-const SUPABASE_KEY = 'OrizonSec._key';
+let SUPABASE_URL = '';
+let SUPABASE_KEY = '';
+// Recebe credenciais do shell
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}'); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener('message',function(e){ if(e.data&&e.data.tipo==='orizon_ctx'){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+})();
 // Crie um nome único para seu canal ntfy (sem espaços, ex: orizon-agenda-2024)
 // Depois abra o app ntfy no celular e assine este mesmo nome
 const NTFY_TOPICO = 'orizon-agenda-orizon'; // ← altere se quiser

@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Carta de Oferta | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:700px;height:700px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* ── HERO ── */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.6rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.2);}
+.btn-danger:hover{background:rgba(231,76,60,0.18);border-color:rgba(231,76,60,0.35);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.2);border-color:rgba(46,204,113,0.4);}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1fr 400px;gap:1rem;align-items:start;}
+@media(max-width:1100px){.layout{grid-template-columns:1fr;}}
+
+/* ── SEC LABEL ── */
+.sec{margin-bottom:0.85rem;margin-top:0.2rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1.1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.2);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* ── FORM ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+.form-grid.g3{grid-template-columns:1fr 1fr 1fr;}
+.form-grid.full{grid-template-columns:1fr;}
+@media(max-width:700px){.form-grid,.form-grid.g3{grid-template-columns:1fr;}}
+.field{display:flex;flex-direction:column;gap:0.3rem;}
+.field.span2{grid-column:span 2;}
+.field.span3{grid-column:span 3;}
+@media(max-width:700px){.field.span2,.field.span3{grid-column:span 1;}}
+.label{font-size:0.62rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.label span{color:var(--red);margin-left:2px;}
+.input,.select,.textarea{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;padding:0.55rem 0.85rem;font-family:inherit;font-size:0.8rem;font-weight:600;color:var(--text);outline:none;transition:border-color 0.15s,background 0.15s;width:100%;}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent);background:rgba(59,130,246,0.04);}
+.input::placeholder,.textarea::placeholder{color:var(--muted);}
+.select{appearance:none;cursor:pointer;}
+.textarea{resize:vertical;min-height:90px;line-height:1.6;}
+.input-prefix{display:flex;align-items:center;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;overflow:hidden;transition:border-color 0.15s;}
+.input-prefix:focus-within{border-color:var(--accent);}
+.input-prefix-icon{padding:0 0.75rem;font-size:0.75rem;font-weight:800;color:var(--muted);background:rgba(255,255,255,0.03);border-right:1px solid var(--border);white-space:nowrap;}
+.input-prefix .input{border:none;border-radius:0;background:transparent;}
+.input-prefix .input:focus{background:transparent;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-info{display:flex;flex-direction:column;gap:0.1rem;}
+.toggle-label{font-size:0.72rem;font-weight:700;}
+.toggle-desc{font-size:0.62rem;color:var(--muted);}
+.toggle{position:relative;width:34px;height:18px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--muted2);border-radius:99px;cursor:pointer;transition:0.2s;}
+.toggle-slider::before{content:'';position:absolute;height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s;}
+.toggle input:checked + .toggle-slider{background:var(--accent);}
+.toggle input:checked + .toggle-slider::before{transform:translateX(16px);}
+
+/* ── BENEFÍCIOS ── */
+.benef-list{display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.6rem;}
+.benef-item{display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.75rem;}
+.benef-ico{font-size:1rem;width:22px;text-align:center;flex-shrink:0;}
+.benef-name{flex:1;font-size:0.72rem;font-weight:700;}
+.benef-val{font-size:0.7rem;color:var(--accent);font-weight:800;font-family:var(--mono);}
+.benef-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.9rem;padding:0.1rem 0.3rem;border-radius:4px;transition:color 0.15s;}
+.benef-del:hover{color:var(--red);}
+.benef-add-row{display:flex;gap:0.5rem;align-items:center;}
+
+/* ── PREVIEW ── */
+.preview-panel{position:sticky;top:1.5rem;}
+.status-bar{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap;}
+.status-chip{font-size:0.62rem;font-weight:800;padding:0.2rem 0.65rem;border-radius:99px;border:1px solid;display:flex;align-items:center;gap:0.3rem;}
+.chip-rascunho{background:rgba(85,85,85,0.15);color:var(--muted);border-color:rgba(85,85,85,0.2);}
+.chip-aguardando{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.chip-aceita{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.chip-recusada{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.2);}
+.chip-expirada{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* ── CARTA PREVIEW ── */
+.carta-wrap{background:var(--card2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.carta-toolbar{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1rem;background:var(--card3);border-bottom:1px solid var(--border);gap:0.4rem;flex-wrap:wrap;}
+.carta-toolbar-title{font-size:0.62rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.carta-body{padding:1.5rem;font-size:0.79rem;line-height:1.8;color:var(--text2);}
+.carta-body .carta-header-logo{font-size:1.1rem;font-weight:900;color:var(--accent);letter-spacing:-0.5px;margin-bottom:0.8rem;}
+.carta-body .carta-date{font-size:0.68rem;color:var(--muted);margin-bottom:1.4rem;}
+.carta-body .carta-dest{margin-bottom:1.2rem;}
+.carta-body .carta-dest strong{display:block;font-size:0.85rem;font-weight:800;color:var(--text);margin-bottom:0.1rem;}
+.carta-body h3{font-size:0.82rem;font-weight:900;color:var(--text);margin:1.1rem 0 0.6rem;border-left:2px solid var(--accent);padding-left:0.6rem;}
+.carta-body .carta-field{display:flex;justify-content:space-between;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.carta-body .carta-field:last-child{border-bottom:none;}
+.carta-body .cf-label{font-size:0.67rem;color:var(--muted);}
+.carta-body .cf-val{font-size:0.72rem;font-weight:800;color:var(--text);}
+.carta-body .carta-obs{font-size:0.68rem;color:var(--muted);background:rgba(255,255,255,0.025);border-left:2px solid var(--border2);padding:0.6rem 0.8rem;border-radius:0 8px 8px 0;margin:0.8rem 0;}
+.carta-body .carta-sign{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--border);font-size:0.68rem;color:var(--muted);}
+.carta-body .carta-sign strong{display:block;color:var(--text);font-size:0.74rem;margin-bottom:0.1rem;}
+.carta-body .carta-prazo{display:flex;align-items:center;gap:0.4rem;background:rgba(243,156,18,0.07);border:1px solid rgba(243,156,18,0.2);border-radius:8px;padding:0.55rem 0.8rem;margin-top:0.8rem;font-size:0.68rem;color:var(--orange);}
+
+/* ── HISTÓRICO ── */
+.hist-list{display:flex;flex-direction:column;gap:0;}
+.hist-item{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.hist-item:last-child{border-bottom:none;}
+.hist-status{font-size:0.58rem;font-weight:800;padding:0.14rem 0.48rem;border-radius:6px;white-space:nowrap;border:1px solid;}
+.hist-name{flex:1;font-size:0.7rem;font-weight:700;}
+.hist-meta{font-size:0.62rem;color:var(--muted);text-align:right;}
+.hist-action{font-size:0.68rem;color:var(--accent);cursor:pointer;background:none;border:none;font-family:inherit;font-weight:700;padding:0.1rem 0.3rem;}
+.hist-action:hover{color:var(--text);}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;margin-bottom:1rem;}
+.kpi-mini{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;text-align:center;position:relative;overflow:hidden;}
+.kpi-mini::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--kpi-color,var(--accent)),transparent);}
+.kpi-mini-val{font-size:1.4rem;font-weight:900;font-family:var(--mono);color:var(--kpi-color,var(--accent));}
+.kpi-mini-label{font-size:0.56rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:0.1rem;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9998;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:2rem;max-width:480px;width:90%;animation:fadeUp 0.3s ease;position:relative;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.4rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.6;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal-actions{display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.4rem;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;display:flex;flex-direction:column;gap:0.4rem;}
+.toast-item{background:var(--card3);border:1px solid var(--border2);border-radius:12px;padding:0.7rem 1rem;font-size:0.72rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;animation:slideIn 0.25s ease;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.toast-item.ok{border-color:rgba(46,204,113,0.3);color:var(--green);}
+.toast-item.err{border-color:rgba(231,76,60,0.35);color:var(--red);}
+.toast-item.warn{border-color:rgba(243,156,18,0.35);color:var(--orange);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+
+@media(max-width:700px){
+  .page{padding:1rem 0.9rem 3rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.2rem;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Propostas & Ofertas</div>
+      <div class="hero-title">Carta de <span>Oferta</span></div>
+      <div class="hero-sub">Geração · Personalização · Envio · Controle de aceite</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="navegar('contratados')">✅ Contratados</button>
+      <button class="btn btn-ghost" onclick="navegar('pipeline')">🔀 Pipeline</button>
+      <button class="btn btn-primary" onclick="abrirNovaCarta()">✉ Nova Carta</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi-mini" style="--kpi-color:var(--orange)">
+      <div class="kpi-mini-val" id="kpiAguardando">4</div>
+      <div class="kpi-mini-label">Aguardando Resposta</div>
+    </div>
+    <div class="kpi-mini" style="--kpi-color:var(--green)">
+      <div class="kpi-mini-val" id="kpiAceitas">12</div>
+      <div class="kpi-mini-label">Aceitas este Mês</div>
+    </div>
+    <div class="kpi-mini" style="--kpi-color:var(--accent)">
+      <div class="kpi-mini-val" id="kpiTaxa">75%</div>
+      <div class="kpi-mini-label">Taxa de Aceite</div>
+    </div>
+  </div>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <div class="layout">
+
+    <!-- COLUNA ESQUERDA: FORMULÁRIO -->
+    <div>
+
+      <!-- CANDIDATO & VAGA -->
+      <div class="sec"><div class="sec-label">📋 Candidato & Vaga</div></div>
+      <div class="card" style="margin-bottom:1rem;animation-delay:0.05s">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label">Candidato<span>*</span></label>
+            <select class="select" id="selCandidato" onchange="sincronizarPreview()">
+              <option value="">Selecionar candidato...</option>
+              <option value="1">Lucas Andrade — Dev Backend Sênior</option>
+              <option value="2">Mariana Costa — UX Designer Pleno</option>
+              <option value="3">Rafael Souza — Gerente de Projetos</option>
+              <option value="4">Juliana Mendes — Analista de Dados</option>
+              <option value="5">Bruno Alves — Tech Lead</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Vaga<span>*</span></label>
+            <select class="select" id="selVaga" onchange="sincronizarPreview()">
+              <option value="">Selecionar vaga...</option>
+              <option value="1">Dev Backend Sênior — Fintech Alpha</option>
+              <option value="2">UX Designer Pleno — Startup Beta</option>
+              <option value="3">Gerente de Projetos — Empresa Gamma</option>
+              <option value="4">Analista de Dados — Consulta Delta</option>
+              <option value="5">Tech Lead — Unicórnio Omega</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Empresa contratante<span>*</span></label>
+            <input class="input" id="empresa" type="text" placeholder="Ex: Fintech Alpha S.A." oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field">
+            <label class="label">Cargo ofertado<span>*</span></label>
+            <input class="input" id="cargo" type="text" placeholder="Ex: Desenvolvedor Backend Sênior" oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field">
+            <label class="label">Modalidade</label>
+            <select class="select" id="modalidade" onchange="sincronizarPreview()">
+              <option>Presencial</option>
+              <option>Híbrido</option>
+              <option selected>Remoto</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Regime de contratação</label>
+            <select class="select" id="regime" onchange="sincronizarPreview()">
+              <option>CLT</option>
+              <option>PJ</option>
+              <option>Estágio</option>
+              <option>Temporário</option>
+              <option>Cooperado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- REMUNERAÇÃO -->
+      <div class="sec"><div class="sec-label">💰 Remuneração</div></div>
+      <div class="card" style="margin-bottom:1rem;animation-delay:0.1s">
+        <div class="form-grid g3">
+          <div class="field">
+            <label class="label">Salário Base<span>*</span></label>
+            <div class="input-prefix">
+              <span class="input-prefix-icon">R$</span>
+              <input class="input" id="salario" type="text" placeholder="0,00" oninput="mascararMoeda(this);sincronizarPreview()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Periodicidade</label>
+            <select class="select" id="periodicidade" onchange="sincronizarPreview()">
+              <option>Mensal</option>
+              <option>Hora</option>
+              <option>Diária</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Moeda</label>
+            <select class="select" id="moeda" onchange="sincronizarPreview()">
+              <option>BRL</option>
+              <option>USD</option>
+              <option>EUR</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label">Bônus variável</label>
+            <div class="input-prefix">
+              <span class="input-prefix-icon">R$</span>
+              <input class="input" id="bonus" type="text" placeholder="0,00" oninput="mascararMoeda(this);sincronizarPreview()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Participação nos lucros (PLR)</label>
+            <div class="input-prefix">
+              <span class="input-prefix-icon">R$</span>
+              <input class="input" id="plr" type="text" placeholder="0,00" oninput="mascararMoeda(this);sincronizarPreview()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">Stock Options / Equity</label>
+            <input class="input" id="equity" type="text" placeholder="Ex: 0,5% vesting 4 anos" oninput="sincronizarPreview()"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- BENEFÍCIOS -->
+      <div class="sec"><div class="sec-label">🎁 Benefícios</div></div>
+      <div class="card" style="margin-bottom:1rem;animation-delay:0.15s">
+        <div id="benef-list" class="benef-list"></div>
+        <div class="benef-add-row">
+          <select class="select" id="benef-select" style="flex:1;">
+            <option value="">Selecionar benefício...</option>
+            <option value="🏥 Plano de Saúde">🏥 Plano de Saúde</option>
+            <option value="🦷 Plano Odontológico">🦷 Plano Odontológico</option>
+            <option value="🍽 Vale Refeição">🍽 Vale Refeição</option>
+            <option value="🛒 Vale Alimentação">🛒 Vale Alimentação</option>
+            <option value="🚌 Vale Transporte">🚌 Vale Transporte</option>
+            <option value="💻 Auxílio Home Office">💻 Auxílio Home Office</option>
+            <option value="📚 Auxílio Educação">📚 Auxílio Educação</option>
+            <option value="🏋 Academia / Wellhub">🏋 Academia / Wellhub</option>
+            <option value="🐾 Pet Friendly">🐾 Pet Friendly</option>
+            <option value="🧘 Programa de Bem-estar">🧘 Programa de Bem-estar</option>
+            <option value="🚗 Carro / Combustível">🚗 Carro / Combustível</option>
+            <option value="📱 Celular corporativo">📱 Celular corporativo</option>
+            <option value="✈ Plano de viagens">✈ Plano de viagens</option>
+          </select>
+          <input class="input" id="benef-val" type="text" placeholder="Valor ou descrição" style="width:160px;"/>
+          <button class="btn btn-ghost" onclick="adicionarBeneficio()">+ Adicionar</button>
+        </div>
+      </div>
+
+      <!-- CONDIÇÕES & PRAZO -->
+      <div class="sec"><div class="sec-label">📅 Condições & Prazo</div></div>
+      <div class="card" style="margin-bottom:1rem;animation-delay:0.2s">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label">Data prevista de início</label>
+            <input class="input" id="dataInicio" type="date" oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field">
+            <label class="label">Prazo para resposta</label>
+            <input class="input" id="prazoResposta" type="date" oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field">
+            <label class="label">Carga horária semanal</label>
+            <input class="input" id="cargaHoraria" type="text" placeholder="Ex: 40h/semana" oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field">
+            <label class="label">Local / Cidade</label>
+            <input class="input" id="localTrabalho" type="text" placeholder="Ex: São Paulo, SP" oninput="sincronizarPreview()"/>
+          </div>
+          <div class="field span2">
+            <label class="label">Observações adicionais</label>
+            <textarea class="textarea" id="observacoes" rows="3" placeholder="Ex: período de experiência, cláusulas especiais, detalhes do processo de onboarding..." oninput="sincronizarPreview()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPÇÕES DE ENVIO -->
+      <div class="sec"><div class="sec-label">⚙️ Opções de Envio</div></div>
+      <div class="card" style="margin-bottom:1rem;animation-delay:0.25s">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Enviar por e-mail automaticamente</span>
+            <span class="toggle-desc">Dispara o e-mail ao salvar a carta</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="togEmail" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Enviar cópia por WhatsApp</span>
+            <span class="toggle-desc">Notificação via WhatsApp após envio do e-mail</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="togWhats"/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Exigir assinatura eletrônica</span>
+            <span class="toggle-desc">Candidato assina digitalmente para aceitar</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="togAssinatura" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Alerta de prazo expirando</span>
+            <span class="toggle-desc">Notifica o recrutador 24h antes do prazo</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="togAlerta" checked/><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Mover para "Contratados" ao aceitar</span>
+            <span class="toggle-desc">Atualiza o pipeline automaticamente</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="togAutoMover" checked/><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <button class="btn btn-ghost" onclick="salvarRascunho()">💾 Salvar Rascunho</button>
+        <button class="btn btn-success" onclick="enviarCarta()">✉ Enviar Carta</button>
+        <button class="btn btn-primary" onclick="gerarPDF()">⬇ Baixar PDF</button>
+        <button class="btn btn-danger" style="margin-left:auto;" onclick="limparFormulario()">🗑 Limpar</button>
+      </div>
+
+    </div><!-- /coluna esquerda -->
+
+    <!-- COLUNA DIREITA: PREVIEW + HISTÓRICO -->
+    <div class="preview-panel">
+
+      <!-- STATUS + AÇÕES -->
+      <div class="status-bar">
+        <span class="status-chip chip-rascunho" id="chipStatus">● Rascunho</span>
+        <button class="btn btn-ghost" style="margin-left:auto;font-size:0.68rem;padding:0.3rem 0.7rem;" onclick="copiarLink()">🔗 Copiar Link</button>
+      </div>
+
+      <!-- PREVIEW DA CARTA -->
+      <div class="carta-wrap" style="margin-bottom:1rem;">
+        <div class="carta-toolbar">
+          <span class="carta-toolbar-title">👁 Pré-visualização</span>
+          <div style="display:flex;gap:0.35rem;">
+            <button class="btn btn-ghost" style="font-size:0.65rem;padding:0.25rem 0.6rem;" onclick="gerarPDF()">⬇ PDF</button>
+            <button class="btn btn-ghost" style="font-size:0.65rem;padding:0.25rem 0.6rem;" onclick="copiarTexto()">📋 Copiar</button>
+          </div>
+        </div>
+        <div class="carta-body" id="cartaPreview">
+          <div class="carta-header-logo">Orizon ATS</div>
+          <div class="carta-date" id="prev-date">—</div>
+          <div class="carta-dest">
+            <strong id="prev-nome">Candidato</strong>
+            <span id="prev-cargo-dest" style="font-size:0.7rem;color:var(--muted);">—</span>
+          </div>
+          <p style="margin-bottom:0.8rem;">Prezado(a) <strong id="prev-nome2">candidato</strong>,</p>
+          <p>Temos o prazer de formalizarmos nossa proposta de trabalho para a posição de <strong id="prev-cargo-p" style="color:var(--text);">—</strong> na empresa <strong id="prev-empresa-p" style="color:var(--accent);">—</strong>.</p>
+          <h3>📊 Proposta de Remuneração</h3>
+          <div class="carta-field"><span class="cf-label">Cargo</span><span class="cf-val" id="prev-cargo-field">—</span></div>
+          <div class="carta-field"><span class="cf-label">Salário Base</span><span class="cf-val" id="prev-salario">—</span></div>
+          <div class="carta-field" id="row-bonus" style="display:none;"><span class="cf-label">Bônus Variável</span><span class="cf-val" id="prev-bonus">—</span></div>
+          <div class="carta-field" id="row-plr" style="display:none;"><span class="cf-label">PLR</span><span class="cf-val" id="prev-plr">—</span></div>
+          <div class="carta-field" id="row-equity" style="display:none;"><span class="cf-label">Stock Options</span><span class="cf-val" id="prev-equity">—</span></div>
+          <div class="carta-field"><span class="cf-label">Regime</span><span class="cf-val" id="prev-regime">CLT</span></div>
+          <div class="carta-field"><span class="cf-label">Modalidade</span><span class="cf-val" id="prev-modalidade">Remoto</span></div>
+          <div class="carta-field" id="row-local" style="display:none;"><span class="cf-label">Local</span><span class="cf-val" id="prev-local">—</span></div>
+          <div class="carta-field" id="row-ch" style="display:none;"><span class="cf-label">Carga Horária</span><span class="cf-val" id="prev-ch">—</span></div>
+          <div class="carta-field" id="row-inicio" style="display:none;"><span class="cf-label">Início Previsto</span><span class="cf-val" id="prev-inicio">—</span></div>
+
+          <div id="secBeneficios" style="display:none;">
+            <h3>🎁 Pacote de Benefícios</h3>
+            <div id="prev-beneficios"></div>
+          </div>
+
+          <div id="secObs" style="display:none;">
+            <h3>📝 Observações</h3>
+            <div class="carta-obs" id="prev-obs"></div>
+          </div>
+
+          <div class="carta-prazo" id="prev-prazo-row" style="display:none;">
+            ⏰ Esta proposta é válida até <strong id="prev-prazo">—</strong>.
+          </div>
+
+          <div class="carta-sign">
+            <strong>Equipe Orizon ATS</strong>
+            Recrutamento & Seleção · contato@orizon.ats.io
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO DE CARTAS -->
+      <div class="card" style="animation-delay:0.3s">
+        <div class="card-head">
+          <div class="card-title">🕐 Cartas Enviadas</div>
+          <span class="card-badge" id="badgeHistorico">7 no mês</span>
+        </div>
+        <div class="hist-list" id="historicoList">
+          <!-- preenchido por JS -->
+        </div>
+      </div>
+
+    </div><!-- /preview panel -->
+  </div><!-- /layout -->
+</div><!-- /page -->
+
+<!-- MODAL ENVIO -->
+<div class="modal-overlay" id="modalEnvio">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modalEnvio')">✕</button>
+    <div class="modal-title">✉ Confirmar Envio</div>
+    <div class="modal-sub" id="modalEnvioText">Você está prestes a enviar a carta de oferta para <strong>—</strong>. O candidato receberá um e-mail com o link para aceite ou recusa.</div>
+    <div style="background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.5rem;">
+      <div style="font-size:0.65rem;font-weight:700;color:var(--muted);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:1px;">Será enviado para:</div>
+      <div id="modalEnvioEmail" style="font-size:0.8rem;font-weight:700;">lucas.andrade@email.com</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modalEnvio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarEnvio()">✉ Enviar Agora</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── DADOS MOCK ──
+const historico = [
+  {nome:'Lucas Andrade', cargo:'Dev Backend Sênior', status:'aguardando', data:'02/06/2025'},
+  {nome:'Fernanda Lopes', cargo:'Product Manager', status:'aceita', data:'28/05/2025'},
+  {nome:'Thiago Martins', cargo:'DevOps Engineer', status:'aceita', data:'25/05/2025'},
+  {nome:'Camila Reis', cargo:'Data Analyst', status:'recusada', data:'22/05/2025'},
+  {nome:'Diego Pereira', cargo:'UX Designer', status:'aceita', data:'18/05/2025'},
+  {nome:'Patrícia Nunes', cargo:'Tech Lead', status:'expirada', data:'10/05/2025'},
+  {nome:'Renato Oliveira', cargo:'Scrum Master', status:'aceita', data:'05/05/2025'},
+];
+
+const statusMap = {
+  rascunho:  {label:'Rascunho',  cls:'chip-rascunho'},
+  aguardando:{label:'Aguardando',cls:'chip-aguardando'},
+  aceita:    {label:'Aceita',    cls:'chip-aceita'},
+  recusada:  {label:'Recusada', cls:'chip-recusada'},
+  expirada:  {label:'Expirada', cls:'chip-expirada'},
+};
+
+let beneficios = [
+  {ico:'🏥', nome:'Plano de Saúde', val:'Bradesco Saúde Pleno'},
+  {ico:'🍽', nome:'Vale Refeição', val:'R$ 45/dia'},
+  {ico:'💻', nome:'Auxílio Home Office', val:'R$ 200/mês'},
+];
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderHistorico();
+  renderBeneficios();
+  sincronizarPreview();
+  // data de hoje como padrão
+  const hoje = new Date();
+  document.getElementById('prev-date').textContent = hoje.toLocaleDateString('pt-BR', {day:'numeric',month:'long',year:'numeric'});
+  // prazo padrão: 7 dias
+  const prazo = new Date(hoje); prazo.setDate(prazo.getDate()+7);
+  document.getElementById('prazoResposta').value = prazo.toISOString().split('T')[0];
+  // inicio padrão: 14 dias
+  const inicio = new Date(hoje); inicio.setDate(inicio.getDate()+14);
+  document.getElementById('dataInicio').value = inicio.toISOString().split('T')[0];
+  sincronizarPreview();
+});
+
+// ── RENDERIZAR HISTÓRICO ──
+function renderHistorico() {
+  const el = document.getElementById('historicoList');
+  const statusClsMap = {aguardando:'chip-aguardando',aceita:'chip-aceita',recusada:'chip-recusada',expirada:'chip-expirada',rascunho:'chip-rascunho'};
+  el.innerHTML = historico.map((h,i) => `
+    <div class="hist-item">
+      <span class="hist-status status-chip ${statusClsMap[h.status]||'chip-rascunho'}">${statusMap[h.status]?.label||h.status}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="hist-name">${h.nome}</div>
+        <div style="font-size:0.6rem;color:var(--muted);">${h.cargo} · ${h.data}</div>
+      </div>
+      <button class="hist-action" onclick="carregarCarta(${i})">Ver</button>
+    </div>
+  `).join('');
+}
+
+// ── RENDERIZAR BENEFÍCIOS ──
+function renderBeneficios() {
+  const el = document.getElementById('benef-list');
+  if (!beneficios.length) { el.innerHTML = '<div style="font-size:0.7rem;color:var(--muted);padding:0.4rem 0;">Nenhum benefício adicionado.</div>'; return; }
+  el.innerHTML = beneficios.map((b,i) => `
+    <div class="benef-item">
+      <span class="benef-ico">${b.ico}</span>
+      <span class="benef-name">${b.nome.replace(/^[^\w\s]/,'').trim()}</span>
+      <span class="benef-val">${b.val||'—'}</span>
+      <button class="benef-del" onclick="removerBeneficio(${i})">✕</button>
+    </div>
+  `).join('');
+  sincronizarBeneficios();
+}
+
+function adicionarBeneficio() {
+  const sel = document.getElementById('benef-select');
+  const val = document.getElementById('benef-val').value.trim();
+  if (!sel.value) { toast('Selecione um benefício','warn'); return; }
+  const partes = sel.value.split(' ');
+  beneficios.push({ico:partes[0], nome:sel.value, val:val||'Incluso'});
+  sel.value = ''; document.getElementById('benef-val').value = '';
+  renderBeneficios();
+}
+
+function removerBeneficio(i) {
+  beneficios.splice(i,1);
+  renderBeneficios();
+}
+
+function sincronizarBeneficios() {
+  const sec = document.getElementById('secBeneficios');
+  const prev = document.getElementById('prev-beneficios');
+  if (!beneficios.length) { sec.style.display='none'; return; }
+  sec.style.display='block';
+  prev.innerHTML = beneficios.map(b => `
+    <div class="carta-field">
+      <span class="cf-label">${b.ico} ${b.nome.replace(/^[^\w\s]/,'').trim()}</span>
+      <span class="cf-val">${b.val}</span>
+    </div>
+  `).join('');
+}
+
+// ── SINCRONIZAR PREVIEW ──
+function sincronizarPreview() {
+  const candidatoSel = document.getElementById('selCandidato');
+  const candidatoNome = candidatoSel.options[candidatoSel.selectedIndex]?.text.split('—')[0].trim() || 'Candidato';
+  const cargo = document.getElementById('cargo').value || document.getElementById('selVaga').options[document.getElementById('selVaga').selectedIndex]?.text.split('—')[0].trim() || '—';
+  const empresa = document.getElementById('empresa').value || '—';
+  const salario = document.getElementById('salario').value;
+  const moeda = document.getElementById('moeda').value;
+  const per = document.getElementById('periodicidade').value;
+  const bonus = document.getElementById('bonus').value;
+  const plr = document.getElementById('plr').value;
+  const equity = document.getElementById('equity').value;
+  const regime = document.getElementById('regime').value;
+  const modalidade = document.getElementById('modalidade').value;
+  const local = document.getElementById('localTrabalho').value;
+  const ch = document.getElementById('cargaHoraria').value;
+  const obs = document.getElementById('observacoes').value;
+  const prazo = document.getElementById('prazoResposta').value;
+  const inicio = document.getElementById('dataInicio').value;
+
+  document.getElementById('prev-nome').textContent = candidatoNome;
+  document.getElementById('prev-nome2').textContent = candidatoNome;
+  document.getElementById('prev-cargo-dest').textContent = cargo !== '—' ? cargo : '';
+  document.getElementById('prev-cargo-p').textContent = cargo;
+  document.getElementById('prev-empresa-p').textContent = empresa;
+  document.getElementById('prev-cargo-field').textContent = cargo;
+  document.getElementById('prev-salario').textContent = salario ? `${moeda} ${salario} / ${per}` : '—';
+  document.getElementById('prev-regime').textContent = regime;
+  document.getElementById('prev-modalidade').textContent = modalidade;
+
+  // opcionais
+  toggleField('row-bonus','prev-bonus', bonus, `${moeda} ${bonus}`);
+  toggleField('row-plr','prev-plr', plr, `${moeda} ${plr}`);
+  toggleField('row-equity','prev-equity', equity, equity);
+  toggleField('row-local','prev-local', local, local);
+  toggleField('row-ch','prev-ch', ch, ch);
+  toggleField('row-inicio','prev-inicio', inicio, formatarData(inicio));
+
+  // obs
+  const secObs = document.getElementById('secObs');
+  if (obs) { secObs.style.display='block'; document.getElementById('prev-obs').textContent=obs; }
+  else { secObs.style.display='none'; }
+
+  // prazo
+  const prazoRow = document.getElementById('prev-prazo-row');
+  if (prazo) { prazoRow.style.display='flex'; document.getElementById('prev-prazo').textContent=formatarData(prazo); }
+  else { prazoRow.style.display='none'; }
+
+  sincronizarBeneficios();
+}
+
+function toggleField(rowId, valId, val, txt) {
+  const row = document.getElementById(rowId);
+  if (val) { row.style.display='flex'; document.getElementById(valId).textContent=txt; }
+  else { row.style.display='none'; }
+}
+
+function formatarData(str) {
+  if (!str) return '—';
+  const [y,m,d] = str.split('-');
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return `${parseInt(d)} de ${meses[parseInt(m)-1]} de ${y}`;
+}
+
+function mascararMoeda(el) {
+  let v = el.value.replace(/\D/g,'');
+  if (!v) { el.value=''; return; }
+  v = (parseInt(v)/100).toFixed(2);
+  el.value = parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+// ── AÇÕES ──
+function salvarRascunho() {
+  document.getElementById('chipStatus').textContent='● Rascunho';
+  document.getElementById('chipStatus').className='status-chip chip-rascunho';
+  toast('Rascunho salvo com sucesso','ok');
+}
+
+function enviarCarta() {
+  const candidatoSel = document.getElementById('selCandidato');
+  const nome = candidatoSel.options[candidatoSel.selectedIndex]?.text.split('—')[0].trim();
+  if (!nome || candidatoSel.value === '') { toast('Selecione um candidato primeiro','warn'); return; }
+  if (!document.getElementById('salario').value) { toast('Informe o salário antes de enviar','warn'); return; }
+  document.getElementById('modalEnvioText').innerHTML = `Você está prestes a enviar a carta de oferta para <strong>${nome}</strong>. O candidato receberá um e-mail com o link para aceite ou recusa.`;
+  document.getElementById('modalEnvioEmail').textContent = `${nome.toLowerCase().replace(/\s/g,'.')  }@email.com`;
+  document.getElementById('modalEnvio').classList.add('open');
+}
+
+function confirmarEnvio() {
+  fecharModal('modalEnvio');
+  document.getElementById('chipStatus').textContent='⏳ Aguardando Resposta';
+  document.getElementById('chipStatus').className='status-chip chip-aguardando';
+  toast('Carta enviada com sucesso! Aguardando resposta do candidato.','ok');
+  // simular adição ao histórico
+  const candidatoSel = document.getElementById('selCandidato');
+  const nome = candidatoSel.options[candidatoSel.selectedIndex]?.text.split('—')[0].trim() || '—';
+  const cargo = document.getElementById('cargo').value || '—';
+  historico.unshift({nome, cargo, status:'aguardando', data: new Date().toLocaleDateString('pt-BR')});
+  renderHistorico();
+}
+
+function gerarPDF() {
+  toast('Gerando PDF da carta de oferta...','ok');
+  setTimeout(()=>toast('PDF gerado e salvo em Downloads','ok'),1500);
+}
+
+function copiarLink() {
+  toast('Link copiado para a área de transferência','ok');
+}
+
+function copiarTexto() {
+  toast('Texto da carta copiado','ok');
+}
+
+function limparFormulario() {
+  document.querySelectorAll('.input,.select,.textarea').forEach(el => {
+    if (el.tagName==='SELECT') el.selectedIndex=0;
+    else el.value='';
+  });
+  beneficios = [];
+  renderBeneficios();
+  sincronizarPreview();
+  document.getElementById('chipStatus').textContent='● Rascunho';
+  document.getElementById('chipStatus').className='status-chip chip-rascunho';
+  toast('Formulário limpo','ok');
+}
+
+function abrirNovaCarta() {
+  limparFormulario();
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('Nova carta em branco','ok');
+}
+
+function carregarCarta(i) {
+  const h = historico[i];
+  toast(`Carta de ${h.nome} carregada`,'ok');
+}
+
+function navegar(pg) { window.location.href = `${pg}.html`; }
+
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── TOAST ──
+function toast(msg, tipo='ok') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast-item ${tipo}`;
+  el.innerHTML = (tipo==='ok'?'✓':tipo==='warn'?'⚠':'✕') + ` ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+</script>
+</body>
+</html>

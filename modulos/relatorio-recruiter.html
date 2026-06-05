@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Relatório do Recrutador | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:700px;height:700px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* ── HERO ── */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.6rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+
+/* ── SELETOR DE RECRUTADOR ── */
+.seletor-bar{display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0.9rem 1.2rem;margin-bottom:1.2rem;}
+.seletor-label{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);white-space:nowrap;}
+.seletor-select{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;padding:0.45rem 0.8rem;font-family:inherit;font-size:0.8rem;font-weight:700;color:var(--text);outline:none;appearance:none;cursor:pointer;transition:border-color 0.15s;min-width:200px;}
+.seletor-select:focus{border-color:var(--accent);}
+.periodo-tabs{display:flex;gap:0.3rem;background:rgba(255,255,255,0.03);border-radius:8px;padding:0.2rem;}
+.ptab{font-size:0.63rem;font-weight:700;padding:0.3rem 0.65rem;border-radius:6px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:inherit;transition:all 0.15s;}
+.ptab.on{background:rgba(59,130,246,0.15);color:var(--accent);}
+.seletor-sep{flex:1;}
+
+/* ── PERFIL CARD ── */
+.perfil-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.6rem 1.8rem;margin-bottom:1rem;display:flex;align-items:center;gap:1.8rem;flex-wrap:wrap;position:relative;overflow:hidden;animation:fadeUp 0.4s ease both;}
+.perfil-card::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.06),transparent 70%);pointer-events:none;}
+.perfil-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;flex-shrink:0;border:3px solid rgba(59,130,246,0.3);box-shadow:0 0 20px rgba(59,130,246,0.15);}
+.perfil-info{flex:1;min-width:0;}
+.perfil-nome{font-size:1.4rem;font-weight:900;margin-bottom:0.15rem;}
+.perfil-cargo{font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem;}
+.perfil-tags{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.perfil-tag{font-size:0.58rem;font-weight:700;padding:0.18rem 0.55rem;border-radius:99px;border:1px solid;}
+.perfil-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.ps-item{text-align:center;}
+.ps-val{font-size:1.3rem;font-weight:900;color:var(--accent);font-family:var(--mono);}
+.ps-label{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:0.1rem;}
+.rank-badge{display:flex;flex-direction:column;align-items:center;gap:0.2rem;}
+.rank-num{font-size:2rem;font-weight:900;line-height:1;}
+.rank-label{font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.2rem;position:relative;overflow:hidden;transition:all 0.18s;animation:fadeUp 0.5s ease both;}
+.kpi:hover{border-color:var(--border2);transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--kpi-color,var(--accent)),transparent);}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:55px;height:55px;border-radius:50%;background:radial-gradient(ellipse,var(--kpi-color,var(--accent)) 0%,transparent 70%);opacity:0.07;transform:translate(18px,-18px);}
+.kpi-icon{font-size:1.2rem;margin-bottom:0.5rem;}
+.kpi-val{font-size:1.7rem;font-weight:900;line-height:1;color:var(--kpi-color,var(--accent));font-family:var(--mono);}
+.kpi-label{font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:0.15rem;}
+.kpi-delta{font-size:0.58rem;margin-top:0.3rem;display:flex;align-items:center;gap:0.2rem;}
+.kpi-delta.up{color:var(--green);}
+.kpi-delta.down{color:var(--red);}
+.kpi-delta.neu{color:var(--muted);}
+
+/* ── SEC LABEL ── */
+.sec{margin-bottom:0.85rem;margin-top:0.2rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+.g-main{display:grid;grid-template-columns:2fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+@media(max-width:1000px){.g2,.g-main{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.g3{grid-template-columns:1fr;}}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1.1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.card-badge.purple{background:rgba(167,139,250,0.1);color:var(--purple);border-color:rgba(167,139,250,0.25);}
+
+/* ── FUNIL ── */
+.funil{display:flex;flex-direction:column;gap:0.35rem;}
+.funil-row{display:flex;align-items:center;gap:0.7rem;}
+.funil-label{font-size:0.63rem;font-weight:700;width:90px;flex-shrink:0;color:var(--text2);}
+.funil-track{flex:1;height:26px;background:rgba(255,255,255,0.03);border-radius:7px;overflow:hidden;position:relative;}
+.funil-fill{height:100%;border-radius:7px;display:flex;align-items:center;padding:0 0.7rem;font-size:0.6rem;font-weight:800;color:rgba(255,255,255,0.9);transition:width 0.9s cubic-bezier(.4,0,.2,1);justify-content:space-between;white-space:nowrap;}
+.funil-count{font-size:0.68rem;font-weight:900;width:28px;text-align:right;flex-shrink:0;font-family:var(--mono);}
+.funil-pct{font-size:0.56rem;color:var(--muted);width:36px;text-align:right;font-family:var(--mono);}
+
+/* ── VAGAS TABLE ── */
+.vagas-table{width:100%;border-collapse:collapse;}
+.vagas-table th{font-size:0.57rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:0.4rem 0.7rem;text-align:left;border-bottom:1px solid var(--border);}
+.vagas-table td{font-size:0.7rem;padding:0.6rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+.vagas-table tr:hover td{background:rgba(255,255,255,0.012);}
+.vagas-table tr:last-child td{border-bottom:none;}
+.v-status{font-size:0.58rem;font-weight:700;padding:0.14rem 0.48rem;border-radius:6px;white-space:nowrap;}
+.v-aberta{background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.2);}
+.v-fechada{background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.v-pausada{background:rgba(243,156,18,0.1);color:var(--orange);border:1px solid rgba(243,156,18,0.2);}
+
+/* ── PROGRESS BAR SIMPLES ── */
+.prog{height:6px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;margin-top:0.3rem;}
+.prog-fill{height:100%;border-radius:99px;transition:width 0.9s ease;}
+
+/* ── ATIVIDADE TIMELINE ── */
+.timeline{display:flex;flex-direction:column;gap:0;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.tl-item{display:flex;gap:0.8rem;padding:0.6rem 0;position:relative;}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:11px;top:28px;bottom:0;width:1px;background:var(--border);}
+.tl-dot{width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:0.7rem;border:1px solid;margin-top:2px;}
+.tl-body{flex:1;min-width:0;}
+.tl-txt{font-size:0.71rem;font-weight:700;line-height:1.4;}
+.tl-meta{font-size:0.6rem;color:var(--muted);margin-top:0.1rem;}
+
+/* ── RADAR / SKILL BARS ── */
+.skill-list{display:flex;flex-direction:column;gap:0.7rem;}
+.skill-row{display:flex;flex-direction:column;gap:0.25rem;}
+.skill-head{display:flex;justify-content:space-between;align-items:center;}
+.skill-name{font-size:0.67rem;font-weight:700;color:var(--text2);}
+.skill-val{font-size:0.67rem;font-weight:900;font-family:var(--mono);}
+
+/* ── COMPARATIVO ── */
+.comp-table{width:100%;}
+.comp-table tr td{font-size:0.68rem;padding:0.45rem 0.5rem;border-bottom:1px solid rgba(255,255,255,0.03);}
+.comp-table tr:last-child td{border-bottom:none;}
+.comp-label{color:var(--muted);width:120px;}
+.comp-recr{font-weight:800;text-align:center;}
+.comp-media{text-align:center;color:var(--muted);}
+.comp-delta{text-align:right;font-size:0.62rem;font-weight:700;font-family:var(--mono);}
+.comp-delta.pos{color:var(--green);}
+.comp-delta.neg{color:var(--red);}
+.comp-head td{font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding-bottom:0.6rem;border-bottom:1px solid var(--border)!important;}
+
+/* ── NPS ── */
+.nps-display{text-align:center;padding:1rem 0;}
+.nps-score{font-size:3.5rem;font-weight:900;font-family:var(--mono);line-height:1;}
+.nps-label{font-size:0.65rem;color:var(--muted);margin-top:0.3rem;text-transform:uppercase;letter-spacing:1px;}
+.nps-bar-wrap{display:flex;gap:0.15rem;height:10px;border-radius:99px;overflow:hidden;margin-top:1rem;}
+.nps-seg{height:100%;transition:width 0.9s ease;}
+
+/* ── CHART ── */
+.chart-wrap{position:relative;}
+
+/* ── EMPTY ── */
+.empty-state{text-align:center;padding:2rem;color:var(--muted);}
+.empty-ico{font-size:2rem;margin-bottom:0.5rem;opacity:0.3;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;display:flex;flex-direction:column;gap:0.4rem;}
+.toast-item{background:var(--card3);border:1px solid var(--border2);border-radius:12px;padding:0.7rem 1rem;font-size:0.72rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;animation:slideIn 0.25s ease;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.toast-item.ok{border-color:rgba(46,204,113,0.3);color:var(--green);}
+.toast-item.err{border-color:rgba(231,76,60,0.35);color:var(--red);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+
+@media(max-width:700px){
+  .page{padding:1rem 0.9rem 3rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.2rem;}
+  .perfil-card{flex-direction:column;align-items:flex-start;gap:1rem;}
+  .perfil-stats{gap:1rem;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Performance Individual</div>
+      <div class="hero-title">Relatório do <span>Recrutador</span></div>
+      <div class="hero-sub">Análise completa · Pipeline · Fechamentos · SLA · NPS · Evolução histórica</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="navegar('meta-recrutador')">🎯 Metas da Equipe</button>
+      <button class="btn btn-ghost" onclick="exportarPDF()">⬇ Exportar PDF</button>
+      <button class="btn btn-primary" onclick="exportarCSV()">📊 Exportar CSV</button>
+    </div>
+  </div>
+
+  <!-- SELETOR -->
+  <div class="seletor-bar">
+    <span class="seletor-label">Recrutador:</span>
+    <select class="seletor-select" id="selectRecrutador" onchange="trocarRecrutador()">
+      <option value="0">Ana Paula Ferreira</option>
+      <option value="1">Carlos Eduardo Lima</option>
+      <option value="2">Fernanda Rocha</option>
+      <option value="3">Gustavo Melo</option>
+    </select>
+    <span class="seletor-sep"></span>
+    <div class="periodo-tabs">
+      <button class="ptab on" onclick="trocarPeriodo('30',this)">30 dias</button>
+      <button class="ptab" onclick="trocarPeriodo('90',this)">3 meses</button>
+      <button class="ptab" onclick="trocarPeriodo('180',this)">6 meses</button>
+      <button class="ptab" onclick="trocarPeriodo('365',this)">12 meses</button>
+    </div>
+  </div>
+
+  <!-- PERFIL -->
+  <div class="perfil-card" id="perfilCard"><!-- preenchido por JS --></div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" id="kpiGrid"><!-- preenchido por JS --></div>
+
+  <!-- EVOLUÇÃO + FUNIL -->
+  <div class="g-main">
+    <div class="card" style="animation-delay:0.1s">
+      <div class="card-head">
+        <div class="card-title">📈 Evolução de Fechamentos</div>
+        <div class="card-badge" id="badgeEvolucao">Últimos 6 meses</div>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="chartEvolucao"></canvas>
+      </div>
+    </div>
+    <div class="card" style="animation-delay:0.15s">
+      <div class="card-head">
+        <div class="card-title">🔽 Funil de Conversão</div>
+        <div class="card-badge" id="badgeFunil">Período selecionado</div>
+      </div>
+      <div class="funil" id="funilDiv"></div>
+    </div>
+  </div>
+
+  <!-- VAGAS + TIMELINE -->
+  <div class="g-main" style="grid-template-columns:1.5fr 1fr;">
+    <div class="card" style="animation-delay:0.2s">
+      <div class="card-head">
+        <div class="card-title">💼 Vagas em Carteira</div>
+        <span class="card-badge" id="badgeVagas">—</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="vagas-table" id="vagasTable">
+          <thead><tr><th>Vaga</th><th>Cliente</th><th>Status</th><th>Fase</th><th>Cands.</th><th>SLA</th><th>Abertura</th></tr></thead>
+          <tbody id="vagasBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="animation-delay:0.25s">
+      <div class="card-head">
+        <div class="card-title">🕐 Atividade Recente</div>
+      </div>
+      <div class="timeline" id="timelineDiv"></div>
+    </div>
+  </div>
+
+  <!-- SKILLS + COMPARATIVO + NPS -->
+  <div class="g3">
+    <div class="card" style="animation-delay:0.3s">
+      <div class="card-head">
+        <div class="card-title">⚡ Indicadores de Performance</div>
+      </div>
+      <div class="skill-list" id="skillList"></div>
+    </div>
+    <div class="card" style="animation-delay:0.32s">
+      <div class="card-head">
+        <div class="card-title">📊 vs Média da Equipe</div>
+      </div>
+      <table class="comp-table" id="compTable">
+        <thead><tr class="comp-head"><td class="comp-label">Indicador</td><td class="comp-recr">Recrutador</td><td class="comp-media">Média</td><td class="comp-delta">Δ</td></tr></thead>
+        <tbody id="compBody"></tbody>
+      </table>
+    </div>
+    <div class="card" style="animation-delay:0.34s">
+      <div class="card-head">
+        <div class="card-title">⭐ NPS de Candidatos</div>
+        <div class="card-badge green" id="npsClassif">—</div>
+      </div>
+      <div class="nps-display">
+        <div class="nps-score" id="npsScore" style="color:var(--green);">—</div>
+        <div class="nps-label">Net Promoter Score</div>
+      </div>
+      <div class="nps-bar-wrap" id="npsBar"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.5rem;font-size:0.6rem;color:var(--muted);">
+        <span id="npsDetratores">—% detratores</span>
+        <span id="npsNeutros">—% neutros</span>
+        <span id="npsPromotores">—% promotores</span>
+      </div>
+      <div style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem;" id="npsComentarios"></div>
+    </div>
+  </div>
+
+  <!-- DISTRIBUIÇÃO ORIGEM + CHART PIZZA ── -->
+  <div class="g2">
+    <div class="card" style="animation-delay:0.36s">
+      <div class="card-head">
+        <div class="card-title">🔵 Origem dos Candidatos</div>
+      </div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="chartOrigem"></canvas>
+      </div>
+    </div>
+    <div class="card" style="animation-delay:0.38s">
+      <div class="card-head">
+        <div class="card-title">📅 Entrevistas por Dia da Semana</div>
+      </div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="chartDias"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+function navegar(mod){ window.parent.postMessage({tipo:'orizon_navegar',mod},'*'); }
+
+// ── DADOS DOS RECRUTADORES ──
+const RECRUTADORES = [
+  {
+    nome:'Ana Paula Ferreira', iniciais:'AP', cargo:'Sênior Recruiter', desde:'Mar 2023',
+    especialidades:['Tech','Produto','Data'],
+    ranking:1, total_planejado:52, total_realizado:48,
+    kpis:{ fechamentos:14, vagas:8, entrevistas:67, tempo_medio_sla:28, taxa_conversao:22, nps:76 },
+    deltas:{ fechamentos:'+3', vagas:'+1', entrevistas:'+12', tempo_medio_sla:'-4d', taxa_conversao:'+3%', nps:'+8' },
+    deltas_dir:{ fechamentos:'up', vagas:'up', entrevistas:'up', tempo_medio_sla:'up', taxa_conversao:'up', nps:'up' },
+    funil:[
+      {label:'Triados',n:320,pct:100,cor:'#1d4ed8'},
+      {label:'Qualificados',n:210,pct:66,cor:'#2563eb'},
+      {label:'Entrevistados',n:67,pct:21,cor:'#3b82f6'},
+      {label:'Finalistas',n:28,pct:9,cor:'#60a5fa'},
+      {label:'Contratados',n:14,pct:4,cor:'#a8d85f'},
+    ],
+    evolucao_labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+    evolucao_data:[8,10,12,11,13,14],
+    evolucao_meta:[10,10,10,10,10,10],
+    vagas:[
+      {titulo:'Dev Full Stack Sr',cliente:'Empresa Alpha',status:'aberta',fase:'Entrevistas',cands:18,sla:32,abertura:'05/04'},
+      {titulo:'Product Manager',cliente:'Startup Beta',status:'aberta',fase:'Triagem',cands:45,sla:15,abertura:'22/05'},
+      {titulo:'Data Engineer',cliente:'Empresa Gamma',status:'fechada',fase:'Contratado',cands:31,sla:27,abertura:'01/03'},
+      {titulo:'UX Designer Sr',cliente:'Empresa Delta',status:'pausada',fase:'Qualificação',cands:22,sla:21,abertura:'10/05'},
+      {titulo:'Tech Lead',cliente:'Empresa Épsilon',status:'aberta',fase:'Finalistas',cands:9,sla:41,abertura:'15/03'},
+    ],
+    timeline:[
+      {ico:'✅',cor:'#2ecc71',bc:'rgba(46,204,113,0.2)',txt:'Fechamento: Mariana Costa → Empresa Alpha',meta:'Hoje, 11h42'},
+      {ico:'📞',cor:'#f39c12',bc:'rgba(243,156,18,0.2)',txt:'Follow-up realizado: candidato Rafael Santos',meta:'Hoje, 10h15'},
+      {ico:'🎙',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Entrevista técnica — Lucas Pereira (Dev Full Stack)',meta:'Ontem, 15h00'},
+      {ico:'📋',cor:'#a78bfa',bc:'rgba(167,139,250,0.2)',txt:'Parecer enviado ao cliente Startup Beta',meta:'Ontem, 13h30'},
+      {ico:'📂',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Nova triagem: 14 currículos processados',meta:'2 dias atrás'},
+      {ico:'🎙',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Entrevista comportamental — Juliana Melo',meta:'3 dias atrás'},
+      {ico:'✅',cor:'#2ecc71',bc:'rgba(46,204,113,0.2)',txt:'Fechamento: Diego Martins → Startup Beta',meta:'5 dias atrás'},
+    ],
+    skills:[
+      {nome:'Taxa de conversão',val:22,max:30,cor:'#3b82f6',fmt:'%'},
+      {nome:'Cumprimento de SLA',val:78,max:100,cor:'#2ecc71',fmt:'%'},
+      {nome:'NPS candidatos',val:76,max:100,cor:'#a8d85f',fmt:'pts'},
+      {nome:'Velocidade de triagem',val:85,max:100,cor:'#f39c12',fmt:'%'},
+      {nome:'Retenção pós-contratação',val:91,max:100,cor:'#06b6d4',fmt:'%'},
+    ],
+    comp:[
+      {ind:'Fechamentos/mês',rec:14,media:9.5},
+      {ind:'SLA médio (dias)',rec:28,media:34},
+      {ind:'Taxa conversão',rec:'22%',media:'16%',recN:22,mediaN:16},
+      {ind:'NPS candidatos',rec:76,media:62},
+      {ind:'Entrevistas/mês',rec:67,media:48},
+    ],
+    nps:{ score:76, promotores:68, neutros:20, detratores:12,
+      comentarios:['Muito atenciosa e profissional.','Processo claro e ágil.','Feedback rápido!'] },
+    origem:{ labels:['LinkedIn','Indeed','Indicação','Site','Catho','Outro'], data:[38,22,18,12,6,4] },
+    dias:{ labels:['Seg','Ter','Qua','Qui','Sex'], data:[14,18,22,17,9] },
+  },
+  {
+    nome:'Carlos Eduardo Lima', iniciais:'CE', cargo:'Recruiter Pleno', desde:'Jun 2023',
+    especialidades:['Comercial','Operações'],
+    ranking:2, total_planejado:40, total_realizado:35,
+    kpis:{ fechamentos:9, vagas:6, entrevistas:48, tempo_medio_sla:35, taxa_conversao:16, nps:62 },
+    deltas:{ fechamentos:'-1', vagas:'=', entrevistas:'+5', tempo_medio_sla:'+2d', taxa_conversao:'-1%', nps:'+3' },
+    deltas_dir:{ fechamentos:'down', vagas:'neu', entrevistas:'up', tempo_medio_sla:'down', taxa_conversao:'down', nps:'up' },
+    funil:[
+      {label:'Triados',n:260,pct:100,cor:'#1d4ed8'},
+      {label:'Qualificados',n:180,pct:69,cor:'#2563eb'},
+      {label:'Entrevistados',n:48,pct:18,cor:'#3b82f6'},
+      {label:'Finalistas',n:19,pct:7,cor:'#60a5fa'},
+      {label:'Contratados',n:9,pct:3,cor:'#a8d85f'},
+    ],
+    evolucao_labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+    evolucao_data:[7,9,8,10,8,9],
+    evolucao_meta:[8,8,8,8,8,8],
+    vagas:[
+      {titulo:'Executivo Comercial',cliente:'Empresa Norte',status:'aberta',fase:'Entrevistas',cands:22,sla:18,abertura:'12/05'},
+      {titulo:'Supervisor Operações',cliente:'Empresa Sul',status:'aberta',fase:'Triagem',cands:38,sla:12,abertura:'28/05'},
+      {titulo:'Gerente de Vendas',cliente:'Empresa Leste',status:'fechada',fase:'Contratado',cands:27,sla:31,abertura:'02/04'},
+      {titulo:'Analista Comercial',cliente:'Empresa Oeste',status:'aberta',fase:'Qualificação',cands:15,sla:25,abertura:'20/05'},
+    ],
+    timeline:[
+      {ico:'🎙',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Entrevista: Bruno Oliveira (Executivo Comercial)',meta:'Hoje, 14h00'},
+      {ico:'📋',cor:'#a78bfa',bc:'rgba(167,139,250,0.2)',txt:'Parecer enviado: Empresa Norte',meta:'Hoje, 10h00'},
+      {ico:'📞',cor:'#f39c12',bc:'rgba(243,156,18,0.2)',txt:'Follow-up: 3 candidatos Supervisor Operações',meta:'Ontem, 16h00'},
+      {ico:'✅',cor:'#2ecc71',bc:'rgba(46,204,113,0.2)',txt:'Fechamento: Tatiane Borges → Empresa Leste',meta:'3 dias atrás'},
+      {ico:'📂',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Triagem: 10 currículos processados',meta:'4 dias atrás'},
+    ],
+    skills:[
+      {nome:'Taxa de conversão',val:16,max:30,cor:'#3b82f6',fmt:'%'},
+      {nome:'Cumprimento de SLA',val:64,max:100,cor:'#2ecc71',fmt:'%'},
+      {nome:'NPS candidatos',val:62,max:100,cor:'#a8d85f',fmt:'pts'},
+      {nome:'Velocidade de triagem',val:71,max:100,cor:'#f39c12',fmt:'%'},
+      {nome:'Retenção pós-contratação',val:85,max:100,cor:'#06b6d4',fmt:'%'},
+    ],
+    comp:[
+      {ind:'Fechamentos/mês',rec:9,media:9.5},
+      {ind:'SLA médio (dias)',rec:35,media:34},
+      {ind:'Taxa conversão',rec:'16%',media:'16%',recN:16,mediaN:16},
+      {ind:'NPS candidatos',rec:62,media:62},
+      {ind:'Entrevistas/mês',rec:48,media:48},
+    ],
+    nps:{ score:62, promotores:55, neutros:28, detratores:17,
+      comentarios:['Processo bem conduzido.','Comunicação poderia ser mais rápida.'] },
+    origem:{ labels:['LinkedIn','Indeed','Indicação','Site','Catho','Outro'], data:[30,28,15,10,12,5] },
+    dias:{ labels:['Seg','Ter','Qua','Qui','Sex'], data:[10,14,18,14,7] },
+  },
+  {
+    nome:'Fernanda Rocha', iniciais:'FR', cargo:'Recruiter Sênior', desde:'Jan 2022',
+    especialidades:['RH','Financeiro','Jurídico'],
+    ranking:3, total_planejado:45, total_realizado:42,
+    kpis:{ fechamentos:11, vagas:7, entrevistas:55, tempo_medio_sla:30, taxa_conversao:19, nps:70 },
+    deltas:{ fechamentos:'+1', vagas:'+2', entrevistas:'+8', tempo_medio_sla:'-2d', taxa_conversao:'+2%', nps:'+5' },
+    deltas_dir:{ fechamentos:'up', vagas:'up', entrevistas:'up', tempo_medio_sla:'up', taxa_conversao:'up', nps:'up' },
+    funil:[
+      {label:'Triados',n:290,pct:100,cor:'#1d4ed8'},
+      {label:'Qualificados',n:200,pct:69,cor:'#2563eb'},
+      {label:'Entrevistados',n:55,pct:19,cor:'#3b82f6'},
+      {label:'Finalistas',n:23,pct:8,cor:'#60a5fa'},
+      {label:'Contratados',n:11,pct:4,cor:'#a8d85f'},
+    ],
+    evolucao_labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+    evolucao_data:[9,10,11,10,12,11],
+    evolucao_meta:[9,9,9,9,9,9],
+    vagas:[
+      {titulo:'Analista RH Sênior',cliente:'Corp HR',status:'aberta',fase:'Finalistas',cands:12,sla:38,abertura:'01/04'},
+      {titulo:'Controller Financeiro',cliente:'Finance Co',status:'aberta',fase:'Entrevistas',cands:19,sla:22,abertura:'10/05'},
+      {titulo:'Advogado Trabalhista',cliente:'LegalFirm',status:'fechada',fase:'Contratado',cands:24,sla:29,abertura:'15/03'},
+      {titulo:'HRBP',cliente:'Corp HR',status:'aberta',fase:'Triagem',cands:42,sla:9,abertura:'01/06'},
+    ],
+    timeline:[
+      {ico:'✅',cor:'#2ecc71',bc:'rgba(46,204,113,0.2)',txt:'Fechamento: Patricia Nunes → LegalFirm',meta:'Ontem, 17h00'},
+      {ico:'🎙',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Entrevista: Candidato Controller Financeiro',meta:'Ontem, 09h00'},
+      {ico:'📋',cor:'#a78bfa',bc:'rgba(167,139,250,0.2)',txt:'Parecer técnico enviado: Corp HR',meta:'2 dias atrás'},
+      {ico:'📞',cor:'#f39c12',bc:'rgba(243,156,18,0.2)',txt:'Follow-up: candidato HRBP',meta:'3 dias atrás'},
+    ],
+    skills:[
+      {nome:'Taxa de conversão',val:19,max:30,cor:'#3b82f6',fmt:'%'},
+      {nome:'Cumprimento de SLA',val:72,max:100,cor:'#2ecc71',fmt:'%'},
+      {nome:'NPS candidatos',val:70,max:100,cor:'#a8d85f',fmt:'pts'},
+      {nome:'Velocidade de triagem',val:78,max:100,cor:'#f39c12',fmt:'%'},
+      {nome:'Retenção pós-contratação',val:88,max:100,cor:'#06b6d4',fmt:'%'},
+    ],
+    comp:[
+      {ind:'Fechamentos/mês',rec:11,media:9.5},
+      {ind:'SLA médio (dias)',rec:30,media:34},
+      {ind:'Taxa conversão',rec:'19%',media:'16%',recN:19,mediaN:16},
+      {ind:'NPS candidatos',rec:70,media:62},
+      {ind:'Entrevistas/mês',rec:55,media:48},
+    ],
+    nps:{ score:70, promotores:63, neutros:24, detratores:13,
+      comentarios:['Muito organizada e eficiente.','Retorno ágil sempre.','Processo transparente.'] },
+    origem:{ labels:['LinkedIn','Indeed','Indicação','Site','Catho','Outro'], data:[35,20,20,12,8,5] },
+    dias:{ labels:['Seg','Ter','Qua','Qui','Sex'], data:[12,16,20,15,8] },
+  },
+  {
+    nome:'Gustavo Melo', iniciais:'GM', cargo:'Recruiter Júnior', desde:'Ago 2024',
+    especialidades:['Administrativo','Logística'],
+    ranking:4, total_planejado:30, total_realizado:24,
+    kpis:{ fechamentos:6, vagas:5, entrevistas:35, tempo_medio_sla:42, taxa_conversao:12, nps:55 },
+    deltas:{ fechamentos:'+2', vagas:'+1', entrevistas:'+6', tempo_medio_sla:'-5d', taxa_conversao:'+2%', nps:'+10' },
+    deltas_dir:{ fechamentos:'up', vagas:'up', entrevistas:'up', tempo_medio_sla:'up', taxa_conversao:'up', nps:'up' },
+    funil:[
+      {label:'Triados',n:200,pct:100,cor:'#1d4ed8'},
+      {label:'Qualificados',n:140,pct:70,cor:'#2563eb'},
+      {label:'Entrevistados',n:35,pct:17,cor:'#3b82f6'},
+      {label:'Finalistas',n:12,pct:6,cor:'#60a5fa'},
+      {label:'Contratados',n:6,pct:3,cor:'#a8d85f'},
+    ],
+    evolucao_labels:['Jan','Fev','Mar','Abr','Mai','Jun'],
+    evolucao_data:[2,3,4,5,5,6],
+    evolucao_meta:[5,5,5,5,5,5],
+    vagas:[
+      {titulo:'Assistente Administrativo',cliente:'Empresa ABC',status:'aberta',fase:'Triagem',cands:55,sla:8,abertura:'28/05'},
+      {titulo:'Aux. Logística',cliente:'LogCorp',status:'aberta',fase:'Entrevistas',cands:17,sla:29,abertura:'05/05'},
+      {titulo:'Analista de Estoque',cliente:'LogCorp',status:'fechada',fase:'Contratado',cands:28,sla:40,abertura:'10/03'},
+    ],
+    timeline:[
+      {ico:'🎙',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Entrevista: candidato Aux. Logística',meta:'Hoje, 09h30'},
+      {ico:'📂',cor:'#3b82f6',bc:'rgba(59,130,246,0.2)',txt:'Triagem: 22 currículos processados',meta:'Ontem'},
+      {ico:'✅',cor:'#2ecc71',bc:'rgba(46,204,113,0.2)',txt:'Fechamento: João Carlos → LogCorp',meta:'3 dias atrás'},
+    ],
+    skills:[
+      {nome:'Taxa de conversão',val:12,max:30,cor:'#3b82f6',fmt:'%'},
+      {nome:'Cumprimento de SLA',val:55,max:100,cor:'#2ecc71',fmt:'%'},
+      {nome:'NPS candidatos',val:55,max:100,cor:'#a8d85f',fmt:'pts'},
+      {nome:'Velocidade de triagem',val:62,max:100,cor:'#f39c12',fmt:'%'},
+      {nome:'Retenção pós-contratação',val:80,max:100,cor:'#06b6d4',fmt:'%'},
+    ],
+    comp:[
+      {ind:'Fechamentos/mês',rec:6,media:9.5},
+      {ind:'SLA médio (dias)',rec:42,media:34},
+      {ind:'Taxa conversão',rec:'12%',media:'16%',recN:12,mediaN:16},
+      {ind:'NPS candidatos',rec:55,media:62},
+      {ind:'Entrevistas/mês',rec:35,media:48},
+    ],
+    nps:{ score:55, promotores:48, neutros:34, detratores:18,
+      comentarios:['Candidato simpático, boa experiência.','Aguardei um pouco para retorno.'] },
+    origem:{ labels:['LinkedIn','Indeed','Indicação','Site','Catho','Outro'], data:[25,30,10,8,20,7] },
+    dias:{ labels:['Seg','Ter','Qua','Qui','Sex'], data:[8,10,12,9,5] },
+  },
+];
+
+let recAtual = 0;
+let chartEv=null, chartOr=null, chartDi=null;
+
+const KPI_CONFIG = [
+  {key:'fechamentos',   label:'Fechamentos',       icon:'✅', cor:'var(--green)'},
+  {key:'vagas',         label:'Vagas Ativas',       icon:'💼', cor:'var(--accent)'},
+  {key:'entrevistas',   label:'Entrevistas',        icon:'🎙', cor:'var(--purple)'},
+  {key:'tempo_medio_sla',label:'SLA Médio',         icon:'⏱', cor:'var(--orange)', sufixo:'d'},
+  {key:'taxa_conversao', label:'Taxa Conversão',    icon:'🔄', cor:'var(--blue)', sufixo:'%'},
+  {key:'nps',           label:'NPS Candidatos',     icon:'⭐', cor:'var(--accent2)'},
+];
+
+function trocarRecrutador(){
+  recAtual = parseInt(document.getElementById('selectRecrutador').value);
+  renderTudo();
+}
+function trocarPeriodo(p,btn){
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderTudo();
+}
+
+function renderTudo(){
+  const r = RECRUTADORES[recAtual];
+  renderPerfil(r);
+  renderKPIs(r);
+  renderFunil(r);
+  renderVagas(r);
+  renderTimeline(r);
+  renderSkills(r);
+  renderComp(r);
+  renderNPS(r);
+  renderChartEvolucao(r);
+  renderChartOrigem(r);
+  renderChartDias(r);
+}
+
+function renderPerfil(r){
+  const rankEmoji = r.ranking===1?'🥇':r.ranking===2?'🥈':r.ranking===3?'🥉':'🏅';
+  document.getElementById('perfilCard').innerHTML=`
+    <div class="perfil-avatar">${r.iniciais}</div>
+    <div class="perfil-info">
+      <div class="perfil-nome">${r.nome}</div>
+      <div class="perfil-cargo">${r.cargo} · Na equipe desde ${r.desde}</div>
+      <div class="perfil-tags">
+        ${r.especialidades.map(e=>`<span class="perfil-tag" style="color:var(--accent);border-color:rgba(59,130,246,0.3);">${e}</span>`).join('')}
+      </div>
+    </div>
+    <div class="perfil-stats">
+      <div class="ps-item"><div class="ps-val">${r.total_realizado}</div><div class="ps-label">Fechamentos Total</div></div>
+      <div class="ps-item"><div class="ps-val">${r.total_planejado}</div><div class="ps-label">Meta Total</div></div>
+      <div class="ps-item"><div class="ps-val" style="color:${r.total_realizado>=r.total_planejado?'var(--green)':'var(--orange)'};">${Math.round(r.total_realizado/r.total_planejado*100)}%</div><div class="ps-label">Atingimento</div></div>
+    </div>
+    <div class="rank-badge" style="margin-left:auto;">
+      <div class="rank-num">${rankEmoji}</div>
+      <div class="rank-label">#${r.ranking} Ranking</div>
+    </div>
+  `;
+  // mini progress
+  const pct = Math.round(r.total_realizado/r.total_planejado*100);
+  const progressHtml = `<div style="margin-top:0.7rem;width:100%;"><div style="font-size:0.6rem;color:var(--muted);margin-bottom:0.25rem;">Meta geral: ${pct}%</div><div class="prog"><div class="prog-fill" style="width:${pct}%;background:${pct>=100?'var(--green)':pct>=70?'var(--accent)':'var(--orange)'};"></div></div></div>`;
+  document.getElementById('perfilCard').querySelector('.perfil-info').insertAdjacentHTML('beforeend',progressHtml);
+}
+
+function renderKPIs(r){
+  document.getElementById('kpiGrid').innerHTML = KPI_CONFIG.map((k,i)=>{
+    const val = r.kpis[k.key];
+    const delta = r.deltas[k.key];
+    const dir = r.deltas_dir[k.key];
+    const suf = k.sufixo||'';
+    return `<div class="kpi" style="--kpi-color:${k.cor};animation-delay:${i*0.05}s">
+      <div class="kpi-icon">${k.icon}</div>
+      <div class="kpi-val">${val}${suf}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-delta ${dir}">${dir==='up'?'▲':dir==='down'?'▼':'—'} ${delta} vs mês anterior</div>
+    </div>`;
+  }).join('');
+}
+
+function renderFunil(r){
+  document.getElementById('funilDiv').innerHTML = r.funil.map(f=>`
+    <div class="funil-row">
+      <span class="funil-label">${f.label}</span>
+      <div class="funil-track">
+        <div class="funil-fill" style="width:${f.pct}%;background:${f.cor};">
+          <span>${f.label}</span><span>${f.pct}%</span>
+        </div>
+      </div>
+      <span class="funil-count">${f.n}</span>
+      <span class="funil-pct">${f.pct}%</span>
+    </div>
+  `).join('');
+}
+
+function renderVagas(r){
+  document.getElementById('badgeVagas').textContent = r.vagas.length+' vagas';
+  document.getElementById('vagasBody').innerHTML = r.vagas.map(v=>{
+    const cls = v.status==='aberta'?'v-aberta':v.status==='fechada'?'v-fechada':'v-pausada';
+    const slaColor = v.sla>40?'var(--red)':v.sla>25?'var(--orange)':'var(--green)';
+    return `<tr>
+      <td style="font-weight:700;">${v.titulo}</td>
+      <td style="color:var(--muted);">${v.cliente}</td>
+      <td><span class="v-status ${cls}">${v.status}</span></td>
+      <td style="color:var(--text2);">${v.fase}</td>
+      <td style="font-family:var(--mono);font-weight:700;">${v.cands}</td>
+      <td style="font-family:var(--mono);font-weight:800;color:${slaColor};">${v.sla}d</td>
+      <td style="color:var(--muted);font-size:0.64rem;">${v.abertura}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTimeline(r){
+  document.getElementById('timelineDiv').innerHTML = r.timeline.map(t=>`
+    <div class="tl-item">
+      <div class="tl-dot" style="color:${t.cor};background:${t.bc};border-color:${t.cor};">${t.ico}</div>
+      <div class="tl-body">
+        <div class="tl-txt">${t.txt}</div>
+        <div class="tl-meta">${t.meta}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderSkills(r){
+  document.getElementById('skillList').innerHTML = r.skills.map(s=>`
+    <div class="skill-row">
+      <div class="skill-head">
+        <span class="skill-name">${s.nome}</span>
+        <span class="skill-val" style="color:${s.cor};">${s.val}${s.fmt}</span>
+      </div>
+      <div class="prog"><div class="prog-fill" style="width:${(s.val/s.max)*100}%;background:${s.cor};"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderComp(r){
+  document.getElementById('compBody').innerHTML = r.comp.map(c=>{
+    const recN = c.recN!==undefined ? c.recN : (typeof c.rec==='number'?c.rec:parseFloat(c.rec));
+    const medN = c.mediaN!==undefined ? c.mediaN : (typeof c.media==='number'?c.media:parseFloat(c.media));
+    const diff = recN - medN;
+    const posMelhor = c.ind.includes('SLA') ? diff<0 : diff>=0;
+    const deltaStr = (diff>=0?'+':'')+diff.toFixed(1);
+    return `<tr>
+      <td class="comp-label">${c.ind}</td>
+      <td class="comp-recr" style="color:var(--accent);">${c.rec}</td>
+      <td class="comp-media">${c.media}</td>
+      <td class="comp-delta ${posMelhor?'pos':'neg'}">${deltaStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderNPS(r){
+  const n = r.nps;
+  const cor = n.score>=70?'var(--green)':n.score>=50?'var(--orange)':'var(--red)';
+  const classif = n.score>=70?'Excelente':n.score>=50?'Bom':'Precisa melhorar';
+  document.getElementById('npsScore').textContent=n.score;
+  document.getElementById('npsScore').style.color=cor;
+  document.getElementById('npsClassif').textContent=classif;
+  document.getElementById('npsBar').innerHTML=`
+    <div class="nps-seg" style="width:${n.detratores}%;background:var(--red);"></div>
+    <div class="nps-seg" style="width:${n.neutros}%;background:var(--orange);"></div>
+    <div class="nps-seg" style="width:${n.promotores}%;background:var(--green);"></div>
+  `;
+  document.getElementById('npsDetratores').textContent=n.detratores+'% detratores';
+  document.getElementById('npsNeutros').textContent=n.neutros+'% neutros';
+  document.getElementById('npsPromotores').textContent=n.promotores+'% promotores';
+  document.getElementById('npsComentarios').innerHTML = n.comentarios.map(c=>`
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:0.5rem 0.7rem;font-size:0.67rem;color:var(--text2);">💬 "${c}"</div>
+  `).join('');
+}
+
+// ── CHARTS ──
+const CHART_DEFAULTS = {
+  plugins:{ legend:{ labels:{ color:'#555', font:{ family:'Sora', size:11 } } } },
+  scales:{
+    x:{ ticks:{ color:'#555', font:{family:'JetBrains Mono',size:11} }, grid:{ color:'rgba(255,255,255,0.03)' } },
+    y:{ ticks:{ color:'#555', font:{family:'JetBrains Mono',size:11} }, grid:{ color:'rgba(255,255,255,0.05)' } }
+  }
+};
+
+function renderChartEvolucao(r){
+  if(chartEv){ chartEv.destroy(); chartEv=null; }
+  const ctx = document.getElementById('chartEvolucao').getContext('2d');
+  chartEv = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:r.evolucao_labels,
+      datasets:[
+        { label:'Fechamentos', data:r.evolucao_data, backgroundColor:'rgba(59,130,246,0.6)', borderColor:'#3b82f6', borderWidth:2, borderRadius:6, borderSkipped:false },
+        { label:'Meta', data:r.evolucao_meta, type:'line', borderColor:'rgba(168,216,95,0.7)', borderDash:[5,4], pointRadius:3, pointBackgroundColor:'#a8d85f', tension:0.3, fill:false }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#666', font:{family:'Sora',size:11} } } },
+      scales:{
+        x:{ ticks:{color:'#555',font:{family:'JetBrains Mono',size:11}}, grid:{color:'rgba(255,255,255,0.03)'} },
+        y:{ ticks:{color:'#555',font:{family:'JetBrains Mono',size:11}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+function renderChartOrigem(r){
+  if(chartOr){ chartOr.destroy(); chartOr=null; }
+  const ctx = document.getElementById('chartOrigem').getContext('2d');
+  chartOr = new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:r.origem.labels,
+      datasets:[{ data:r.origem.data,
+        backgroundColor:['#1d4ed8','#2563eb','#3b82f6','#60a5fa','#a8d85f','#555'],
+        borderWidth:0, hoverOffset:6 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{ position:'right', labels:{ color:'#666', font:{family:'Sora',size:10}, boxWidth:10, padding:8 } } }
+    }
+  });
+}
+
+function renderChartDias(r){
+  if(chartDi){ chartDi.destroy(); chartDi=null; }
+  const ctx = document.getElementById('chartDias').getContext('2d');
+  chartDi = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:r.dias.labels,
+      datasets:[{ label:'Entrevistas', data:r.dias.data,
+        backgroundColor:r.dias.data.map(v=>v===Math.max(...r.dias.data)?'rgba(168,216,95,0.7)':'rgba(59,130,246,0.4)'),
+        borderColor:r.dias.data.map(v=>v===Math.max(...r.dias.data)?'#a8d85f':'#3b82f6'),
+        borderWidth:2, borderRadius:6 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{color:'#555',font:{family:'JetBrains Mono',size:11}}, grid:{color:'rgba(255,255,255,0.03)'} },
+        y:{ ticks:{color:'#555',font:{family:'JetBrains Mono',size:11}}, grid:{color:'rgba(255,255,255,0.05)'}, beginAtZero:true }
+      }
+    }
+  });
+}
+
+// ── EXPORTAR ──
+function exportarCSV(){
+  const r = RECRUTADORES[recAtual];
+  let csv = `Relatório Individual — ${r.nome}\nGerado em: ${new Date().toLocaleDateString('pt-BR')}\n\n`;
+  csv += `KPI,Valor\n`;
+  KPI_CONFIG.forEach(k=>{ csv+=`"${k.label}",${r.kpis[k.key]}\n`; });
+  csv += `\nVagas,Cliente,Status,Candidatos,SLA\n`;
+  r.vagas.forEach(v=>{ csv+=`"${v.titulo}","${v.cliente}","${v.status}",${v.cands},${v.sla}\n`; });
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`relatorio-${r.nome.split(' ').join('-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado!');
+}
+function exportarPDF(){ toast('PDF: use Ctrl+P → Salvar como PDF','ok'); }
+
+function toast(msg,tipo='ok'){
+  const w=document.getElementById('toastWrap');
+  const el=document.createElement('div');
+  el.className='toast-item '+(tipo==='err'?'err':'ok');
+  el.innerHTML=`<span>${tipo==='err'?'⚠️':'✅'}</span><span>${msg}</span>`;
+  w.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity 0.3s';setTimeout(()=>el.remove(),300);},3200);
+}
+
+document.addEventListener('DOMContentLoaded', renderTudo);
+</script>
+</body>
+</html>

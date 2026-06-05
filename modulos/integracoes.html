@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Integrações | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-20%;right:-10%;z-index:0;width:700px;height:700px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);pointer-events:none;}
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1500px;margin:0 auto;}
+
+/* ── HERO ── */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.6rem;flex-wrap:wrap;background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);border:1px solid var(--border);border-radius:20px;padding:1.4rem 1.8rem;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.2);border-color:rgba(46,204,113,0.4);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.2);}
+.btn-danger:hover{background:rgba(231,76,60,0.18);border-color:rgba(231,76,60,0.35);}
+.btn-sm{font-size:0.68rem;padding:0.28rem 0.65rem;}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.2rem;}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.2rem;position:relative;overflow:hidden;transition:all 0.18s;animation:fadeUp 0.5s ease both;}
+.kpi:hover{border-color:var(--border2);transform:translateY(-2px);}
+.kpi::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--kpi-color,var(--accent)),transparent);}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:55px;height:55px;border-radius:50%;background:radial-gradient(ellipse,var(--kpi-color,var(--accent)) 0%,transparent 70%);opacity:0.07;transform:translate(18px,-18px);}
+.kpi-icon{font-size:1.2rem;margin-bottom:0.5rem;}
+.kpi-val{font-size:1.7rem;font-weight:900;line-height:1;color:var(--kpi-color,var(--accent));font-family:var(--mono);}
+.kpi-label{font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-top:0.15rem;}
+.kpi-delta{font-size:0.58rem;margin-top:0.3rem;color:var(--green);}
+
+/* ── SEC ── */
+.sec{margin-bottom:0.85rem;margin-top:0.4rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0.7rem 1.1rem;margin-bottom:1rem;}
+.filter-tabs{display:flex;gap:0.25rem;background:rgba(255,255,255,0.03);border-radius:8px;padding:0.18rem;}
+.ftab{font-size:0.63rem;font-weight:700;padding:0.28rem 0.65rem;border-radius:6px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:inherit;transition:all 0.15s;}
+.ftab.on{background:rgba(59,130,246,0.15);color:var(--accent);}
+.filter-sep{flex:1;}
+.search-input{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:9px;padding:0.38rem 0.75rem;font-family:inherit;font-size:0.75rem;color:var(--text);outline:none;width:200px;transition:border-color 0.15s;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--muted);}
+
+/* ── GRID INTEGRAÇÕES ── */
+.int-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.85rem;margin-bottom:1rem;}
+@media(max-width:1200px){.int-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.int-grid{grid-template-columns:1fr;}}
+
+/* ── CARD INTEGRAÇÃO ── */
+.int-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.4rem;position:relative;overflow:hidden;transition:all 0.2s;animation:fadeUp 0.5s ease both;display:flex;flex-direction:column;gap:0.9rem;}
+.int-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.int-card.connected{border-color:rgba(46,204,113,0.2);}
+.int-card.connected:hover{border-color:rgba(46,204,113,0.4);}
+.int-card.error{border-color:rgba(231,76,60,0.2);}
+.int-card::after{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;background:radial-gradient(ellipse,var(--int-color,rgba(59,130,246,0.08)),transparent 70%);transform:translate(24px,-24px);pointer-events:none;}
+
+.int-header{display:flex;align-items:flex-start;justify-content:space-between;gap:0.8rem;}
+.int-logo{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;border:1px solid rgba(255,255,255,0.07);}
+.int-info{flex:1;min-width:0;}
+.int-name{font-size:0.85rem;font-weight:900;margin-bottom:0.15rem;}
+.int-cat{font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.int-status-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:0.3rem;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sd-on{background:var(--green);box-shadow:0 0 6px var(--green);}
+.sd-off{background:var(--muted);}
+.sd-err{background:var(--red);box-shadow:0 0 6px var(--red);}
+.sd-warn{background:var(--orange);box-shadow:0 0 6px var(--orange);}
+.int-status-label{font-size:0.57rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;}
+.sl-on{color:var(--green);}
+.sl-off{color:var(--muted);}
+.sl-err{color:var(--red);}
+.sl-warn{color:var(--orange);}
+
+.int-desc{font-size:0.69rem;color:var(--text2);line-height:1.6;}
+
+.int-stats{display:flex;gap:1rem;flex-wrap:wrap;}
+.ist{display:flex;flex-direction:column;gap:0.08rem;}
+.ist-val{font-size:0.85rem;font-weight:900;font-family:var(--mono);color:var(--accent);}
+.ist-label{font-size:0.56rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);}
+
+.int-meta{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding-top:0.6rem;border-top:1px solid rgba(255,255,255,0.04);}
+.int-sync{font-size:0.6rem;color:var(--muted);display:flex;align-items:center;gap:0.3rem;}
+.int-actions{display:flex;gap:0.3rem;}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.2);}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+@media(max-width:1000px){.g2{grid-template-columns:1fr;}.g3{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.g3{grid-template-columns:1fr;}}
+
+/* ── LOG ── */
+.log-list{display:flex;flex-direction:column;gap:0;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.log-item{display:flex;align-items:flex-start;gap:0.75rem;padding:0.55rem 0;border-bottom:1px solid rgba(255,255,255,0.03);}
+.log-item:last-child{border-bottom:none;}
+.log-ico{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;flex-shrink:0;margin-top:1px;border:1px solid;}
+.log-ok{background:rgba(46,204,113,0.12);border-color:rgba(46,204,113,0.3);color:var(--green);}
+.log-err{background:rgba(231,76,60,0.12);border-color:rgba(231,76,60,0.3);color:var(--red);}
+.log-warn{background:rgba(243,156,18,0.12);border-color:rgba(243,156,18,0.3);color:var(--orange);}
+.log-info{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.3);color:var(--accent);}
+.log-body{flex:1;min-width:0;}
+.log-txt{font-size:0.7rem;font-weight:700;line-height:1.4;}
+.log-meta{font-size:0.6rem;color:var(--muted);margin-top:0.1rem;display:flex;gap:0.6rem;}
+.log-tag{font-size:0.56rem;font-weight:700;padding:0.1rem 0.38rem;border-radius:4px;background:rgba(255,255,255,0.05);}
+
+/* ── WEBHOOK ── */
+.webhook-list{display:flex;flex-direction:column;gap:0.4rem;}
+.wh-item{display:flex;align-items:center;gap:0.7rem;background:rgba(255,255,255,0.025);border:1px solid var(--border);border-radius:10px;padding:0.6rem 0.85rem;}
+.wh-method{font-size:0.6rem;font-weight:800;padding:0.12rem 0.42rem;border-radius:5px;background:rgba(46,204,113,0.12);color:var(--green);border:1px solid rgba(46,204,113,0.2);}
+.wh-url{flex:1;font-size:0.67rem;font-family:var(--mono);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.wh-event{font-size:0.58rem;font-weight:700;color:var(--accent);}
+.wh-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.85rem;padding:0.1rem 0.3rem;transition:color 0.15s;}
+.wh-del:hover{color:var(--red);}
+
+/* ── API KEY BOX ── */
+.apikey-box{display:flex;align-items:center;gap:0.5rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:0.6rem 0.9rem;}
+.apikey-val{flex:1;font-size:0.68rem;font-family:var(--mono);color:var(--muted);letter-spacing:1px;}
+.apikey-val.visible{color:var(--accent2);}
+
+/* ── PROG ── */
+.prog{height:5px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;margin-top:0.3rem;}
+.prog-fill{height:100%;border-radius:99px;transition:width 0.9s ease;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9998;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:2rem;max-width:540px;width:92%;animation:fadeUp 0.3s ease;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:0.3rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.6;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;}
+.modal-close:hover{color:var(--text);}
+.modal-actions{display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1.4rem;}
+.field{display:flex;flex-direction:column;gap:0.3rem;margin-bottom:0.7rem;}
+.label{font-size:0.62rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.input,.select,.textarea{background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;padding:0.5rem 0.8rem;font-family:inherit;font-size:0.8rem;font-weight:600;color:var(--text);outline:none;transition:border-color 0.15s;width:100%;}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent);}
+.input::placeholder{color:var(--muted);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-info .toggle-label{font-size:0.72rem;font-weight:700;}
+.toggle-info .toggle-desc{font-size:0.6rem;color:var(--muted);}
+.toggle{position:relative;width:34px;height:18px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--muted2);border-radius:99px;cursor:pointer;transition:0.2s;}
+.toggle-slider::before{content:'';position:absolute;height:12px;width:12px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.2s;}
+.toggle input:checked+.toggle-slider{background:var(--accent);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;display:flex;flex-direction:column;gap:0.4rem;}
+.toast-item{background:var(--card3);border:1px solid var(--border2);border-radius:12px;padding:0.7rem 1rem;font-size:0.72rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;animation:slideIn 0.25s ease;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.toast-item.ok{border-color:rgba(46,204,113,0.3);color:var(--green);}
+.toast-item.err{border-color:rgba(231,76,60,0.35);color:var(--red);}
+.toast-item.warn{border-color:rgba(243,156,18,0.35);color:var(--orange);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+@media(max-width:700px){.page{padding:1rem 0.9rem 3rem;}.hero-title{font-size:1.2rem;}.kpi-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Conectividade</div>
+      <div class="hero-title">Integrações & <span>APIs</span></div>
+      <div class="hero-sub">Job boards · CRMs · Comunicação · Calendário · Webhooks · Chaves de API</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="navegar('config')">⚙️ Configurações</button>
+      <button class="btn btn-ghost" onclick="abrirModal('modalWebhook')">🔗 Novo Webhook</button>
+      <button class="btn btn-primary" onclick="sincronizarTudo()">🔄 Sincronizar Tudo</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi" style="--kpi-color:var(--green);animation-delay:0s">
+      <div class="kpi-icon">🔗</div>
+      <div class="kpi-val" id="kpiAtivas">7</div>
+      <div class="kpi-label">Integrações Ativas</div>
+      <div class="kpi-delta">de 12 disponíveis</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--accent);animation-delay:0.05s">
+      <div class="kpi-icon">🔄</div>
+      <div class="kpi-val">1.284</div>
+      <div class="kpi-label">Sincronizações Hoje</div>
+      <div class="kpi-delta">última há 4 min</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--orange);animation-delay:0.1s">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-val" id="kpiErros">2</div>
+      <div class="kpi-label">Erros nas Últimas 24h</div>
+      <div class="kpi-delta" style="color:var(--orange);">requer atenção</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--accent2);animation-delay:0.15s">
+      <div class="kpi-icon">📡</div>
+      <div class="kpi-val">99,2%</div>
+      <div class="kpi-label">Uptime (30 dias)</div>
+      <div class="kpi-delta">SLA dentro do limite</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <button class="ftab on" onclick="filtrarCat('todos',this)">Todas</button>
+      <button class="ftab" onclick="filtrarCat('job_board',this)">Job Boards</button>
+      <button class="ftab" onclick="filtrarCat('crm',this)">CRM</button>
+      <button class="ftab" onclick="filtrarCat('comunicacao',this)">Comunicação</button>
+      <button class="ftab" onclick="filtrarCat('calendario',this)">Calendário</button>
+      <button class="ftab" onclick="filtrarCat('rh',this)">RH & Folha</button>
+      <button class="ftab" onclick="filtrarCat('ia',this)">IA & Parsing</button>
+    </div>
+    <div class="filter-sep"></div>
+    <input class="search-input" id="searchInput" type="text" placeholder="🔍 Buscar integração..." oninput="buscarInt()"/>
+  </div>
+
+  <!-- CARDS DE INTEGRAÇÃO -->
+  <div class="int-grid" id="intGrid"></div>
+
+  <!-- LINHA INFERIOR: LOG + WEBHOOKS + API KEY -->
+  <div class="g3">
+
+    <!-- LOG DE EVENTOS -->
+    <div class="card" style="animation-delay:0.3s">
+      <div class="card-head">
+        <div class="card-title">📋 Log de Eventos</div>
+        <div style="display:flex;gap:0.4rem;">
+          <span class="card-badge orange" id="badgeErros">2 erros</span>
+          <button class="btn btn-ghost btn-sm" onclick="limparLog()">Limpar</button>
+        </div>
+      </div>
+      <div class="log-list" id="logList"></div>
+    </div>
+
+    <!-- WEBHOOKS -->
+    <div class="card" style="animation-delay:0.35s">
+      <div class="card-head">
+        <div class="card-title">🔔 Webhooks Ativos</div>
+        <button class="btn btn-ghost btn-sm" onclick="abrirModal('modalWebhook')">+ Novo</button>
+      </div>
+      <div class="webhook-list" id="webhookList"></div>
+    </div>
+
+    <!-- API KEY & ACESSO -->
+    <div class="card" style="animation-delay:0.4s">
+      <div class="card-head">
+        <div class="card-title">🔑 Chave de API Orizon</div>
+        <button class="btn btn-ghost btn-sm" onclick="rotacionarChave()">↻ Rotacionar</button>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.4rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Chave de produção</div>
+        <div class="apikey-box">
+          <span class="apikey-val" id="apikeyVal">ori_live_••••••••••••••••••••••</span>
+          <button class="btn btn-ghost btn-sm" onclick="toggleApiKey()" id="btnToggleKey">👁 Ver</button>
+          <button class="btn btn-ghost btn-sm" onclick="copiarApiKey()">📋</button>
+        </div>
+        <div style="font-size:0.6rem;color:var(--muted);margin-top:0.35rem;">Criada em 01/01/2025 · Nunca expira</div>
+      </div>
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.4rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Chave de sandbox</div>
+        <div class="apikey-box">
+          <span class="apikey-val" style="color:var(--orange);">ori_test_••••••••••••••••••••</span>
+          <button class="btn btn-ghost btn-sm" onclick="copiarApiKey()">📋</button>
+        </div>
+      </div>
+      <div style="margin-bottom:0.8rem;">
+        <div style="font-size:0.62rem;color:var(--muted);margin-bottom:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Uso da API (este mês)</div>
+        <div style="display:flex;justify-content:space-between;font-size:0.68rem;margin-bottom:0.25rem;">
+          <span style="color:var(--text2);">12.480 / 50.000 requisições</span>
+          <span style="font-weight:800;color:var(--accent);font-family:var(--mono);">25%</span>
+        </div>
+        <div class="prog"><div class="prog-fill" style="width:25%;background:linear-gradient(90deg,var(--primary),var(--accent));"></div></div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">Rate limit ativo</div>
+          <div class="toggle-desc">Limitar a 1.000 req/min</div>
+        </div>
+        <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-label">Logs de acesso</div>
+          <div class="toggle-desc">Registrar todas as chamadas</div>
+        </div>
+        <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div style="margin-top:0.8rem;">
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" onclick="abrirModal('modalDocs')">📄 Ver Documentação da API</button>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /page -->
+
+<!-- MODAL CONFIG INTEGRAÇÃO -->
+<div class="modal-overlay" id="modalConfig">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modalConfig')">✕</button>
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.2rem;">
+      <div class="int-logo" id="mc-logo" style="font-size:1.8rem;width:52px;height:52px;"></div>
+      <div>
+        <div class="modal-title" id="mc-titulo" style="margin-bottom:0.1rem;"></div>
+        <div style="font-size:0.65rem;color:var(--muted);" id="mc-cat"></div>
+      </div>
+    </div>
+    <div id="mc-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="mc-btn-desconectar" onclick="desconectarInt()">🔌 Desconectar</button>
+      <button class="btn btn-ghost" onclick="fecharModal('modalConfig')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarConfig()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONECTAR -->
+<div class="modal-overlay" id="modalConectar">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modalConectar')">✕</button>
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem;">
+      <div class="int-logo" id="con-logo" style="font-size:1.8rem;width:52px;height:52px;"></div>
+      <div>
+        <div class="modal-title" id="con-titulo" style="margin-bottom:0.1rem;"></div>
+        <div style="font-size:0.65rem;color:var(--muted);" id="con-cat"></div>
+      </div>
+    </div>
+    <div class="modal-sub" id="con-desc"></div>
+    <div id="con-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modalConectar')">Cancelar</button>
+      <button class="btn btn-primary" id="con-btn" onclick="confirmarConexao()">🔗 Conectar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WEBHOOK -->
+<div class="modal-overlay" id="modalWebhook">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modalWebhook')">✕</button>
+    <div class="modal-title">🔔 Novo Webhook</div>
+    <div class="modal-sub">Configure um endpoint para receber notificações em tempo real de eventos do Orizon ATS.</div>
+    <div class="field">
+      <label class="label">URL do endpoint *</label>
+      <input class="input" id="wh-url" type="url" placeholder="https://meuapp.com/webhook/orizon"/>
+    </div>
+    <div class="field">
+      <label class="label">Evento *</label>
+      <select class="select" id="wh-event">
+        <option value="">Selecionar evento...</option>
+        <option>candidato.criado</option>
+        <option>candidato.atualizado</option>
+        <option>entrevista.agendada</option>
+        <option>entrevista.concluida</option>
+        <option>oferta.enviada</option>
+        <option>oferta.aceita</option>
+        <option>oferta.recusada</option>
+        <option>vaga.aberta</option>
+        <option>vaga.fechada</option>
+        <option>contratado.adicionado</option>
+        <option>disc.concluido</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="label">Secret (opcional)</label>
+      <input class="input" id="wh-secret" type="text" placeholder="Chave para validar assinatura HMAC"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modalWebhook')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarWebhook()">✓ Criar Webhook</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DOCS -->
+<div class="modal-overlay" id="modalDocs">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="fecharModal('modalDocs')">✕</button>
+    <div class="modal-title">📄 Documentação da API Orizon</div>
+    <div class="modal-sub">Endpoints disponíveis para integração via REST API.</div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:1rem;font-family:var(--mono);font-size:0.67rem;color:var(--text2);line-height:2;">
+      <div style="color:var(--muted);margin-bottom:0.5rem;">// Base URL</div>
+      <div style="color:var(--accent2);">https://api.orizon.ats.io/v1</div>
+      <div style="color:var(--muted);margin-top:0.8rem;margin-bottom:0.3rem;">// Candidatos</div>
+      <div><span style="color:var(--green);">GET</span>    /candidates</div>
+      <div><span style="color:var(--green);">GET</span>    /candidates/:id</div>
+      <div><span style="color:var(--orange);">POST</span>   /candidates</div>
+      <div><span style="color:var(--accent);">PATCH</span>  /candidates/:id</div>
+      <div style="color:var(--muted);margin-top:0.8rem;margin-bottom:0.3rem;">// Vagas</div>
+      <div><span style="color:var(--green);">GET</span>    /jobs</div>
+      <div><span style="color:var(--orange);">POST</span>   /jobs</div>
+      <div style="color:var(--muted);margin-top:0.8rem;margin-bottom:0.3rem;">// Entrevistas</div>
+      <div><span style="color:var(--green);">GET</span>    /interviews</div>
+      <div><span style="color:var(--orange);">POST</span>   /interviews/schedule</div>
+      <div style="color:var(--muted);margin-top:0.8rem;margin-bottom:0.3rem;">// Webhooks</div>
+      <div><span style="color:var(--green);">GET</span>    /webhooks</div>
+      <div><span style="color:var(--orange);">POST</span>   /webhooks</div>
+      <div><span style="color:var(--red);">DELETE</span> /webhooks/:id</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal('modalDocs')">Fechar</button>
+      <button class="btn btn-primary" onclick="toast('Documentação completa em docs.orizon.ats.io','ok');fecharModal('modalDocs')">🌐 Acessar Docs Online</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── DADOS ──
+const integracoes = [
+  {
+    id:'linkedin', nome:'LinkedIn Jobs', cat:'job_board', catLabel:'Job Board',
+    logo:'💼', cor:'rgba(10,102,194,0.1)', status:'connected',
+    desc:'Publica vagas automaticamente no LinkedIn e importa candidatos que se aplicam diretamente no perfil da empresa.',
+    stats:[{val:'143',label:'Vagas publicadas'},{val:'1.2k',label:'Candidatos importados'},{val:'94%',label:'Uptime'}],
+    sync:'Sincronizado há 4 min', syncCount:482,
+  },
+  {
+    id:'catho', nome:'Catho', cat:'job_board', catLabel:'Job Board',
+    logo:'🔶', cor:'rgba(243,156,18,0.1)', status:'connected',
+    desc:'Integração com a maior plataforma de empregos do Brasil. Publique vagas e receba currículos automaticamente.',
+    stats:[{val:'89',label:'Vagas ativas'},{val:'640',label:'Candidatos'},{val:'99%',label:'Uptime'}],
+    sync:'Sincronizado há 12 min', syncCount:214,
+  },
+  {
+    id:'infojobs', nome:'InfoJobs', cat:'job_board', catLabel:'Job Board',
+    logo:'🟣', cor:'rgba(167,139,250,0.1)', status:'connected',
+    desc:'Publicação e gestão de vagas no InfoJobs com sincronização bidirecional de candidatos.',
+    stats:[{val:'61',label:'Vagas ativas'},{val:'390',label:'Candidatos'},{val:'97%',label:'Uptime'}],
+    sync:'Sincronizado há 1h', syncCount:130,
+  },
+  {
+    id:'gupy', nome:'Gupy', cat:'job_board', catLabel:'Job Board',
+    logo:'🟢', cor:'rgba(46,204,113,0.08)', status:'error',
+    desc:'Plataforma de recrutamento com IA. Token de autenticação expirado — reconecte para retomar a sincronização.',
+    stats:[{val:'—',label:'Vagas ativas'},{val:'—',label:'Candidatos'},{val:'Erro',label:'Status'}],
+    sync:'Falha há 2h', syncCount:0,
+  },
+  {
+    id:'google_calendar', nome:'Google Calendar', cat:'calendario', catLabel:'Calendário',
+    logo:'📅', cor:'rgba(66,133,244,0.1)', status:'connected',
+    desc:'Agendamentos de entrevistas são criados automaticamente no Google Calendar para recrutadores e candidatos.',
+    stats:[{val:'48',label:'Eventos criados'},{val:'12',label:'Recrutadores'},{val:'100%',label:'Uptime'}],
+    sync:'Sincronizado há 2 min', syncCount:48,
+  },
+  {
+    id:'whatsapp', nome:'WhatsApp Business', cat:'comunicacao', catLabel:'Comunicação',
+    logo:'💬', cor:'rgba(37,211,102,0.1)', status:'connected',
+    desc:'Envio automático de mensagens de triagem, confirmação de entrevista e feedback via WhatsApp Business API.',
+    stats:[{val:'2.1k',label:'Mensagens enviadas'},{val:'87%',label:'Taxa de abertura'},{val:'99%',label:'Entrega'}],
+    sync:'Ativo em tempo real', syncCount:2100,
+  },
+  {
+    id:'gmail', nome:'Gmail / Google Workspace', cat:'comunicacao', catLabel:'Comunicação',
+    logo:'✉️', cor:'rgba(234,67,53,0.1)', status:'connected',
+    desc:'Envio de e-mails transacionais, cartas de oferta e comunicações automáticas via Gmail integrado.',
+    stats:[{val:'3.4k',label:'E-mails enviados'},{val:'42%',label:'Taxa de abertura'},{val:'2,1%',label:'Bounce'}],
+    sync:'Ativo em tempo real', syncCount:3400,
+  },
+  {
+    id:'slack', nome:'Slack', cat:'comunicacao', catLabel:'Comunicação',
+    logo:'#️⃣', cor:'rgba(74,21,75,0.12)', status:'connected',
+    desc:'Notificações internas de novos candidatos, aprovações e alertas de pipeline no canal da equipe de recrutamento.',
+    stats:[{val:'18',label:'Canais conectados'},{val:'924',label:'Notificações'},{val:'100%',label:'Entrega'}],
+    sync:'Ativo em tempo real', syncCount:924,
+  },
+  {
+    id:'salesforce', nome:'Salesforce CRM', cat:'crm', catLabel:'CRM',
+    logo:'☁️', cor:'rgba(0,161,224,0.1)', status:'disconnected',
+    desc:'Sincronize clientes, contatos e oportunidades do Salesforce com o pipeline de vagas e contratações do Orizon.',
+    stats:[{val:'—',label:'Contatos'},{val:'—',label:'Oportunidades'},{val:'—',label:'Uptime'}],
+    sync:'Não conectado', syncCount:0,
+  },
+  {
+    id:'rd_station', nome:'RD Station CRM', cat:'crm', catLabel:'CRM',
+    logo:'🟡', cor:'rgba(255,193,7,0.1)', status:'disconnected',
+    desc:'Integração com RD Station para gestão de clientes contratantes e automações de marketing de relacionamento.',
+    stats:[{val:'—',label:'Leads'},{val:'—',label:'Negócios'},{val:'—',label:'Uptime'}],
+    sync:'Não conectado', syncCount:0,
+  },
+  {
+    id:'totvs', nome:'TOTVS RH', cat:'rh', catLabel:'RH & Folha',
+    logo:'🏢', cor:'rgba(255,87,34,0.1)', status:'warning',
+    desc:'Integração com TOTVS para envio automático de dados de contratados ao módulo de admissão e folha de pagamento.',
+    stats:[{val:'11',label:'Admissões enviadas'},{val:'3',label:'Pendentes'},{val:'95%',label:'Uptime'}],
+    sync:'Atenção: 3 registros pendentes', syncCount:11,
+  },
+  {
+    id:'openai', nome:'OpenAI / Parsing IA', cat:'ia', catLabel:'IA & Parsing',
+    logo:'🤖', cor:'rgba(16,163,127,0.1)', status:'connected',
+    desc:'Motor de parsing de currículos, geração de perguntas personalizadas e análise de fit cultural com GPT-4.',
+    stats:[{val:'1.8k',label:'Currículos parseados'},{val:'340',label:'Scorecards gerados'},{val:'99%',label:'Uptime'}],
+    sync:'Ativo em tempo real', syncCount:1800,
+  },
+];
+
+const logs = [
+  {tipo:'ok',  ico:'✓', txt:'LinkedIn Jobs — 12 novos candidatos importados (Dev Backend Sênior)', integ:'LinkedIn', time:'Há 4 min'},
+  {tipo:'ok',  ico:'✓', txt:'Google Calendar — Entrevista agendada para Lucas Andrade (10/06 14h)', integ:'G.Calendar', time:'Há 9 min'},
+  {tipo:'err', ico:'✕', txt:'Gupy — Token de autenticação expirado. Reconexão necessária.', integ:'Gupy', time:'Há 2h'},
+  {tipo:'warn',ico:'⚠', txt:'TOTVS RH — 3 registros de admissão aguardando sincronização', integ:'TOTVS', time:'Há 3h'},
+  {tipo:'ok',  ico:'✓', txt:'WhatsApp — 48 mensagens de confirmação de entrevista enviadas', integ:'WhatsApp', time:'Há 4h'},
+  {tipo:'ok',  ico:'✓', txt:'OpenAI — 22 currículos parseados e enriquecidos', integ:'OpenAI', time:'Há 5h'},
+  {tipo:'err', ico:'✕', txt:'Gupy — Tentativa de reconexão automática falhou (3/3)', integ:'Gupy', time:'Há 5h'},
+  {tipo:'ok',  ico:'✓', txt:'Catho — Vaga "Product Manager" publicada com sucesso', integ:'Catho', time:'Ontem 18:30'},
+  {tipo:'ok',  ico:'✓', txt:'Gmail — 89 e-mails transacionais entregues (0 bounces)', integ:'Gmail', time:'Ontem 17:00'},
+  {tipo:'ok',  ico:'✓', txt:'Slack — Notificação enviada: nova indicação cadastrada', integ:'Slack', time:'Ontem 15:45'},
+];
+
+let webhooks = [
+  {method:'POST', url:'https://meucrm.com/webhooks/candidato', event:'candidato.criado'},
+  {method:'POST', url:'https://pipeline.empresa.io/orizon', event:'oferta.aceita'},
+  {method:'POST', url:'https://n8n.empresa.io/webhook/entrevista', event:'entrevista.agendada'},
+];
+
+let filtroAtivo = 'todos';
+let busca = '';
+let intAtiva = null;
+let apiKeyVisivel = false;
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderGrid();
+  renderLog();
+  renderWebhooks();
+});
+
+// ── GRID ──
+function renderGrid() {
+  let dados = integracoes;
+  if (filtroAtivo !== 'todos') dados = dados.filter(d => d.cat === filtroAtivo);
+  if (busca) dados = dados.filter(d => d.nome.toLowerCase().includes(busca) || d.catLabel.toLowerCase().includes(busca));
+
+  document.getElementById('intGrid').innerHTML = dados.map(d => {
+    const sc = {connected:'sd-on', disconnected:'sd-off', error:'sd-err', warning:'sd-warn'}[d.status];
+    const sl = {connected:'sl-on Ativa', disconnected:'sl-off Desconectada', error:'sl-err Erro', warning:'sl-warn Atenção'}[d.status];
+    const [slCls, slTxt] = sl.split(' ');
+    const cardCls = d.status === 'connected' ? 'connected' : d.status === 'error' ? 'error' : '';
+    return `
+      <div class="int-card ${cardCls}" style="--int-color:${d.cor};animation-delay:${dados.indexOf(d)*0.05}s">
+        <div class="int-header">
+          <div class="int-logo" style="background:${d.cor};">${d.logo}</div>
+          <div class="int-info">
+            <div class="int-name">${d.nome}</div>
+            <div class="int-cat">${d.catLabel}</div>
+          </div>
+          <div class="int-status-wrap">
+            <div class="status-dot ${sc}"></div>
+            <div class="int-status-label ${slCls}">${slTxt}</div>
+          </div>
+        </div>
+        <div class="int-desc">${d.desc}</div>
+        <div class="int-stats">
+          ${d.stats.map(s=>`<div class="ist"><div class="ist-val">${s.val}</div><div class="ist-label">${s.label}</div></div>`).join('')}
+        </div>
+        <div class="int-meta">
+          <span class="int-sync">🕐 ${d.sync}</span>
+          <div class="int-actions">
+            ${d.status === 'disconnected'
+              ? `<button class="btn btn-success btn-sm" onclick="abrirConectar('${d.id}')">🔗 Conectar</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="sincronizarUm('${d.id}')">🔄</button>
+                 <button class="btn btn-ghost btn-sm" onclick="abrirConfig('${d.id}')">⚙️ Config</button>`
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filtrarCat(cat, el) {
+  filtroAtivo = cat;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderGrid();
+}
+
+function buscarInt() {
+  busca = document.getElementById('searchInput').value.toLowerCase();
+  renderGrid();
+}
+
+// ── LOG ──
+function renderLog() {
+  const cls = {ok:'log-ok',err:'log-err',warn:'log-warn',info:'log-info'};
+  document.getElementById('logList').innerHTML = logs.map(l=>`
+    <div class="log-item">
+      <div class="log-ico ${cls[l.tipo]}">${l.ico}</div>
+      <div class="log-body">
+        <div class="log-txt">${l.txt}</div>
+        <div class="log-meta">
+          <span>${l.time}</span>
+          <span class="log-tag">${l.integ}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function limparLog() {
+  logs.length = 0;
+  renderLog();
+  toast('Log de eventos limpo','ok');
+}
+
+// ── WEBHOOKS ──
+function renderWebhooks() {
+  const el = document.getElementById('webhookList');
+  if (!webhooks.length) { el.innerHTML=`<div style="font-size:0.7rem;color:var(--muted);">Nenhum webhook cadastrado.</div>`; return; }
+  el.innerHTML = webhooks.map((w,i)=>`
+    <div class="wh-item">
+      <span class="wh-method">${w.method}</span>
+      <span class="wh-url">${w.url}</span>
+      <span class="wh-event">${w.event}</span>
+      <button class="wh-del" onclick="deletarWebhook(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function deletarWebhook(i) {
+  webhooks.splice(i,1);
+  renderWebhooks();
+  toast('Webhook removido','ok');
+}
+
+function salvarWebhook() {
+  const url = document.getElementById('wh-url').value.trim();
+  const event = document.getElementById('wh-event').value;
+  if (!url || !event) { toast('Preencha URL e evento','warn'); return; }
+  webhooks.push({method:'POST', url, event});
+  fecharModal('modalWebhook');
+  renderWebhooks();
+  toast('Webhook criado com sucesso','ok');
+}
+
+// ── CONFIG MODAL ──
+function abrirConfig(id) {
+  intAtiva = integracoes.find(x=>x.id===id);
+  if (!intAtiva) return;
+  document.getElementById('mc-logo').textContent = intAtiva.logo;
+  document.getElementById('mc-logo').style.background = intAtiva.cor;
+  document.getElementById('mc-titulo').textContent = intAtiva.nome;
+  document.getElementById('mc-cat').textContent = intAtiva.catLabel;
+  document.getElementById('mc-body').innerHTML = `
+    <div class="field">
+      <label class="label">Token / API Key</label>
+      <input class="input" type="password" value="••••••••••••••••••••••" placeholder="Cole seu token aqui"/>
+    </div>
+    <div class="field">
+      <label class="label">Frequência de sincronização</label>
+      <select class="select">
+        <option>A cada 5 minutos</option>
+        <option selected>A cada 15 minutos</option>
+        <option>A cada hora</option>
+        <option>Diário</option>
+      </select>
+    </div>
+    <div class="toggle-row" style="padding-bottom:0.5rem;border-bottom:1px solid rgba(255,255,255,0.04);">
+      <div class="toggle-info"><div class="toggle-label">Importar candidatos automaticamente</div><div class="toggle-desc">Novos aplicantes entram no pipeline</div></div>
+      <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+    </div>
+    <div class="toggle-row" style="padding:0.5rem 0;">
+      <div class="toggle-info"><div class="toggle-label">Publicar vagas automaticamente</div><div class="toggle-desc">Ao abrir vaga no Orizon, publica aqui</div></div>
+      <label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label>
+    </div>
+  `;
+  document.getElementById('mc-btn-desconectar').dataset.id = id;
+  abrirModal('modalConfig');
+}
+
+function abrirConectar(id) {
+  intAtiva = integracoes.find(x=>x.id===id);
+  if (!intAtiva) return;
+  document.getElementById('con-logo').textContent = intAtiva.logo;
+  document.getElementById('con-logo').style.background = intAtiva.cor;
+  document.getElementById('con-titulo').textContent = intAtiva.nome;
+  document.getElementById('con-cat').textContent = intAtiva.catLabel;
+  document.getElementById('con-desc').textContent = intAtiva.desc;
+  document.getElementById('con-body').innerHTML = `
+    <div class="field">
+      <label class="label">Token / API Key *</label>
+      <input class="input" id="con-token" type="password" placeholder="Cole seu token de acesso aqui"/>
+    </div>
+    <div class="field">
+      <label class="label">Client ID (se necessário)</label>
+      <input class="input" type="text" placeholder="Opcional"/>
+    </div>
+  `;
+  abrirModal('modalConectar');
+}
+
+function confirmarConexao() {
+  if (!intAtiva) return;
+  intAtiva.status = 'connected';
+  intAtiva.sync = 'Recém conectado';
+  fecharModal('modalConectar');
+  renderGrid();
+  document.getElementById('kpiAtivas').textContent = integracoes.filter(x=>x.status==='connected').length;
+  toast(`${intAtiva.nome} conectado com sucesso!`, 'ok');
+  logs.unshift({tipo:'ok', ico:'✓', txt:`${intAtiva.nome} — Conexão estabelecida com sucesso`, integ:intAtiva.nome.split(' ')[0], time:'Agora mesmo'});
+  renderLog();
+}
+
+function desconectarInt() {
+  if (!intAtiva) return;
+  intAtiva.status = 'disconnected';
+  intAtiva.sync = 'Não conectado';
+  intAtiva.stats = intAtiva.stats.map(s=>({...s, val:'—'}));
+  fecharModal('modalConfig');
+  renderGrid();
+  document.getElementById('kpiAtivas').textContent = integracoes.filter(x=>x.status==='connected').length;
+  toast(`${intAtiva.nome} desconectado`, 'warn');
+}
+
+function salvarConfig() {
+  fecharModal('modalConfig');
+  toast('Configurações salvas com sucesso', 'ok');
+}
+
+// ── AÇÕES ──
+function sincronizarUm(id) {
+  const d = integracoes.find(x=>x.id===id);
+  if (!d) return;
+  d.sync = 'Sincronizando...';
+  renderGrid();
+  setTimeout(()=>{ d.sync='Sincronizado agora'; renderGrid(); toast(`${d.nome} sincronizado`, 'ok'); }, 1200);
+}
+
+function sincronizarTudo() {
+  toast('Iniciando sincronização de todas as integrações...','ok');
+  integracoes.filter(x=>x.status==='connected').forEach(d=>{ d.sync='Sincronizando...'; });
+  renderGrid();
+  setTimeout(()=>{
+    integracoes.filter(x=>x.status==='connected').forEach(d=>{ d.sync='Sincronizado agora'; });
+    renderGrid();
+    toast('Todas as integrações sincronizadas!','ok');
+  }, 1800);
+}
+
+function toggleApiKey() {
+  apiKeyVisivel = !apiKeyVisivel;
+  const el = document.getElementById('apikeyVal');
+  const btn = document.getElementById('btnToggleKey');
+  el.textContent = apiKeyVisivel ? 'ori_live_sk_prod_x7k2m9nq8zpl3r5t' : 'ori_live_••••••••••••••••••••••';
+  el.className = 'apikey-val' + (apiKeyVisivel ? ' visible' : '');
+  btn.textContent = apiKeyVisivel ? '🙈 Ocultar' : '👁 Ver';
+}
+
+function copiarApiKey() {
+  navigator.clipboard?.writeText('ori_live_sk_prod_x7k2m9nq8zpl3r5t');
+  toast('Chave de API copiada para a área de transferência','ok');
+}
+
+function rotacionarChave() {
+  toast('Chave de API rotacionada. Atualize suas integrações.','warn');
+  apiKeyVisivel = false;
+  document.getElementById('apikeyVal').textContent = 'ori_live_••••••••••••••••••••••';
+  document.getElementById('apikeyVal').className = 'apikey-val';
+  document.getElementById('btnToggleKey').textContent = '👁 Ver';
+}
+
+function abrirModal(id) { document.getElementById(id).classList.add('open'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('open'); }
+function navegar(pg) { window.location.href = `${pg}.html`; }
+
+function toast(msg, tipo='ok') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast-item ${tipo}`;
+  el.innerHTML = (tipo==='ok'?'✓':tipo==='warn'?'⚠':'✕') + ` ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 3200);
+}
+</script>
+</body>
+</html>

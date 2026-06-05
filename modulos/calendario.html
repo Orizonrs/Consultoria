@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Calendário | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.10/index.global.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.10/index.global.min.js"></script>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;
+  --mono:'JetBrains Mono',monospace;
+
+  /* Cores por tipo de evento */
+  --c-entrevista:#3b82f6;
+  --c-tarefa:#a78bfa;
+  --c-prazo:#e74c3c;
+  --c-followup:#f39c12;
+  --c-pendencia:#2ecc71;
+  --c-reuniao:#06b6d4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;top:-20%;right:-10%;z-index:0;
+  width:700px;height:700px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);
+  pointer-events:none;
+}
+
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1600px;margin:0 auto;}
+
+/* ── HERO ── */
+.hero{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  margin-bottom:1.6rem;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);
+  border:1px solid var(--border);border-radius:20px;
+  padding:1.4rem 1.8rem;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;right:-60px;top:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+
+/* ── FILTROS ── */
+.filtros-bar{
+  display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;
+  background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:0.75rem 1.1rem;margin-bottom:1rem;
+}
+.filtros-label{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-right:0.3rem;}
+.ftag{
+  font-size:0.62rem;font-weight:700;padding:0.28rem 0.7rem;border-radius:99px;
+  border:1px solid;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.3rem;
+  background:transparent;font-family:inherit;
+}
+.ftag.on{opacity:1;}
+.ftag.off{opacity:0.35;}
+.ftag:hover{opacity:0.9;}
+.ftag-entrevista{color:var(--c-entrevista);border-color:var(--c-entrevista);}
+.ftag-entrevista.on{background:rgba(59,130,246,0.12);}
+.ftag-tarefa{color:var(--c-tarefa);border-color:var(--c-tarefa);}
+.ftag-tarefa.on{background:rgba(167,139,250,0.12);}
+.ftag-prazo{color:var(--c-prazo);border-color:var(--c-prazo);}
+.ftag-prazo.on{background:rgba(231,76,60,0.12);}
+.ftag-followup{color:var(--c-followup);border-color:var(--c-followup);}
+.ftag-followup.on{background:rgba(243,156,18,0.12);}
+.ftag-pendencia{color:var(--c-pendencia);border-color:var(--c-pendencia);}
+.ftag-pendencia.on{background:rgba(46,204,113,0.12);}
+.ftag-reuniao{color:var(--c-reuniao);border-color:var(--c-reuniao);}
+.ftag-reuniao.on{background:rgba(6,182,212,0.12);}
+.filtros-sep{width:1px;height:20px;background:var(--border2);margin:0 0.2rem;}
+
+/* ── LAYOUT ── */
+.cal-layout{display:grid;grid-template-columns:1fr 300px;gap:1rem;}
+@media(max-width:1050px){.cal-layout{grid-template-columns:1fr;}}
+
+/* ── CALENDÁRIO ── */
+.cal-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.4rem;overflow:hidden;}
+
+/* FullCalendar overrides */
+.fc{font-family:'Sora',sans-serif!important;}
+.fc-toolbar-title{font-size:1rem!important;font-weight:900!important;color:var(--text)!important;}
+.fc-button{
+  background:rgba(255,255,255,0.05)!important;border:1px solid rgba(255,255,255,0.09)!important;
+  color:var(--text)!important;font-family:'Sora',sans-serif!important;
+  font-size:0.71rem!important;font-weight:700!important;border-radius:8px!important;
+  transition:all 0.15s!important;padding:0.35rem 0.7rem!important;
+}
+.fc-button:hover{background:rgba(255,255,255,0.1)!important;}
+.fc-button-active,.fc-button-primary:not(:disabled):active,.fc-button-primary:not(:disabled).fc-button-active{
+  background:rgba(59,130,246,0.18)!important;border-color:var(--border2)!important;color:var(--accent)!important;
+}
+.fc-daygrid-day{background:transparent!important;transition:background 0.15s!important;}
+.fc-daygrid-day:hover{background:rgba(255,255,255,0.025)!important;}
+.fc-day-today{background:rgba(59,130,246,0.06)!important;}
+.fc-day-today .fc-daygrid-day-number{color:var(--accent)!important;font-weight:900!important;}
+.fc-col-header-cell{background:rgba(255,255,255,0.025)!important;border-color:var(--border)!important;}
+.fc-col-header-cell-cushion{color:var(--muted)!important;font-size:0.65rem!important;font-weight:800!important;text-transform:uppercase!important;letter-spacing:1px!important;text-decoration:none!important;}
+.fc-daygrid-day-number{color:var(--text2)!important;font-size:0.7rem!important;text-decoration:none!important;font-weight:600!important;}
+.fc-scrollgrid{border-color:var(--border)!important;}
+.fc-scrollgrid td,.fc-scrollgrid th{border-color:rgba(255,255,255,0.05)!important;}
+.fc-event{border-radius:5px!important;font-size:0.67rem!important;font-weight:700!important;padding:1px 4px!important;border:none!important;cursor:pointer!important;transition:opacity 0.15s!important;}
+.fc-event:hover{opacity:0.82!important;}
+.fc-event-title{font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;}
+.fc-event-time{display:none!important;}
+.fc-daygrid-event-dot{display:none!important;}
+.fc-more-link{color:var(--accent)!important;font-size:0.62rem!important;font-weight:800!important;}
+.fc-timegrid-slot{height:36px!important;}
+.fc-timegrid-slot-label{font-size:0.62rem!important;color:var(--muted)!important;font-family:var(--mono)!important;}
+.fc-timegrid-now-indicator-line{border-color:var(--accent)!important;border-width:2px!important;}
+.fc-timegrid-now-indicator-arrow{border-color:var(--accent)!important;}
+
+/* ── PAINEL DIREITO ── */
+.side-panel{display:flex;flex-direction:column;gap:0.75rem;}
+.side-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.1rem 1.3rem;}
+.side-title{font-size:0.72rem;font-weight:800;margin-bottom:0.9rem;display:flex;align-items:center;gap:0.4rem;}
+
+/* ── PRÓXIMOS EVENTOS ── */
+.ev-list{display:flex;flex-direction:column;gap:0.4rem;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.ev-item{
+  display:flex;align-items:center;gap:0.7rem;
+  padding:0.6rem 0.75rem;
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.045);
+  border-radius:10px;cursor:pointer;transition:all 0.15s;
+  position:relative;overflow:hidden;
+}
+.ev-item:hover{border-color:var(--border2);background:rgba(255,255,255,0.04);}
+.ev-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ev-color,var(--accent));border-radius:3px 0 0 3px;}
+.ev-dot{width:8px;height:8px;border-radius:50%;background:var(--ev-color,var(--accent));flex-shrink:0;}
+.ev-info{flex:1;min-width:0;}
+.ev-nome{font-size:0.72rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev-meta{font-size:0.6rem;color:var(--muted);margin-top:0.1rem;}
+.ev-hora{font-size:0.65rem;font-weight:800;color:var(--ev-color,var(--accent));flex-shrink:0;font-family:var(--mono);}
+.ev-empty{text-align:center;padding:1.8rem 1rem;color:var(--muted);font-size:0.72rem;}
+.ev-date-sep{font-size:0.55rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin:0.5rem 0 0.25rem;padding:0 0.2rem;}
+
+/* ── RESUMO MÊS ── */
+.resumo-row{display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.resumo-row:last-child{border-bottom:none;}
+.resumo-label{font-size:0.66rem;color:var(--text2);display:flex;align-items:center;gap:0.4rem;}
+.resumo-dot{width:7px;height:7px;border-radius:50%;}
+.resumo-val{font-size:0.75rem;font-weight:900;font-family:var(--mono);}
+
+/* ── AÇÕES RÁPIDAS ── */
+.acoes-list{display:flex;flex-direction:column;gap:0.35rem;}
+.acao-btn{
+  width:100%;text-align:left;background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.05);border-radius:9px;
+  padding:0.55rem 0.75rem;font-family:inherit;font-size:0.7rem;font-weight:700;
+  color:var(--text2);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:0.5rem;
+}
+.acao-btn:hover{background:rgba(255,255,255,0.05);border-color:var(--border2);color:var(--text);}
+
+/* ── LEGENDA ── */
+.legenda{display:flex;flex-direction:column;gap:0.35rem;}
+.leg-item{display:flex;align-items:center;gap:0.5rem;font-size:0.65rem;color:var(--text2);}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.82);backdrop-filter:blur(8px);display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto;}
+.overlay.show{display:flex;}
+.modal{background:#141414;border:1px solid var(--border2);border-radius:20px;padding:1.8rem;width:100%;max-width:500px;position:relative;margin:auto;animation:fadeUp 0.22s ease;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.modal-close:hover{background:rgba(255,255,255,0.12);color:var(--text);}
+.modal-tipo-badge{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:0.2rem 0.6rem;border-radius:99px;margin-bottom:0.8rem;}
+.modal-title{font-size:1.05rem;font-weight:900;margin-bottom:0.15rem;}
+.modal-sub{font-size:0.72rem;color:var(--muted);margin-bottom:1.3rem;line-height:1.5;}
+.f-label{font-size:0.63rem;font-weight:800;color:var(--muted);display:block;margin-bottom:0.3rem;text-transform:uppercase;letter-spacing:0.5px;}
+.f-input,.f-select{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  border-radius:10px;padding:0.55rem 0.8rem;color:var(--text);font-family:inherit;
+  font-size:0.78rem;outline:none;margin-bottom:0.85rem;transition:border-color 0.2s;appearance:none;
+}
+.f-input:focus,.f-select:focus{border-color:var(--accent);}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;}
+.f-tipo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.4rem;margin-bottom:0.85rem;}
+.f-tipo-opt{
+  border:1px solid var(--border);border-radius:10px;padding:0.55rem 0.4rem;
+  text-align:center;cursor:pointer;transition:all 0.15s;font-size:0.62rem;font-weight:700;
+  background:transparent;font-family:inherit;color:var(--muted);
+}
+.f-tipo-opt.sel{border-color:var(--sel-color,var(--accent));background:rgba(59,130,246,0.1);color:var(--sel-color,var(--accent));}
+.f-tipo-opt:hover:not(.sel){border-color:var(--border2);color:var(--text2);}
+.modal-btns{display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;display:flex;flex-direction:column;gap:0.4rem;}
+.toast-item{background:var(--card3);border:1px solid var(--border2);border-radius:12px;padding:0.7rem 1rem;font-size:0.72rem;font-weight:700;display:flex;align-items:center;gap:0.5rem;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,0.5);animation:slideIn 0.25s ease;}
+.toast-item.ok{border-color:rgba(46,204,113,0.3);color:var(--green);}
+.toast-item.err{border-color:rgba(231,76,60,0.35);color:var(--red);}
+
+/* ── ANIMAÇÕES ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+
+/* ── MOBILE ── */
+@media(max-width:700px){
+  .page{padding:1rem 0.9rem 3rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.2rem;}
+  .filtros-bar{gap:0.4rem;}
+  .cal-card{padding:0.8rem;}
+  .fc-toolbar{flex-wrap:wrap;gap:0.4rem;}
+  .f-row{grid-template-columns:1fr;}
+  .f-tipo-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Visão Geral</div>
+      <div class="hero-title">Calendário <span>Integrado</span></div>
+      <div class="hero-sub">Entrevistas · Tarefas · Prazos · Follow-ups · Reuniões</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="exportarCSV()">⬇ Exportar</button>
+      <button class="btn btn-primary" onclick="abrirModalNovo()">＋ Novo Evento</button>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filtros-bar">
+    <span class="filtros-label">Filtrar:</span>
+    <button class="ftag ftag-entrevista on" data-tipo="entrevista" onclick="toggleFiltro(this)">🎙 Entrevistas</button>
+    <button class="ftag ftag-tarefa on" data-tipo="tarefa" onclick="toggleFiltro(this)">✅ Tarefas</button>
+    <button class="ftag ftag-prazo on" data-tipo="prazo" onclick="toggleFiltro(this)">🚨 Prazos</button>
+    <button class="ftag ftag-followup on" data-tipo="followup" onclick="toggleFiltro(this)">📞 Follow-ups</button>
+    <button class="ftag ftag-pendencia on" data-tipo="pendencia" onclick="toggleFiltro(this)">⏳ Pendências</button>
+    <button class="ftag ftag-reuniao on" data-tipo="reuniao" onclick="toggleFiltro(this)">💼 Reuniões</button>
+    <div class="filtros-sep"></div>
+    <button class="btn btn-ghost" style="padding:0.25rem 0.7rem;font-size:0.63rem;" onclick="toggleTodos(true)">Todos</button>
+    <button class="btn btn-ghost" style="padding:0.25rem 0.7rem;font-size:0.63rem;" onclick="toggleTodos(false)">Nenhum</button>
+  </div>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <div class="cal-layout">
+
+    <!-- CALENDÁRIO -->
+    <div class="cal-card">
+      <div id="calendar"></div>
+    </div>
+
+    <!-- PAINEL DIREITO -->
+    <div class="side-panel">
+
+      <!-- PRÓXIMOS -->
+      <div class="side-card">
+        <div class="side-title">📅 Próximos eventos</div>
+        <div class="ev-list" id="proximosList">
+          <div class="ev-empty">Nenhum evento nos próximos dias</div>
+        </div>
+      </div>
+
+      <!-- RESUMO DO MÊS -->
+      <div class="side-card">
+        <div class="side-title">📊 Resumo — <span id="mesTitulo" style="color:var(--accent);"></span></div>
+        <div class="legenda" id="resumoMes"></div>
+      </div>
+
+      <!-- AÇÕES RÁPIDAS -->
+      <div class="side-card">
+        <div class="side-title">⚡ Ações rápidas</div>
+        <div class="acoes-list">
+          <button class="acao-btn" onclick="abrirModalNovo('entrevista')">🎙 Agendar entrevista</button>
+          <button class="acao-btn" onclick="abrirModalNovo('tarefa')">✅ Nova tarefa</button>
+          <button class="acao-btn" onclick="abrirModalNovo('followup')">📞 Registrar follow-up</button>
+          <button class="acao-btn" onclick="abrirModalNovo('reuniao')">💼 Marcar reunião</button>
+          <button class="acao-btn" onclick="navegar('agendamento')">📆 Agendamento detalhado</button>
+          <button class="acao-btn" onclick="navegar('pendencias')">⏳ Ver pendências</button>
+          <button class="acao-btn" onclick="navegar('tarefas')">📋 Gerenciar tarefas</button>
+        </div>
+      </div>
+
+      <!-- LEGENDA -->
+      <div class="side-card">
+        <div class="side-title">🎨 Legenda</div>
+        <div class="legenda">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-entrevista)"></div>Entrevista</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-tarefa)"></div>Tarefa</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-prazo)"></div>Prazo / Deadline</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-followup)"></div>Follow-up</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-pendencia)"></div>Pendência</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--c-reuniao)"></div>Reunião</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO EVENTO -->
+<div class="overlay" id="overlayNovo">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('overlayNovo')">×</button>
+    <div class="modal-title">Novo Evento</div>
+    <div class="modal-sub">Adicione ao calendário integrado do Orizon</div>
+
+    <label class="f-label">Tipo de evento</label>
+    <div class="f-tipo-grid" id="tipoGrid">
+      <button class="f-tipo-opt sel" data-tipo="entrevista" style="--sel-color:var(--c-entrevista)" onclick="selecionarTipo(this)">🎙<br>Entrevista</button>
+      <button class="f-tipo-opt" data-tipo="tarefa" style="--sel-color:var(--c-tarefa)" onclick="selecionarTipo(this)">✅<br>Tarefa</button>
+      <button class="f-tipo-opt" data-tipo="prazo" style="--sel-color:var(--c-prazo)" onclick="selecionarTipo(this)">🚨<br>Prazo</button>
+      <button class="f-tipo-opt" data-tipo="followup" style="--sel-color:var(--c-followup)" onclick="selecionarTipo(this)">📞<br>Follow-up</button>
+      <button class="f-tipo-opt" data-tipo="pendencia" style="--sel-color:var(--c-pendencia)" onclick="selecionarTipo(this)">⏳<br>Pendência</button>
+      <button class="f-tipo-opt" data-tipo="reuniao" style="--sel-color:var(--c-reuniao)" onclick="selecionarTipo(this)">💼<br>Reunião</button>
+    </div>
+
+    <label class="f-label">Título / Descrição</label>
+    <input class="f-input" id="novoTitulo" type="text" placeholder="Ex: Entrevista Ana Lima — Dev Full Stack"/>
+
+    <div class="f-row">
+      <div>
+        <label class="f-label">Data</label>
+        <input class="f-input" id="novaData" type="date"/>
+      </div>
+      <div>
+        <label class="f-label">Horário</label>
+        <input class="f-input" id="novoHora" type="time" value="09:00"/>
+      </div>
+    </div>
+
+    <label class="f-label">Responsável / Recrutador</label>
+    <select class="f-select" id="novoRecrutador">
+      <option value="">— Selecione —</option>
+      <option>Ana Paula</option>
+      <option>Carlos Eduardo</option>
+      <option>Fernanda Lima</option>
+      <option>Gustavo Melo</option>
+    </select>
+
+    <label class="f-label">Vaga relacionada (opcional)</label>
+    <input class="f-input" id="novoVaga" type="text" placeholder="Nome ou código da vaga..."/>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="fecharModal('overlayNovo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEvento()">💾 Salvar Evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE -->
+<div class="overlay" id="overlayDetalhe">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('overlayDetalhe')">×</button>
+    <div id="detalheConteudo"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── SUPABASE ──
+const SB  = 'https://soyogedsgrvduygjsgqg.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveW9nZWRzZ3J2ZHV5Z2pzZ3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MDEwNDksImV4cCI6MjA4OTM3NzA0OX0.IUyEh5SZLz_j5nf2k9-xelbxthcvSJ8oX0mAbqtuLF4';
+const hdrs = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+function navegar(mod){ window.parent.postMessage({tipo:'orizon_navegar',mod},'*'); }
+
+// ── CORES POR TIPO ──
+const CORES = {
+  entrevista: { bg:'#1d4ed8', txt:'#93c5fd', border:'rgba(59,130,246,0.35)', css:'var(--c-entrevista)', ico:'🎙' },
+  tarefa:     { bg:'#5b21b6', txt:'#c4b5fd', border:'rgba(167,139,250,0.35)', css:'var(--c-tarefa)', ico:'✅' },
+  prazo:      { bg:'#991b1b', txt:'#fca5a5', border:'rgba(231,76,60,0.35)', css:'var(--c-prazo)', ico:'🚨' },
+  followup:   { bg:'#92400e', txt:'#fcd34d', border:'rgba(243,156,18,0.35)', css:'var(--c-followup)', ico:'📞' },
+  pendencia:  { bg:'#065f46', txt:'#6ee7b7', border:'rgba(46,204,113,0.35)', css:'var(--c-pendencia)', ico:'⏳' },
+  reuniao:    { bg:'#155e75', txt:'#67e8f9', border:'rgba(6,182,212,0.35)', css:'var(--c-reuniao)', ico:'💼' },
+};
+
+const TIPO_LABEL = {
+  entrevista:'Entrevista', tarefa:'Tarefa', prazo:'Prazo', followup:'Follow-up', pendencia:'Pendência', reuniao:'Reunião'
+};
+
+// ── FILTROS ATIVOS ──
+let filtrosAtivos = new Set(['entrevista','tarefa','prazo','followup','pendencia','reuniao']);
+let cal; // instância FullCalendar
+
+// ── EVENTOS (estado local) ──
+let eventos = [];
+let idSeq = 0;
+
+// ── EVENTOS DEMO ──
+function gerarEventosDemo(){
+  const hoje = new Date();
+  const ano = hoje.getFullYear(), mes = hoje.getMonth();
+  const fmt = (d) => d.toISOString().slice(0,10);
+  const dt = (dPlus, h='10:00') => { const d = new Date(ano,mes,hoje.getDate()+dPlus); return fmt(d)+'T'+h; };
+
+  return [
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista — Ana Lima (Dev Full Stack)', data:dt(0,'09:00'), recrutador:'Ana Paula', vaga:'Dev Full Stack #124' },
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista — Carlos Mendes (Gerente Comercial)', data:dt(0,'14:30'), recrutador:'Carlos Eduardo', vaga:'Gerente Comercial #121' },
+    { id:++idSeq, tipo:'followup',   titulo:'Follow-up cliente Empresa ABC', data:dt(1,'11:00'), recrutador:'Fernanda Lima', vaga:'' },
+    { id:++idSeq, tipo:'tarefa',     titulo:'Enviar pareceres — 3 candidatos pendentes', data:dt(1,'15:00'), recrutador:'Ana Paula', vaga:'' },
+    { id:++idSeq, tipo:'reuniao',    titulo:'Reunião de alinhamento com Empresa XYZ', data:dt(2,'10:00'), recrutador:'Gustavo Melo', vaga:'Analista Financeiro #118' },
+    { id:++idSeq, tipo:'prazo',      titulo:'⚠ Prazo encerramento vaga Dev Full Stack', data:dt(3,'00:00'), recrutador:'', vaga:'Dev Full Stack #124' },
+    { id:++idSeq, tipo:'pendencia',  titulo:'Retorno candidato Rafael Santos', data:dt(3,'09:00'), recrutador:'Carlos Eduardo', vaga:'Supervisor Operações #119' },
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista — Mariana Costa (Analista RH)', data:dt(4,'09:30'), recrutador:'Fernanda Lima', vaga:'Analista RH #122' },
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista — Juliana Melo (Coordenadora)', data:dt(4,'14:00'), recrutador:'Ana Paula', vaga:'Coord. Financeiro #120' },
+    { id:++idSeq, tipo:'followup',   titulo:'Follow-up candidato Lucas Pereira', data:dt(5,'10:30'), recrutador:'Gustavo Melo', vaga:'' },
+    { id:++idSeq, tipo:'tarefa',     titulo:'Atualizar scorecard entrevistas da semana', data:dt(5,'16:00'), recrutador:'Carlos Eduardo', vaga:'' },
+    { id:++idSeq, tipo:'reuniao',    titulo:'Apresentação pipeline — Empresa Norte', data:dt(7,'09:00'), recrutador:'Ana Paula', vaga:'' },
+    { id:++idSeq, tipo:'prazo',      titulo:'⚠ Prazo contrato Empresa Sul', data:dt(8,'00:00'), recrutador:'', vaga:'' },
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista final — Diego Martins', data:dt(9,'10:00'), recrutador:'Fernanda Lima', vaga:'Gerente Comercial #121' },
+    { id:++idSeq, tipo:'tarefa',     titulo:'Enviar NPS candidatos — lote junho', data:dt(10,'09:00'), recrutador:'Ana Paula', vaga:'' },
+    { id:++idSeq, tipo:'pendencia',  titulo:'Documentação Tatiane Borges', data:dt(-2,'00:00'), recrutador:'Carlos Eduardo', vaga:'Analista Marketing #117' },
+    { id:++idSeq, tipo:'entrevista', titulo:'Entrevista — Bruno Oliveira (TI)', data:dt(-1,'15:00'), recrutador:'Gustavo Melo', vaga:'Dev Full Stack #124' },
+  ];
+}
+
+// ── MAPEAR PARA FC ──
+function eventoParaFC(ev){
+  const c = CORES[ev.tipo] || CORES.entrevista;
+  const allDay = ev.data.length === 10;
+  return {
+    id: ev.id,
+    title: (c.ico ? c.ico + ' ' : '') + ev.titulo,
+    start: ev.data,
+    allDay,
+    backgroundColor: c.bg,
+    borderColor: 'transparent',
+    textColor: '#fff',
+    extendedProps: { ...ev },
+  };
+}
+
+function fcEventos(){
+  return eventos
+    .filter(ev => filtrosAtivos.has(ev.tipo))
+    .map(eventoParaFC);
+}
+
+// ── INIT CALENDÁRIO ──
+function initCalendario(){
+  const el = document.getElementById('calendar');
+  cal = new FullCalendar.Calendar(el, {
+    locale: 'pt-br',
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    buttonText: { today:'Hoje', month:'Mês', week:'Semana', day:'Dia', list:'Lista' },
+    height: 'auto',
+    events: fcEventos(),
+    eventClick(info){ abrirDetalhe(info.event.extendedProps); },
+    dateClick(info){ abrirModalNovo(null, info.dateStr); },
+    dayMaxEvents: 4,
+    eventDidMount(info){
+      // tooltip no hover
+      info.el.title = info.event.extendedProps.titulo;
+    },
+  });
+  cal.render();
+}
+
+function recarregarFC(){
+  if(!cal) return;
+  cal.removeAllEvents();
+  cal.addEventSource(fcEventos());
+  renderProximos();
+  renderResumo();
+}
+
+// ── FILTROS ──
+function toggleFiltro(btn){
+  const tipo = btn.dataset.tipo;
+  if(filtrosAtivos.has(tipo)){ filtrosAtivos.delete(tipo); btn.classList.replace('on','off'); }
+  else { filtrosAtivos.add(tipo); btn.classList.replace('off','on'); }
+  recarregarFC();
+}
+function toggleTodos(on){
+  document.querySelectorAll('.ftag').forEach(b=>{
+    if(on){ filtrosAtivos.add(b.dataset.tipo); b.classList.add('on'); b.classList.remove('off'); }
+    else { filtrosAtivos.delete(b.dataset.tipo); b.classList.add('off'); b.classList.remove('on'); }
+  });
+  recarregarFC();
+}
+
+// ── PRÓXIMOS EVENTOS ──
+function renderProximos(){
+  const lista = document.getElementById('proximosList');
+  const agora = new Date();
+  const limite = new Date(agora); limite.setDate(limite.getDate()+14);
+
+  const proxs = eventos
+    .filter(ev => {
+      if(!filtrosAtivos.has(ev.tipo)) return false;
+      const d = new Date(ev.data);
+      return d >= agora && d <= limite;
+    })
+    .sort((a,b)=> new Date(a.data)-new Date(b.data))
+    .slice(0,15);
+
+  if(!proxs.length){ lista.innerHTML='<div class="ev-empty">Nenhum evento nos próximos 14 dias</div>'; return; }
+
+  // Agrupar por data
+  const grupos = {};
+  proxs.forEach(ev=>{
+    const key = ev.data.slice(0,10);
+    if(!grupos[key]) grupos[key]=[];
+    grupos[key].push(ev);
+  });
+
+  lista.innerHTML = Object.entries(grupos).map(([data, evs])=>{
+    const d = new Date(data+'T12:00:00');
+    const labels = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const label = `${labels[d.getDay()]}, ${d.getDate()} ${meses[d.getMonth()]}`;
+    const isHoje = data===new Date().toISOString().slice(0,10);
+    return `<div class="ev-date-sep">${isHoje?'📍 Hoje':''}${!isHoje?label:label+' (Hoje)'}</div>` +
+      evs.map(ev=>{
+        const c = CORES[ev.tipo];
+        const hora = ev.data.includes('T') ? ev.data.slice(11,16) : '—';
+        return `<div class="ev-item" style="--ev-color:${c.css}" onclick="abrirDetalhe(${JSON.stringify(ev).replace(/"/g,'&quot;')})">
+          <div class="ev-dot"></div>
+          <div class="ev-info">
+            <div class="ev-nome">${ev.titulo}</div>
+            <div class="ev-meta">${TIPO_LABEL[ev.tipo]}${ev.vaga?' · '+ev.vaga:''}</div>
+          </div>
+          <div class="ev-hora">${hora}</div>
+        </div>`;
+      }).join('');
+  }).join('');
+}
+
+// ── RESUMO DO MÊS ──
+function renderResumo(){
+  const agora = new Date();
+  const mes = agora.getMonth(), ano = agora.getFullYear();
+  document.getElementById('mesTitulo').textContent = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][mes]+' '+ano;
+
+  const contagem = {};
+  Object.keys(CORES).forEach(t=>contagem[t]=0);
+  eventos.forEach(ev=>{
+    const d = new Date(ev.data);
+    if(d.getMonth()===mes && d.getFullYear()===ano) contagem[ev.tipo]=(contagem[ev.tipo]||0)+1;
+  });
+
+  document.getElementById('resumoMes').innerHTML = Object.entries(CORES).map(([tipo, c])=>`
+    <div class="resumo-row">
+      <span class="resumo-label"><div class="resumo-dot" style="background:${c.css};"></div>${c.ico} ${TIPO_LABEL[tipo]}</span>
+      <span class="resumo-val" style="color:${c.css};">${contagem[tipo]}</span>
+    </div>
+  `).join('');
+}
+
+// ── MODAL NOVO ──
+let tipoSelecionado = 'entrevista';
+function abrirModalNovo(tipo=null, data=null){
+  if(tipo) selecionarTipoStr(tipo);
+  if(data) document.getElementById('novaData').value=data;
+  else {
+    const h = new Date();
+    document.getElementById('novaData').value=h.toISOString().slice(0,10);
+  }
+  document.getElementById('novoTitulo').value='';
+  document.getElementById('novoVaga').value='';
+  document.getElementById('overlayNovo').classList.add('show');
+}
+function fecharModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function selecionarTipo(btn){
+  document.querySelectorAll('.f-tipo-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  tipoSelecionado = btn.dataset.tipo;
+}
+function selecionarTipoStr(tipo){
+  document.querySelectorAll('.f-tipo-opt').forEach(b=>{
+    b.classList.toggle('sel', b.dataset.tipo===tipo);
+  });
+  tipoSelecionado = tipo;
+}
+
+function salvarEvento(){
+  const titulo = document.getElementById('novoTitulo').value.trim();
+  const data   = document.getElementById('novaData').value;
+  const hora   = document.getElementById('novoHora').value;
+  const recrutador = document.getElementById('novoRecrutador').value;
+  const vaga   = document.getElementById('novoVaga').value.trim();
+  if(!titulo){ toast('Informe o título do evento','err'); return; }
+  if(!data){ toast('Informe a data','err'); return; }
+
+  const ev = {
+    id: ++idSeq,
+    tipo: tipoSelecionado,
+    titulo,
+    data: hora ? data+'T'+hora : data,
+    recrutador,
+    vaga,
+  };
+  eventos.push(ev);
+  cal.addEvent(eventoParaFC(ev));
+  renderProximos();
+  renderResumo();
+  fecharModal('overlayNovo');
+  toast(`✅ Evento "${titulo}" adicionado!`);
+}
+
+// ── MODAL DETALHE ──
+function abrirDetalhe(ev){
+  const c = CORES[ev.tipo] || CORES.entrevista;
+  const hora = ev.data && ev.data.includes('T') ? ev.data.slice(11,16) : '—';
+  const data = ev.data ? new Date(ev.data.slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '—';
+  document.getElementById('detalheConteudo').innerHTML=`
+    <div style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;padding:0.2rem 0.65rem;border-radius:99px;background:rgba(0,0,0,0.3);border:1px solid ${c.border};color:${c.css};margin-bottom:0.8rem;">${c.ico} ${TIPO_LABEL[ev.tipo]}</div>
+    <div style="font-size:1rem;font-weight:900;margin-bottom:0.3rem;line-height:1.3;">${ev.titulo}</div>
+    <div style="font-size:0.7rem;color:var(--muted);margin-bottom:1.3rem;line-height:1.6;">${data} ${hora!=='—'?'· '+hora:''}</div>
+    <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.4rem;">
+      ${ev.recrutador?`<div style="display:flex;gap:0.5rem;align-items:center;font-size:0.72rem;"><span style="color:var(--muted);min-width:90px;">👤 Recrutador</span><span style="font-weight:700;">${ev.recrutador}</span></div>`:''}
+      ${ev.vaga?`<div style="display:flex;gap:0.5rem;align-items:center;font-size:0.72rem;"><span style="color:var(--muted);min-width:90px;">💼 Vaga</span><span style="font-weight:700;">${ev.vaga}</span></div>`:''}
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+      ${ev.tipo==='entrevista'?`<button class="btn btn-primary" onclick="navegar('agendamento')">📅 Ver agendamento</button>`:''}
+      ${ev.tipo==='tarefa'?`<button class="btn btn-primary" onclick="navegar('tarefas')">✅ Ver tarefas</button>`:''}
+      ${ev.tipo==='pendencia'?`<button class="btn btn-primary" onclick="navegar('pendencias')">⏳ Ver pendências</button>`:''}
+      <button class="btn btn-ghost" onclick="excluirEvento(${ev.id})">🗑 Excluir</button>
+      <button class="btn btn-ghost" onclick="fecharModal('overlayDetalhe')">Fechar</button>
+    </div>
+  `;
+  document.getElementById('overlayDetalhe').classList.add('show');
+}
+
+function excluirEvento(id){
+  eventos = eventos.filter(ev=>ev.id!==id);
+  const fcEv = cal.getEventById(id);
+  if(fcEv) fcEv.remove();
+  renderProximos();
+  renderResumo();
+  fecharModal('overlayDetalhe');
+  toast('Evento removido');
+}
+
+// ── EXPORTAR ──
+function exportarCSV(){
+  if(!eventos.length){ toast('Nenhum evento para exportar','err'); return; }
+  const header = 'Tipo,Título,Data,Hora,Recrutador,Vaga\n';
+  const rows = eventos.map(ev=>{
+    const hora = ev.data.includes('T')?ev.data.slice(11,16):'';
+    return `"${TIPO_LABEL[ev.tipo]}","${ev.titulo}","${ev.data.slice(0,10)}","${hora}","${ev.recrutador||''}","${ev.vaga||''}"`;
+  }).join('\n');
+  const blob = new Blob([header+rows],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='calendario-orizon-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado!');
+}
+
+// ── TOAST ──
+function toast(msg,tipo='ok'){
+  const w=document.getElementById('toastWrap');
+  const el=document.createElement('div');
+  el.className='toast-item '+(tipo==='err'?'err':'ok');
+  el.innerHTML=`<span>${tipo==='err'?'⚠️':'✅'}</span><span>${msg}</span>`;
+  w.appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity 0.3s';setTimeout(()=>el.remove(),300);},3200);
+}
+
+// ── FECHAR OVERLAY AO CLICAR FORA ──
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('show'); });
+});
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',()=>{
+  eventos = gerarEventosDemo();
+  // Data padrão no modal
+  document.getElementById('novaData').value = new Date().toISOString().slice(0,10);
+  initCalendario();
+  renderProximos();
+  renderResumo();
+});
+</script>
+</body>
+</html>

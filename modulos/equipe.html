@@ -198,8 +198,13 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+let SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
+let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+// ── Recebe credenciais do shell via localStorage + postMessage ──
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+})();
 const HEADERS = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
 const LS_KEY = 'orizon_membros';
 

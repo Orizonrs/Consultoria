@@ -365,8 +365,13 @@ select.perfil-inp option{background:#1e1e1e;color:#f0f0f0;}
    Tabela de assign: pendencias_assign
 ══════════════════════════════════════════ */
 
-const SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+let SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
+let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
+// ── Recebe credenciais do shell via localStorage + postMessage ──
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+})();
 
 const SB_PEND = 'pendencias_assign'; // tabela de assign: { cand_id TEXT PRIMARY KEY, tipo TEXT, nota TEXT, atualizado_em TIMESTAMPTZ }
 

@@ -831,7 +831,7 @@ function getFormacoes(){
 
 // inicializa com 1 linha cada
 addFormacao(); addCurso(); addSoftware(); addIdioma();
-const SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
+let SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
 // A chave deve ser a "anon key" do Supabase (começa com eyJ...).
 // Pode ser sobrescrita via localStorage: localStorage.setItem('sb_anon_key', 'eyJ...')
 const SUPABASE_KEY = (function(){
@@ -839,6 +839,12 @@ const SUPABASE_KEY = (function(){
   if(saved && saved.startsWith('eyJ')) return saved;
   // Anon key do projeto Supabase
   return 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveW9nZWRzZ3J2ZHV5Z2pzZ3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MDEwNDksImV4cCI6MjA4OTM3NzA0OX0.IUyEh5SZLz_j5nf2k9-xelbxthcvSJ8oX0mAbqtuLF4';
+})();
+
+// ── Recebe credenciais do shell via localStorage + postMessage ──
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
 })();
 
 // ═══ PARAMS DA URL ═══

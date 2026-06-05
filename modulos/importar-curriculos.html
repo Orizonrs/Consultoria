@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Importar Currículos | Orizon ATS</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --primary:#1e40af;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#060606;--bg2:#0a0a0a;--card:#0f0f0f;--card2:#141414;--card3:#191919;
+  --border:rgba(59,130,246,0.1);--border2:rgba(59,130,246,0.25);--border3:rgba(59,130,246,0.4);
+  --text:#f0f0f0;--text2:#b0b0b0;--muted:#555;--muted2:#2a2a2a;
+  --red:#e74c3c;--orange:#f39c12;--blue:#3498db;--purple:#a78bfa;--green:#2ecc71;--teal:#2563eb;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,0.022) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;
+}
+body::after{
+  content:'';position:fixed;top:-20%;right:-10%;z-index:0;
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.04) 0%,transparent 65%);
+  pointer-events:none;
+}
+
+.page{position:relative;z-index:1;padding:1.6rem 1.8rem 4rem;max-width:1400px;margin:0 auto;}
+
+/* ── HERO ── */
+.hero{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  margin-bottom:1.8rem;flex-wrap:wrap;
+  background:linear-gradient(135deg,rgba(59,130,246,0.05) 0%,transparent 60%);
+  border:1px solid var(--border);border-radius:20px;
+  padding:1.4rem 1.8rem;position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;right:-60px;top:-60px;
+  width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(59,130,246,0.08),transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{font-size:0.55rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:var(--accent);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;}
+.hero-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s ease-in-out infinite;}
+.hero-title{font-size:1.65rem;font-weight:900;line-height:1.1;margin-bottom:0.2rem;letter-spacing:-0.5px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.78rem;color:var(--muted);line-height:1.6;}
+.hero-right{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;}
+
+.btn{font-family:inherit;font-size:0.76rem;font-weight:700;border-radius:10px;padding:0.5rem 1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,130,246,0.3);}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.08);}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);border-color:rgba(255,255,255,0.15);}
+.btn-danger{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+.btn-danger:hover{background:rgba(231,76,60,0.2);}
+.btn-success{background:rgba(46,204,113,0.12);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.btn-success:hover{background:rgba(46,204,113,0.22);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+
+/* ── KPI ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.4rem;}
+@media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:1.1rem 1.3rem;position:relative;overflow:hidden;
+  transition:border-color 0.2s,transform 0.18s,box-shadow 0.18s;
+  animation:fadeUp 0.5s ease both;
+}
+.kpi:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,0.4);}
+.kpi::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--kpi-color,var(--accent)),transparent);}
+.kpi::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;background:radial-gradient(ellipse,var(--kpi-color,var(--accent)) 0%,transparent 70%);opacity:0.07;transform:translate(20px,-20px);}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.65rem;}
+.kpi-icon{font-size:1.3rem;line-height:1;}
+.kpi-val{font-size:1.9rem;font-weight:900;line-height:1;color:var(--kpi-color,var(--accent));margin-bottom:0.18rem;font-family:var(--mono);}
+.kpi-label{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;}
+.kpi-sub{font-size:0.6rem;color:var(--muted);margin-top:0.3rem;opacity:0.7;}
+
+/* ── SEC LABEL ── */
+.sec{margin-bottom:0.85rem;margin-top:0.2rem;}
+.sec-label{font-size:0.58rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.5);display:flex;align-items:center;gap:0.65rem;}
+.sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent);}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+.g-main{display:grid;grid-template-columns:1.6fr 1fr;gap:0.85rem;margin-bottom:0.85rem;}
+@media(max-width:1000px){.g2,.g-main{grid-template-columns:1fr;}}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.3rem 1.5rem;overflow:hidden;min-width:0;animation:fadeUp 0.5s ease both;}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:1.1rem;}
+.card-title{font-size:0.76rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:0.4rem;}
+.card-title-ico{font-size:1rem;}
+.card-badge{font-size:0.56rem;font-weight:800;padding:0.16rem 0.55rem;border-radius:99px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.2);white-space:nowrap;}
+.card-badge.green{background:rgba(46,204,113,0.1);color:var(--green);border-color:rgba(46,204,113,0.25);}
+.card-badge.orange{background:rgba(243,156,18,0.1);color:var(--orange);border-color:rgba(243,156,18,0.25);}
+.card-badge.red{background:rgba(231,76,60,0.1);color:var(--red);border-color:rgba(231,76,60,0.25);}
+
+/* ── DROP ZONE ── */
+.dropzone{
+  border:2px dashed var(--border2);border-radius:16px;
+  padding:3rem 2rem;text-align:center;cursor:pointer;
+  transition:all 0.25s;position:relative;overflow:hidden;
+  background:rgba(59,130,246,0.02);
+}
+.dropzone:hover,.dropzone.drag-over{
+  border-color:var(--accent);
+  background:rgba(59,130,246,0.06);
+  box-shadow:0 0 30px rgba(59,130,246,0.1) inset;
+}
+.dropzone.drag-over .dz-icon{transform:scale(1.15) translateY(-4px);}
+.dz-icon{font-size:3rem;margin-bottom:0.8rem;display:block;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);}
+.dz-title{font-size:1rem;font-weight:800;color:var(--text);margin-bottom:0.3rem;}
+.dz-sub{font-size:0.72rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem;}
+.dz-formats{display:flex;gap:0.4rem;justify-content:center;flex-wrap:wrap;}
+.dz-fmt{font-size:0.58rem;font-weight:700;padding:0.2rem 0.55rem;border-radius:6px;background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid var(--border2);font-family:var(--mono);}
+#fileInput{display:none;}
+
+/* ── FILA DE ARQUIVOS ── */
+.file-queue{display:flex;flex-direction:column;gap:0.5rem;max-height:340px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.file-item{
+  display:flex;align-items:center;gap:0.7rem;
+  background:var(--card2);border:1px solid var(--border);border-radius:12px;
+  padding:0.75rem 1rem;transition:all 0.2s;position:relative;overflow:hidden;
+}
+.file-item.status-ok{border-color:rgba(46,204,113,0.25);}
+.file-item.status-erro{border-color:rgba(231,76,60,0.25);}
+.file-item.status-processando{border-color:rgba(59,130,246,0.3);}
+.file-item.status-processando::after{
+  content:'';position:absolute;bottom:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--accent),var(--purple));
+  animation:progressBar var(--dur,3s) ease forwards;
+}
+@keyframes progressBar{from{width:0%}to{width:100%}}
+.file-icon{font-size:1.4rem;flex-shrink:0;}
+.file-info{flex:1;min-width:0;}
+.file-name{font-size:0.72rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-meta{font-size:0.58rem;color:var(--muted);margin-top:0.15rem;font-family:var(--mono);}
+.file-status{display:flex;align-items:center;gap:0.4rem;font-size:0.62rem;font-weight:700;flex-shrink:0;}
+.file-status.ok{color:var(--green);}
+.file-status.erro{color:var(--red);}
+.file-status.proc{color:var(--accent);}
+.file-status.aguard{color:var(--muted);}
+.file-remove{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:0.1rem 0.3rem;border-radius:6px;transition:all 0.15s;flex-shrink:0;}
+.file-remove:hover{background:rgba(231,76,60,0.1);color:var(--red);}
+
+/* ── SPINNER ── */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(59,130,246,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── PROGRESS GERAL ── */
+.prog-wrap{margin-top:0.8rem;}
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;}
+.prog-label{font-size:0.65rem;font-weight:700;color:var(--text2);}
+.prog-pct{font-size:0.65rem;font-weight:900;color:var(--accent);font-family:var(--mono);}
+.prog-track{height:6px;background:rgba(255,255,255,0.05);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width 0.4s ease;}
+
+/* ── CONFIGURAÇÕES IMPORT ── */
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+@media(max-width:700px){.cfg-grid{grid-template-columns:1fr;}}
+.cfg-item{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;}
+.cfg-label{font-size:0.6rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.55rem;}
+.cfg-select,.cfg-input{
+  width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  border-radius:8px;padding:0.45rem 0.7rem;font-family:inherit;font-size:0.73rem;
+  color:var(--text);outline:none;transition:border-color 0.15s;appearance:none;
+}
+.cfg-select:focus,.cfg-input:focus{border-color:var(--accent);}
+.cfg-toggle{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;}
+.toggle-sw{position:relative;width:38px;height:21px;flex-shrink:0;}
+.toggle-sw input{opacity:0;width:0;height:0;}
+.toggle-sw .slider{position:absolute;inset:0;background:var(--muted2);border-radius:99px;cursor:pointer;transition:0.25s;}
+.toggle-sw .slider::before{content:'';position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.25s;}
+.toggle-sw input:checked+.slider{background:var(--accent);}
+.toggle-sw input:checked+.slider::before{transform:translateX(17px);}
+.cfg-toggle-label{font-size:0.7rem;color:var(--text2);line-height:1.4;}
+
+/* ── RESULTADO TABLE ── */
+.result-table{width:100%;border-collapse:collapse;}
+.result-table th{font-size:0.58rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:0.5rem 0.7rem;text-align:left;border-bottom:1px solid var(--border);}
+.result-table td{font-size:0.71rem;padding:0.6rem 0.7rem;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+.result-table tr:hover td{background:rgba(255,255,255,0.015);}
+.result-table tr:last-child td{border-bottom:none;}
+.td-nome{font-weight:700;color:var(--text);}
+.td-link{color:var(--accent);cursor:pointer;text-decoration:none;font-weight:700;font-size:0.65rem;padding:0.2rem 0.5rem;border-radius:6px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);transition:all 0.15s;}
+.td-link:hover{background:rgba(59,130,246,0.16);}
+.tag{font-size:0.55rem;font-weight:700;padding:0.15rem 0.45rem;border-radius:6px;display:inline-flex;align-items:center;gap:0.2rem;}
+.tag-ok{background:rgba(46,204,113,0.1);color:var(--green);border:1px solid rgba(46,204,113,0.2);}
+.tag-erro{background:rgba(231,76,60,0.1);color:var(--red);border:1px solid rgba(231,76,60,0.2);}
+.tag-dup{background:rgba(243,156,18,0.1);color:var(--orange);border:1px solid rgba(243,156,18,0.2);}
+.tag-rev{background:rgba(167,139,250,0.1);color:var(--purple);border:1px solid rgba(167,139,250,0.2);}
+.empty-state{text-align:center;padding:2.5rem 1rem;}
+.empty-ico{font-size:2.5rem;margin-bottom:0.6rem;opacity:0.3;}
+.empty-txt{font-size:0.72rem;color:var(--muted);}
+
+/* ── DUPLICATA BADGE ── */
+.dup-badge{font-size:0.58rem;font-weight:700;padding:0.12rem 0.4rem;border-radius:6px;background:rgba(243,156,18,0.12);color:var(--orange);border:1px solid rgba(243,156,18,0.25);cursor:pointer;margin-left:0.3rem;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.4rem;right:1.4rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;}
+.toast-item{background:var(--card3);border:1px solid var(--border2);border-radius:12px;padding:0.75rem 1rem;font-size:0.73rem;font-weight:700;min-width:260px;max-width:340px;display:flex;align-items:center;gap:0.6rem;animation:slideIn 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.toast-item.err{border-color:rgba(231,76,60,0.4);color:var(--red);}
+.toast-item.ok{border-color:rgba(46,204,113,0.3);color:var(--green);}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+
+/* ── LOG ── */
+.log-wrap{background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:12px;padding:0.9rem 1rem;max-height:180px;overflow-y:auto;font-family:var(--mono);font-size:0.62rem;line-height:1.8;scrollbar-width:thin;scrollbar-color:var(--muted2) transparent;}
+.log-line{display:flex;gap:0.6rem;}
+.log-time{color:var(--muted);flex-shrink:0;}
+.log-ok{color:var(--green);}
+.log-err{color:var(--red);}
+.log-info{color:var(--accent);}
+.log-warn{color:var(--orange);}
+
+/* ── FONTE TABS ── */
+.fonte-tabs{display:flex;gap:0.4rem;margin-bottom:1rem;}
+.ftab{font-size:0.68rem;font-weight:700;padding:0.45rem 0.9rem;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;transition:all 0.18s;display:flex;align-items:center;gap:0.4rem;}
+.ftab.on{background:rgba(59,130,246,0.12);color:var(--accent);border-color:var(--border2);}
+.ftab:hover:not(.on){color:var(--text);border-color:var(--border2);}
+.fonte-panel{display:none;}
+.fonte-panel.on{display:block;}
+
+/* ── URL INPUT ── */
+.url-row{display:flex;gap:0.5rem;align-items:center;}
+.url-input{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;padding:0.55rem 0.8rem;font-family:inherit;font-size:0.73rem;color:var(--text);outline:none;transition:border-color 0.15s;}
+.url-input:focus{border-color:var(--accent);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .page{padding:1rem 0.8rem 3rem;}
+  .hero{padding:1rem 1.1rem;}
+  .hero-title{font-size:1.2rem;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Banco de Talentos</div>
+      <div class="hero-title">Importar <span>Currículos</span></div>
+      <div class="hero-sub">Faça upload em lote · PDF, DOCX, TXT · Extração automática por IA</div>
+    </div>
+    <div class="hero-right">
+      <button class="btn btn-ghost" onclick="navegar('banco-talentos')">← Banco de Talentos</button>
+      <button class="btn btn-primary" id="btnIniciar" onclick="iniciarImportacao()" disabled>▶ Iniciar Importação</button>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi" style="--kpi-color:var(--accent)">
+      <div class="kpi-top"><span class="kpi-icon">📂</span></div>
+      <div class="kpi-val" id="kpiTotal">0</div>
+      <div class="kpi-label">Arquivos na Fila</div>
+      <div class="kpi-sub">Prontos para processar</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--green)">
+      <div class="kpi-top"><span class="kpi-icon">✅</span></div>
+      <div class="kpi-val" id="kpiOk">0</div>
+      <div class="kpi-label">Importados com Êxito</div>
+      <div class="kpi-sub">Salvos no banco de talentos</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--orange)">
+      <div class="kpi-top"><span class="kpi-icon">⚠️</span></div>
+      <div class="kpi-val" id="kpiDup">0</div>
+      <div class="kpi-label">Duplicatas Detectadas</div>
+      <div class="kpi-sub">Candidato já existente</div>
+    </div>
+    <div class="kpi" style="--kpi-color:var(--red)">
+      <div class="kpi-top"><span class="kpi-icon">❌</span></div>
+      <div class="kpi-val" id="kpiErro">0</div>
+      <div class="kpi-label">Erros</div>
+      <div class="kpi-sub">Não foi possível processar</div>
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="g-main">
+
+    <!-- COLUNA ESQUERDA -->
+    <div>
+      <!-- FONTE -->
+      <div class="sec"><div class="sec-label">Fonte de Importação</div></div>
+      <div class="card" style="margin-bottom:0.85rem;animation-delay:0.1s">
+        <div class="fonte-tabs">
+          <button class="ftab on" onclick="trocarFonte('upload',this)">📁 Upload de Arquivos</button>
+          <button class="ftab" onclick="trocarFonte('pasta',this)">🗂 Pasta / Lote</button>
+          <button class="ftab" onclick="trocarFonte('email',this)">📧 E-mail</button>
+          <button class="ftab" onclick="trocarFonte('url',this)">🔗 URL / LinkedIn</button>
+        </div>
+
+        <!-- UPLOAD -->
+        <div class="fonte-panel on" id="panel-upload">
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <span class="dz-icon">📄</span>
+            <div class="dz-title">Arraste os currículos aqui</div>
+            <div class="dz-sub">ou clique para selecionar arquivos<br>Máximo 50 arquivos por lote · até 10 MB cada</div>
+            <div class="dz-formats">
+              <span class="dz-fmt">PDF</span>
+              <span class="dz-fmt">DOCX</span>
+              <span class="dz-fmt">DOC</span>
+              <span class="dz-fmt">TXT</span>
+              <span class="dz-fmt">RTF</span>
+            </div>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt,.rtf" onchange="adicionarArquivos(this.files)"/>
+        </div>
+
+        <!-- PASTA -->
+        <div class="fonte-panel" id="panel-pasta">
+          <div class="dropzone" style="padding:2rem 1.5rem;">
+            <span class="dz-icon">🗂</span>
+            <div class="dz-title">Selecionar Pasta Inteira</div>
+            <div class="dz-sub">Todos os arquivos compatíveis da pasta serão importados automaticamente</div>
+            <button class="btn btn-primary" style="margin-top:0.8rem;" onclick="selecionarPasta()">📂 Escolher Pasta</button>
+          </div>
+          <input type="file" id="pastaInput" webkitdirectory multiple accept=".pdf,.docx,.doc,.txt,.rtf" onchange="adicionarArquivos(this.files)" style="display:none"/>
+        </div>
+
+        <!-- EMAIL -->
+        <div class="fonte-panel" id="panel-email">
+          <div style="background:rgba(59,130,246,0.05);border:1px solid var(--border2);border-radius:12px;padding:1.2rem;text-align:center;">
+            <div style="font-size:2rem;margin-bottom:0.6rem;">📧</div>
+            <div style="font-size:0.8rem;font-weight:700;margin-bottom:0.3rem;">Importação via E-mail</div>
+            <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:0.8rem;">Encaminhe e-mails com currículos em anexo para o endereço abaixo. Os anexos serão processados automaticamente.</div>
+            <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:0.5rem 1rem;font-family:var(--mono);font-size:0.72rem;color:var(--accent);display:inline-block;">curriculos@orizon.ats.io</div>
+            <div style="margin-top:0.7rem;"><button class="btn btn-ghost" onclick="copiarEmail()">📋 Copiar Endereço</button></div>
+          </div>
+        </div>
+
+        <!-- URL -->
+        <div class="fonte-panel" id="panel-url">
+          <div style="margin-bottom:0.7rem;font-size:0.7rem;color:var(--muted);line-height:1.6;">Cole URLs de perfis LinkedIn ou links diretos para currículos online.</div>
+          <div id="urlList" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.7rem;"></div>
+          <div class="url-row">
+            <input class="url-input" id="urlInput" type="url" placeholder="https://linkedin.com/in/nome-candidato ou link direto para PDF..." onkeydown="if(event.key==='Enter')adicionarUrl()"/>
+            <button class="btn btn-primary" onclick="adicionarUrl()">＋ Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILA -->
+      <div class="sec"><div class="sec-label">Fila de Processamento</div></div>
+      <div class="card" style="animation-delay:0.15s">
+        <div class="card-head">
+          <div class="card-title"><span class="card-title-ico">📋</span> Arquivos Adicionados</div>
+          <div style="display:flex;gap:0.4rem;align-items:center;">
+            <span class="card-badge" id="badgeFila">0 arquivos</span>
+            <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.65rem;" onclick="limparFila()">🗑 Limpar</button>
+          </div>
+        </div>
+        <div class="file-queue" id="fileQueue">
+          <div class="empty-state" id="emptyQueue">
+            <div class="empty-ico">📭</div>
+            <div class="empty-txt">Nenhum arquivo adicionado ainda</div>
+          </div>
+        </div>
+        <div class="prog-wrap" id="progWrap" style="display:none;">
+          <div class="prog-header">
+            <span class="prog-label" id="progLabel">Processando...</span>
+            <span class="prog-pct" id="progPct">0%</span>
+          </div>
+          <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUNA DIREITA -->
+    <div>
+      <!-- CONFIGURAÇÕES -->
+      <div class="sec"><div class="sec-label">Configurações de Importação</div></div>
+      <div class="card" style="animation-delay:0.2s;margin-bottom:0.85rem;">
+        <div class="card-head">
+          <div class="card-title"><span class="card-title-ico">⚙️</span> Opções</div>
+        </div>
+        <div class="cfg-grid">
+          <div class="cfg-item">
+            <div class="cfg-label">Vaga de Referência</div>
+            <select class="cfg-select" id="cfgVaga">
+              <option value="">— Sem vínculo —</option>
+              <option value="banco">Banco de Talentos Geral</option>
+              <option value="dev">Desenvolvedor Full Stack</option>
+              <option value="comercial">Executivo Comercial</option>
+              <option value="rh">Analista de RH</option>
+              <option value="financeiro">Analista Financeiro</option>
+            </select>
+          </div>
+          <div class="cfg-item">
+            <div class="cfg-label">Origem / Fonte</div>
+            <select class="cfg-select" id="cfgOrigem">
+              <option value="manual">Upload Manual</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="indeed">Indeed</option>
+              <option value="catho">Catho</option>
+              <option value="infojobs">InfoJobs</option>
+              <option value="email">Indicação / E-mail</option>
+              <option value="site">Site da Empresa</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="cfg-item" style="grid-column:1/-1;">
+            <div class="cfg-label">Etiqueta Personalizada</div>
+            <input class="cfg-input" id="cfgTag" type="text" placeholder="ex: Evento Recrutamento SP 2025, Headhunting Junho..."/>
+          </div>
+
+          <div class="cfg-item">
+            <div class="cfg-label">Extração por IA</div>
+            <div class="cfg-toggle">
+              <span class="cfg-toggle-label">Extrair nome, e-mail, telefone, formação e experiências automaticamente</span>
+              <label class="toggle-sw"><input type="checkbox" id="togIA" checked/><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="cfg-item">
+            <div class="cfg-label">Avaliação DISC Automática</div>
+            <div class="cfg-toggle">
+              <span class="cfg-toggle-label">Inferir perfil DISC com base no texto do currículo</span>
+              <label class="toggle-sw"><input type="checkbox" id="togDISC"/><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="cfg-item">
+            <div class="cfg-label">Duplicatas</div>
+            <div class="cfg-toggle">
+              <span class="cfg-toggle-label">Ignorar e pular duplicatas automaticamente</span>
+              <label class="toggle-sw"><input type="checkbox" id="togDup" checked/><span class="slider"></span></label>
+            </div>
+          </div>
+          <div class="cfg-item">
+            <div class="cfg-label">Notificar Recrutador</div>
+            <div class="cfg-toggle">
+              <span class="cfg-toggle-label">Enviar resumo por e-mail ao concluir importação</span>
+              <label class="toggle-sw"><input type="checkbox" id="togNotif" checked/><span class="slider"></span></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOG -->
+      <div class="sec"><div class="sec-label">Log de Processamento</div></div>
+      <div class="card" style="animation-delay:0.25s;">
+        <div class="card-head">
+          <div class="card-title"><span class="card-title-ico">📟</span> Console</div>
+          <button class="btn btn-ghost" style="padding:0.25rem 0.6rem;font-size:0.63rem;" onclick="limparLog()">Limpar</button>
+        </div>
+        <div class="log-wrap" id="logWrap">
+          <div class="log-line"><span class="log-time">--:--:--</span><span class="log-info">Sistema pronto. Adicione arquivos para iniciar.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADOS -->
+  <div class="sec"><div class="sec-label">Resultados da Importação</div></div>
+  <div class="card" style="animation-delay:0.3s;">
+    <div class="card-head">
+      <div class="card-title"><span class="card-title-ico">📊</span> Candidatos Processados</div>
+      <div style="display:flex;gap:0.4rem;align-items:center;">
+        <span class="card-badge green" id="badgeRes">0 registros</span>
+        <button class="btn btn-ghost" style="padding:0.3rem 0.6rem;font-size:0.65rem;" onclick="exportarResultados()">⬇ Exportar CSV</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th>Cargo / Área</th>
+            <th>Arquivo</th>
+            <th>Status</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="resultBody">
+          <tr><td colspan="7">
+            <div class="empty-state"><div class="empty-ico">🔍</div><div class="empty-txt">Nenhum candidato processado ainda</div></div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastArea"></div>
+
+<script>
+// ── SUPABASE ──
+const SB  = 'https://soyogedsgrvduygjsgqg.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNveW9nZWRzZ3J2ZHV5Z2pzZ3FnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4MDEwNDksImV4cCI6MjA4OTM3NzA0OX0.IUyEh5SZLz_j5nf2k9-xelbxthcvSJ8oX0mAbqtuLF4';
+const hdrs = { 'apikey': KEY, 'Authorization': 'Bearer ' + KEY, 'Content-Type': 'application/json' };
+
+// ── ESTADO ──
+let fila = []; // { id, nome, tamanho, tipo, status, arquivo }
+let resultados = [];
+let processando = false;
+let cntOk = 0, cntDup = 0, cntErro = 0;
+let idSeq = 0;
+
+// ── NAVEGAÇÃO ──
+
+// Recebe credenciais do shell
+let SUPABASE_URL = '', SUPABASE_KEY = '';
+(function(){
+  try{ var c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}'); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
+  window.addEventListener('message',function(e){ if(e.data&&e.data.tipo==='orizon_ctx'){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+})();
+const SB_HEADERS = () => ({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'});
+
+function navegar(mod){ window.parent.postMessage({tipo:'orizon_navegar',mod},'*'); }
+
+// ── FONTES ──
+function trocarFonte(id, el){
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.fonte-panel').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('panel-'+id).classList.add('on');
+}
+
+function selecionarPasta(){
+  document.getElementById('pastaInput').click();
+}
+
+// ── DRAG & DROP ──
+function onDragOver(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.add('drag-over');
+}
+function onDragLeave(e){
+  document.getElementById('dropzone').classList.remove('drag-over');
+}
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  adicionarArquivos(e.dataTransfer.files);
+}
+
+// ── ADICIONAR ARQUIVOS ──
+const TIPOS_OK = ['application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/msword','text/plain','application/rtf'];
+const EXT_OK   = ['.pdf','.docx','.doc','.txt','.rtf'];
+
+function adicionarArquivos(files){
+  if(!files || !files.length) return;
+  let adicionados = 0;
+  Array.from(files).forEach(f=>{
+    const ext = '.' + f.name.split('.').pop().toLowerCase();
+    if(!EXT_OK.includes(ext)){ addLog(`Ignorado: ${f.name} (formato não suportado)`,'warn'); return; }
+    if(fila.length >= 50){ toast('Limite de 50 arquivos por lote atingido','err'); return; }
+    if(fila.find(x=>x.nome===f.name)){ addLog(`Duplicata na fila: ${f.name}`,'warn'); return; }
+    const id = ++idSeq;
+    fila.push({ id, nome:f.name, tamanho:f.size, tipo:ext, status:'aguardando', arquivo:f });
+    adicionados++;
+  });
+  if(adicionados) addLog(`${adicionados} arquivo(s) adicionado(s) à fila`,'info');
+  renderFila();
+  atualizarKPIs();
+}
+
+// ── URL ──
+const urlsAdicionadas = [];
+function adicionarUrl(){
+  const input = document.getElementById('urlInput');
+  const url = input.value.trim();
+  if(!url){ return; }
+  if(!url.startsWith('http')){ toast('URL inválida','err'); return; }
+  if(urlsAdicionadas.includes(url)){ toast('URL já adicionada','err'); return; }
+  urlsAdicionadas.push(url);
+  const div = document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:0.5rem;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.8rem;';
+  div.innerHTML=`<span style="font-size:0.7rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);">${url}</span><button onclick="this.parentElement.remove();urlsAdicionadas.splice(urlsAdicionadas.indexOf('${url}'),1)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;">×</button>`;
+  document.getElementById('urlList').appendChild(div);
+  // Simula como arquivo na fila
+  const id = ++idSeq;
+  const nomeFake = 'LinkedIn: ' + url.split('/').pop().split('?')[0];
+  fila.push({ id, nome:nomeFake, tamanho:0, tipo:'.url', status:'aguardando', arquivo:null, url });
+  input.value='';
+  renderFila();
+  atualizarKPIs();
+  addLog(`URL adicionada: ${nomeFake}`,'info');
+}
+
+function copiarEmail(){
+  navigator.clipboard.writeText('curriculos@orizon.ats.io')
+    .then(()=>toast('Endereço copiado!'))
+    .catch(()=>toast('Erro ao copiar','err'));
+}
+
+// ── RENDER FILA ──
+function renderFila(){
+  const q = document.getElementById('fileQueue');
+  const empty = document.getElementById('emptyQueue');
+  const badge = document.getElementById('badgeFila');
+  badge.textContent = fila.length + ' arquivo' + (fila.length===1?'':'s');
+  if(!fila.length){
+    q.innerHTML='';
+    q.appendChild(empty);
+    document.getElementById('btnIniciar').disabled = true;
+    return;
+  }
+  document.getElementById('btnIniciar').disabled = processando;
+  q.innerHTML = fila.map(f=>{
+    const ico = f.tipo==='.pdf'?'📕':f.tipo==='.docx'||f.tipo==='.doc'?'📘':f.tipo==='.url'?'🔗':'📄';
+    const tam = f.tamanho ? formatBytes(f.tamanho) : '—';
+    let statusHtml='', cls='';
+    if(f.status==='aguardando'){ statusHtml='<span class="file-status aguard">⏸ Aguardando</span>'; }
+    else if(f.status==='processando'){ statusHtml='<span class="file-status proc"><span class="spin"></span> Processando</span>'; cls='status-processando'; }
+    else if(f.status==='ok'){ statusHtml='<span class="file-status ok">✅ Importado</span>'; cls='status-ok'; }
+    else if(f.status==='duplicata'){ statusHtml='<span class="file-status aguard" style="color:var(--orange);">⚠️ Duplicata</span>'; cls='status-erro'; }
+    else if(f.status==='erro'){ statusHtml='<span class="file-status erro">❌ Erro</span>'; cls='status-erro'; }
+    return `<div class="file-item ${cls}" id="fi-${f.id}" style="${f.status==='processando'?'--dur:'+calcDur(f.tamanho)+'s':''}">
+      <span class="file-icon">${ico}</span>
+      <div class="file-info">
+        <div class="file-name">${f.nome}</div>
+        <div class="file-meta">${tam}${f.tipo!=='.url'?' · '+f.tipo.toUpperCase():' · Link externo'}</div>
+      </div>
+      ${statusHtml}
+      ${f.status==='aguardando'?`<button class="file-remove" onclick="removerArquivo(${f.id})">×</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function calcDur(bytes){
+  if(!bytes) return 3;
+  const mb = bytes/1024/1024;
+  return Math.max(1.5, Math.min(8, mb*2+1.5));
+}
+
+function removerArquivo(id){
+  fila = fila.filter(f=>f.id!==id);
+  renderFila();
+  atualizarKPIs();
+}
+
+function limparFila(){
+  if(processando){ toast('Aguarde o processamento terminar','err'); return; }
+  fila = [];
+  renderFila();
+  atualizarKPIs();
+}
+
+// ── IMPORTAÇÃO ──
+async function iniciarImportacao(){
+  if(!fila.length){ toast('Adicione arquivos primeiro','err'); return; }
+  if(processando) return;
+  processando = true;
+  cntOk = 0; cntDup = 0; cntErro = 0;
+  resultados = [];
+  document.getElementById('btnIniciar').disabled = true;
+  document.getElementById('progWrap').style.display = 'block';
+  document.getElementById('resultBody').innerHTML = '';
+  addLog(`Iniciando importação de ${fila.length} arquivo(s)...`,'info');
+
+  const total = fila.length;
+  for(let i=0;i<fila.length;i++){
+    const f = fila[i];
+    f.status = 'processando';
+    renderFila();
+    atualizarProg(i, total, `Processando ${i+1}/${total}: ${f.nome}`);
+
+    await sleep(calcDur(f.tamanho)*600);
+
+    // Simula resultado
+    const resultado = await simularExtracao(f);
+    if(resultado.status==='ok') cntOk++;
+    else if(resultado.status==='duplicata') cntDup++;
+    else cntErro++;
+    f.status = resultado.status;
+    resultados.push(resultado);
+    addLog(`${resultado.status==='ok'?'✅':resultado.status==='duplicata'?'⚠️':'❌'} ${f.nome} → ${resultado.nome||'sem nome'}`, resultado.status==='ok'?'ok':resultado.status==='duplicata'?'warn':'err');
+    renderFila();
+    atualizarKPIs();
+    renderResultados();
+  }
+
+  atualizarProg(total, total, 'Importação concluída!');
+  processando = false;
+  document.getElementById('btnIniciar').disabled = false;
+  addLog(`Concluído: ${cntOk} importados, ${cntDup} duplicatas, ${cntErro} erros.`,'info');
+  toast(`✅ Importação concluída! ${cntOk} candidato(s) adicionado(s).`);
+  try{ window.parent.postMessage({tipo:'orizon_badge_update'},'*'); }catch(e){}
+}
+
+async function simularExtracao(f){
+  // Extrai dados básicos do nome do arquivo como fallback
+  const nomeBase = f.nome.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  const dados = {
+    nome: nomeBase,
+    email: '',
+    tel: '',
+    vaga: 'Banco de Talentos',
+    no_banco: true,
+    criado_em: new Date().toISOString()
+  };
+  // Tenta salvar no Supabase
+  if(SUPABASE_URL){
+    try{
+      // Verifica duplicata pelo nome
+      const chk = await fetch(SUPABASE_URL+'/rest/v1/disc_historico?nome=eq.'+encodeURIComponent(dados.nome)+'&select=id',
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      const existe = await chk.json();
+      if(existe && existe.length > 0) return { ...f, status:'duplicata', nome:dados.nome, email:'', tel:'', cargo:'' };
+      // Insere novo candidato
+      const res = await fetch(SUPABASE_URL+'/rest/v1/disc_historico',{
+        method:'POST',
+        headers:SB_HEADERS(),
+        body: JSON.stringify(dados)
+      });
+      if(res.ok) return { ...f, status:'ok', nome:dados.nome, email:'', tel:'', cargo:dados.vaga, candId: Date.now() };
+      return { ...f, status:'erro', nome:dados.nome, email:'', tel:'', cargo:'' };
+    }catch(e){
+      // Fallback: salva no localStorage
+      try{
+        const ls = JSON.parse(localStorage.getItem('orizon_importados')||'[]');
+        ls.push({...dados, id: Date.now()});
+        localStorage.setItem('orizon_importados', JSON.stringify(ls));
+      }catch(_){}
+      return { ...f, status:'ok', nome:dados.nome, email:'', tel:'', cargo:'(salvo localmente)', candId: Date.now() };
+    }
+  }
+  // Sem Supabase: só localStorage
+  try{
+    const ls = JSON.parse(localStorage.getItem('orizon_importados')||'[]');
+    ls.push({...dados, id: Date.now()});
+    localStorage.setItem('orizon_importados', JSON.stringify(ls));
+  }catch(_){}
+  return { ...f, status:'ok', nome:dados.nome, email:'', tel:'', cargo:'(salvo localmente)', candId: Date.now() };
+}
+
+function renderResultados(){
+  const tb = document.getElementById('resultBody');
+  document.getElementById('badgeRes').textContent = resultados.length + ' registro' + (resultados.length===1?'':'s');
+  if(!resultados.length){ tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="empty-ico">🔍</div><div class="empty-txt">Nenhum candidato processado ainda</div></div></td></tr>'; return; }
+  tb.innerHTML = resultados.map(r=>{
+    let tagHtml='';
+    if(r.status==='ok') tagHtml='<span class="tag tag-ok">✅ Importado</span>';
+    else if(r.status==='duplicata') tagHtml='<span class="tag tag-dup">⚠️ Duplicata</span>';
+    else tagHtml='<span class="tag tag-erro">❌ Erro</span>';
+    const acaoHtml = r.status==='ok' ? `<a class="td-link" onclick="navegar('perfil-candidatos')">Ver Perfil →</a>` :
+                     r.status==='duplicata' ? `<a class="td-link" style="color:var(--orange);background:rgba(243,156,18,0.08);border-color:rgba(243,156,18,0.2);" onclick="navegar('perfil-candidatos')">Ver Existente</a>` :
+                     `<a class="td-link" style="color:var(--red);background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.2);" onclick="">Retentar</a>`;
+    return `<tr>
+      <td class="td-nome">${r.nome||'—'}</td>
+      <td style="color:var(--text2);font-size:0.65rem;font-family:var(--mono);">${r.email||'—'}</td>
+      <td style="color:var(--text2);font-size:0.65rem;font-family:var(--mono);">${r.tel||'—'}</td>
+      <td style="color:var(--muted);font-size:0.68rem;">${r.cargo||'—'}</td>
+      <td style="color:var(--muted);font-size:0.62rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.nome}">${r.nome}</td>
+      <td>${tagHtml}</td>
+      <td>${acaoHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── HELPERS ──
+function atualizarProg(atual, total, label){
+  const pct = total ? Math.round(atual/total*100) : 0;
+  document.getElementById('progFill').style.width = pct+'%';
+  document.getElementById('progPct').textContent = pct+'%';
+  document.getElementById('progLabel').textContent = label;
+}
+
+function atualizarKPIs(){
+  document.getElementById('kpiTotal').textContent = fila.length;
+  document.getElementById('kpiOk').textContent = cntOk;
+  document.getElementById('kpiDup').textContent = cntDup;
+  document.getElementById('kpiErro').textContent = cntErro;
+}
+
+function formatBytes(b){
+  if(b<1024) return b+'B';
+  if(b<1024*1024) return (b/1024).toFixed(0)+'KB';
+  return (b/1024/1024).toFixed(1)+'MB';
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+const NOMES=['Ana Lima','Carlos Souza','Fernanda Rocha','Gustavo Alves','Juliana Melo','Lucas Pereira','Mariana Costa','Rafael Santos','Tatiane Borges','Diego Martins','Patricia Nunes','Bruno Oliveira'];
+const CARGOS=['Analista de RH','Desenvolvedor Full Stack','Gerente Comercial','Coordenador Financeiro','Assistente Administrativo','Analista de Marketing','Engenheiro de Software','Supervisor de Operações','Consultor de Vendas','Analista de Dados'];
+function nomeAleatorio(){ return NOMES[Math.floor(Math.random()*NOMES.length)]; }
+function emailAleatorio(){ const n=nomeAleatorio().toLowerCase().replace(' ','.'); return n+'@email.com'; }
+function telAleatorio(){ return '('+['11','21','31','41','51'][Math.floor(Math.random()*5)]+') 9'+String(Math.floor(Math.random()*90000000)+10000000); }
+function cargoAleatorio(){ return CARGOS[Math.floor(Math.random()*CARGOS.length)]; }
+
+// ── LOG ──
+function addLog(msg, tipo='info'){
+  const w = document.getElementById('logWrap');
+  const d = new Date();
+  const t = d.toTimeString().slice(0,8);
+  const cls = tipo==='ok'?'log-ok':tipo==='err'?'log-err':tipo==='warn'?'log-warn':'log-info';
+  const el = document.createElement('div');
+  el.className='log-line';
+  el.innerHTML=`<span class="log-time">${t}</span><span class="${cls}">${msg}</span>`;
+  w.appendChild(el);
+  w.scrollTop = w.scrollHeight;
+}
+function limparLog(){
+  document.getElementById('logWrap').innerHTML='<div class="log-line"><span class="log-time">--:--:--</span><span class="log-info">Log limpo.</span></div>';
+}
+
+// ── EXPORTAR ──
+function exportarResultados(){
+  if(!resultados.length){ toast('Nenhum resultado para exportar','err'); return; }
+  const header = 'Nome,E-mail,Telefone,Cargo,Arquivo,Status\n';
+  const rows = resultados.map(r=>`"${r.nome||''}","${r.email||''}","${r.tel||''}","${r.cargo||''}","${r.nome}","${r.status}"`).join('\n');
+  const blob = new Blob([header+rows], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'importacao-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado com sucesso!');
+}
+
+// ── TOAST ──
+function toast(msg, tipo='ok'){
+  const area = document.getElementById('toastArea');
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + (tipo==='err'?'err':'ok');
+  el.innerHTML = `<span>${tipo==='err'?'⚠️':'✅'}</span><span>${msg}</span>`;
+  area.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(8px)'; el.style.transition='all 0.3s'; setTimeout(()=>el.remove(),300); }, 3500);
+}
+</script>
+</body>
+</html>
