@@ -564,8 +564,8 @@ let idSeq = 0;
 
 // ── NAVEGAÇÃO ──
 
-// Recebe credenciais do shell
-let SUPABASE_URL = '', SUPABASE_KEY = '';
+// Recebe credenciais do shell (com fallback para as constantes hardcoded)
+let SUPABASE_URL = SB, SUPABASE_KEY = KEY;
 (function(){
   try{ var c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}'); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
   window.addEventListener('message',function(e){ if(e.data&&e.data.tipo==='orizon_ctx'){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
@@ -870,91 +870,109 @@ async function lerArquivo(arquivo) {
   });
 }
 
-// Extrai dados do currículo via Claude API (mesmo modelo que entrevista.html)
+// Extrai dados do currículo via Edge Function do Supabase (server-side, sem CORS)
 async function extrairComIA(arquivo, vagaAlvo) {
   const lido = await lerArquivo(arquivo);
-  const vagaCtx = vagaAlvo ? `VAGA: ${vagaAlvo}` : 'VAGA: Banco de Talentos Geral';
 
-  const prompt = `Você é um recrutador sênior com 20+ anos de experiência em triagem e seleção de candidatos.
-Sua missão é fazer uma LEITURA INTELIGENTE, PROFUNDA e JUSTA deste currículo — diferenciando candidatos que usam as mesmas palavras-chave com base no IMPACTO REAL e no CONTEXTO de cada experiência.
+  // Monta o texto do currículo para enviar à edge
+  let curriculoTexto = '';
+  let curriculoB64 = null;
+  let curriculoMediaType = null;
 
-${vagaCtx}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ REGRA DE OURO — NUNCA IGNORE ISSO:
-Dois candidatos com a MESMA palavra-chave têm pesos COMPLETAMENTE DIFERENTES.
-  • "Fiz triagem de currículos" → baixo impacto
-  • "Fiz triagem de 20.000 currículos/mês com taxa de aprovação de 12%" → alto impacto
-O que diferencia candidatos NÃO é a palavra-chave — é o VOLUME, a ESCALA, o RESULTADO e a ESPECIFICIDADE.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-DIMENSÕES A AVALIAR (nota 0-10 cada):
-
-1. IMPACTO QUANTIFICÁVEL (peso 25%) — existem números, volumes, metas, percentuais com contexto?
-2. VERBOS DE AÇÃO E PROTAGONISMO (peso 15%) — implementei, criei, liderei vs auxiliei, participei
-3. PROGRESSÃO E TRAJETÓRIA (peso 15%) — crescimento de cargo ao longo do tempo?
-4. PROFUNDIDADE E ESPECIFICIDADE (peso 15%) — ferramentas, sistemas, processos específicos?
-5. ALINHAMENTO COM A VAGA (peso 30%) — cobertura real dos requisitos da vaga no currículo
-
-CÁLCULO DO SCORE FINAL:
-  score_bruto = (d_impacto×25 + d_verbos×15 + d_progressao×15 + d_profundidade×15 + d_alinhamento×30) / 10
-  score_curriculo = min(score_bruto, d_alinhamento×10 + 5)
-  → Arredonde para inteiro. nivel_curriculo: 0-19=Muito Baixo, 20-34=Baixo, 35-54=Médio, 55-69=Intermediário, 70-91=Alto, 92-100=Excelente
-
-Retorne APENAS este JSON válido (sem markdown, sem texto fora do JSON):
-{
-  "nome": "<nome completo do candidato extraído do currículo>",
-  "email": "<email encontrado ou null>",
-  "telefone": "<telefone encontrado ou null>",
-  "cargo": "<cargo/objetivo profissional principal>",
-  "area": "<área de atuação principal>",
-  "score_curriculo": <inteiro 0-100>,
-  "nivel_curriculo": "<Muito Baixo|Baixo|Médio|Intermediário|Alto|Excelente>",
-  "notas_dimensoes": {
-    "impacto_quantificavel": <0-10>,
-    "verbos_protagonismo": <0-10>,
-    "progressao_trajetoria": <0-10>,
-    "profundidade_especificidade": <0-10>,
-    "alinhamento_vaga": <0-10>
-  },
-  "resumo_curriculo": "<2-3 frases avaliando a história que o currículo conta e o que destaca ou preocupa para ESTA vaga>",
-  "diferenciais_detectados": ["<diferencial específico>"],
-  "lacunas_identificadas": ["<lacuna específica>"],
-  "keywords_encontradas": ["<keyword relevante para a vaga encontrada no CV>"],
-  "keywords_ausentes": ["<keyword importante da vaga ausente no CV>"],
-  "tempo_experiencia_detectado": "<ex: 5 anos, menos de 1 ano, sem experiência declarada>",
-  "nivel_formacao_detectado": "<ex: Superior em Administração, Técnico em Logística, Não declarado>"
-}`;
-
-  let mensagens;
-  if (lido.tipo === 'binario' && lido.dataUrl) {
+  if (lido.tipo === 'texto') {
+    curriculoTexto = (lido.conteudo || '').slice(0, 14000);
+  } else if (lido.tipo === 'binario' && lido.dataUrl) {
+    // PDF/DOCX: envia base64 para a edge extrair o texto server-side
     const [, base64] = lido.dataUrl.split(',');
-    const mediaType = lido.ext === 'pdf' ? 'application/pdf'
+    curriculoB64 = base64;
+    curriculoMediaType = lido.ext === 'pdf' ? 'application/pdf'
       : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    mensagens = [{
-      role: 'user',
-      content: [
-        { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64 } },
-        { type: 'text', text: prompt }
-      ]
-    }];
-  } else {
-    mensagens = [{ role: 'user', content: prompt + '\n\nCURRÍCULO:\n' + (lido.conteudo||'').slice(0, 12000) }];
+    curriculoTexto = `[Arquivo ${lido.ext?.toUpperCase()}: ${arquivo.name}]`;
   }
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const vagaCtx = vagaAlvo && vagaAlvo !== 'Banco de Talentos' ? vagaAlvo : 'Banco de Talentos Geral';
+
+  // Prompt completo que a edge vai usar como prompt de análise
+  const promptFitCurriculo = `Você é um recrutador sênior com 20+ anos de experiência em triagem e seleção de candidatos.
+Analise o currículo abaixo e retorne APENAS um JSON válido sem nenhum texto fora dele.
+
+VAGA DE REFERÊNCIA: ${vagaCtx}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REGRA DE OURO: Dois candidatos com a MESMA palavra-chave têm pesos COMPLETAMENTE DIFERENTES.
+O que diferencia candidatos é VOLUME, ESCALA, RESULTADO e ESPECIFICIDADE — não a palavra-chave em si.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DIMENSÕES (nota 0-10 cada):
+1. IMPACTO QUANTIFICÁVEL (peso 25%) — números, volumes, metas com contexto
+2. VERBOS DE AÇÃO (peso 15%) — implementei/liderei vs auxiliei/participei
+3. PROGRESSÃO DE CARREIRA (peso 15%) — crescimento de cargo ao longo do tempo
+4. PROFUNDIDADE TÉCNICA (peso 15%) — ferramentas e processos específicos
+5. ALINHAMENTO COM A VAGA (peso 30%) — cobertura real dos requisitos
+
+score_bruto = (d1×25 + d2×15 + d3×15 + d4×15 + d5×30) / 10
+score_curriculo = min(score_bruto, d5×10 + 5) → inteiro 0-100
+nivel_curriculo: 0-19=Muito Baixo, 20-34=Baixo, 35-54=Médio, 55-69=Intermediário, 70-91=Alto, 92-100=Excelente
+
+CURRÍCULO:
+${curriculoTexto}
+
+Retorne APENAS este JSON (sem markdown, sem texto fora):
+{"nome":"<nome completo>","email":"<email ou null>","telefone":"<tel ou null>","cargo":"<cargo principal>","area":"<área>","score_curriculo":<0-100>,"nivel_curriculo":"<nivel>","notas_dimensoes":{"impacto_quantificavel":<0-10>,"verbos_protagonismo":<0-10>,"progressao_trajetoria":<0-10>,"profundidade_especificidade":<0-10>,"alinhamento_vaga":<0-10>},"resumo_curriculo":"<2-3 frases>","diferenciais_detectados":["..."],"lacunas_identificadas":["..."],"keywords_encontradas":["..."],"keywords_ausentes":["..."],"tempo_experiencia_detectado":"<ex: 5 anos>","nivel_formacao_detectado":"<ex: Superior em Administração>"}`;
+
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error('Supabase não configurado');
+  }
+
+  // Tenta a Edge Function analisar-candidato
+  // Envia o prompt completo no campo "entrevista" e candidato vazio
+  // A edge usa esses campos para montar a chamada à Anthropic server-side
+  const edgeResp = await fetch(`${SUPABASE_URL}/functions/v1/analisar-candidato`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
     },
-    body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1500, messages: mensagens })
+    body: JSON.stringify({
+      modo: 'fit_curriculo',
+      candidato: { nome: arquivo.name.replace(/\.[^.]+$/, '') },
+      entrevista: promptFitCurriculo,
+      vaga_dados: { titulo: vagaCtx },
+      ...(curriculoB64 ? { curriculo_b64: curriculoB64, curriculo_media_type: curriculoMediaType } : {}),
+    }),
   });
-  if (!resp.ok) throw new Error('API Claude: ' + resp.status);
-  const data = await resp.json();
-  const txt = (data.content || []).map(b => b.text || '').join('').replace(/```json|```/g,'').trim();
-  return JSON.parse(txt);
+
+  if (!edgeResp.ok) {
+    const errTxt = await edgeResp.text().catch(() => '');
+    throw new Error(`Edge Function retornou ${edgeResp.status}: ${errTxt.slice(0, 200)}`);
+  }
+
+  const edgeData = await edgeResp.json();
+
+  // Extrai o JSON de qualquer campo que a edge retornar
+  const candidatos = [
+    edgeData?.resultado,
+    edgeData?.curriculo,
+    edgeData?.analise,
+    edgeData?.resposta,
+    edgeData?.content,
+    edgeData?.text,
+    edgeData,
+  ];
+
+  for (const cand of candidatos) {
+    if (!cand) continue;
+    if (typeof cand === 'object' && typeof cand.score_curriculo !== 'undefined') return cand;
+    if (typeof cand === 'string') {
+      const cleaned = cand.replace(/```json|```/g, '').trim();
+      const match = cleaned.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { const parsed = JSON.parse(match[0]); if (typeof parsed.score_curriculo !== 'undefined') return parsed; } catch(_) {}
+      }
+    }
+  }
+
+  throw new Error('Edge Function não retornou JSON de fit_curriculo esperado');
 }
 
 // Fallback local se a IA falhar
