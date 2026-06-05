@@ -293,6 +293,27 @@ body::after{
 .svc-tabs{display:flex;gap:0.3rem;margin-bottom:1.1rem;background:rgba(255,255,255,0.04);border-radius:10px;padding:0.25rem;}
 .svc-tab{flex:1;padding:0.45rem;border-radius:8px;border:none;font-family:inherit;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.15s;}
 
+/* ── EXCLUIR ── */
+.btn-excluir-cv{
+  background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);
+  color:var(--red);border-radius:7px;padding:0.2rem 0.45rem;
+  font-size:0.7rem;cursor:pointer;transition:background 0.15s;flex-shrink:0;
+}
+.btn-excluir-cv:hover{background:rgba(231,76,60,0.22);}
+#modalExcluir{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+#modalExcluir.open{display:flex;}
+#modalExcluir .mex-box{background:var(--card);border:1px solid rgba(231,76,60,0.35);border-radius:18px;padding:2rem 2.2rem;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
+#modalExcluir .mex-icon{font-size:2.4rem;margin-bottom:0.6rem;}
+#modalExcluir .mex-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:0.5rem;}
+#modalExcluir .mex-nome{color:var(--red);font-weight:800;}
+#modalExcluir .mex-desc{font-size:0.7rem;color:var(--muted);line-height:1.5;margin-bottom:1.4rem;}
+#modalExcluir .mex-btns{display:flex;gap:0.8rem;justify-content:center;}
+#modalExcluir .mex-cancel{padding:0.55rem 1.2rem;border-radius:10px;font-size:0.75rem;font-weight:600;background:var(--card2);border:1px solid var(--border);color:var(--text2);cursor:pointer;}
+#modalExcluir .mex-cancel:hover{background:var(--card3);}
+#modalExcluir .mex-confirm{padding:0.55rem 1.4rem;border-radius:10px;font-size:0.75rem;font-weight:700;background:var(--red);border:none;color:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(231,76,60,0.35);transition:opacity 0.15s;}
+#modalExcluir .mex-confirm:hover{opacity:0.85;}
+#modalExcluir .mex-confirm:disabled{opacity:0.5;cursor:not-allowed;}
+
 </style>
 </head>
 <body>
@@ -936,13 +957,25 @@ async function extrairComIA(arquivo, vagaAlvo) {
 
   return resultado;
 }
-// Fallback local se a IA falhar
+// Fallback local se a IA falhar — usa heurística para dar score estimado
 function extrairFallback(arquivo) {
   const nomeBase = arquivo.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Score heurístico baseado no tipo e tamanho do arquivo
+  const ext = arquivo.name.split('.').pop().toLowerCase();
+  const kb = arquivo.size / 1024;
+  // PDFs/DOCXs maiores tendem a ser currículos mais completos
+  let scoreEst = 35; // base "Médio baixo"
+  if (ext === 'pdf' || ext === 'docx') scoreEst += 10;
+  if (kb > 100) scoreEst += 10; // arquivo mais denso
+  if (kb > 300) scoreEst += 5;
+  scoreEst = Math.min(60, scoreEst); // teto de 60 para fallback sem leitura real
+  const nivel = scoreEst >= 65 ? 'Alto' : scoreEst >= 40 ? 'Médio' : 'Baixo';
   return { nome: nomeBase, email: null, telefone: null, cargo: null, area: null,
-    score_curriculo: null, nivel_curriculo: null, resumo_curriculo: null,
+    score_curriculo: scoreEst, nivel_curriculo: nivel,
+    resumo_curriculo: 'Score estimado — IA indisponível no momento da importação.',
     diferenciais_detectados: [], lacunas_identificadas: [],
-    keywords_encontradas: [], keywords_ausentes: [] };
+    keywords_encontradas: [], keywords_ausentes: [],
+    _fallback: true };
 }
 
 // Função principal — mesma responsabilidade que entrevista.html tem para o candidato
@@ -957,8 +990,9 @@ async function processarCurriculo(f) {
       dados = await extrairComIA(f.arquivo, vagaAlvo);
       addLog(`📊 Score currículo: ${dados.score_curriculo ?? '?'}% (${dados.nivel_curriculo || '?'})`, 'info');
     } catch(e) {
-      addLog(`⚠️ IA falhou (${e.message}) — usando fallback`, 'warn');
+      addLog(`⚠️ IA falhou (${e.message}) — score estimado`, 'warn');
       dados = extrairFallback(f.arquivo);
+      addLog(`📊 Score estimado (heurística): ${dados.score_curriculo}% (${dados.nivel_curriculo}) — clique em "Score CV" para recalcular com IA`, 'warn');
     }
   } else {
     const nomeUrl = f.nome.replace(/^LinkedIn:\s*/i,'').trim();
@@ -1002,6 +1036,7 @@ async function processarCurriculo(f) {
           cargo: dados.cargo || f.vinculadoVaga,
           scoreCurriculo: dados.score_curriculo,
           nivelCurriculo: dados.nivel_curriculo,
+          _fallback: dados._fallback || false,
           candId: f.vinculadoId,
           modoVinculo: true,
         };
@@ -1074,6 +1109,7 @@ async function processarCurriculo(f) {
           cargo: dados.cargo || vagaAlvo,
           scoreCurriculo: dados.score_curriculo,
           nivelCurriculo: dados.nivel_curriculo,
+          _fallback: dados._fallback || false,
           candId
         };
       }
@@ -1103,9 +1139,13 @@ function renderResultados(){
     else if(r.status==='ok') tagHtml='<span class="tag tag-ok">✅ Importado</span>';
     else if(r.status==='duplicata') tagHtml='<span class="tag tag-dup">⚠️ Duplicata</span>';
     else tagHtml='<span class="tag tag-erro">❌ Erro</span>';
-    const acaoHtml = r.status==='ok' ? `<a class="td-link" onclick="navegar('banco-talentos')">Ver no Banco →</a>` :
-                     r.status==='duplicata' ? `<a class="td-link" style="color:var(--orange);background:rgba(243,156,18,0.08);border-color:rgba(243,156,18,0.2);" onclick="navegar('banco-talentos')">Ver Existente</a>` :
-                     `<a class="td-link" style="color:var(--red);background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.2);" onclick="">Retentar</a>`;
+    const candIdParaExcluir = r.candId || r.vinculadoId || null;
+    const btnExcluir = candIdParaExcluir
+      ? `<button class="btn-excluir-cv" onclick="confirmarExclusao('${candIdParaExcluir}','${(r.nome||'').replace(/'/g,"\\'")}',${idx})" title="Excluir do Supabase">🗑️</button>`
+      : '';
+    const acaoHtml = r.status==='ok' ? `<div style="display:flex;gap:0.4rem;align-items:center;">${btnExcluir}<a class="td-link" onclick="navegar('banco-talentos')">Ver no Banco →</a></div>` :
+                     r.status==='duplicata' ? `<div style="display:flex;gap:0.4rem;align-items:center;">${btnExcluir}<a class="td-link" style="color:var(--orange);background:rgba(243,156,18,0.08);border-color:rgba(243,156,18,0.2);" onclick="navegar('banco-talentos')">Ver Existente</a></div>` :
+                     `<div style="display:flex;gap:0.4rem;align-items:center;">${btnExcluir}<a class="td-link" style="color:var(--red);background:rgba(231,76,60,0.08);border-color:rgba(231,76,60,0.2);" onclick="">Retentar</a></div>`;
     const sc = r.scoreCurriculo;
     const scCor = sc==null?'var(--muted)':sc>=70?'#2ecc71':sc>=55?'#3b82f6':sc>=35?'#f39c12':'#e74c3c';
     // Botão de score — clicável se tiver candId (importado com sucesso ou duplicata com id)
@@ -1113,13 +1153,14 @@ function renderResultados(){
     const candIdReal = r.candId || r.vinculadoId || null;
     let scHtml;
     if (sc != null) {
+      const isFallback = r._fallback === true;
       scHtml = `<div style="display:flex;flex-direction:column;align-items:center;gap:0.25rem;">
         <button class="btn-score-cv" id="scorebtn-${idx}" onclick="abrirModalScoreImport('${candIdReal}','${(r.nome||'').replace(/'/g,"\\'")}','${(r.cargo||'').replace(/'/g,"\\'")}',${idx})"
           style="font-weight:800;font-size:0.82rem;color:${scCor};font-family:var(--mono);background:${scCor}15;border:1px solid ${scCor}33;border-radius:7px;padding:0.1rem 0.5rem;cursor:${temId?'pointer':'default'};">
-          ${sc}%
+          ${isFallback?'⚠️ ':''}${sc}%
         </button>
         <span style="font-size:0.55rem;color:var(--muted);">${r.nivelCurriculo||''}</span>
-        ${temId?`<span style="font-size:0.5rem;color:var(--muted);opacity:0.6;">✏️ editar</span>`:''}
+        ${temId?`<span style="font-size:0.5rem;color:${isFallback?'var(--orange)':'var(--muted)'};opacity:0.8;">${isFallback?'estimado · recalcular':'✏️ editar'}</span>`:''}
       </div>`;
     } else if (temId) {
       scHtml = `<button class="btn-score-cv" id="scorebtn-${idx}" onclick="abrirModalScoreImport('${candIdReal}','${(r.nome||'').replace(/'/g,"\\'")}','${(r.cargo||'').replace(/'/g,"\\'")}',${idx})"
@@ -1478,6 +1519,69 @@ async function executarScoreIA() {
     btn.style.opacity = '';
   }
 }
+
+// ── EXCLUIR CURRÍCULO DO SUPABASE ──
+let _exCandId = null, _exNome = '', _exResIdx = null;
+
+function confirmarExclusao(candId, nome, resIdx) {
+  _exCandId = candId;
+  _exNome   = nome;
+  _exResIdx = resIdx;
+  document.getElementById('exNome').textContent = nome;
+  document.getElementById('modalExcluir').classList.add('open');
+}
+
+function fecharModalExcluir() {
+  document.getElementById('modalExcluir').classList.remove('open');
+  _exCandId = null; _exNome = ''; _exResIdx = null;
+}
+
+async function executarExclusao() {
+  if (!_exCandId) return;
+  if (!SUPABASE_URL || !SUPABASE_KEY) { toast('Supabase não configurado', 'err'); return; }
+  const btn = document.getElementById('btnConfirmarEx');
+  btn.disabled = true;
+  btn.textContent = 'Excluindo…';
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_exCandId)}`,
+      { method: 'DELETE', headers: { ...SB_HEADERS(), 'Prefer': 'return=minimal' } }
+    );
+    if (!res.ok) throw new Error('Supabase retornou ' + res.status);
+
+    if (_exResIdx != null) {
+      resultados.splice(_exResIdx, 1);
+      cntOk   = resultados.filter(r=>r.status==='ok'&&!r.modoVinculo).length;
+      cntDup  = resultados.filter(r=>r.status==='duplicata').length;
+      cntErro = resultados.filter(r=>r.status==='erro').length;
+      atualizarKPIs();
+      renderResultados();
+    }
+    toast(`🗑️ ${_exNome} excluído do banco`, 'ok');
+    fecharModalExcluir();
+  } catch(e) {
+    toast('❌ Erro ao excluir: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = 'Sim, excluir';
+  }
+}
 </script>
+
+<!-- Modal Excluir -->
+<div id="modalExcluir">
+  <div class="mex-box">
+    <div class="mex-icon">🗑️</div>
+    <div class="mex-title">Excluir candidato?</div>
+    <p class="mex-desc">
+      <span class="mex-nome" id="exNome"></span> será removido permanentemente do Supabase.<br>
+      Esta ação não pode ser desfeita.
+    </p>
+    <div class="mex-btns">
+      <button class="mex-cancel" onclick="fecharModalExcluir()">Cancelar</button>
+      <button class="mex-confirm" id="btnConfirmarEx" onclick="executarExclusao()">Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
