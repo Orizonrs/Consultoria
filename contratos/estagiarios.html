@@ -29,6 +29,7 @@
     <a class="sb-item" href="financeiro-mensal.html"><span class="ico">📅</span><span class="lbl">Financeiro Mensal</span></a>
     <a class="sb-item" href="relatorios.html"><span class="ico">📈</span><span class="lbl">Relatórios</span></a>
     <a class="sb-item" href="balanco-financeiro.html"><span class="ico">💰</span><span class="lbl">Balanço Financeiro</span></a>
+    <a class="sb-item" href="despesas-fixas.html"><span class="ico">📌</span><span class="lbl">Despesas Fixas</span></a>
     <div class="sb-sep">Equipe</div>
     <a class="sb-item" href="consultores.html"><span class="ico">🏆</span><span class="lbl">Consultores</span></a>
     <a class="sb-item" href="pipeline.html"><span class="ico">🔄</span><span class="lbl">Pipeline de Projetos</span></a>
@@ -163,7 +164,7 @@
     <div class="form-group"><label class="fl">Tipo de Comissão</label>
       <select class="fi" id="mTipoComissao" onchange="calcReceita()">
         <option value="none">Sem consultor externo</option>
-        <option value="percentual">Porcentagem (% da receita)</option>
+        <option value="pct">Porcentagem (% da receita)</option>
         <option value="fixo">Valor fixo (R$/mês)</option>
       </select>
     </div>
@@ -239,7 +240,7 @@ function estagiarios() {
 // ── Calcula comissão do recrutador para um contrato ──
 function calcComissaoRec(c) {
   const rec = Calc.receita(c);
-  if (c.tipoComissao === 'percentual')  return rec * ((c.comissaoRec||0)/100);
+  if (c.tipoComissao === 'pct')  return rec * ((c.comissaoRec||0)/100);
   if (c.tipoComissao === 'fixo') return c.comissaoFixo || 0;
   if (!c.tipoComissao && (c.comissaoRec||0) > 0) return rec * (c.comissaoRec/100);
   return 0;
@@ -414,7 +415,7 @@ function calcReceita() {
   const tipo       = UI.val('mTipoComissao') || 'none';
   const grpPct  = document.getElementById('grpComissaoPct');
   const grpFixo = document.getElementById('grpComissaoFixo');
-  if (grpPct)  grpPct.style.display  = tipo==='percentual'  ? '' : 'none';
+  if (grpPct)  grpPct.style.display  = tipo==='pct'  ? '' : 'none';
   if (grpFixo) grpFixo.style.display = tipo==='fixo' ? '' : 'none';
   let comissao = 0;
   if (tipo === 'pct')  comissao = recConsultoria * ((parseFloat(UI.val('mComissaoPct'))||0)/100);
@@ -445,7 +446,7 @@ async function salvar() {
     taxa:  parseFloat(UI.val('mTaxa'))||cfg.taxaEstPadrao,
     recrutador:  UI.val('mConsultor').trim(),
     tipoComissao: UI.val('mTipoComissao') || 'none',
-    comissaoRec:  UI.val('mTipoComissao')==='percentual'  ? parseFloat(UI.val('mComissaoPct'))||0  : 0,
+    comissaoRec:  UI.val('mTipoComissao')==='pct'  ? parseFloat(UI.val('mComissaoPct'))||0  : 0,
     comissaoFixo: UI.val('mTipoComissao')==='fixo' ? parseFloat(UI.val('mComissaoFixo'))||0 : 0,
     inicio1: ini,
     periodoAtual: parseInt(UI.val('mPeriodoAtual'))||1,

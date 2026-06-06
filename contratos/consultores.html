@@ -91,6 +91,7 @@
     <a class="sb-item" href="financeiro-mensal.html"><span class="ico">📅</span><span class="lbl">Financeiro Mensal</span></a>
     <a class="sb-item" href="relatorios.html"><span class="ico">📈</span><span class="lbl">Relatórios</span></a>
     <a class="sb-item" href="balanco-financeiro.html"><span class="ico">💰</span><span class="lbl">Balanço Financeiro</span></a>
+    <a class="sb-item" href="despesas-fixas.html"><span class="ico">📌</span><span class="lbl">Despesas Fixas</span></a>
     <div class="sb-sep">Equipe</div>
     <a class="sb-item active" href="consultores.html"><span class="ico">🏆</span><span class="lbl">Consultores</span></a>
     <a class="sb-item" href="pipeline.html"><span class="ico">🔄</span><span class="lbl">Pipeline de Projetos</span></a>
@@ -439,10 +440,7 @@ function _renderCards(recMap) {
             <div class="rec-total-label">Comissão Total</div>
             <div class="rec-total-val">${Fmt.brl(r.totalComissao)}</div>
           </div>
-          <div style="display:flex;align-items:center;gap:.6rem">
-            <span style="font-size:.72rem;color:var(--muted)">ver detalhes →</span>
-            <button onclick="event.stopPropagation();excluirConsultor('${n.replace(/'/g,"\\'")}')" title="Excluir consultor" style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);color:#e74c3c;border-radius:6px;padding:.2rem .5rem;font-size:.7rem;cursor:pointer;line-height:1">🗑</button>
-          </div>
+          <span style="font-size:.72rem;color:var(--muted)">ver detalhes →</span>
         </div>
       </div>`;
   }).join('');
@@ -644,20 +642,6 @@ function salvarNovoRecrutador() {
   if (!lista.includes(nome)) { lista.push(nome); saveConsultoresExtra(lista); }
   UI.toast(`Recrutador "${nome}" cadastrado!`, 'ok');
   UI.closeModal('modalNovo');
-  render();
-}
-
-function excluirConsultor(nome) {
-  const temContratos = _contratos.some(c => (c.recrutador||'').trim() === nome);
-  if (temContratos) {
-    if (!confirm(`"${nome}" possui contratos vinculados. Deseja remover mesmo assim?\n\nOs contratos não serão apagados, apenas o consultor sumirá da lista de pré-cadastrados.`)) return;
-  } else {
-    if (!confirm(`Excluir o consultor "${nome}"?`)) return;
-  }
-  // Remove dos extras (pré-cadastrados manualmente)
-  const extras = getConsultoresExtra().filter(n => n !== nome);
-  saveConsultoresExtra(extras);
-  UI.toast(`"${nome}" removido.`, 'wrn');
   render();
 }
 
