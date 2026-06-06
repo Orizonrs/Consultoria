@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="../imagens/icone.png" />
   <link rel="manifest" href="../imagens/site.webmanifest" />
 <!-- SEO -->
-<meta name="description" content="Orizon Consultoria — Sistema de Gestão de Contratos e RH" />
+<meta name="description" content="Orizon Consultoria — Sistema de Gestão Financeira de Contratos" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Configurações — Contratos · Orizon Consultoria</title>
 <link rel="stylesheet" href="assets/cc-style.css"/>
@@ -29,6 +29,10 @@
     <a class="sb-item" href="financeiro-mensal.html"><span class="ico">📅</span><span class="lbl">Financeiro Mensal</span></a>
     <a class="sb-item" href="relatorios.html"><span class="ico">📈</span><span class="lbl">Relatórios</span></a>
     <a class="sb-item" href="balanco-financeiro.html"><span class="ico">💰</span><span class="lbl">Balanço Financeiro</span></a>
+    <div class="sb-sep">Equipe</div>
+    <a class="sb-item" href="consultores.html"><span class="ico">🏆</span><span class="lbl">Consultores</span></a>
+    <a class="sb-item" href="pipeline.html"><span class="ico">🔄</span><span class="lbl">Pipeline de Projetos</span></a>
+    <div class="sb-sep">Sistema</div>
     <a class="sb-item active" href="configuracoes.html"><span class="ico">⚙️</span><span class="lbl">Configurações</span></a>
   </nav>
   <div class="sb-foot"><div class="sb-av"><img src="../imagens/fundo.png" alt="EX" style="width:18px;height:18px;object-fit:contain"/></div><div class="sb-uinfo"><div class="sb-uname" id="user-nome">—</div><div class="sb-urole" id="user-email">—</div></div><button class="sb-toggle" onclick="if(window.ccLogout)window.ccLogout()" title="Sair" style="margin-right:.2rem;opacity:.4">⏻</button><button class="sb-toggle" id="sb-toggle">◀</button></div>
@@ -47,7 +51,7 @@
 
     <!-- Taxas -->
     <div class="config-box">
-      <div class="config-box-title">💰 Taxas da Agência</div>
+      <div class="config-box-title">💰 Taxas da Consultoria</div>
       <div class="config-grid">
         <div class="form-group"><label class="fl">Taxa Estagiário Padrão (%)</label>
           <input type="number" class="fi" id="cfgTaxaEstPadrao" min="0" max="100" step="0.5"/>
@@ -61,7 +65,7 @@
         </div>
         <div class="form-group"><label class="fl">Taxa CLT (% sobre salário)</label>
           <input type="number" class="fi" id="cfgTaxaCLT" min="0" max="100" step="1"/>
-          <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Padrão: 50% — 1 CLT ganha R$ 2.000 → agência recebe R$ 1.000</span>
+          <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Padrão: 50% — 1 CLT ganha R$ 2.000 → consultoria recebe R$ 1.000</span>
         </div>
       </div>
       <div class="config-note">💡 As taxas acima são os padrões aplicados ao cadastrar novos contratos. Cada contrato pode ter uma taxa individual diferente.</div>
@@ -177,10 +181,10 @@ function exportarTodoCSV() {
 function importar(input) {
   const f = input.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = e => {
+  r.onload = async e => {
     try {
       const d = JSON.parse(e.target.result);
-      if(d.contratos) CC.saveContratos(d.contratos);
+      if(d.contratos) { CC.set('contratos', d.contratos); try { await CC.getContratosAsync(); } catch(e){} }
       if(d.config)    CC.saveConfig(d.config);
       UI.toast('Backup importado!','ok');
       carregar();
@@ -189,10 +193,15 @@ function importar(input) {
   r.readAsText(f);
 }
 
-function limparTudo() {
-  if(!confirm('Limpar TODOS os contratos? Irreversível!')) return;
-  CC.saveContratos([]);
-  UI.toast('Dados apagados.','wrn');
+async function limparTudo() {
+  if(!confirm('Limpar TODOS os contratos? Esta ação é irreversível e apaga do Supabase!')) return;
+  UI.toast('Apagando...','wrn');
+  try {
+    await CC.deleteAllContratos();
+    UI.toast('Dados apagados.','wrn');
+  } catch(e) {
+    UI.toast('Erro ao apagar: '+e.message,'err');
+  }
   carregar();
 }
 
