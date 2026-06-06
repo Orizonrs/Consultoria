@@ -41,6 +41,32 @@
 .mes-bar-outer{flex:1;height:8px;border-radius:99px;background:rgba(59,130,246,.1);overflow:hidden;}
 .mes-bar-inner{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .5s ease;}
 .mes-bar-val{font-size:.65rem;font-weight:700;color:var(--accent);width:72px;text-align:right;flex-shrink:0;}
+
+/* ── Pagamentos ── */
+.pag-section{margin-top:1.5rem;}
+.pag-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+.pag-tabs{display:flex;gap:.4rem;margin-bottom:1rem;}
+.pag-tab{padding:.32rem .8rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.pag-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.pag-list{display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;}
+.pag-item{display:flex;align-items:center;gap:.6rem;padding:.55rem .75rem;border-radius:9px;background:rgba(255,255,255,.025);border:1px solid var(--border);font-size:.75rem;}
+.pag-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot-pagar{background:#f39c12;}
+.dot-recebido{background:#2ecc71;}
+.pag-item-desc{flex:1;font-weight:600;}
+.pag-item-data{color:var(--muted);font-size:.66rem;white-space:nowrap;}
+.pag-item-val{font-weight:800;white-space:nowrap;}
+.val-pagar{color:#f39c12;}
+.val-recebido{color:#2ecc71;}
+.pag-item-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.8rem;padding:.1rem .3rem;border-radius:4px;opacity:.5;transition:opacity .15s;}
+.pag-item-del:hover{opacity:1;color:#e74c3c;}
+.pag-saldo{display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;border-radius:10px;background:rgba(59,130,246,.05);border:1px solid var(--border);margin-bottom:.8rem;}
+.pag-saldo-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.pag-saldo-val{font-size:1.15rem;font-weight:900;}
+.saldo-positivo{color:#2ecc71;}
+.saldo-negativo{color:#e74c3c;}
+.saldo-neutro{color:var(--muted);}
+.pag-empty{color:var(--muted);font-size:.75rem;text-align:center;padding:1.5rem 0;}
 </style>
 </head>
 <body>
@@ -85,6 +111,7 @@
     <div class="tb-right">
       <span id="tb-date" class="tb-date"></span>
       <button class="btn btn-ghost btn-sm" onclick="exportarCSV()">📊 CSV</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirPagamentos()">💳 Pagamentos</button>
       <button class="btn btn-primary btn-sm" onclick="abrirNovoRecrutador()">＋ Novo Recrutador</button>
     </div>
   </div>
@@ -153,6 +180,15 @@
         </table>
       </div>
     </div>
+    <!-- Pagamentos por Consultor -->
+    <div class="pag-section">
+      <div class="pag-header">
+        <div class="tbl-title">💳 Valores a Pagar / Recebidos por Consultor</div>
+        <button class="btn btn-primary btn-sm" onclick="abrirPagamentos()">＋ Lançar Valor</button>
+      </div>
+      <div id="pagSummaryArea"></div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -185,6 +221,50 @@
     <div class="modal-ft">
       <button class="btn btn-ghost" onclick="UI.closeModal('modalNovo')">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarNovoRecrutador()">✓ Cadastrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pagamentos -->
+<div class="overlay" id="modalPag">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title">💳 Lançar Valor</span>
+      <button class="modal-close" onclick="UI.closeModal('modalPag')">✕</button>
+    </div>
+    <div style="padding:1.2rem 1.4rem">
+      <div class="form-group">
+        <label class="fl">Consultor</label>
+        <select class="fi" id="pagConsultor"></select>
+      </div>
+      <div class="form-group">
+        <label class="fl">Tipo</label>
+        <div style="display:flex;gap:.5rem">
+          <button class="pag-tab active" id="tabPagar" onclick="selectTipo('pagar')">💳 A Pagar</button>
+          <button class="pag-tab" id="tabRecebido" onclick="selectTipo('recebido')">✅ Recebido</button>
+        </div>
+        <input type="hidden" id="pagTipo" value="pagar"/>
+      </div>
+      <div class="form-group">
+        <label class="fl">Descrição</label>
+        <input class="fi" id="pagDesc" placeholder="Ex: Comissão Janeiro, Adiantamento..."/>
+      </div>
+      <div class="form-group">
+        <label class="fl">Valor (R$)</label>
+        <input class="fi" type="number" id="pagValor" placeholder="0,00" min="0" step="0.01"/>
+      </div>
+      <div class="form-group">
+        <label class="fl">Data</label>
+        <input class="fi" type="date" id="pagData"/>
+      </div>
+      <div class="form-group">
+        <label class="fl">Observação <span style="color:var(--muted)">(opcional)</span></label>
+        <input class="fi" id="pagObs" placeholder="Referência, período, nota..."/>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="UI.closeModal('modalPag')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPagamento()">✓ Lançar</button>
     </div>
   </div>
 </div>
@@ -232,6 +312,7 @@ function render() {
   _renderCards(recMap);
   _renderTabela(contratos);
   _renderChartMensal(_contratos);
+  _renderPagSummary();
 }
 
 // ── Filtro de período ──
@@ -561,6 +642,157 @@ function salvarNovoRecrutador() {
   UI.toast(`Recrutador "${nome}" cadastrado!`, 'ok');
   UI.closeModal('modalNovo');
   render();
+}
+
+// ══════════════════════════════════════
+// PAGAMENTOS
+// ══════════════════════════════════════
+const PAG_KEY = 'ex_cc_pagamentos_consultores';
+
+function getPagamentos() {
+  try { return JSON.parse(localStorage.getItem(PAG_KEY)) || []; } catch { return []; }
+}
+function savePagamentos(arr) {
+  localStorage.setItem(PAG_KEY, JSON.stringify(arr));
+}
+
+function _todosConsultores() {
+  const recMap = _agruparPorRecrutador(_contratos);
+  const extras = getConsultoresExtra();
+  const nomes = new Set([...Object.keys(recMap), ...extras]);
+  return [...nomes].sort();
+}
+
+function abrirPagamentos() {
+  // Preenche select de consultores
+  const sel = document.getElementById('pagConsultor');
+  const todos = _todosConsultores();
+  sel.innerHTML = todos.length
+    ? todos.map(n => `<option value="${n}">${n}</option>`).join('')
+    : '<option value="">— Nenhum consultor cadastrado —</option>';
+
+  // Data padrão: hoje
+  document.getElementById('pagData').value = new Date().toISOString().slice(0,10);
+  document.getElementById('pagDesc').value = '';
+  document.getElementById('pagValor').value = '';
+  document.getElementById('pagObs').value = '';
+  selectTipo('pagar');
+  UI.openModal('modalPag');
+}
+
+function selectTipo(tipo) {
+  document.getElementById('pagTipo').value = tipo;
+  document.getElementById('tabPagar').classList.toggle('active', tipo === 'pagar');
+  document.getElementById('tabRecebido').classList.toggle('active', tipo === 'recebido');
+}
+
+function salvarPagamento() {
+  const consultor = document.getElementById('pagConsultor').value.trim();
+  const tipo      = document.getElementById('pagTipo').value;
+  const desc      = document.getElementById('pagDesc').value.trim();
+  const valor     = parseFloat(document.getElementById('pagValor').value);
+  const data      = document.getElementById('pagData').value;
+  const obs       = document.getElementById('pagObs').value.trim();
+
+  if (!consultor) { UI.toast('Selecione um consultor', 'err'); return; }
+  if (!desc)      { UI.toast('Informe a descrição', 'err'); return; }
+  if (!valor || valor <= 0) { UI.toast('Informe um valor válido', 'err'); return; }
+  if (!data)      { UI.toast('Informe a data', 'err'); return; }
+
+  const pags = getPagamentos();
+  pags.push({ id: Date.now(), consultor, tipo, desc, valor, data, obs });
+  savePagamentos(pags);
+
+  UI.toast(`Valor lançado para ${consultor}!`, 'ok');
+  UI.closeModal('modalPag');
+  _renderPagSummary();
+}
+
+function excluirPagamento(id) {
+  if (!confirm('Excluir este lançamento?')) return;
+  const pags = getPagamentos().filter(p => p.id !== id);
+  savePagamentos(pags);
+  _renderPagSummary();
+  UI.toast('Lançamento removido', 'wrn');
+}
+
+function _renderPagSummary() {
+  const pags = getPagamentos();
+  const todos = _todosConsultores();
+
+  if (!todos.length && !pags.length) {
+    document.getElementById('pagSummaryArea').innerHTML =
+      '<div style="color:var(--muted);font-size:.76rem;padding:.5rem">Nenhum consultor cadastrado ainda.</div>';
+    return;
+  }
+
+  // Agrupa por consultor
+  const mapa = {};
+  todos.forEach(n => { mapa[n] = { pagar: [], recebido: [] }; });
+  pags.forEach(p => {
+    if (!mapa[p.consultor]) mapa[p.consultor] = { pagar: [], recebido: [] };
+    mapa[p.consultor][p.tipo].push(p);
+  });
+
+  const html = Object.entries(mapa).map(([nome, dados]) => {
+    const totalPagar    = dados.pagar.reduce((s,p) => s+p.valor, 0);
+    const totalRecebido = dados.recebido.reduce((s,p) => s+p.valor, 0);
+    const saldo         = totalRecebido - totalPagar;
+    const saldoCls      = saldo > 0 ? 'saldo-positivo' : saldo < 0 ? 'saldo-negativo' : 'saldo-neutro';
+    const saldoLabel    = saldo >= 0 ? `+${Fmt.brl(saldo)}` : Fmt.brl(saldo);
+
+    const allPags = [...dados.pagar.map(p=>({...p,_tipo:'pagar'})), ...dados.recebido.map(p=>({...p,_tipo:'recebido'}))]
+      .sort((a,b) => b.data.localeCompare(a.data));
+
+    return `
+      <div class="tbl-wrap" style="margin-bottom:.9rem;padding:1.2rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+          <div style="font-weight:800;font-size:.92rem">${nome}</div>
+          <button class="btn btn-ghost btn-sm" onclick="abrirPagConsultor('${nome.replace(/'/g,"\\'")}')">＋ Lançar</button>
+        </div>
+        <div class="pag-saldo">
+          <div>
+            <div class="pag-saldo-label">Saldo</div>
+            <div class="pag-saldo-val ${saldoCls}">${saldoLabel}</div>
+          </div>
+          <div style="display:flex;gap:1.5rem;text-align:right">
+            <div>
+              <div class="pag-saldo-label">A Pagar</div>
+              <div style="font-size:.9rem;font-weight:800;color:#f39c12">${Fmt.brl(totalPagar)}</div>
+            </div>
+            <div>
+              <div class="pag-saldo-label">Recebido</div>
+              <div style="font-size:.9rem;font-weight:800;color:#2ecc71">${Fmt.brl(totalRecebido)}</div>
+            </div>
+          </div>
+        </div>
+        ${allPags.length ? `
+        <div class="pag-list">
+          ${allPags.map(p => `
+            <div class="pag-item">
+              <div class="pag-item-dot ${p._tipo==='pagar'?'dot-pagar':'dot-recebido'}"></div>
+              <div class="pag-item-desc">${p.desc}${p.obs?` <span style="color:var(--muted);font-weight:400;font-size:.66rem">· ${p.obs}</span>`:''}</div>
+              <div class="pag-item-data">${Fmt.dt(p.data)}</div>
+              <div class="pag-item-val ${p._tipo==='pagar'?'val-pagar':'val-recebido'}">${p._tipo==='pagar'?'-':'+'} ${Fmt.brl(p.valor)}</div>
+              <button class="pag-item-del" onclick="excluirPagamento(${p.id})" title="Excluir">✕</button>
+            </div>`).join('')}
+        </div>` : `<div class="pag-empty">Nenhum lançamento ainda — clique em "＋ Lançar"</div>`}
+      </div>`;
+  }).join('');
+
+  document.getElementById('pagSummaryArea').innerHTML = html;
+}
+
+function abrirPagConsultor(nome) {
+  const sel = document.getElementById('pagConsultor');
+  const todos = _todosConsultores();
+  sel.innerHTML = todos.map(n => `<option value="${n}" ${n===nome?'selected':''}>${n}</option>`).join('');
+  document.getElementById('pagData').value = new Date().toISOString().slice(0,10);
+  document.getElementById('pagDesc').value = '';
+  document.getElementById('pagValor').value = '';
+  document.getElementById('pagObs').value = '';
+  selectTipo('pagar');
+  UI.openModal('modalPag');
 }
 
 // ── Exportar CSV ──
