@@ -221,13 +221,14 @@ let editId = null;
 function _token() { return window._ccAccessToken || SB_ANON_D; }
 
 async function _fetch(path, opts = {}) {
+  const isWrite = opts.method && opts.method !== 'GET';
   const res = await fetch(`${SB_URL_D}/rest/v1/${path}`, {
     ...opts,
     headers: {
       'apikey': SB_ANON_D,
       'Authorization': `Bearer ${_token()}`,
       'Content-Type': 'application/json',
-      'Prefer': opts._prefer || 'return=representation',
+      'Prefer': opts._prefer || (isWrite ? 'return=minimal' : 'return=representation'),
       ...(opts.headers || {}),
     },
   });
@@ -441,35 +442,40 @@ async function confirmarLancamento() {
   if (!ativas.length) { UI.toast('Nenhuma despesa ativa.', 'wrn'); return; }
 
   const [ano, mes] = mesVal.split('-');
-  // Dia 1 do mês como data do lançamento
   const data = `${ano}-${mes}-01`;
 
   UI.toast('Lançando despesas...', 'ok');
 
+  // Usa o mesmo cliente Supabase que o balanço financeiro usa
+  const sb = window.supabase.createClient(SB_URL_D, SB_ANON_D, {
+    global: { headers: { Authorization: `Bearer ${_token()}` } }
+  });
+
   let erros = 0;
   for (const d of ativas) {
     try {
-      await _fetch(TABLE_LANC, {
-        method: 'POST',
-        body: JSON.stringify({
-          tipo:       'despesa',
-          data,
-          valor:      Number(d.valor),
-          categoria:  d.categoria,
-          descricao:  d.nome,
-          forma_pgto: 'Transferência',
-          obs:        `[FIXO] Despesa fixa — ${mes}/${ano}`,
-        }),
-      });
+      const payload = {
+        tipo:       'despesa',
+        data,
+        valor:      Number(d.valor),
+        categoria:  d.categoria,
+        descricao:  d.nome,
+        forma_pgto: 'Transferência',
+        obs:        `[FIXO] Despesa fixa — ${mes}/${ano}`,
+      };
+      const { error } = await sb.from(TABLE_LANC).insert(payload);
+      if (error) throw new Error(error.message);
     } catch(e) {
       erros++;
-      console.error('Erro ao lançar:', d.nome, e);
+      console.error('Erro ao lançar:', d.nome, e.message || e);
     }
   }
 
   UI.closeModal('modalLancar');
   if (erros === 0) {
     UI.toast(`${ativas.length} despesa(s) lançadas no balanço!`, 'ok');
+  } else if (erros === ativas.length) {
+    UI.toast(`Erro ao lançar — verifique o console (F12)`, 'err');
   } else {
     UI.toast(`${ativas.length - erros} lançadas, ${erros} com erro.`, 'wrn');
   }
