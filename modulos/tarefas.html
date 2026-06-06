@@ -1,12 +1,13 @@
 <!DOCTYPE html><html lang="pt-BR"><head>
 <script src="../guard.js"></script>
-<script src="../supabase-config.js"></script><meta charset="UTF-8"/>
-  <!-- ═══ FAVICON ═══ -->
-  <link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png" />
-  <link rel="shortcut icon" href="../imagens/icone.png" type="image/png" />
-  <link rel="apple-touch-icon" href="../imagens/icone.png" />
-  <link rel="manifest" href="../imagens/site.webmanifest" /><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<script src="../supabase-config.js"></script>
+<meta charset="UTF-8"/>
+<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<link rel="apple-touch-icon" href="../imagens/icone.png"/>
+<link rel="manifest" href="../imagens/site.webmanifest"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Tarefas | Orizon ATS</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
@@ -24,21 +25,18 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 .btn{font-family:inherit;font-size:0.78rem;font-weight:700;border-radius:11px;padding:0.52rem 1.1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
 .btn-accent{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;}.btn-accent:hover{opacity:0.88;}
 .btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.09);}.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);}
-/* ADD FORM */
 .add-form{display:flex;gap:0.6rem;margin-bottom:1.2rem;flex-wrap:wrap;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;}
 .fi{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.55rem 0.8rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;}.fi:focus{border-color:var(--accent);}.fi::placeholder{color:var(--muted2);}
 .fsel{background:#161616;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.55rem 1.6rem 0.55rem 0.7rem;color:var(--text);font-family:inherit;font-size:0.78rem;outline:none;cursor:pointer;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.5rem center;}.fsel option{background:#161616;}
-/* FILTERS */
-.filters{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}.filters::-webkit-scrollbar{display:none;}
+.filters{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;}
 .filter-chip{font-size:0.7rem;font-weight:700;padding:0.28rem 0.75rem;border-radius:99px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;background:rgba(255,255,255,0.04);color:var(--muted);transition:all 0.15s;}
 .filter-chip.active{background:rgba(59,130,246,0.15);border-color:var(--border2);color:var(--accent);}
-/* TASKS */
 .task-list{display:flex;flex-direction:column;gap:0.45rem;}
 .task-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.8rem;transition:all 0.15s;}
 .task-item:hover{border-color:var(--border2);}
 .task-item.done{opacity:0.5;}
-.task-cb{width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;}
-.task-cb.checked{background:var(--accent);border-color:var(--accent);}
+.task-cb{width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.15s;font-size:0.7rem;}
+.task-cb.checked{background:var(--accent);border-color:var(--accent);color:#fff;}
 .task-body{flex:1;min-width:0;}
 .task-txt{font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .task-item.done .task-txt{text-decoration:line-through;color:var(--muted);}
@@ -55,85 +53,38 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 .del-btn:hover{color:var(--red);background:rgba(231,76,60,0.1);}
 .empty{text-align:center;padding:2.5rem;color:var(--muted2);font-size:0.78rem;}
 .toast{position:fixed;bottom:1.2rem;right:1.2rem;z-index:9999;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:0.6rem 1rem;font-size:0.78rem;font-weight:600;transform:translateY(20px);opacity:0;transition:all 0.22s;pointer-events:none;}.toast.show{transform:translateY(0);opacity:1;}
-
-/* =====================================================
-   MOBILE RESPONSIVO — Orizon ATS
-   ===================================================== */
-@media (max-width: 640px) {
-  .page {
-    padding: 1rem 0.9rem 4rem !important;
-  }
-  .hero {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.8rem !important;
-    margin-bottom: 1rem !important;
-  }
-  .hero > div:last-child,
-  .hero > button,
-  .hero > div[style*="display:flex"] {
-    width: 100%;
-  }
-  .hero .btn,
-  .hero button.btn {
-    width: 100%;
-    justify-content: center;
-  }
-  .title { font-size: 1.25rem !important; }
-  .kpi-row {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.5rem !important;
-  }
-  .kpi { padding: 0.7rem 0.8rem !important; }
-  .kpi-val { font-size: 1.4rem !important; }
-  .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
-  .form-card { padding: 1rem !important; }
-  .filters {
-    gap: 0.35rem !important;
-  }
-  .filter-chip { font-size: 0.65rem !important; padding: 0.22rem 0.6rem !important; }
-  .rec-item, .sla-item, .task-item, .rank-card, .vi, .sync-row {
-    flex-wrap: wrap !important;
-    gap: 0.6rem !important;
-  }
-  .sla-bar-wrap { flex: 1 1 100% !important; justify-content: space-between; }
-  .sla-bar { width: auto !important; flex: 1 !important; }
-  .btn { font-size: 0.72rem !important; padding: 0.45rem 0.8rem !important; }
-  .sec-label { font-size: 0.58rem !important; }
-  .add-form { flex-direction: column !important; }
-  .add-form .fi,
-  .add-form .fsel,
-  .add-form input[type=date] { width: 100% !important; }
-  .add-form .btn { width: 100% !important; justify-content: center !important; }
-  .tpl-grid { grid-template-columns: 1fr !important; }
-  .cand-list { max-height: 200px !important; }
-  .card { padding: 1rem !important; border-radius: 14px !important; }
-  .sync-row { padding: 0.7rem 0 !important; }
-  .sync-ico { display: none !important; }
-  .schema-box { font-size: 0.62rem !important; }
-  .info-box { font-size: 0.7rem !important; }
-  .log-box { font-size: 0.65rem !important; }
-  .pesos-card { padding: 1rem !important; }
-  .pesos-grid { grid-template-columns: 1fr !important; }
-  .pesos-total { flex-wrap: wrap !important; gap: 0.5rem !important; }
-  .pesos-total .btn { flex: 1 1 auto !important; }
-  .filtro-row { gap: 0.4rem !important; }
-  .filter-select { font-size: 0.72rem !important; flex: 1 !important; }
-  .rank-scores { gap: 0.3rem !important; }
-  .score-final-val { font-size: 1.2rem !important; }
-  .score-bar { width: 44px !important; }
-  .vi-btns { width: 100% !important; justify-content: flex-end; }
-  .vi-tit { font-size: 0.82rem !important; }
-  .vagas-grid { grid-template-columns: 1fr !important; }
-  .modal { padding: 1.2rem !important; border-radius: 16px !important; }
-  .toast { right: 0.6rem !important; bottom: 0.6rem !important; left: 0.6rem !important; }
+.spinner{width:16px;height:16px;border:2px solid var(--muted2);border-top-color:var(--orange);border-radius:50%;animation:spin 0.6s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sync-status{font-size:0.62rem;color:var(--muted);display:flex;align-items:center;gap:0.35rem;}
+.dot-sb{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.dot-sb.off{background:var(--orange);}
+.vinculos{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.35rem;}
+.vinc-tag{font-size:0.58rem;font-weight:700;padding:0.1rem 0.45rem;border-radius:99px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--accent);}
+@media(max-width:640px){
+  .page{padding:1rem 0.9rem 4rem!important;}
+  .hero{flex-direction:column!important;align-items:flex-start!important;}
+  .title{font-size:1.25rem!important;}
+  .kpi-row{grid-template-columns:repeat(2,1fr)!important;}
+  .add-form{flex-direction:column!important;}
+  .add-form .fi,.add-form .fsel,.add-form input[type=date]{width:100%!important;}
+  .add-form .btn{width:100%!important;justify-content:center!important;}
+  .task-item{flex-wrap:wrap!important;}
 }
-
-</style></head><body>
+</style>
+</head><body>
 <div class="page">
   <div class="hero">
-    <div><div class="eyebrow">Operações</div><div class="title">Tarefas <span>& Follow-up</span></div><div class="sub">Controle de ações e pendências da equipe</div></div>
+    <div>
+      <div class="eyebrow">Operações</div>
+      <div class="title">Tarefas <span>& Follow-up</span></div>
+      <div class="sub">Controle de ações e pendências — sincronizado com Supabase</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <div class="sync-status"><div class="dot-sb" id="dotSb"></div><span id="syncTxt">Conectando...</span></div>
+      <button class="btn btn-ghost" onclick="init()">↺ Atualizar</button>
+    </div>
   </div>
+
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-val" id="kTotal" style="color:var(--accent);">0</div><div class="kpi-label">Total</div></div>
     <div class="kpi"><div class="kpi-val" id="kPendente" style="color:var(--orange);">0</div><div class="kpi-label">Pendentes</div></div>
@@ -141,13 +92,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
     <div class="kpi"><div class="kpi-val" id="kVencidas" style="color:var(--red);">0</div><div class="kpi-label">Vencidas</div></div>
     <div class="kpi"><div class="kpi-val" id="kFeitas" style="color:var(--green);">0</div><div class="kpi-label">Concluídas</div></div>
   </div>
+
   <div class="add-form">
     <input class="fi" id="tTexto" placeholder="Nova tarefa..." style="flex:1;min-width:160px;" onkeydown="if(event.key==='Enter')addTask()"/>
     <select class="fsel" id="tPrio"><option value="alta">🔴 Alta</option><option value="media" selected>🟠 Média</option><option value="baixa">🟢 Baixa</option></select>
     <input class="fi" id="tPrazo" type="date" style="width:140px;"/>
     <input class="fi" id="tResp" placeholder="Responsável" style="width:130px;"/>
-    <button class="btn btn-accent" onclick="addTask()">➕ Adicionar</button>
+    <input class="fi" id="tVinculo" placeholder="Candidato / Vaga (opcional)" style="width:170px;"/>
+    <button class="btn btn-accent" id="btnAdd" onclick="addTask()">➕ Adicionar</button>
   </div>
+
   <div class="filters">
     <div class="filter-chip active" onclick="setFiltro('todas',this)">Todas</div>
     <div class="filter-chip" onclick="setFiltro('pendente',this)">Pendentes</div>
@@ -156,64 +110,246 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
     <div class="filter-chip" onclick="setFiltro('alta',this)">🔴 Alta prioridade</div>
     <div class="filter-chip" onclick="setFiltro('feita',this)">✅ Concluídas</div>
   </div>
-  <div class="task-list" id="taskList"></div>
+
+  <div class="task-list" id="taskList">
+    <div class="empty"><div class="spinner"></div></div>
+  </div>
 </div>
 <div class="toast" id="toast"></div>
+
 <script>
-const KEY='orizon_tarefas_v1';
-let _tasks=[],_filtro='todas';
-function lerTasks(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];}}
-function salvarTasks(){try{localStorage.setItem(KEY,JSON.stringify(_tasks));}catch(e){}; window.parent.postMessage({tipo:'orizon_badge',mod:'tarefas',valor:_tasks.filter(t=>!t.done).length},'*');}
-function init(){_tasks=lerTasks();render();}
+let SB_URL='',SB_KEY='',_tasks=[],_filtro='todas',_sbOk=false;
 const hoje=new Date().toISOString().split('T')[0];
-function prazoStatus(p){if(!p)return '';const d=new Date(p),h=new Date(hoje);if(d<h)return 'vencido';if(p===hoje)return 'hoje';return 'ok';}
-function addTask(){
-  const txt=(document.getElementById('tTexto').value||'').trim();if(!txt)return;
-  _tasks.unshift({id:'t'+Date.now(),txt,prio:document.getElementById('tPrio').value,prazo:document.getElementById('tPrazo').value,resp:document.getElementById('tResp').value.trim(),done:false,criado:hoje});
-  document.getElementById('tTexto').value='';salvarTasks();render();toast('✅ Tarefa adicionada');
+
+function lerCtx(){
+  try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}
 }
-function toggleTask(id){const t=_tasks.find(x=>x.id===id);if(t){t.done=!t.done;salvarTasks();render();}}
-function delTask(id){_tasks=_tasks.filter(t=>t.id!==id);salvarTasks();render();}
-function setFiltro(f,el){_filtro=f;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');render();}
+window.addEventListener('message',e=>{
+  if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;init();}
+});
+
+/* ─── SUPABASE HELPERS ─────────────────────── */
+async function sbFetch(tabela, qs=''){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabela}?${qs}`,{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbInsert(tabela, dados){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabela}`,{
+    method:'POST',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(dados)
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbUpdate(tabela, id, dados){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(dados)
+  });
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function sbDelete(tabela, id){
+  const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
+    method:'DELETE',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+/* ─── INIT ─────────────────────────────────── */
+async function init(){
+  lerCtx();
+  if(!SB_URL){
+    document.getElementById('dotSb').className='dot-sb off';
+    document.getElementById('syncTxt').textContent='Supabase não configurado';
+    carregarLocal();
+    return;
+  }
+  try{
+    _tasks=await sbFetch('tarefas','order=criado_em.desc');
+    _sbOk=true;
+    document.getElementById('dotSb').className='dot-sb';
+    document.getElementById('syncTxt').textContent='Sincronizado com Supabase';
+    salvarLocal(); // backup local
+  }catch(e){
+    console.warn('[Tarefas] Supabase falhou, usando localStorage:',e);
+    _sbOk=false;
+    document.getElementById('dotSb').className='dot-sb off';
+    document.getElementById('syncTxt').textContent='Offline — dados locais';
+    carregarLocal();
+  }
+  render();
+  emitirBadge();
+}
+
+function carregarLocal(){
+  try{_tasks=JSON.parse(localStorage.getItem('orizon_tarefas_v2')||'[]');}catch(e){_tasks=[];}
+}
+function salvarLocal(){
+  try{localStorage.setItem('orizon_tarefas_v2',JSON.stringify(_tasks));}catch(e){}
+}
+function emitirBadge(){
+  const pendentes=_tasks.filter(t=>!t.done&&!t.concluida).length;
+  window.parent.postMessage({tipo:'orizon_badge',mod:'tarefas',valor:pendentes},'*');
+}
+
+/* ─── ADD ───────────────────────────────────── */
+async function addTask(){
+  const txt=(document.getElementById('tTexto').value||'').trim();
+  if(!txt){toast('⚠️ Digite o texto da tarefa','orange');return;}
+  const btn=document.getElementById('btnAdd');
+  btn.innerHTML='<div class="spinner"></div>';btn.disabled=true;
+
+  const nova={
+    texto:txt,
+    prioridade:document.getElementById('tPrio').value,
+    prazo:document.getElementById('tPrazo').value||null,
+    responsavel:document.getElementById('tResp').value.trim()||null,
+    vinculo:document.getElementById('tVinculo').value.trim()||null,
+    concluida:false,
+    criado_em:new Date().toISOString()
+  };
+
+  if(_sbOk){
+    try{
+      const res=await sbInsert('tarefas',nova);
+      const salva=Array.isArray(res)?res[0]:res;
+      _tasks.unshift(salva);
+      toast('✅ Tarefa salva no banco');
+    }catch(e){
+      console.error('[Tarefas] Erro ao salvar:',e);
+      nova.id='loc_'+Date.now();
+      _tasks.unshift(nova);
+      toast('⚠️ Salvo localmente (banco indisponível)','orange');
+    }
+  }else{
+    nova.id='loc_'+Date.now();
+    _tasks.unshift(nova);
+    toast('💾 Tarefa salva localmente');
+  }
+
+  salvarLocal();
+  document.getElementById('tTexto').value='';
+  document.getElementById('tVinculo').value='';
+  btn.innerHTML='➕ Adicionar';btn.disabled=false;
+  render();emitirBadge();
+}
+
+/* ─── TOGGLE ────────────────────────────────── */
+async function toggleTask(id){
+  const t=_tasks.find(x=>String(x.id)===String(id));
+  if(!t)return;
+  t.concluida=!t.concluida;
+  // optimistic UI
+  render();emitirBadge();
+
+  if(_sbOk && !String(id).startsWith('loc_')){
+    try{
+      await sbUpdate('tarefas',id,{concluida:t.concluida,atualizado_em:new Date().toISOString()});
+    }catch(e){
+      console.warn('[Tarefas] Erro ao atualizar:',e);
+    }
+  }
+  salvarLocal();
+}
+
+/* ─── DELETE ────────────────────────────────── */
+async function delTask(id){
+  _tasks=_tasks.filter(t=>String(t.id)!==String(id));
+  render();emitirBadge();salvarLocal();
+
+  if(_sbOk && !String(id).startsWith('loc_')){
+    try{await sbDelete('tarefas',id);}
+    catch(e){console.warn('[Tarefas] Erro ao deletar:',e);}
+  }
+  toast('🗑 Tarefa removida');
+}
+
+/* ─── FILTRO ────────────────────────────────── */
+function setFiltro(f,el){
+  _filtro=f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+/* ─── RENDER ────────────────────────────────── */
+function prazoStatus(p){
+  if(!p)return '';
+  const d=new Date(p+'T00:00:00');const h=new Date(hoje+'T00:00:00');
+  if(d<h)return 'vencido';if(p===hoje)return 'hoje';return 'ok';
+}
+
 function render(){
+  // normalizar campo done/concluida
+  _tasks.forEach(t=>{if(t.done!==undefined&&t.concluida===undefined)t.concluida=t.done;});
+
   let lista=[..._tasks];
-  if(_filtro==='pendente') lista=lista.filter(t=>!t.done);
-  else if(_filtro==='feita') lista=lista.filter(t=>t.done);
-  else if(_filtro==='hoje') lista=lista.filter(t=>!t.done&&t.prazo===hoje);
-  else if(_filtro==='vencida') lista=lista.filter(t=>!t.done&&t.prazo&&t.prazo<hoje);
-  else if(_filtro==='alta') lista=lista.filter(t=>!t.done&&t.prio==='alta');
-  const pendentes=_tasks.filter(t=>!t.done).length;
-  const vencidas=_tasks.filter(t=>!t.done&&t.prazo&&t.prazo<hoje).length;
-  const hojeQ=_tasks.filter(t=>!t.done&&t.prazo===hoje).length;
+  if(_filtro==='pendente') lista=lista.filter(t=>!t.concluida);
+  else if(_filtro==='feita') lista=lista.filter(t=>t.concluida);
+  else if(_filtro==='hoje') lista=lista.filter(t=>!t.concluida&&t.prazo===hoje);
+  else if(_filtro==='vencida') lista=lista.filter(t=>!t.concluida&&t.prazo&&t.prazo<hoje);
+  else if(_filtro==='alta') lista=lista.filter(t=>!t.concluida&&(t.prioridade==='alta'||t.prio==='alta'));
+
+  const pendentes=_tasks.filter(t=>!t.concluida).length;
+  const vencidas=_tasks.filter(t=>!t.concluida&&t.prazo&&t.prazo<hoje).length;
+  const hojeQ=_tasks.filter(t=>!t.concluida&&t.prazo===hoje).length;
   document.getElementById('kTotal').textContent=_tasks.length;
   document.getElementById('kPendente').textContent=pendentes;
   document.getElementById('kHoje').textContent=hojeQ;
   document.getElementById('kVencidas').textContent=vencidas;
-  document.getElementById('kFeitas').textContent=_tasks.filter(t=>t.done).length;
+  document.getElementById('kFeitas').textContent=_tasks.filter(t=>t.concluida).length;
+
   const pc={alta:'p-alta',media:'p-media',baixa:'p-baixa'};
   const pl={alta:'Alta',media:'Média',baixa:'Baixa'};
   const el=document.getElementById('taskList');
+
   if(!lista.length){el.innerHTML='<div class="empty">Nenhuma tarefa neste filtro.</div>';return;}
+
   el.innerHTML=lista.map(t=>{
+    const prio=t.prioridade||t.prio||'media';
     const ps=prazoStatus(t.prazo);
     const prazoCls=ps==='vencido'?'prazo-vencido':ps==='hoje'?'prazo-hoje':'prazo-ok';
     const prazoTxt=ps==='vencido'?'⚠️ Vencida':ps==='hoje'?'📌 Hoje':t.prazo?'✓ '+t.prazo:'';
-    return `<div class="task-item ${t.done?'done':''}">
-      <div class="task-cb ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+    const resp=t.responsavel||t.resp||'';
+    const vinculo=t.vinculo||'';
+    const isLocal=String(t.id).startsWith('loc_');
+    return `<div class="task-item ${t.concluida?'done':''}">
+      <div class="task-cb ${t.concluida?'checked':''}" onclick="toggleTask('${esc(String(t.id))}')">${t.concluida?'✓':''}</div>
       <div class="task-body">
-        <div class="task-txt">${esc(t.txt)}</div>
+        <div class="task-txt">${esc(t.texto||t.txt||'—')}${isLocal?' <span style="font-size:0.58rem;color:var(--orange);">(local)</span>':''}</div>
         <div class="task-meta">
-          <span class="prio-pill ${pc[t.prio]||'p-media'}">${pl[t.prio]||t.prio}</span>
+          <span class="prio-pill ${pc[prio]||'p-media'}">${pl[prio]||prio}</span>
           ${prazoTxt?`<span class="prazo-tag ${prazoCls}">${prazoTxt}</span>`:''}
-          ${t.resp?`<span>👤 ${esc(t.resp)}</span>`:''}
+          ${resp?`<span>👤 ${esc(resp)}</span>`:''}
+          ${vinculo?`<span class="vinc-tag">🔗 ${esc(vinculo)}</span>`:''}
         </div>
       </div>
-      <button class="del-btn" onclick="delTask('${t.id}')">🗑</button>
+      <button class="del-btn" onclick="delTask('${esc(String(t.id))}')">🗑</button>
     </div>`;
   }).join('');
 }
-const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-let _tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);}
+
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+let _tt;
+function toast(msg,tipo){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderColor=tipo==='orange'?'rgba(243,156,18,0.4)':'';
+  t.style.color=tipo==='orange'?'var(--orange)':'';
+  t.className='toast show';clearTimeout(_tt);
+  _tt=setTimeout(()=>{t.className='toast';t.style.borderColor='';t.style.color='';},2800);
+}
+
 document.getElementById('tPrazo').value=hoje;
-init();
-</script></body></html>
+lerCtx();
+if(SB_URL) init();
+else setTimeout(()=>{lerCtx();if(SB_URL)init();else init();},500);
+</script>
+</body></html>

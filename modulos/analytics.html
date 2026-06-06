@@ -216,7 +216,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-val" id="aTotal" style="color:var(--accent);">—</div><div class="kpi-label">Avaliações no período</div><div class="kpi-delta up" id="aTotalDelta"></div></div>
     <div class="kpi"><div class="kpi-val" id="aFitMedio" style="color:var(--blue);">—</div><div class="kpi-label">Fit score médio</div><div class="kpi-delta" id="aFitDelta"></div></div>
-    <div class="kpi"><div class="kpi-val" id="aAprov" style="color:var(--green);">—</div><div class="kpi-label">Aprovados</div><div class="kpi-delta" id="aAprovDelta"></div></div>
+    <div class="kpi"><div class="kpi-val" id="aAprov" style="color:var(--green);">—</div><div class="kpi-label">Contratados</div><div class="kpi-delta" id="aAprovDelta"></div></div>
     <div class="kpi"><div class="kpi-val" id="aTxConv" style="color:var(--orange);">—</div><div class="kpi-label">Taxa de conversão</div></div>
     <div class="kpi"><div class="kpi-val" id="aTMedio" style="color:var(--purple);">—</div><div class="kpi-label">Vagas únicas</div></div>
     <div class="kpi"><div class="kpi-val" id="aSemEnt" style="color:var(--red);">—</div><div class="kpi-label">Sem entrevista</div></div>
@@ -268,11 +268,11 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 </div>
 
 <script>
-let SB_URL='',SB_KEY='',PIPE_KEY='orizon_pipeline_v1';
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
+let SB_URL='',SB_KEY='';
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}}
 window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;if(!_loaded)init();}});
 
-let _hist=[],_periodo=7,_loaded=false;
+let _hist=[],_contratados=[],_periodo=7,_loaded=false;
 const CHARTS={};
 const COR={D:'#e74c3c',I:'#f39c12',S:'#2ecc71',C:'#3498db'};
 
@@ -287,9 +287,13 @@ async function init(){
   lerCtx(); if(!SB_URL){setTimeout(()=>{lerCtx();if(SB_URL)init();},500);return;}
   _loaded=true;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-    _hist=await r.json(); if(!Array.isArray(_hist)) _hist=[];
-  }catch(e){_hist=[];}
+    const [rHist, rCont] = await Promise.all([
+      fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}),
+      fetch(`${SB_URL}/rest/v1/contratados?select=id,candidato,vaga,data_contratacao&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+    ]);
+    _hist=await rHist.json(); if(!Array.isArray(_hist)) _hist=[];
+    _contratados=await rCont.json(); if(!Array.isArray(_contratados)) _contratados=[];
+  }catch(e){console.error('[Analytics] Erro ao carregar:',e);_hist=[];_contratados=[];}
   renderTudo();
 }
 
@@ -316,7 +320,12 @@ function renderTudo(){
 function renderKPIs(lista){
   const fits=lista.filter(h=>h.fit_score).map(h=>parseInt(h.fit_score));
   const fitMedio=fits.length?Math.round(fits.reduce((s,v)=>s+v,0)/fits.length):null;
-  let aprov=0; try{const p=JSON.parse(localStorage.getItem(PIPE_KEY)||'{}');Object.values(p).forEach(vm=>Object.values(vm||{}).forEach(et=>{if(et==='aprovado')aprov++;}));}catch(e){}
+  // Aprovados = contratados no período filtrado (dados reais do Supabase)
+  const corte=new Date(); corte.setDate(corte.getDate()-_periodo);
+  const aprov=_contratados.filter(c=>{
+    if(!c.data_contratacao) return true; // sem data, conta sempre
+    try{return new Date(c.data_contratacao)>=corte;}catch(e){return true;}
+  }).length;
   const semEnt=lista.filter(h=>!h.entrevista_json&&!h.resumo_ia).length;
   const vagas=new Set(lista.map(h=>h.vaga).filter(Boolean)).size;
   const txConv=lista.length?Math.round(aprov/lista.length*100):0;
