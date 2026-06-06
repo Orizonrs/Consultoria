@@ -169,7 +169,7 @@
     <div class="form-group"><label class="fl">Tipo de Comissão</label>
       <select class="fi" id="mTipoComissao" onchange="calcReceita()">
         <option value="none">Sem consultor externo</option>
-        <option value="pct">Porcentagem (% da receita)</option>
+        <option value="percentual">Porcentagem (% da receita)</option>
         <option value="fixo">Valor fixo (R$)</option>
       </select>
     </div>
@@ -230,7 +230,7 @@ function clts() { return contratos.filter(c=>c.tipo==='clt'); }
 // ── Calcula comissão do recrutador para um contrato ──
 function calcComissaoRec(c) {
   const rec = Calc.receita(c);
-  if (c.tipoComissao === 'pct')  return rec * ((c.comissaoRec||0)/100);
+  if (c.tipoComissao === 'percentual')  return rec * ((c.comissaoRec||0)/100);
   if (c.tipoComissao === 'fixo') return c.comissaoFixo || 0;
   // legado: se comissaoRec > 0 e sem tipoComissao, assume %
   if (!c.tipoComissao && (c.comissaoRec||0) > 0) return rec * (c.comissaoRec/100);
@@ -402,10 +402,10 @@ function calcReceita() {
   // mostrar/esconder campos conforme tipo
   const grpPct  = document.getElementById('grpComissaoPct');
   const grpFixo = document.getElementById('grpComissaoFixo');
-  if (grpPct)  grpPct.style.display  = tipo==='pct'  ? '' : 'none';
+  if (grpPct)  grpPct.style.display  = tipo==='percentual'  ? '' : 'none';
   if (grpFixo) grpFixo.style.display = tipo==='fixo' ? '' : 'none';
   let comissao = 0;
-  if (tipo === 'pct') {
+  if (tipo === 'percentual') {
     const pct = parseFloat(UI.val('mComissaoPct'))||0;
     comissao  = recConsultoria * (pct/100);
   } else if (tipo === 'fixo') {
@@ -429,7 +429,7 @@ async function salvar() {
     taxa:parseFloat(UI.val('mTaxa'))||cfg.taxaCLT,
     recrutador:   UI.val('mConsultor').trim(),
     tipoComissao: UI.val('mTipoComissao') || 'none',
-    comissaoRec:  UI.val('mTipoComissao')==='pct'  ? parseFloat(UI.val('mComissaoPct'))||0  : 0,
+    comissaoRec:  UI.val('mTipoComissao')==='percentual'  ? parseFloat(UI.val('mComissaoPct'))||0  : 0,
     comissaoFixo: UI.val('mTipoComissao')==='fixo' ? parseFloat(UI.val('mComissaoFixo'))||0 : 0,
     admissao:adm, situacao:UI.val('mSituacao'), obs:UI.val('mObs'),
   };
