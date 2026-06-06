@@ -209,6 +209,27 @@
 
     .aviso{background:rgba(224,128,0,0.07);border:1px solid rgba(224,128,0,0.22);border-radius:12px;padding:0.9rem 1.1rem;margin-top:1.2rem;}
     .aviso p{font-size:0.8rem;color:#c8a060;line-height:1.6;}
+
+    /* DIAGNÓSTICO DE SCORE */
+    .diag-wrap{margin-top:1.1rem;display:flex;flex-direction:column;gap:0.55rem;}
+    .diag-item{display:flex;align-items:flex-start;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:11px;padding:0.7rem 0.9rem;}
+    .diag-item.ok{border-color:rgba(46,204,113,0.2);background:rgba(46,204,113,0.05);}
+    .diag-item.warn{border-color:rgba(243,156,18,0.2);background:rgba(243,156,18,0.05);}
+    .diag-item.bad{border-color:rgba(231,76,60,0.2);background:rgba(231,76,60,0.05);}
+    .diag-icon{font-size:1rem;flex-shrink:0;margin-top:1px;}
+    .diag-text{flex:1;}
+    .diag-label{font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:0.18rem;}
+    .diag-item.ok .diag-label{color:#2ecc71;}
+    .diag-item.warn .diag-label{color:#f39c12;}
+    .diag-item.bad .diag-label{color:#e74c3c;}
+    .diag-desc{font-size:0.8rem;color:var(--muted);line-height:1.55;}
+    .diag-peso{font-size:0.65rem;color:#555;margin-top:0.2rem;font-style:italic;}
+    .diag-header{font-size:0.63rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;margin:1.2rem 0 0.5rem;}
+    .score-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.5rem;margin-top:0.7rem;}
+    .score-dim{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.6rem 0.8rem;text-align:center;}
+    .score-dim-val{font-size:1.4rem;font-weight:900;line-height:1;}
+    .score-dim-label{font-size:0.62rem;color:var(--muted);margin-top:0.2rem;text-transform:uppercase;letter-spacing:0.5px;}
+    .score-dim-peso{font-size:0.58rem;color:#444;margin-top:0.1rem;}
     .footer{text-align:center;padding-top:2rem;font-size:0.7rem;color:#444;}
 
     /* ── VISIBILIDADE PDF ── */
@@ -344,6 +365,15 @@
     <div class="fit-bar-track"><div class="fit-bar-fill" id="fitBarFill" style="width:0%"></div></div>
     <div class="fit-bar-labs"><span>0%</span><span>50%</span><span>100%</span></div>
     <div class="fit-resumo" id="fitResumo">—</div>
+  </div>
+
+  <!-- DIAGNÓSTICO DE SCORE -->
+  <div class="card" id="cardDiagnostico" style="display:none;">
+    <h4>🔍 Diagnóstico do Score</h4>
+    <p style="font-size:0.8rem;color:var(--muted);margin-bottom:0.3rem;" id="diagIntro">—</p>
+    <div class="score-breakdown" id="diagBreakdown"></div>
+    <div class="diag-header">Análise por dimensão</div>
+    <div class="diag-wrap" id="diagWrap"></div>
   </div>
 
   <!-- PONTOS FORTES -->
@@ -544,6 +574,153 @@ function renderizarTudo() {
   document.getElementById('fitDesc').textContent = `Compatibilidade com a vaga de ${vaga}`;
   document.getElementById('fitResumo').textContent = iaData.resumo_candidato || '—';
   setTimeout(()=>{ document.getElementById('fitBarFill').style.width = fitScore + '%'; }, 200);
+
+  // ── DIAGNÓSTICO DE SCORE ─────────────────────────────────────
+  (function buildDiagnostico() {
+    const ent = entData || {};
+    const comp = ent.competencias || {};
+    const cardDiag = document.getElementById('cardDiagnostico');
+    if (!cardDiag) return;
+
+    // Calcular dimensões localmente para o diagnóstico
+    const historiaW  = (ent.historia  || '').trim().split(/\s+/).filter(Boolean).length;
+    const expVagaW   = (ent.exp_vaga  || '').trim().split(/\s+/).filter(Boolean).length;
+    const motivacaoW = (ent.motivacao || '').trim().split(/\s+/).filter(Boolean).length;
+    const conquistas = (ent.conquistas || []).filter(Boolean);
+    const diferencial= (ent.diferencial || '').trim();
+    const expTotal   = ent.exp_total || '';
+
+    const compIds = ['comunicacao_acao','resiliencia_acao','equipe_acao','resultados_acao','proatividade_acao','adaptabilidade_acao'];
+    const compLabels = ['Comunicação','Resiliência','Equipe','Resultados','Proatividade','Adaptabilidade'];
+    const compPreenchidas = compIds.filter(id => (comp[id]||'').trim().split(/\s+/).filter(Boolean).length >= 10).length;
+    const temNumeros = Object.values(comp).some(v => /\d/.test(v||''));
+
+    // Notas por dimensão (0-10)
+    let expNota = 0;
+    if (historiaW >= 30) expNota = 5;
+    if (historiaW >= 60) expNota += 1;
+    if (historiaW >= 100) expNota += 1;
+    if (expVagaW > 30)   expNota += 1;
+    if (temNumeros)      expNota += 1;
+    if (conquistas.length > 0) expNota += 1;
+    expNota = Math.min(10, expNota);
+
+    let compNota = 0;
+    if (compPreenchidas >= 1) compNota = 3;
+    if (compPreenchidas >= 3) compNota = 6;
+    if (compPreenchidas >= 5) compNota = 8;
+    if (compPreenchidas >= 6 && temNumeros) compNota = 10;
+
+    let motNota = motivacaoW >= 50 ? 8 : motivacaoW >= 30 ? 6 : motivacaoW >= 20 ? 5 : motivacaoW >= 10 ? 3 : 0;
+
+    // Scores ponderados por dimensão
+    const scoreExp  = Math.round(expNota  * 5.5);
+    const scoreComp = Math.round(compNota * 1.5);
+    const scoreMot  = Math.round(motNota  * 2.0);
+    const scoreDisc = fitScore - scoreExp - scoreComp - scoreMot;
+
+    // Mostrar card
+    cardDiag.style.display = '';
+
+    // Intro dinâmico
+    const introEl = document.getElementById('diagIntro');
+    if (fitScore === 0) {
+      introEl.innerHTML = '<strong style="color:#e74c3c;">Nenhum campo foi preenchido.</strong> O sistema não teve dados para avaliar — o candidato avançou sem responder a entrevista.';
+    } else if (fitScore <= 25) {
+      introEl.innerHTML = `<strong style="color:#e74c3c;">Score muito baixo (${fitScore}%).</strong> O candidato preencheu pouco ou com conteúdo sem substância profissional. Veja abaixo o que faltou em cada dimensão.`;
+    } else if (fitScore <= 50) {
+      introEl.innerHTML = `<strong style="color:#f39c12;">Score moderado (${fitScore}%).</strong> Há conteúdo parcial, mas faltam detalhes em dimensões importantes. Confira o diagnóstico abaixo.`;
+    } else if (fitScore <= 75) {
+      introEl.innerHTML = `<strong style="color:#3b82f6;">Score bom (${fitScore}%).</strong> Candidato com perfil relevante. Alguns pontos podem ser aprofundados na entrevista presencial.`;
+    } else {
+      introEl.innerHTML = `<strong style="color:#2ecc71;">Score alto (${fitScore}%).</strong> Candidato com perfil sólido e bem documentado. Alta compatibilidade com a vaga.`;
+    }
+
+    // Breakdown visual por dimensão
+    const dims = [
+      { label: 'Experiência', peso: '55%', val: scoreExp,  max: 55, cor: scoreExp  >= 40 ? '#2ecc71' : scoreExp  >= 20 ? '#f39c12' : '#e74c3c' },
+      { label: 'Competências', peso: '15%', val: scoreComp, max: 15, cor: scoreComp >= 10 ? '#2ecc71' : scoreComp >= 5  ? '#f39c12' : '#e74c3c' },
+      { label: 'Motivação',   peso: '20%', val: scoreMot,  max: 20, cor: scoreMot  >= 15 ? '#2ecc71' : scoreMot  >= 8  ? '#f39c12' : '#e74c3c' },
+      { label: 'DISC',        peso: '5%',  val: Math.max(0, scoreDisc), max: 5, cor: '#3b82f6' },
+    ];
+    document.getElementById('diagBreakdown').innerHTML = dims.map(d =>
+      `<div class="score-dim">
+        <div class="score-dim-val" style="color:${d.cor};">${d.val > 0 ? d.val : 0}<span style="font-size:0.8rem;font-weight:600;color:#555;">/${d.max}</span></div>
+        <div class="score-dim-label">${d.label}</div>
+        <div class="score-dim-peso">peso ${d.peso}</div>
+      </div>`
+    ).join('');
+
+    // Itens de diagnóstico por dimensão
+    const items = [];
+
+    // — EXPERIÊNCIA —
+    if (historiaW === 0) {
+      items.push({ tipo:'bad', icon:'📖', label:'Trajetória profissional — não preenchida', desc:'O campo "Me fale sobre você / História Profissional" estava vazio. É o campo mais importante — representa 55% do score.' });
+    } else if (historiaW < 30) {
+      items.push({ tipo:'warn', icon:'📖', label:'Trajetória muito curta', desc:`Apenas ${historiaW} palavras. Para uma avaliação completa, o ideal é 60+ palavras descrevendo cargos, empresas e responsabilidades.` });
+    } else if (historiaW >= 100) {
+      items.push({ tipo:'ok', icon:'📖', label:'Trajetória bem detalhada', desc:`${historiaW} palavras — boa profundidade de conteúdo para análise.` });
+    } else {
+      items.push({ tipo:'warn', icon:'📖', label:'Trajetória razoável', desc:`${historiaW} palavras. Detalhar mais cargos, responsabilidades e contexto de cada empresa elevaria o score.` });
+    }
+
+    if (expVagaW === 0) {
+      items.push({ tipo:'bad', icon:'🎯', label:'Experiência específica na vaga — não preenchida', desc:'Não foi descrita nenhuma experiência direta com a função. Esse campo ajuda a IA a avaliar alinhamento técnico real.' });
+    } else if (expVagaW >= 20) {
+      items.push({ tipo:'ok', icon:'🎯', label:'Experiência específica descrita', desc:`${expVagaW} palavras sobre experiência direta com a vaga — bom para avaliação técnica.` });
+    }
+
+    if (!temNumeros) {
+      items.push({ tipo:'warn', icon:'📊', label:'Sem números ou métricas', desc:'Nenhum dado quantitativo foi mencionado (volumes, prazos, percentuais, quantidades). Números concretos aumentam significativamente a credibilidade e o score.' });
+    } else {
+      items.push({ tipo:'ok', icon:'📊', label:'Métricas e números presentes', desc:'O candidato usou dados concretos — isso eleva a confiança na avaliação.' });
+    }
+
+    if (conquistas.length === 0) {
+      items.push({ tipo:'warn', icon:'🏆', label:'Conquistas não preenchidas', desc:'Nenhuma conquista ou realização profissional foi registrada. Esse campo destaca diferenciais reais do candidato.' });
+    } else {
+      items.push({ tipo:'ok', icon:'🏆', label:`${conquistas.length} conquista(s) registrada(s)`, desc: conquistas.slice(0,2).join(' · ') });
+    }
+
+    // — COMPETÊNCIAS —
+    if (compPreenchidas === 0) {
+      items.push({ tipo:'bad', icon:'🧠', label:'Competências STAR — nenhuma preenchida', desc:'Comunicação, Resiliência, Equipe, Resultados, Proatividade e Adaptabilidade — nenhuma foi respondida. São opcionais mas elevam muito o score quando preenchidas com exemplos reais.' });
+    } else if (compPreenchidas <= 2) {
+      items.push({ tipo:'warn', icon:'🧠', label:`Apenas ${compPreenchidas} competência(s) STAR preenchida(s)`, desc:`Preenchidas: ${compIds.filter((id,i) => (comp[id]||'').trim().split(/\s+/).filter(Boolean).length >= 10).map((id,i) => compLabels[compIds.indexOf(id)]).join(', ')||'—'}. Mais competências com exemplos concretos elevariam o score.` });
+    } else {
+      items.push({ tipo:'ok', icon:'🧠', label:`${compPreenchidas}/6 competências STAR preenchidas`, desc:'Boa cobertura comportamental — permite análise de perfil mais completa.' });
+    }
+
+    // — MOTIVAÇÃO —
+    if (motivacaoW === 0) {
+      items.push({ tipo:'bad', icon:'💡', label:'Motivação — não preenchida', desc:'O campo "Por que quer essa vaga?" estava vazio. É o segundo campo mais importante para avaliar alinhamento do candidato.' });
+    } else if (motivacaoW < 15) {
+      items.push({ tipo:'warn', icon:'💡', label:'Motivação muito genérica', desc:`Apenas ${motivacaoW} palavras. Uma boa motivação tem 30+ palavras e menciona algo específico sobre a vaga ou a área de atuação.` });
+    } else if (motivacaoW >= 40) {
+      items.push({ tipo:'ok', icon:'💡', label:'Motivação bem articulada', desc:`${motivacaoW} palavras — candidato demonstrou interesse e contextualizou bem sua motivação.` });
+    } else {
+      items.push({ tipo:'warn', icon:'💡', label:'Motivação razoável', desc:`${motivacaoW} palavras. Poderia ser mais específica sobre o alinhamento com a vaga de ${vaga}.` });
+    }
+
+    // — TEMPO DE EXPERIÊNCIA —
+    if (!expTotal) {
+      items.push({ tipo:'warn', icon:'⏱️', label:'Tempo de experiência não informado', desc:'O candidato não selecionou o tempo total de experiência profissional.' });
+    } else {
+      const corExp = expTotal.includes('10') ? '#2ecc71' : expTotal.includes('5') ? '#3b82f6' : expTotal.includes('Primeiro') ? '#f39c12' : '#e0e0e0';
+      items.push({ tipo:'ok', icon:'⏱️', label:`Experiência: ${expTotal}`, desc:'Campo preenchido — contribui para o cálculo de aderência à vaga.' });
+    }
+
+    document.getElementById('diagWrap').innerHTML = items.map(it =>
+      `<div class="diag-item ${it.tipo}">
+        <div class="diag-icon">${it.icon}</div>
+        <div class="diag-text">
+          <div class="diag-label">${it.label}</div>
+          <div class="diag-desc">${it.desc}</div>
+        </div>
+      </div>`
+    ).join('');
+  })();
 
   // ── RADAR CHART ──────────────────────────────────────────────
   (function buildRadar() {
