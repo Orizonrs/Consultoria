@@ -1,207 +1,175 @@
 /* ════════════════════════════════════════════
    cc-core.js — Orizon Consultoria
-   Sistema de Controle de Contratos
-   v3.0 — Supabase como backend de dados
+   Projeto Supabase: yunoxkembhskpnprffoi
    ════════════════════════════════════════════ */
 'use strict';
 
-// ══════════════════════════════════════
-// CONFIGURAÇÃO SUPABASE
-// ══════════════════════════════════════
-const SB_URL = 'https://huycenqggwkfhvoynnhi.supabase.co';
-const SB_KEY = 'sb_publishable_XPRq5RZwkFLToHc8cYcXXg_5YnPr-TA';
+const SB_URL  = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
 
+// ── Retorna o token JWT do usuário autenticado (ou a anon key como fallback) ──
+function _authToken() {
+  return window._ccAccessToken || SB_ANON;
+}
+
+// ── Fetch genérico com token correto (suporta RLS no Supabase) ──
 async function _sbFetch(path, opts = {}) {
+  const token = _authToken();
   const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
     ...opts,
     headers: {
-      'apikey': SB_KEY,
-      'Authorization': `Bearer ${SB_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': opts._prefer || 'return=representation',
+      'apikey':        SB_ANON,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type':  'application/json',
+      'Prefer':        opts._prefer || 'return=representation',
       ...(opts.headers || {}),
     },
   });
+
+  // ── Detecta 401 e redireciona para login ──
+  if (res.status === 401) {
+    console.warn('[CC] Token expirado — redirecionando para login');
+    window.location.replace('/Consultoria/contratos/login.html');
+    return [];
+  }
+
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Supabase error ${res.status}: ${err}`);
+    throw new Error(`Supabase ${res.status}: ${err}`);
   }
   const text = await res.text();
   return text ? JSON.parse(text) : [];
 }
 
 // ══════════════════════════════════════
-// CC — API pública (compatível com v2)
+// CC — API pública
 // ══════════════════════════════════════
 const CC = {
   _ns: 'ex_cc_',
-  _ready: false,
 
-  // localStorage ainda usado APENAS para config (sem dados pessoais)
-  get(k)   { try { return JSON.parse(localStorage.getItem(this._ns + k)); } catch { return null; } },
-  set(k, v){ localStorage.setItem(this._ns + k, JSON.stringify(v)); },
+  // ── localStorage (apenas config) ──
+  get(k)    { try { return JSON.parse(localStorage.getItem(this._ns + k)); } catch { return null; } },
+  set(k, v) { localStorage.setItem(this._ns + k, JSON.stringify(v)); },
+  del(k)    { localStorage.removeItem(this._ns + k); },
 
   getConfig()   { return this.get('config') || defaultConfig(); },
-  saveConfig(d) { this.set('config', d); },
+  saveConfig(d) { this.set('config', { ...defaultConfig(), ...d }); },
 
-  // ── Contratos: leitura assíncrona do Supabase ──
+  // ── Carregar contratos do Supabase ──
   async getContratosAsync() {
     try {
       const rows = await _sbFetch('ex_contratos?order=id.asc&select=*');
-      // Retorna os dados do Supabase — mesmo que seja lista vazia
-      return rows.map(_fromRow);
+      const lista = rows.map(_fromRow);
+      this.set('contratos', lista);   // atualiza cache
+      return lista;
     } catch (e) {
-      console.error('[CC] Falha ao carregar contratos do Supabase:', e);
-      // fallback para localStorage se offline (sem seed)
-      return this.get('contratos') || [];
+      console.error('[CC] Falha ao carregar contratos:', e);
+      return this.get('contratos') || [];  // fallback cache
     }
   },
 
-  // ── Compatibilidade síncrona: retorna cache local ──
+  // ── Cache síncrono (usado antes do init completar) ──
   getContratos() {
     return this.get('contratos') || [];
   },
 
-  // ── Salvar: Supabase (upsert) + cache local ──
-  async saveContratosAsync(lista) {
-    try {
-      if (!lista || !lista.length) return;
-
-      // Garante que todos têm campo tipo e id
-      const rows = lista.map(c => ({
-        id:           c.id,
-        tipo:         c.tipo,
-        nome:         c.nome,
-        empresa:      c.empresa,
-        cargo:        c.cargo    || null,
-        vt:           c.vt       || 'nao',
-        valor_vt:     c.valorVT  || 0,
-        bolsa:        c.bolsa    || null,
-        salario:      c.salario  || null,
-        taxa:         c.taxa     || 0,
-        recrutador:   c.recrutador   || null,
-        tipo_comissao: c.tipoComissao || 'none',
-        comissao_rec: c.comissaoRec  ?? 0,
-        comissao_fixo: c.comissaoFixo ?? 0,
-        admissao:     c.admissao || null,
-        inicio1:      c.inicio1  || null,
-        periodo_atual:c.periodoAtual || null,
-        situacao:     c.situacao || 'ativo',
-        obs:          c.obs      || null,
-      }));
-
-      await _sbFetch('ex_contratos', {
-        method: 'POST',
-        body: JSON.stringify(rows),
-        _prefer: 'resolution=merge-duplicates,return=minimal',
-      });
-
-      // atualiza cache local
-      this.set('contratos', lista);
-    } catch (e) {
-      console.error('[CC] Falha ao salvar no Supabase:', e);
-      // salva só localmente como fallback
-      this.set('contratos', lista);
-      throw e;
-    }
-  },
-
-  // ── saveContratos síncrono: salva local + dispara async ──
-  saveContratos(lista) {
-    this.set('contratos', lista);
-    this.saveContratosAsync(lista).catch(err =>
-      console.error('[CC] saveContratosAsync falhou:', err)
-    );
-  },
-
-  // ── Inserir um único contrato ──
+  // ── Inserir contrato (ID gerado pelo banco) ──
   async insertContrato(dados) {
-    // Garante que novos registros sempre tenham um id (Date.now() como bigint)
-    if (!dados.id) dados = { ...dados, id: Date.now() };
+    _validarContrato(dados);
     const row = _toRow(dados);
+    delete row.id;   // deixa o banco gerar o ID
     const res = await _sbFetch('ex_contratos', {
       method: 'POST',
-      body: JSON.stringify(row),
+      body:   JSON.stringify(row),
       _prefer: 'return=representation',
     });
     const novo = Array.isArray(res) ? res[0] : res;
-    // atualiza cache
     const lista = this.get('contratos') || [];
     lista.push(_fromRow(novo));
     this.set('contratos', lista);
     return _fromRow(novo);
   },
 
-  // ── Atualizar um único contrato ──
+  // ── Atualizar contrato ──
   async updateContrato(id, dados) {
+    _validarContrato(dados);
     const row = _toRow(dados);
+    delete row.id;
     await _sbFetch(`ex_contratos?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(row),
+      method:  'PATCH',
+      body:    JSON.stringify(row),
       _prefer: 'return=minimal',
     });
-    // atualiza cache
     const lista = this.get('contratos') || [];
     const idx = lista.findIndex(c => String(c.id) === String(id));
-    if (idx >= 0) lista[idx] = { ...lista[idx], ...dados };
+    if (idx >= 0) lista[idx] = { ...lista[idx], ...dados, id };
     this.set('contratos', lista);
   },
 
-  // ── Excluir um contrato ──
+  // ── Excluir contrato ──
   async deleteContrato(id) {
     await _sbFetch(`ex_contratos?id=eq.${id}`, {
-      method: 'DELETE',
+      method:  'DELETE',
       _prefer: 'return=minimal',
     });
-    // atualiza cache
     const lista = (this.get('contratos') || []).filter(c => String(c.id) !== String(id));
     this.set('contratos', lista);
   },
 
-  // ── init(): aguarda DOM + carrega dados do Supabase ──
-  async init() {
-    await new Promise(resolve => {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', resolve);
-      } else {
-        resolve();
-      }
+  // ── Limpar todos (para configurações) — batch delete ──
+  async deleteAllContratos() {
+    const lista = this.get('contratos') || [];
+    if (lista.length === 0) return;
+    const ids = lista.map(c => c.id).join(',');
+    await _sbFetch(`ex_contratos?id=in.(${ids})`, {
+      method:  'DELETE',
+      _prefer: 'return=minimal',
     });
-    _navInit();
-    this._ready = true;
+    this.set('contratos', []);
+  },
 
-    // Carrega contratos do Supabase e atualiza cache
-    try {
-      const lista = await this.getContratosAsync();
-      this.set('contratos', lista);
-    } catch (e) {
-      console.error('[CC] init: erro ao carregar contratos', e);
-    }
+  // ── init(): carrega dados após autenticação confirmada ──
+  async init() {
+    _navInit();
+    await this.getContratosAsync();
   },
 };
 
-// ── Conversão snake_case (Supabase) ↔ camelCase (app) ──
+// ══════════════════════════════════════
+// VALIDAÇÃO
+// ══════════════════════════════════════
+function _validarContrato(c) {
+  if (!c.nome || String(c.nome).trim().length < 2) throw new Error('Nome inválido');
+  if (!c.empresa || String(c.empresa).trim().length < 2) throw new Error('Empresa inválida');
+  if (!c.tipo || !['estagiario','clt'].includes(c.tipo)) throw new Error('Tipo inválido');
+  const taxa = parseFloat(c.taxa);
+  if (isNaN(taxa) || taxa < 0 || taxa > 200) throw new Error('Taxa inválida');
+}
+
+// ══════════════════════════════════════
+// CONVERSÃO snake_case ↔ camelCase
+// ══════════════════════════════════════
 function _toRow(c) {
   return {
     ...(c.id ? { id: c.id } : {}),
-    tipo:          c.tipo,
-    nome:          c.nome,
-    empresa:       c.empresa,
-    cargo:         c.cargo        || null,
-    vt:            c.vt           || 'nao',
-    valor_vt:      c.valorVT      ?? 0,
-    bolsa:         c.bolsa        ?? null,
-    salario:       c.salario      ?? null,
-    taxa:          c.taxa         ?? 0,
-    recrutador:    c.recrutador   || null,
-    tipo_comissao: c.tipoComissao || c.tipo_comissao || 'none',
-    comissao_rec:  c.comissaoRec  ?? c.comissao_rec ?? 0,
-    comissao_fixo: c.comissaoFixo ?? c.comissao_fixo ?? 0,
-    admissao:      c.admissao     || null,
-    inicio1:       c.inicio1      || null,
-    periodo_atual: c.periodoAtual ?? null,
-    situacao:      c.situacao     || 'ativo',
-    obs:           c.obs          || null,
+    tipo:           c.tipo,
+    nome:           String(c.nome || '').trim(),
+    empresa:        String(c.empresa || '').trim(),
+    cargo:          c.cargo        || null,
+    vt:             c.vt           || 'nao',
+    valor_vt:       c.valorVT      ?? 0,
+    bolsa:          c.bolsa        ?? null,
+    salario:        c.salario      ?? null,
+    taxa:           c.taxa         ?? 0,
+    recrutador:     c.recrutador   || null,
+    tipo_comissao:  c.tipoComissao || 'none',
+    comissao_rec:   c.comissaoRec  ?? 0,
+    comissao_fixo:  c.comissaoFixo ?? 0,
+    admissao:       c.admissao     || null,
+    inicio1:        c.inicio1      || null,
+    periodo_atual:  c.periodoAtual ?? null,
+    situacao:       c.situacao     || 'ativo',
+    obs:            c.obs          || null,
   };
 }
 
@@ -245,28 +213,6 @@ function defaultConfig() {
 }
 
 // ══════════════════════════════════════
-// SEED — dados iniciais (usados se banco vazio)
-// ══════════════════════════════════════
-function seedContratos() {
-  const hoje = new Date();
-  const sub = m => { const d = new Date(hoje); d.setMonth(d.getMonth()-m); return d.toISOString().slice(0,10); };
-  return [
-    { id:1,  tipo:'estagiario', nome:'Ana Claudia Ambos',         empresa:'Contagil',              vt:'sim',     valorVT:150, bolsa:800,  taxa:15, periodoAtual:1, inicio1:sub(2),  situacao:'ativo',  obs:'' },
-    { id:2,  tipo:'estagiario', nome:'Alexia Rodrigues',          empresa:'Roque Contabilidade',   vt:'sim',     valorVT:120, bolsa:1200, taxa:10, periodoAtual:1, inicio1:sub(5),  situacao:'ativo',  obs:'' },
-    { id:3,  tipo:'estagiario', nome:'Larissa Donay',             empresa:'TES Elevadores',        vt:'sim',     valorVT:130, bolsa:900,  taxa:12, periodoAtual:2, inicio1:sub(9),  situacao:'ativo',  obs:'NF' },
-    { id:4,  tipo:'estagiario', nome:'Guilherme Souza Alves',     empresa:'Farina Condimentos',    vt:'sim',     valorVT:100, bolsa:600,  taxa:10, periodoAtual:1, inicio1:sub(1),  situacao:'ativo',  obs:'' },
-    { id:5,  tipo:'estagiario', nome:'Laisla O. Silverio',        empresa:'Borges Promotoria',     vt:'sim',     valorVT:130, bolsa:900,  taxa:12, periodoAtual:1, inicio1:sub(4),  situacao:'ativo',  obs:'' },
-    { id:6,  tipo:'estagiario', nome:'Maria Eduarda F. Santos',   empresa:'Borges Promotoria',     vt:'sim',     valorVT:130, bolsa:900,  taxa:12, periodoAtual:1, inicio1:sub(3),  situacao:'ativo',  obs:'' },
-    { id:7,  tipo:'estagiario', nome:'Rafaella Capeletti',        empresa:'Escola Arteria',        vt:'sim',     valorVT:100, bolsa:590,  taxa:12, periodoAtual:1, inicio1:sub(5),  situacao:'ativo',  obs:'' },
-    { id:8,  tipo:'estagiario', nome:'Tahiana Antunes Rodrigues', empresa:'FZ Cardiologia',        vt:'fretado', valorVT:0,   bolsa:2500, taxa:15, periodoAtual:1, inicio1:sub(1),  situacao:'ativo',  obs:'' },
-    { id:9,  tipo:'estagiario', nome:'Eduarda Oliveira Almeida',  empresa:'Jessica Academy',       vt:'sim',     valorVT:110, bolsa:700,  taxa:15, periodoAtual:1, inicio1:sub(5),  situacao:'ativo',  obs:'' },
-    { id:10, tipo:'clt', nome:'Carlos Eduardo Lima',    empresa:'Indústria Alfa Ltda',   vt:'sim',     valorVT:200, salario:3500, taxa:50, admissao:sub(18), situacao:'ativo', cargo:'Analista Adm.',  obs:'' },
-    { id:11, tipo:'clt', nome:'Patrícia Mendes',        empresa:'Comércio Beta S.A.',    vt:'nao',     valorVT:0,   salario:2800, taxa:50, admissao:sub(8),  situacao:'ativo', cargo:'Auxiliar Adm.',  obs:'' },
-    { id:12, tipo:'clt', nome:'Fernando Costa',         empresa:'Tech Gamma EIRELI',     vt:'fretado', valorVT:0,   salario:4200, taxa:50, admissao:sub(24), situacao:'ativo', cargo:'Supervisor',     obs:'' },
-  ];
-}
-
-// ══════════════════════════════════════
 // FORMATADORES
 // ══════════════════════════════════════
 const Fmt = {
@@ -274,7 +220,8 @@ const Fmt = {
   pct: v => `${v}%`,
   dt:  v => { if (!v) return '—'; const d = new Date(v+'T12:00:00'); return d.toLocaleDateString('pt-BR'); },
   ini: s => { const n=(s||'').trim().split(/\s+/); return (n[0]?.[0]||'')+(n[1]?.[0]||''); },
-  avCls: id => ['av-g','av-b','av-p','av-o','av-a'][id % 5],
+  avCls: id => ['av-g','av-b','av-p','av-o','av-a'][String(id).charCodeAt(0) % 5],
+  mes:  v => { if (!v) return '—'; const [a,m] = v.split('-'); return `${m}/${a}`; },
 };
 
 // ══════════════════════════════════════
@@ -338,10 +285,22 @@ const Calc = {
       const ps   = this.periodos(contrato, cfg);
       const venc = ps.find(p => p.status === 'vencido');
       const warn = ps.find(p => p.status === 'warn');
-      if (venc && !warn) return { cls:'tag-red',    txt:'Período Vencido' };
-      if (warn)          return { cls:'tag-orange', txt:`Vence em ${warn.dias}d` };
+      if (venc) return { cls:'tag-red',    txt:'Período Vencido' };
+      if (warn) return { cls:'tag-orange', txt:`Vence em ${warn.dias}d` };
     }
     return { cls:'tag-green', txt:'Ativo' };
+  },
+
+  // ── Comissão do recrutador em um contrato ──
+  comissaoRecrutador(c) {
+    if (!c.recrutador) return 0;
+    if (c.tipoComissao === 'percentual') {
+      return Calc.receita(c) * ((c.comissaoRec || 0) / 100);
+    }
+    if (c.tipoComissao === 'fixo') {
+      return c.comissaoFixo || 0;
+    }
+    return 0;
   },
 };
 
@@ -366,8 +325,7 @@ const UI = {
     const el = document.getElementById(id);
     if (!el) return;
     el.classList.add('open');
-    const modal = el.querySelector('.modal');
-    if (modal) modal.scrollTop = 0;
+    el.querySelector('.modal')?.scrollTo(0,0);
   },
 
   closeModal(id) {
@@ -375,9 +333,25 @@ const UI = {
   },
 
   filtrar(tbodyId, q) {
-    const trs = document.querySelectorAll(`#${tbodyId} tr`);
+    const trs = document.querySelectorAll(`#${tbodyId} tr[data-search]`);
     const ql  = (q||'').toLowerCase().trim();
-    trs.forEach(tr => tr.style.display = tr.textContent.toLowerCase().includes(ql) ? '' : 'none');
+    trs.forEach(tr => {
+      const txt = (tr.dataset.search || '').toLowerCase();
+      tr.style.display = txt.includes(ql) ? '' : 'none';
+    });
+  },
+
+  loading(show, msg = 'Carregando...') {
+    let el = document.getElementById('_cc_loading');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = '_cc_loading';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;height:3px;background:linear-gradient(90deg,#1e40af,#3b82f6);transition:opacity .3s;transform-origin:left';
+      document.body.appendChild(el);
+    }
+    el.style.opacity = show ? '1' : '0';
+    el.style.animation = show ? 'none' : '';
+    if (show) el.style.width = '70%'; else el.style.width = '100%';
   },
 };
 
@@ -390,7 +364,7 @@ const Export = {
     const esc = v => `"${String(v??'').replace(/"/g,'""')}"`;
     const csv = bom + [headers, ...rows].map(r => r.map(esc).join(sep)).join('\r\n');
     const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' })),
+      href:     URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' })),
       download: filename,
     });
     a.click(); URL.revokeObjectURL(a.href);
@@ -408,7 +382,7 @@ const Export = {
         h2,h3{color:#1e40af}
       </style></head><body>${htmlContent}</body></html>`;
     const a = Object.assign(document.createElement('a'), {
-      href: URL.createObjectURL(new Blob(['\ufeff', doc], { type:'application/msword' })),
+      href:     URL.createObjectURL(new Blob(['\ufeff', doc], { type:'application/msword' })),
       download: filename,
     });
     a.click(); URL.revokeObjectURL(a.href);
@@ -417,7 +391,7 @@ const Export = {
 };
 
 // ══════════════════════════════════════
-// NAV INIT (sidebar + topbar)
+// NAV INIT
 // ══════════════════════════════════════
 function _navInit() {
   const toggle = document.getElementById('sb-toggle');
