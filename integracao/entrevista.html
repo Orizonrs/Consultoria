@@ -2338,23 +2338,37 @@ function atualizarPreviewScore() {
   if (_motTrajetoria)  motNota = Math.min(10, motNota + 1);
   if (_motGenerica)    motNota = Math.max(1,  motNota - 1);
 
-  // discNota: cruza perfil DISC com tipo de vaga, igual ao fallback
+  // discNota: bônus de compatibilidade de perfil — peso reduzido (0.5x)
+  // O DISC sozinho não deve inflar o score — serve só como bônus de alinhamento comportamental
   const _discDom = (DOM || '').toUpperCase();
   const _vagaTipo = (VAGA || '').toLowerCase();
-  let discNota = (PCT.D + PCT.I + PCT.S + PCT.C > 0) ? 6 : 5;
-  if (_discDom) {
-    const _op = /(produção|operador|montador|soldador|auxiliar|estoque|logística|motorista)/i.test(_vagaTipo);
+  let discNota = 0; // começa em 0 — só pontua se tiver compatibilidade real
+  if (_discDom && (PCT.D + PCT.I + PCT.S + PCT.C > 0)) {
+    const _op = /(produção|operador|montador|soldador|auxiliar|estoque|logística|motorista|carpinteiro|pedreiro|pintor|eletricista)/i.test(_vagaTipo);
     const _ldr = /(supervisor|gerente|coordenador|líder|gestor)/i.test(_vagaTipo);
     const _vnd = /(vendas|comercial|representante|consultor)/i.test(_vagaTipo);
-    if (_op  && (_discDom === 'S' || _discDom === 'C')) discNota = 8;
-    else if (_ldr && (_discDom === 'D' || _discDom === 'I')) discNota = 8;
-    else if (_vnd && (_discDom === 'I' || _discDom === 'D')) discNota = 8;
+    if (_op  && (_discDom === 'S' || _discDom === 'C')) discNota = 5;
+    else if (_ldr && (_discDom === 'D' || _discDom === 'I')) discNota = 5;
+    else if (_vnd && (_discDom === 'I' || _discDom === 'D')) discNota = 5;
+    else discNota = 2; // DISC feito mas sem alinhamento claro
   }
 
-  const score = Math.round(expNota*5.5 + compNota*1.5 + motNota*2.0 + discNota*1.0);
-  // Teto por área: se expNota baixo (área diferente), limita a 60 — igual ao fallback
-  const _tetoPreview = expNota <= 5 ? 60 : 100;
-  const scoreFinal = Math.max(20, Math.min(_tetoPreview, score));
+  // Penalidade por campos essenciais vazios
+  // Se trajetória + experiência na vaga + motivação estão todos vazios → score baixo de verdade
+  const _camposEssenciaisVazios = historiaW < 10 && expVaga.trim().length < 10 && motivacaoW < 10;
+  const _semCompetencias = compNota === 0;
+
+  // Pesos: Experiência 55%, Competências 15%, Motivação 20%, DISC 10%
+  const score = Math.round(expNota*5.5 + compNota*1.5 + motNota*2.0 + discNota*0.5);
+
+  // Teto por área: se expNota baixo, limita a 55
+  const _tetoPreview = expNota <= 3 ? 40 : expNota <= 5 ? 55 : 100;
+
+  // Se campos essenciais vazios, trava no máximo em 25% — independente do DISC
+  const _tetoFinal = _camposEssenciaisVazios ? 25 : _tetoPreview;
+
+  // Remove o mínimo artificial de 20 — se não preencheu nada, score pode ser 0
+  const scoreFinal = Math.max(0, Math.min(_tetoFinal, score));
 
   const numEl   = document.getElementById('previewScoreNum');
   const barEl   = document.getElementById('previewScoreBar');
@@ -2839,7 +2853,7 @@ function calcularCurriculoFitLocal(exps, cursos, certs, habs, textoPDF) {
   let score = Math.round(Math.min(100, scorePonderado + bonusFormacao));
   // Teto por área incompatível — alinhado com o prompt da IA (máx 35%)
   if (!areaCompativel) score = Math.min(score, 35);
-  score = Math.max(20, score); // mínimo 20% mesmo sem área compatível
+  score = Math.max(0, score); // sem mínimo artificial
   const nivel = score >= 92 ? 'Excelente' : score >= 70 ? 'Alto' : score >= 55 ? 'Intermediário' : score >= 35 ? 'Médio' : score >= 20 ? 'Baixo' : 'Muito Baixo';
 
   // ── DIFERENCIAIS E LACUNAS ──
@@ -4975,10 +4989,10 @@ ATENÇÃO: As competências STAR (Comunicação, Resiliência, Equipe, Resultado
 O currículo NÃO levanta esses tetos — ele já foi avaliado na Etapa 0.
 
 MÍNIMO DE PONTUAÇÃO:
-→ fit_score NUNCA = 0 se o candidato preencheu qualquer campo da entrevista, mesmo que o conteúdo seja inválido, fora de contexto ou genérico. Preencheu algo = mínimo 20%.
+→ fit_score pode ser baixo (0-15) se o conteúdo preenchido for genérico, aleatório, sem relação com trabalho, ou claramente um teste. Conteúdo sem valor profissional real = score baixo.
 → fit_score = 0 APENAS se todos os campos estão completamente vazios — sem nenhum texto digitado ou captado por voz.
-→ Se o candidato preencheu ao menos um campo com conteúdo relacionado a trabalho (mesmo genérico): fit_score mínimo é 20%.
-→ Se o candidato preencheu o campo obrigatório ("Me fale sobre você") com conteúdo profissional válido: fit_score mínimo é 20%.
+→ Se o candidato preencheu ao menos um campo com conteúdo REALMENTE relacionado a trabalho e com substância mínima: fit_score mínimo é 15%.
+→ Se o candidato preencheu o campo obrigatório com conteúdo profissional válido e substancial: fit_score mínimo é 15%.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -5021,12 +5035,12 @@ CASO ESPECIAL — MESMA ÁREA, NÍVEL DIFERENTE (ex: Analista Financeiro Júnior
 FLUXO ESPECIAL — PRIMEIRO EMPREGO:
 Se TEMPO TOTAL = "Primeiro emprego / Sem experiência":
 - Avalie potencial, coerência, motivação e escolaridade
-- Fit score mínimo: 20 — não penalize ausência de experiência
+- Fit score mínimo: 15 — não penalize ausência de experiência, mas avalie coerência e motivação
 - Não aplique penalidades de experiência ou conquistas
 
 REGRA DE OURO:
-→ fit_score NUNCA < 30 para primeiro emprego que preencheu os campos com conteúdo relacionado a trabalho.
-→ fit_score NUNCA < 20 para qualquer candidato que preencheu o campo obrigatório com conteúdo relacionado a trabalho, mesmo que genérico.
+→ fit_score NUNCA < 20 para primeiro emprego que preencheu os campos com conteúdo REAL relacionado a trabalho.
+→ fit_score pode ser 10-20 para candidatos que preencheram com conteúdo muito genérico ou pouco substancial.
 → fit_score = 0 apenas se todos os campos estão vazios ou com texto completamente fora de contexto profissional.
 Essas regras têm prioridade sobre qualquer penalidade calculada.
 
