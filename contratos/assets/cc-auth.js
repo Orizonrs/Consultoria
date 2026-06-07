@@ -37,8 +37,10 @@ window.__ccAuthReady = async function () {
     const user = session.user;
     const nomeEl  = document.getElementById('user-nome');
     const emailEl = document.getElementById('user-email');
-    if (nomeEl)  nomeEl.textContent  = user.user_metadata?.nome || user.email.split('@')[0];
-    if (emailEl) emailEl.textContent = user.email;
+    const nomeSalvo  = localStorage.getItem('ex_cc_nome_exibicao');
+    const cargoSalvo = localStorage.getItem('ex_cc_cargo_exibicao');
+    if (nomeEl)  nomeEl.textContent  = nomeSalvo  || user.user_metadata?.nome || user.email.split('@')[0];
+    if (emailEl) emailEl.textContent = cargoSalvo || user.email;
 
     // ── Logout global ──
     window.ccLogout = async () => {
