@@ -51,6 +51,26 @@
       <div class="sec-sub">Taxas, parâmetros do sistema e backup de dados</div></div>
     </div>
 
+    <!-- Perfil do Usuário -->
+    <div class="config-box" style="margin-bottom:1rem">
+      <div class="config-box-title">👤 Meu Perfil</div>
+      <div class="config-grid">
+        <div class="form-group">
+          <label class="fl">Nome de Exibição</label>
+          <input class="fi" id="cfgNomeExibicao" placeholder="Ex: Felipe Andrade"/>
+          <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Este nome aparece no rodapé da barra lateral</span>
+        </div>
+        <div class="form-group">
+          <label class="fl">Cargo / Função</label>
+          <input class="fi" id="cfgCargoExibicao" placeholder="Ex: Consultor, Gerente..."/>
+          <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Aparece abaixo do nome na barra lateral</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:.8rem">
+        <button class="btn btn-primary btn-sm" onclick="salvarPerfil()">✓ Salvar Perfil</button>
+      </div>
+    </div>
+
     <!-- Taxas -->
     <div class="config-box">
       <div class="config-box-title">💰 Taxas da Consultoria</div>
@@ -138,12 +158,30 @@ function carregar() {
   UI.setVal('cfgTaxaEstMax',    cfg.taxaEstMax);
   UI.setVal('cfgTaxaCLT',       cfg.taxaCLT);
   UI.setVal('cfgAlertaDias',    cfg.alertaDias);
+  // Perfil
+  UI.setVal('cfgNomeExibicao',  localStorage.getItem('ex_cc_nome_exibicao') || '');
+  UI.setVal('cfgCargoExibicao', localStorage.getItem('ex_cc_cargo_exibicao') || '');
   const keys = Object.keys(localStorage).filter(k=>k.startsWith('ex_cc_'));
   let total = 0;
   document.getElementById('storageInfo').innerHTML = keys.map(k=>{
     const s=(localStorage.getItem(k)||'').length; total+=s;
     return `<div style="display:flex;justify-content:space-between;margin-bottom:.3rem"><span>${k.replace('ex_cc_','')}</span><span>${(s/1024).toFixed(1)} KB</span></div>`;
   }).join('') + `<div style="border-top:1px solid var(--border);margin-top:.3rem;padding-top:.3rem;font-weight:700">Total: ${(total/1024).toFixed(1)} KB</div>`;
+}
+
+function salvarPerfil() {
+  const nome  = UI.val('cfgNomeExibicao').trim();
+  const cargo = UI.val('cfgCargoExibicao').trim();
+  if (nome)  localStorage.setItem('ex_cc_nome_exibicao',  nome);
+  else       localStorage.removeItem('ex_cc_nome_exibicao');
+  if (cargo) localStorage.setItem('ex_cc_cargo_exibicao', cargo);
+  else       localStorage.removeItem('ex_cc_cargo_exibicao');
+  // Atualiza sidebar na hora
+  const nomeEl  = document.getElementById('user-nome');
+  const emailEl = document.getElementById('user-email');
+  if (nomeEl  && nome)  nomeEl.textContent  = nome;
+  if (emailEl && cargo) emailEl.textContent = cargo;
+  UI.toast('Perfil salvo! Aparecerá em todas as páginas.', 'ok');
 }
 
 function salvar() {
