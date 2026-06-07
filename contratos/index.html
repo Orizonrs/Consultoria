@@ -223,8 +223,9 @@ body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50
       <div class="hero-sub">Receitas, períodos, alertas e projeções em tempo real</div>
     </div>
     <div class="hero-right">
-      <div class="hero-stat green"><div class="hero-stat-val" id="hs-receita">—</div><div class="hero-stat-lbl">Receita / mês</div></div>
-      <div class="hero-stat blue"><div class="hero-stat-val" id="hs-contratos">—</div><div class="hero-stat-lbl">Contratos ativos</div></div>
+      <div class="hero-stat green"><div class="hero-stat-val" id="hs-bruto">—</div><div class="hero-stat-lbl">Valor Arrecadado / mês</div></div>
+      <div class="hero-stat blue"><div class="hero-stat-val" id="hs-comissao">—</div><div class="hero-stat-lbl">Comissão Orizon / mês</div></div>
+      <div class="hero-stat" style="--hc:var(--green)"><div class="hero-stat-val" id="hs-liquido" style="color:var(--green)">—</div><div class="hero-stat-lbl">Líquido (após recrutadores)</div></div>
       <div class="hero-stat orange"><div class="hero-stat-val" id="hs-alertas">—</div><div class="hero-stat-lbl">Alertas</div></div>
     </div>
   </div>
@@ -233,22 +234,22 @@ body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50
 
     <div id="alertasArea"></div>
 
-    <div class="sec-label">Métricas Gerais</div>
+    <div class="sec-label">Financeiro do Mês</div>
     <div class="metric-strip" id="metricStrip"></div>
 
-    <div class="sec-label">Receita &amp; Composição</div>
+    <div class="sec-label">Composição da Receita</div>
     <div class="grid-2-1">
       <div class="chart-card">
         <div class="chart-title">
           <div class="chart-title-ico green">💰</div>
-          <div class="chart-title-txt">Receita por Empresa<div class="chart-title-sub">Estágio + CLT — top 8</div></div>
+          <div class="chart-title-txt">Arrecadado por Empresa<div class="chart-title-sub">Bruto e comissão — top 8</div></div>
         </div>
         <div class="chart-wrap" style="height:220px"><canvas id="cEmpresas"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="chart-title">
           <div class="chart-title-ico purple">🥧</div>
-          <div class="chart-title-txt">Composição<div class="chart-title-sub">Estágio × CLT</div></div>
+          <div class="chart-title-txt">Composição da Comissão<div class="chart-title-sub">Estágio × CLT</div></div>
         </div>
         <div class="chart-wrap" style="height:220px"><canvas id="cTipos"></canvas></div>
       </div>
@@ -310,7 +311,7 @@ body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50
       <div class="tbl-card">
         <div class="chart-title">
           <div class="chart-title-ico green">🏢</div>
-          <div class="chart-title-txt">Top Empresas por Receita<div class="chart-title-sub">Ranking mensal</div></div>
+          <div class="chart-title-txt">Top Empresas por Arrecadado<div class="chart-title-sub">Bruto + comissão — ranking mensal</div></div>
         </div>
         <div id="tEmpresas"></div>
         <a href="relatorios.html" class="tbl-btn">Relatório completo →</a>
@@ -342,10 +343,25 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const clts=all.filter(c=>c.tipo==='clt');
   const atEst=ests.filter(c=>c.situacao==='ativo');
   const atCLT=clts.filter(c=>c.situacao==='ativo');
-  const recEst=atEst.reduce((s,c)=>s+Calc.receita(c),0);
-  const recCLT=atCLT.reduce((s,c)=>s+Calc.receita(c),0);
-  const recTotal=recEst+recCLT;
 
+  // ── FINANCEIRO ──
+  // Valor bruto arrecadado = o que as empresas pagam (bolsa + salário)
+  const brutoEst = atEst.reduce((s,c)=>s+(c.bolsa||0),0);
+  const brutoCLT = atCLT.reduce((s,c)=>s+(c.salario||0),0);
+  const brutoTotal = brutoEst + brutoCLT;
+
+  // Comissão da Orizon = taxa aplicada sobre o bruto
+  const comissaoEst = atEst.reduce((s,c)=>s+Calc.receita(c),0);
+  const comissaoCLT = atCLT.reduce((s,c)=>s+Calc.receita(c),0);
+  const comissaoTotal = comissaoEst + comissaoCLT;
+
+  // Comissão de recrutadores = desconto sobre a comissão da Orizon
+  const comissaoRec = [...atEst,...atCLT].reduce((s,c)=>s+Calc.comissaoRecrutador(c),0);
+
+  // Líquido = comissão Orizon − comissão recrutadores
+  const liquido = comissaoTotal - comissaoRec;
+
+  // ── ALERTAS (apenas estagiários com período vencido/warn) ──
   const alerts={warn:[],vencido:[]};
   atEst.forEach(c=>Calc.periodos(c,cfg).forEach(p=>{
     if(p.status==='warn')alerts.warn.push({c,p});
@@ -353,13 +369,18 @@ document.addEventListener('DOMContentLoaded',async()=>{
   }));
   const nAlerts=alerts.warn.length+alerts.vencido.length;
 
-  document.getElementById('hs-receita').textContent=Fmt.brl(recTotal);
-  document.getElementById('hs-contratos').textContent=atEst.length+atCLT.length;
+  // ── HERO ──
+  document.getElementById('hs-bruto').textContent=Fmt.brl(brutoTotal);
+  document.getElementById('hs-comissao').textContent=Fmt.brl(comissaoTotal);
+  document.getElementById('hs-liquido').textContent=Fmt.brl(liquido);
   document.getElementById('hs-alertas').textContent=nAlerts;
-  document.getElementById('stat-ativos').innerHTML=`Ativos: <strong>${atEst.length+atCLT.length}</strong>`;
-  document.getElementById('stat-rec').innerHTML=`Receita/mês: <strong>${Fmt.brl(recTotal)}</strong>`;
+
+  // ── STATUS BAR ──
+  document.getElementById('stat-ativos').innerHTML=`Contratos: <strong>${atEst.length+atCLT.length}</strong>`;
+  document.getElementById('stat-rec').innerHTML=`Comissão/mês: <strong>${Fmt.brl(comissaoTotal)}</strong>`;
   document.getElementById('stat-alertas').innerHTML=`Alertas: <strong>${nAlerts}</strong>`;
 
+  // ── BANNER DE ALERTAS ──
   if(nAlerts>0){
     document.getElementById('alertasArea').innerHTML=`
     <div style="background:rgba(243,156,18,.07);border:1px solid rgba(243,156,18,.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem;font-size:.76rem;">
@@ -370,30 +391,33 @@ document.addEventListener('DOMContentLoaded',async()=>{
     </div>`;
   }
 
-  const mediaBolsa=atEst.length?atEst.reduce((s,c)=>s+c.bolsa,0)/atEst.length:0;
-  const taxaMedia=atEst.length?atEst.reduce((s,c)=>s+Calc.receita(c)/c.bolsa*100,0)/atEst.length:0;
+  // ── MÉTRICAS FINANCEIRAS ──
+  const taxaMediaEst = atEst.length ? atEst.reduce((s,c)=>s+(c.taxa||0),0)/atEst.length : 0;
+  const taxaMediaCLT = atCLT.length ? atCLT.reduce((s,c)=>s+(c.taxa||0),0)/atCLT.length : 0;
 
   document.getElementById('metricStrip').innerHTML=[
-    {v:atEst.length,         l:'Estagiários ativos', cls:'c-accent'},
-    {v:atCLT.length,         l:'CLTs ativos',         cls:'c-blue'},
-    {v:all.filter(c=>c.situacao==='efetivado').length,l:'Efetivados CLT',cls:'c-blue'},
-    {v:Fmt.brl(recTotal),    l:'Receita total/mês',   cls:'c-green'},
-    {v:Fmt.brl(recEst*12),   l:'Projeção anual (estágio)',cls:'c-accent'},
-    {v:Fmt.brl(mediaBolsa),  l:'Bolsa média',          cls:'c-muted'},
-    {v:taxaMedia.toFixed(1)+'%',l:'Taxa média',        cls:'c-muted'},
-    {v:nAlerts,              l:'Alertas ativos',       cls:nAlerts>0?'c-orange':'c-green'},
-  ].map(k=>`<div class="metric"><div class="metric-v ${k.cls}">${k.v}</div><div class="metric-l">${k.l}</div></div>`).join('');
+    {v:Fmt.brl(brutoTotal),       l:'Arrecadado bruto/mês',   cls:'c-accent',  tip:'Soma das bolsas + salários'},
+    {v:Fmt.brl(comissaoTotal),    l:'Comissão Orizon/mês',    cls:'c-blue',    tip:'Taxa aplicada sobre o bruto'},
+    {v:Fmt.brl(comissaoRec),      l:'Repasse recrutadores',   cls:'c-orange',  tip:'Comissões a pagar aos recrutadores'},
+    {v:Fmt.brl(liquido),          l:'Lucro líquido/mês',      cls:'c-green',   tip:'Comissão − repasses'},
+    {v:Fmt.brl(comissaoTotal*12), l:'Projeção anual',         cls:'c-accent',  tip:'Comissão atual × 12'},
+    {v:atEst.length,              l:'Estagiários ativos',     cls:'c-muted'},
+    {v:atCLT.length,              l:'CLTs ativos',            cls:'c-muted'},
+    {v:taxaMediaEst.toFixed(1)+'% / '+taxaMediaCLT.toFixed(1)+'%', l:'Taxa média Est / CLT', cls:'c-muted'},
+  ].map(k=>`<div class="metric" title="${k.tip||''}"><div class="metric-v ${k.cls}">${k.v}</div><div class="metric-l">${k.l}</div></div>`).join('');
 
+  // Empresas: mostra bruto arrecadado (o que cada empresa paga)
   const empMap={};
   all.filter(c=>c.situacao==='ativo').forEach(c=>{
-    if(!empMap[c.empresa])empMap[c.empresa]={est:0,clt:0};
-    if(c.tipo==='estagiario')empMap[c.empresa].est+=Calc.receita(c);
-    else empMap[c.empresa].clt+=Calc.receita(c);
+    if(!empMap[c.empresa])empMap[c.empresa]={brutoEst:0,brutoCLT:0,comEst:0,comCLT:0};
+    if(c.tipo==='estagiario'){empMap[c.empresa].brutoEst+=(c.bolsa||0);empMap[c.empresa].comEst+=Calc.receita(c);}
+    else{empMap[c.empresa].brutoCLT+=(c.salario||0);empMap[c.empresa].comCLT+=Calc.receita(c);}
   });
-  const empSort=Object.entries(empMap).sort((a,b)=>(b[1].est+b[1].clt)-(a[1].est+a[1].clt)).slice(0,8);
-  new Chart(document.getElementById('cEmpresas'),{type:'bar',data:{labels:empSort.map(([e])=>e.length>16?e.slice(0,14)+'…':e),datasets:[{label:'Estágio',data:empSort.map(([,v])=>v.est),backgroundColor:'rgba(59,130,246,.75)',borderRadius:4},{label:'CLT',data:empSort.map(([,v])=>v.clt),backgroundColor:'rgba(52,152,219,.75)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:12}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Fmt.brl(ctx.raw)}`}}},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>Fmt.brl(v)}}}}});
+  const empSort=Object.entries(empMap).sort((a,b)=>(b[1].brutoEst+b[1].brutoCLT)-(a[1].brutoEst+a[1].brutoCLT)).slice(0,8);
+  new Chart(document.getElementById('cEmpresas'),{type:'bar',data:{labels:empSort.map(([e])=>e.length>16?e.slice(0,14)+'…':e),datasets:[{label:'Bruto Estágio',data:empSort.map(([,v])=>v.brutoEst),backgroundColor:'rgba(59,130,246,.6)',borderRadius:4},{label:'Bruto CLT',data:empSort.map(([,v])=>v.brutoCLT),backgroundColor:'rgba(52,152,219,.6)',borderRadius:4},{label:'Comissão Est.',data:empSort.map(([,v])=>v.comEst),backgroundColor:'rgba(168,216,95,.75)',borderRadius:4},{label:'Comissão CLT',data:empSort.map(([,v])=>v.comCLT),backgroundColor:'rgba(46,204,113,.75)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8,font:{size:10}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Fmt.brl(ctx.raw)}`}}},scales:{x:{stacked:true,grid:{color:'rgba(255,255,255,.04)'}},y:{stacked:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>Fmt.brl(v)}}}}});
 
-  new Chart(document.getElementById('cTipos'),{type:'doughnut',data:{labels:['Receita Estágio','Receita CLT'],datasets:[{data:[recEst,recCLT],backgroundColor:['rgba(59,130,246,.8)','rgba(52,152,219,.8)'],borderColor:['#3b82f6','#3498db'],borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${Fmt.brl(ctx.raw)} (${recTotal?Math.round(ctx.raw/recTotal*100):0}%)`}}}},plugins:[{id:'ct',afterDraw(ch){const{ctx,chartArea:{width:w,height:h,left:l,top:t}}=ch;ctx.save();ctx.font=`900 13px 'Sora',sans-serif`;ctx.fillStyle='#3b82f6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(Fmt.brl(recTotal),l+w/2,t+h/2-7);ctx.font=`600 9px 'Sora',sans-serif`;ctx.fillStyle='#777';ctx.fillText('total/mês',l+w/2,t+h/2+9);ctx.restore();}}]});
+  // Composição: mostra bruto e comissão lado a lado
+  new Chart(document.getElementById('cTipos'),{type:'doughnut',data:{labels:['Comissão Estágio','Comissão CLT'],datasets:[{data:[comissaoEst,comissaoCLT],backgroundColor:['rgba(59,130,246,.8)','rgba(52,152,219,.8)'],borderColor:['#3b82f6','#3498db'],borderWidth:2,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${Fmt.brl(ctx.raw)} (${comissaoTotal?Math.round(ctx.raw/comissaoTotal*100):0}%)`}}}},plugins:[{id:'ct',afterDraw(ch){const{ctx,chartArea:{width:w,height:h,left:l,top:t}}=ch;ctx.save();ctx.font=`900 13px 'Sora',sans-serif`;ctx.fillStyle='#3b82f6';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(Fmt.brl(comissaoTotal),l+w/2,t+h/2-7);ctx.font=`600 9px 'Sora',sans-serif`;ctx.fillStyle='#777';ctx.fillText('comissão/mês',l+w/2,t+h/2+9);ctx.restore();}}]});
 
   const sit={};all.forEach(c=>{sit[c.situacao]=(sit[c.situacao]||0)+1;});
   const sitCores={ativo:'rgba(46,204,113,.8)',cancelado:'rgba(231,76,60,.8)',efetivado:'rgba(52,152,219,.8)',concluido:'rgba(167,139,250,.8)',desligado:'rgba(231,76,60,.6)',licenca:'rgba(243,156,18,.8)'};
@@ -410,7 +434,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   new Chart(document.getElementById('cPeriodos'),{type:'doughnut',data:{labels:['Concluídos ✓','Ativos ▶','A Vencer ⚠️','Vencidos ✕','Futuros'],datasets:[{data:[ps.ok,ps.ativo,ps.warn,ps.vencido,ps.futuro],backgroundColor:['rgba(46,204,113,.75)','rgba(59,130,246,.75)','rgba(243,156,18,.75)','rgba(231,76,60,.75)','rgba(255,255,255,.08)'],borderWidth:1,hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{position:'right',labels:{boxWidth:10,padding:8,font:{size:10}}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw}`}}}}});
 
   const meses=Array.from({length:12},(_,i)=>{const d=new Date();d.setMonth(d.getMonth()+i);return d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});});
-  new Chart(document.getElementById('cProjecao'),{type:'line',data:{labels:meses,datasets:[{label:'Conservador (+1,5%/mês)',data:meses.map((_,i)=>Math.round(recTotal*Math.pow(1.015,i))),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.4,fill:true,pointRadius:3,borderWidth:2},{label:'Otimista (+3%/mês)',data:meses.map((_,i)=>Math.round(recTotal*Math.pow(1.03,i))),borderColor:'rgba(52,152,219,.6)',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[4,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Fmt.brl(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>Fmt.brl(v)}}}}});
+  new Chart(document.getElementById('cProjecao'),{type:'line',data:{labels:meses,datasets:[{label:'Comissão conservador (+1,5%/mês)',data:meses.map((_,i)=>Math.round(comissaoTotal*Math.pow(1.015,i))),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',tension:.4,fill:true,pointRadius:3,borderWidth:2},{label:'Comissão otimista (+3%/mês)',data:meses.map((_,i)=>Math.round(comissaoTotal*Math.pow(1.03,i))),borderColor:'rgba(52,152,219,.6)',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:2,borderWidth:1.5,borderDash:[4,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:10}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${Fmt.brl(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>Fmt.brl(v)}}}}});
 
   const prox=[];
   atEst.forEach(c=>{const p=Calc.periodos(c,cfg).find(x=>['ativo','warn','vencido'].includes(x.status));if(p)prox.push({nome:c.nome,empresa:c.empresa,fim:p.fim,dias:p.dias,num:p.num,status:p.status});});
@@ -420,8 +444,19 @@ document.addEventListener('DOMContentLoaded',async()=>{
     :prox.slice(0,6).map(p=>`<div class="tbl-row"><div><div class="tbl-row-name">${p.nome.split(' ').slice(0,2).join(' ')}</div><div class="tbl-row-sub">${p.empresa} · ${p.num}º período</div></div><div class="tbl-row-right"><div class="tbl-row-val">${Fmt.dt(p.fim)}</div><span class="tag ${p.status==='vencido'?'tag-red':p.status==='warn'?'tag-orange':'tag-green'}" style="margin-top:.2rem">${p.dias<0?Math.abs(p.dias)+'d atrás':p.dias+'d'}</span></div></div>`).join('');
 
   document.getElementById('tEmpresas').innerHTML=empSort.slice(0,6).map(([e,v])=>{
-    const total=v.est+v.clt;const maxT=empSort[0]?empSort[0][1].est+empSort[0][1].clt:1;
-    return `<div style="margin-bottom:.8rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.3rem"><span style="font-weight:700">${e}</span><span style="color:var(--accent);font-weight:800">${Fmt.brl(total)}/mês</span></div><div class="pbar"><div class="pbar-fill" style="width:${Math.round(total/maxT*100)}%"></div></div><div style="font-size:.6rem;color:var(--muted);margin-top:.2rem">${v.est>0?'Est: '+Fmt.brl(v.est):''}${v.est>0&&v.clt>0?' · ':''}${v.clt>0?'CLT: '+Fmt.brl(v.clt):''}</div></div>`;}).join('');
+    const bruto=v.brutoEst+v.brutoCLT;const com=v.comEst+v.comCLT;
+    const maxB=empSort[0]?(empSort[0][1].brutoEst+empSort[0][1].brutoCLT):1;
+    return `<div style="margin-bottom:.85rem">
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:.25rem">
+        <span style="font-weight:700">${e}</span>
+        <span style="color:var(--accent);font-weight:800">${Fmt.brl(bruto)}/mês</span>
+      </div>
+      <div class="pbar"><div class="pbar-fill" style="width:${Math.round(bruto/maxB*100)}%"></div></div>
+      <div style="font-size:.6rem;color:var(--muted);margin-top:.25rem;display:flex;gap:.6rem">
+        <span>Bruto: <strong style="color:var(--text)">${Fmt.brl(bruto)}</strong></span>
+        <span>Comissão: <strong style="color:var(--accent)">${Fmt.brl(com)}</strong></span>
+      </div>
+    </div>`;}).join('');
 });
 </script>
 </body>
