@@ -124,6 +124,31 @@
         </table>
       </div>
     </div>
+  <!-- Histórico Mensal -->
+    <div class="tbl-wrap" style="margin-top:1rem;overflow:hidden">
+      <div class="tbl-hd" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem">
+        <span class="tbl-title">📅 Histórico Mensal de Estagiários</span>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="mudarAnoEst(-1)">◀</button>
+          <span id="anoEstLabel" style="font-size:.82rem;font-weight:800;min-width:45px;text-align:center"></span>
+          <button class="btn btn-ghost btn-sm" onclick="mudarAnoEst(+1)">▶</button>
+        </div>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr>
+            <th>Mês</th>
+            <th>Ativos no Mês</th>
+            <th>Total Bolsas</th>
+            <th>Receita Bruta</th>
+            <th>Minha Comissão</th>
+            <th>Líquido p/ Empresa</th>
+          </tr></thead>
+          <tbody id="tbodyMensalEst"></tbody>
+          <tfoot id="tfootMensalEst"></tfoot>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -509,7 +534,92 @@ async function excluir(id) {
   }
 }
 
-function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); }
+function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); renderMensalEst(); }
+
+
+// ── Histórico Mensal Estagiários ──
+let anoEst = new Date().getFullYear();
+const MESES_FULL_EST = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function mudarAnoEst(delta) {
+  anoEst += delta;
+  renderMensalEst();
+}
+
+function estagiarioAtivoNoMes(c, anoMes) {
+  // Um estagiário é ativo num mês se inicio1 <= anoMes e situacao não é cancelado/concluido naquele ponto
+  if (!c.inicio1) return false;
+  if (c.inicio1.slice(0,7) > anoMes) return false;
+  // Verifica fim máximo: inicio1 + 24 meses
+  const fimMax = new Date(c.inicio1 + 'T12:00:00');
+  fimMax.setMonth(fimMax.getMonth() + 24);
+  const fimStr = fimMax.toISOString().slice(0,7);
+  if (anoMes > fimStr) return false;
+  // Se desligado/cancelado, usa data de admissao como proxy do fim (não temos data de saída explícita)
+  if (c.situacao === 'cancelado' || c.situacao === 'concluido' || c.situacao === 'desligado') {
+    // Mostra apenas se o mês for anterior ou igual ao mês atual real
+    const hoje = new Date();
+    const mesHoje = hoje.toISOString().slice(0,7);
+    return anoMes <= mesHoje;
+  }
+  return true;
+}
+
+function renderMensalEst() {
+  const label = document.getElementById('anoEstLabel');
+  if (label) label.textContent = anoEst;
+  const tbody = document.getElementById('tbodyMensalEst');
+  const tfoot = document.getElementById('tfootMensalEst');
+  if (!tbody) return;
+
+  const lista = estagiarios();
+  const hoje = new Date();
+  let totRec = 0, totComiss = 0, totLiq = 0;
+
+  const rows = MESES_FULL_EST.map((nome, mi) => {
+    const anoMes = `${anoEst}-${String(mi+1).padStart(2,'0')}`;
+    const futuro = anoEst > hoje.getFullYear() || (anoEst === hoje.getFullYear() && mi > hoje.getMonth());
+
+    const ativos = lista.filter(c => estagiarioAtivoNoMes(c, anoMes));
+    const rec    = ativos.reduce((s,c) => s + Calc.receita(c), 0);
+    const comiss = ativos.reduce((s,c) => s + calcComissaoRec(c), 0);
+    const liq    = rec - comiss;
+
+    totRec    += rec;
+    totComiss += comiss;
+    totLiq    += liq;
+
+    if (futuro && ativos.length === 0) {
+      return `<tr style="opacity:.3">
+        <td style="font-size:.78rem;font-weight:700">${nome}</td>
+        <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
+      </tr>`;
+    }
+
+    const isMesAtual = anoMes === `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+
+    return `<tr style="${isMesAtual ? 'background:rgba(59,130,246,.04)' : ''}">
+      <td style="font-size:.78rem;font-weight:${isMesAtual ? '900' : '700'};color:${isMesAtual ? 'var(--accent)' : 'var(--text)'}">
+        ${nome}${isMesAtual ? ' <span class="tag tag-blue" style="font-size:.55rem">Atual</span>' : ''}
+      </td>
+      <td><span class="tag ${ativos.length > 0 ? 'tag-green' : 'tag-gray'}">${ativos.length}</span></td>
+      <td style="font-size:.78rem">${rec > 0 ? Fmt.brl(ativos.reduce((s,c)=>s+c.bolsa,0)) : '<span style="opacity:.35">—</span>'}</td>
+      <td class="fw8">${rec > 0 ? Fmt.brl(rec) : '<span style="opacity:.35">—</span>'}</td>
+      <td style="color:var(--orange)">${comiss > 0 ? Fmt.brl(comiss) : '<span style="opacity:.35">—</span>'}</td>
+      <td class="fw8" style="color:var(--accent)">${liq > 0 ? Fmt.brl(liq) : '<span style="opacity:.35">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows;
+  tfoot.innerHTML = `<tr>
+    <td style="font-weight:800">TOTAL ${anoEst}</td>
+    <td>—</td>
+    <td>—</td>
+    <td class="fw8">${Fmt.brl(totRec)}</td>
+    <td style="color:var(--orange);font-weight:800">${Fmt.brl(totComiss)}</td>
+    <td class="fw8 c-accent">${Fmt.brl(totLiq)}</td>
+  </tr>`;
+}
 
 function exportarCSV() {
   Export.csv(

@@ -128,6 +128,32 @@
         <div id="recEmpresa"></div>
       </div>
     </div>
+
+    <!-- Histórico Mensal -->
+    <div class="tbl-wrap" style="margin-top:1rem;overflow:hidden">
+      <div class="tbl-hd" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem">
+        <span class="tbl-title">📅 Histórico Mensal de Colocações CLT</span>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="mudarAnoCLT(-1)">◀</button>
+          <span id="anoCLTLabel" style="font-size:.82rem;font-weight:800;min-width:45px;text-align:center"></span>
+          <button class="btn btn-ghost btn-sm" onclick="mudarAnoCLT(+1)">▶</button>
+        </div>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr>
+            <th>Mês</th>
+            <th>Colocações</th>
+            <th>Receita Bruta</th>
+            <th>Minha Comissão</th>
+            <th>Líquido p/ Empresa</th>
+            <th>Colaboradores</th>
+          </tr></thead>
+          <tbody id="tbodyMensal"></tbody>
+          <tfoot id="tfootMensal"></tfoot>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 </div>
@@ -488,7 +514,81 @@ async function excluir(id) {
   }
 }
 
-function renderTudo() { renderKPIs(); renderTabela(); renderAnalise(); }
+function renderTudo() { renderKPIs(); renderTabela(); renderAnalise(); renderMensal(); }
+
+
+// ── Histórico Mensal ──
+let anoCLT = new Date().getFullYear();
+const MESES_NOME_CLT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_FULL_CLT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function mudarAnoCLT(delta) {
+  anoCLT += delta;
+  renderMensal();
+}
+
+function renderMensal() {
+  const label = document.getElementById('anoCLTLabel');
+  if (label) label.textContent = anoCLT;
+  const tbody = document.getElementById('tbodyMensal');
+  const tfoot = document.getElementById('tfootMensal');
+  if (!tbody) return;
+
+  const lista = clts();
+  let totRec = 0, totComiss = 0, totLiq = 0, totColoc = 0;
+  const hoje = new Date();
+
+  const rows = MESES_NOME_CLT.map((nome, mi) => {
+    const anoMes = `${anoCLT}-${String(mi+1).padStart(2,'0')}`;
+    const futuro = anoCLT > hoje.getFullYear() || (anoCLT === hoje.getFullYear() && mi > hoje.getMonth());
+
+    // CLTs colocados neste mês (admissao neste anoMes)
+    const doMes = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
+    const rec     = doMes.reduce((s,c) => s + Calc.receita(c), 0);
+    const comiss  = doMes.reduce((s,c) => s + calcComissaoRec(c), 0);
+    const liq     = rec - comiss;
+
+    totRec    += rec;
+    totComiss += comiss;
+    totLiq    += liq;
+    totColoc  += doMes.length;
+
+    if (futuro && doMes.length === 0) {
+      return `<tr style="opacity:.3">
+        <td style="font-size:.78rem;font-weight:700">${MESES_FULL_CLT[mi]}</td>
+        <td><span class="tag tag-gray">—</span></td>
+        <td style="color:var(--muted)">—</td>
+        <td style="color:var(--muted)">—</td>
+        <td style="color:var(--muted)">—</td>
+        <td style="color:var(--muted);font-size:.7rem">—</td>
+      </tr>`;
+    }
+
+    const isMesAtual = anoMes === `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+    const nomes = doMes.map(c => c.nome.split(' ')[0]).join(', ') || '—';
+
+    return `<tr style="${isMesAtual ? 'background:rgba(59,130,246,.04)' : ''}">
+      <td style="font-size:.78rem;font-weight:${isMesAtual ? '900' : '700'};color:${isMesAtual ? 'var(--accent)' : 'var(--text)'}">
+        ${MESES_FULL_CLT[mi]}${isMesAtual ? ' <span class="tag tag-blue" style="font-size:.55rem">Atual</span>' : ''}
+      </td>
+      <td><span class="tag ${doMes.length > 0 ? 'tag-green' : 'tag-gray'}">${doMes.length}</span></td>
+      <td class="fw8">${rec > 0 ? Fmt.brl(rec) : '<span style="opacity:.35">—</span>'}</td>
+      <td style="color:var(--orange)">${comiss > 0 ? Fmt.brl(comiss) : '<span style="opacity:.35">—</span>'}</td>
+      <td class="fw8" style="color:var(--accent)">${liq > 0 ? Fmt.brl(liq) : '<span style="opacity:.35">—</span>'}</td>
+      <td style="font-size:.7rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${doMes.map(c=>c.nome).join(', ')}">${nomes}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows;
+  tfoot.innerHTML = `<tr>
+    <td style="font-weight:800">TOTAL ${anoCLT}</td>
+    <td><span class="tag tag-blue">${totColoc}</span></td>
+    <td class="fw8">${Fmt.brl(totRec)}</td>
+    <td style="color:var(--orange);font-weight:800">${Fmt.brl(totComiss)}</td>
+    <td class="fw8 c-accent">${Fmt.brl(totLiq)}</td>
+    <td></td>
+  </tr>`;
+}
 
 function exportarCSV() {
   Export.csv(
