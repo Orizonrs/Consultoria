@@ -564,15 +564,17 @@ function renderDashMensal() {
     const anoMes = `${anoDash}-${String(mi+1).padStart(2,'0')}`;
     const futuro = anoMes > mesHojeStr;
 
-    // Admitidos NESTE mês
+    // Admitidos NESTE mês (receita gerada aqui — taxa única de colocação)
     const admitidos = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
     // Desligados NESTE mês
     const desligados = lista.filter(c => c.desligamento && c.desligamento.slice(0,7) === anoMes);
-    // Ativos neste mês (receita recorrente)
+    // Ativos neste mês (para contar headcount — sem gerar receita nova)
     const ativos = lista.filter(c => cltAtivoNoMes(c, anoMes));
 
-    const rec    = ativos.reduce((s,c) => s + Calc.receita(c), 0);
-    const comiss = ativos.reduce((s,c) => s + calcComissaoRec(c), 0);
+    // CLT = taxa ÚNICA de colocação gerada no mês da admissão
+    // Nos demais meses o CLT aparece como "ativo" mas NÃO gera receita nova
+    const rec    = admitidos.reduce((s,c) => s + Calc.receita(c), 0);
+    const comiss = admitidos.reduce((s,c) => s + calcComissaoRec(c), 0);
     const liq    = rec - comiss;
 
     if (!futuro || admitidos.length > 0 || ativos.length > 0) {
@@ -621,12 +623,12 @@ function renderDashMensal() {
       <!-- Métricas do mês -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.5rem">
         <div style="background:rgba(59,130,246,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Ativos</div>
+          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Ativos no mês</div>
           <div style="font-size:1.1rem;font-weight:900;color:var(--accent)">${ativos.length}</div>
         </div>
         <div style="background:rgba(16,185,129,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Rec. Bruta</div>
-          <div style="font-size:${rec>=10000?'.75':'1.05'}rem;font-weight:900;color:#10b981">${rec>0?Fmt.brl(rec):'—'}</div>
+          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Colocações (taxa única)</div>
+          <div style="font-size:${rec>=10000?'.75':'1.05'}rem;font-weight:900;color:#10b981">${admitidos.length > 0 ? Fmt.brl(rec) : '—'}</div>
         </div>
         <div style="background:rgba(243,156,18,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
           <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Comissão</div>
@@ -651,11 +653,11 @@ function renderDashMensal() {
 
   // Painel de Resumo do Ano
   document.getElementById('dashResumoAno').innerHTML = [
-    { icon:'📅', label:`Total Ativos (mês·ativo em ${anoDash})`, val: anoTotAtivos, cls:'color:var(--accent)' },
-    { icon:'🆕', label:`Admitidos em ${anoDash}`,               val: anoTotAdmit,  cls:'color:#10b981' },
-    { icon:'💵', label:'Receita Bruta Acumulada',               val: Fmt.brl(anoTotRec),    cls:'color:#10b981;font-size:1.15rem' },
-    { icon:'💰', label:'Comissão Acumulada',                    val: Fmt.brl(anoTotComiss), cls:'color:var(--orange);font-size:1.1rem' },
-    { icon:'🏆', label:'Líquido Acumulado p/ Empresa',          val: Fmt.brl(anoTotLiq),    cls:'color:var(--accent);font-size:1.15rem' },
+    { icon:'👥', label:`Headcount total (mês·ativo em ${anoDash})`, val: anoTotAtivos,        cls:'color:var(--accent)' },
+    { icon:'🆕', label:`Colocações em ${anoDash}`,                  val: anoTotAdmit,          cls:'color:#10b981' },
+    { icon:'💵', label:'Receita Bruta (taxa única acumulada)',       val: Fmt.brl(anoTotRec),   cls:'color:#10b981;font-size:1.15rem' },
+    { icon:'💰', label:'Comissão Acumulada',                        val: Fmt.brl(anoTotComiss), cls:'color:var(--orange);font-size:1.1rem' },
+    { icon:'🏆', label:'Líquido Acumulado p/ Empresa',              val: Fmt.brl(anoTotLiq),   cls:'color:var(--accent);font-size:1.15rem' },
   ].map(k=>`<div style="flex:1;min-width:140px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem">
     <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">${k.icon} ${k.label}</div>
     <div style="font-size:1.3rem;font-weight:900;${k.cls}">${k.val}</div>
