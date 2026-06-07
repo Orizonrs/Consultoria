@@ -97,8 +97,8 @@ table.rel-tbl td.green{color:#22c55e;}
     <!-- Filtros -->
     <div class="filtro-box">
       <div class="tipo-btn">
-        <button class="active" id="btnMensal" onclick="setTipo('mensal')">📅 Mensal</button>
-        <button id="btnPeriodo" onclick="setTipo('periodo')">📆 Período Personalizado</button>
+        <button class="active" id="btnMensal" onclick="relSetTipo('mensal')">📅 Mensal</button>
+        <button id="btnPeriodo" onclick="relSetTipo('periodo')">📆 Período Personalizado</button>
       </div>
       <div class="filtro-row">
         <!-- Mensal -->
@@ -119,7 +119,7 @@ table.rel-tbl td.green{color:#22c55e;}
         </div>
         <div class="filtro-group" style="margin-left:auto">
           <label>&nbsp;</label>
-          <button class="btn btn-primary" onclick="carregar()">🔍 Gerar Prévia</button>
+          <button class="btn btn-primary" onclick="relCarregar()">🔍 Gerar Prévia</button>
         </div>
       </div>
     </div>
@@ -140,17 +140,17 @@ table.rel-tbl td.green{color:#22c55e;}
 <script src="assets/cc-auth.js"></script>
 <script src="assets/cc-core.js"></script>
 <script>
-const SB_URL  = 'https://yunoxkembhskpnprffoi.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
+const SB_URL_REL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SB_ANON_REL = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
 
 let sb, tipoFiltro = 'mensal', dadosRelatorio = null;
 
-function token() { return window._ccAccessToken || SB_ANON; }
+function token() { return window._ccAccessToken || SB_ANON_REL; }
 function brl(v) { return 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtDt(s) { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function nomeMes(m) { return ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][parseInt(m)-1]; }
 
-function setTipo(t) {
+function relSetTipo(t) {
   tipoFiltro = t;
   document.getElementById('btnMensal').classList.toggle('active', t==='mensal');
   document.getElementById('btnPeriodo').classList.toggle('active', t==='periodo');
@@ -173,13 +173,13 @@ function getDatas() {
   }
 }
 
-async function carregar() {
+async function relCarregar() {
   const datas = getDatas();
   if (!datas) { UI.toast('Selecione o período', 'err'); return; }
 
   UI.toast('Carregando dados...', 'ok');
 
-  if (!sb) sb = window.supabase.createClient(SB_URL, SB_ANON, {
+  if (!sb) sb = window.supabase.createClient(SB_URL_REL, SB_ANON_REL, {
     global: { headers: { Authorization: `Bearer ${token()}` } }
   });
 
