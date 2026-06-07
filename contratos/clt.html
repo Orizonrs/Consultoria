@@ -67,9 +67,9 @@
 
     <!-- Tabela -->
     <div class="tbl-wrap" id="tblCLTWrap">
-      <div class="tbl-hd">
+      <div class="tbl-hd" onclick="toggleListaCLT()" style="cursor:pointer;user-select:none">
         <span class="tbl-title">📋 Lista de CLTs</span>
-        <div class="tbl-actions">
+        <div class="tbl-actions" onclick="event.stopPropagation()">
           <div class="search-box"><span>🔍</span><input placeholder="Buscar nome, empresa, agência ou cargo..." oninput="UI.filtrar('tbodyCLT',this.value)"/></div>
           <select class="fi" id="filtSit" style="font-size:.72rem;padding:.32rem .6rem" onchange="renderTabela()">
             <option value="">Todos</option>
@@ -77,8 +77,10 @@
             <option value="desligado">Desligados</option>
             <option value="licenca">Em Licença</option>
           </select>
+          <button class="btn btn-ghost btn-sm" onclick="toggleListaCLT()" id="btnToggleListaCLT" style="font-size:.75rem">▼ Mostrar lista</button>
         </div>
       </div>
+      <div id="listaCorpoCLT" style="display:none">
       <div class="tbl-scroll" style="-webkit-overflow-scrolling:touch">
         <table>
           <thead>
@@ -114,6 +116,7 @@
             </tr>
           </tfoot>
         </table>
+      </div>
       </div>
     </div>
 
@@ -260,6 +263,15 @@ let editId    = null;
 
 function clts() { return contratos.filter(c=>c.tipo==='clt'); }
 
+function toggleListaCLT() {
+  const corpo = document.getElementById('listaCorpoCLT');
+  const btn   = document.getElementById('btnToggleListaCLT');
+  if (!corpo) return;
+  const aberto = corpo.style.display !== 'none';
+  corpo.style.display = aberto ? 'none' : '';
+  if (btn) btn.textContent = aberto ? '▼ Mostrar lista' : '▲ Ocultar lista';
+}
+
 // ── Calcula comissão do recrutador para um contrato ──
 function calcComissaoRec(c) {
   const rec = Calc.receita(c);
@@ -287,8 +299,8 @@ function renderKPIs() {
     { v:ativos.length,                                          l:'CLTs Colocados (ativos)',                 cls:'c-blue' },
     { v:Fmt.brl(totSal),                                        l:'Massa Salarial dos CLTs/mês',          cls:'c-text' },
     { v:Fmt.brl(colMes),    sub:liqMes<colMes?`Líq. ${Fmt.brl(liqMes)}`:'',                     l:'Receita Bruta este mês',  cls:'c-green' },
-    { v:Fmt.brl(totColoc),  sub:totComiss>0?`Bruto total`:'',                                    l:'Receita Bruta Total (histórico)', cls:'c-accent' },
-    { v:Fmt.brl(totLiq),    sub:totComiss>0?`Receita bruta: ${Fmt.brl(totColoc)}`:'Configure sua comissão em cada colocação',  l:'💰 Minha Comissão Total',  cls:'c-accent' },
+    { v:Fmt.brl(totColoc),  sub:totComiss>0?`Líq. empresa: ${Fmt.brl(totLiq)}`:'',               l:'Receita Bruta Total (histórico)', cls:'c-accent' },
+    { v:Fmt.brl(totComiss), sub:totComiss>0?`Receita bruta: ${Fmt.brl(totColoc)}`:'Configure sua comissão em cada colocação', l:'💰 Minha Comissão Total', cls:'c-accent' },
     { v:lista.filter(c=>c.situacao==='desligado').length,       l:'Desligados',                  cls:'c-muted' },
   ].map(k=>`<div class="kpi"><div class="kpi-v ${k.cls}">${k.v}</div><div class="kpi-l">${k.l}</div>${k.sub?`<div class="kpi-sub" style="font-size:.6rem;color:var(--muted);margin-top:.15rem">${k.sub}</div>`:''}</div>`).join('');
 
