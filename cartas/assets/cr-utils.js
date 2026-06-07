@@ -1,10 +1,61 @@
 /**
  * cr-utils.js — Orizon Consultoria
  * Utilitários compartilhados entre TODAS as páginas.
- * Elimina a duplicação atual de maskCPF, clock, toast, etc.
  */
 
-// ── Relógio da topbar ───────────────────────────────────────
+const _DISPLAY_NAME_KEY = 'cr_display_name';
+
+// ── Iniciais ─────────────────────────────────────────────────
+function _iniciais(nm) {
+  const p = nm.trim().split(/\s+/);
+  return p.length >= 2
+    ? (p[0][0] + p[p.length - 1][0]).toUpperCase()
+    : p[0].slice(0, 2).toUpperCase();
+}
+
+// ── Aplica nome + iniciais na sidebar ────────────────────────
+function _aplicarNome(nome) {
+  const elNome = document.getElementById('user-nome');
+  const elAv   = document.getElementById('sb-av-init');
+  if (elNome) elNome.textContent = nome;
+  if (elAv)   elAv.textContent   = _iniciais(nome);
+}
+
+// ── Anexa clique no nome para editar (chama sempre) ──────────
+function _bindEditarNome() {
+  const el = document.getElementById('user-nome');
+  if (!el || el._crBound) return;
+  el._crBound = true;
+  el.title  = 'Clique para alterar seu nome';
+  el.style.cursor = 'pointer';
+  el.addEventListener('click', window.editDisplayName);
+}
+
+// ── Editar nome de exibição ───────────────────────────────────
+window.editDisplayName = function() {
+  const atual = localStorage.getItem(_DISPLAY_NAME_KEY) || '';
+  const novo  = window.prompt('Como você quer ser chamado(a)?', atual);
+  if (novo === null) return;
+  const trimmed = novo.trim();
+  if (trimmed) {
+    localStorage.setItem(_DISPLAY_NAME_KEY, trimmed);
+    _aplicarNome(trimmed);
+  } else {
+    localStorage.removeItem(_DISPLAY_NAME_KEY);
+    // Volta para nome do Supabase
+    if (window._sb) {
+      window._sb.auth.getUser().then(({ data: { user } }) => {
+        const nm = user?.user_metadata?.full_name
+                || user?.user_metadata?.name
+                || user?.email?.split('@')[0]
+                || 'Usuário';
+        _aplicarNome(nm);
+      });
+    }
+  }
+};
+
+// ── Relógio da topbar ────────────────────────────────────────
 window.startClock = function(elId = 'tb-clock') {
   const el = document.getElementById(elId);
   if (!el) return;
@@ -19,14 +70,10 @@ window.startClock = function(elId = 'tb-clock') {
   setInterval(update, 10000);
 };
 
-// ── Toast ───────────────────────────────────────────────────
+// ── Toast ────────────────────────────────────────────────────
 window.toast = function(msg, tipo = 'ok', dur = 3200) {
   let ct = document.getElementById('toast-ct');
-  if (!ct) {
-    ct = document.createElement('div');
-    ct.id = 'toast-ct';
-    document.body.appendChild(ct);
-  }
+  if (!ct) { ct = document.createElement('div'); ct.id = 'toast-ct'; document.body.appendChild(ct); }
   const el = document.createElement('div');
   el.className = `toast ${tipo}`;
   el.textContent = msg;
@@ -34,7 +81,7 @@ window.toast = function(msg, tipo = 'ok', dur = 3200) {
   setTimeout(() => el.remove(), dur);
 };
 
-// ── Máscaras de input ────────────────────────────────────────
+// ── Máscaras ─────────────────────────────────────────────────
 window.maskCPF = function(el) {
   let v = el.value.replace(/\D/g, '');
   v = v.replace(/(\d{3})(\d)/, '$1.$2')
@@ -42,7 +89,6 @@ window.maskCPF = function(el) {
        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   el.value = v;
 };
-
 window.maskCNPJ = function(el) {
   let v = el.value.replace(/\D/g, '');
   v = v.replace(/(\d{2})(\d)/, '$1.$2')
@@ -51,24 +97,14 @@ window.maskCNPJ = function(el) {
        .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
   el.value = v;
 };
-
 window.maskCPFouCNPJ = function(el) {
-  const digits = el.value.replace(/\D/g, '');
-  if (digits.length <= 11) {
-    maskCPF(el);
-  } else {
-    maskCNPJ(el);
-  }
+  if (el.value.replace(/\D/g, '').length <= 11) maskCPF(el); else maskCNPJ(el);
 };
-
 window.maskTel = function(el) {
   let v = el.value.replace(/\D/g, '');
-  if (v.length <= 10) {
-    v = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-  } else {
-    v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
-  }
-  el.value = v;
+  el.value = v.length <= 10
+    ? v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3')
+    : v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
 };
 
 // ── Formatadores ─────────────────────────────────────────────
@@ -78,27 +114,24 @@ window.fmtDate = function(d) {
   if (isNaN(dt)) return '—';
   return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 };
-
 window.fmtDateShort = function(d) {
   if (!d) return '—';
   const dt = new Date(d.includes('T') ? d : d + 'T12:00:00');
   if (isNaN(dt)) return '—';
   return dt.toLocaleDateString('pt-BR');
 };
-
 window.fmtDateTime = function(d) {
   if (!d) return '—';
   const dt = new Date(d.includes(' ') ? d.replace(' ', 'T') : d);
   if (isNaN(dt)) return '—';
   return dt.toLocaleString('pt-BR');
 };
-
 window.fmtBRL = function(v) {
   if (v === null || v === undefined || v === '') return '—';
   return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 };
 
-// ── Sidebar mobile ───────────────────────────────────────────
+// ── Sidebar mobile ────────────────────────────────────────────
 window.toggleSidebar = function() {
   document.querySelector('.sidebar')?.classList.toggle('mob-open');
   document.getElementById('mobOverlay')?.classList.toggle('open');
@@ -108,221 +141,78 @@ window.closeSidebar = function() {
   document.getElementById('mobOverlay')?.classList.remove('open');
 };
 
-// ── Preencher info do usuário na sidebar ─────────────────────
+// ── populateUser — respeita nome customizado ──────────────────
 window.populateUser = function(user) {
   if (!user) return;
-  const nm = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário';
-  const el_nome  = document.getElementById('user-nome');
-  const el_email = document.getElementById('user-email');
-  const el_av    = document.getElementById('sb-av-init');
-  if (el_nome)  el_nome.textContent  = nm;
-  if (el_email) el_email.textContent = user.email || '';
-  // Iniciais: primeira letra do primeiro nome + primeira letra do último sobrenome
-  const partes = nm.trim().split(/\s+/);
-  const iniciais = partes.length >= 2
-    ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
-    : partes[0].slice(0, 2).toUpperCase();
-  if (el_av)    el_av.textContent = iniciais;
+  // Nome customizado tem prioridade máxima
+  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+  const nm = (saved && saved.trim())
+    ? saved.trim()
+    : (user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário');
+
+  _aplicarNome(nm);
+  // Atualiza email (hidden no CSS, mas mantém o dado)
+  const elEmail = document.getElementById('user-email');
+  if (elEmail) elEmail.textContent = user.email || '';
+  // Anexa clique para editar
+  _bindEditarNome();
   return nm;
 };
 
-// ── Logout ───────────────────────────────────────────────────
+// ── Logout ────────────────────────────────────────────────────
 window.doLogout = async function() {
   const loginUrl = window.location.href.replace(/\/[^/]*$/, '/login.html');
-  try {
-    if (window._sb) await window._sb.auth.signOut();
-  } catch(e) { console.warn('logout error', e); }
+  try { if (window._sb) await window._sb.auth.signOut(); } catch(e) {}
   window.location.replace(loginUrl);
 };
 
-// ── Copiar para clipboard ────────────────────────────────────
+// ── Copiar para clipboard ─────────────────────────────────────
 window.copiarTexto = function(txt, btn) {
   navigator.clipboard.writeText(txt).then(() => {
     if (btn) { const o = btn.textContent; btn.textContent = '✅ Copiado!'; setTimeout(() => btn.textContent = o, 2000); }
   });
 };
 
-// ── Preencher usuário imediatamente via localStorage (sem esperar Supabase) ──
-(function preencherUsuarioImediato() {
+// ── Preenche nome IMEDIATAMENTE (sem esperar Supabase) ────────
+(function preencherImediato() {
   try {
-    // Supabase salva a sessão no localStorage com chave que começa com 'sb-'
-    // Tenta múltiplas variações de chave do Supabase v2
+    // 1. Nome customizado salvo
+    const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+    if (saved && saved.trim()) {
+      _aplicarNome(saved.trim());
+      return; // já temos o nome, não precisa ler o token
+    }
+    // 2. Fallback: lê sessão do localStorage do Supabase
     let raw = null;
-    const candidates = [
-      'sb-yunoxkembhskpnprffoi-auth-token',
-      'supabase.auth.token',
-    ];
-    for (const k of candidates) {
-      raw = localStorage.getItem(k);
-      if (raw) break;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) { raw = localStorage.getItem(k); break; }
     }
-    // Fallback: procura qualquer chave sb-* com token
-    if (!raw) {
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
-          raw = localStorage.getItem(k); break;
-        }
-      }
-    }
+    if (!raw) raw = localStorage.getItem('supabase.auth.token');
     if (!raw) return;
     const session = JSON.parse(raw);
     const user = session?.user || session;
     if (!user) return;
-
     const nm = user.user_metadata?.full_name
             || user.user_metadata?.name
-            || user.email?.split('@')[0]
-            || '';
-    if (!nm) return;
-
-    const partes = nm.trim().split(/\s+/);
-    const iniciais = partes.length >= 2
-      ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
-      : partes[0].slice(0, 2).toUpperCase();
-
-    const elNome  = document.getElementById('user-nome');
-    const elEmail = document.getElementById('user-email');
-    const elAv    = document.getElementById('sb-av-init');
-
-    if (elNome)  elNome.textContent  = nm;
-    if (elEmail) elEmail.textContent = user.email || '';
-    if (elAv)    elAv.textContent    = iniciais;
-  } catch(e) { /* silencioso */ }
+            || user.email?.split('@')[0] || '';
+    if (nm) _aplicarNome(nm);
+  } catch(e) {}
 })();
 
-// ── Fechar sidebar ao clicar em link (mobile) ─────────────────
+// ── DOMContentLoaded: relógio + clique no nome ────────────────
 document.addEventListener('DOMContentLoaded', () => {
   startClock();
-  // Tenta preencher novamente no DOMContentLoaded (fallback)
-  try {
-    let raw = null;
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
-        raw = localStorage.getItem(k); break;
-      }
-    }
-    if (!raw) raw = localStorage.getItem('supabase.auth.token');
-    if (raw) {
-      const session = JSON.parse(raw);
-      const user = session?.user || session;
-      const nm = user?.user_metadata?.full_name
-              || user?.user_metadata?.name
-              || user?.email?.split('@')[0] || '';
-      if (nm) {
-        const partes = nm.trim().split(/\s+/);
-        const iniciais = partes.length >= 2
-          ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
-          : partes[0].slice(0, 2).toUpperCase();
-        const elNome  = document.getElementById('user-nome');
-        const elEmail = document.getElementById('user-email');
-        const elAv    = document.getElementById('sb-av-init');
-        if (elNome && elNome.textContent === '—')  elNome.textContent  = nm;
-        if (elEmail && elEmail.textContent === '—') elEmail.textContent = user.email || '';
-        if (elAv && elAv.textContent === 'OR') elAv.textContent = iniciais;
-      }
-    }
-  } catch(e) {}
 
+  // Aplica nome customizado (sobrescreve qualquer coisa já na tela)
+  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+  if (saved && saved.trim()) _aplicarNome(saved.trim());
+
+  // Anexa clique para editar nome
+  _bindEditarNome();
+
+  // Fecha sidebar mobile ao clicar em link
   document.querySelectorAll('.sb-item').forEach(el =>
     el.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); })
   );
 });
-
-// ── Nome de exibição customizado ──────────────────────────────
-// Chave usada para salvar o nome escolhido pelo usuário
-const _DISPLAY_NAME_KEY = 'cr_display_name';
-
-/**
- * Retorna o nome de exibição na ordem de prioridade:
- * 1. Nome salvo manualmente (localStorage cr_display_name)
- * 2. full_name / name do metadata do Supabase
- * 3. Parte antes do @ do e-mail
- */
-window.getDisplayName = function(user) {
-  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
-  if (saved && saved.trim()) return saved.trim();
-  if (!user) return 'Usuário';
-  return user.user_metadata?.full_name
-      || user.user_metadata?.name
-      || user.email?.split('@')[0]
-      || 'Usuário';
-};
-
-/**
- * Abre um prompt para o usuário digitar o nome de exibição
- * e atualiza todos os elementos na página.
- */
-window.editDisplayName = function() {
-  const current = localStorage.getItem(_DISPLAY_NAME_KEY) || '';
-  const novo = window.prompt('Como você quer ser chamado(a)?', current);
-  if (novo === null) return; // cancelou
-  const trimmed = novo.trim();
-  if (!trimmed) {
-    localStorage.removeItem(_DISPLAY_NAME_KEY);
-  } else {
-    localStorage.setItem(_DISPLAY_NAME_KEY, trimmed);
-  }
-  // Atualiza imediatamente na tela
-  _applyDisplayName(trimmed || null);
-};
-
-function _applyDisplayName(nome) {
-  const el = document.getElementById('user-nome');
-  const elAv = document.getElementById('sb-av-init');
-  if (!nome) {
-    // Sem nome customizado — tenta pegar do Supabase
-    if (window._sb) {
-      window._sb.auth.getUser().then(({ data: { user } }) => {
-        const nm = getDisplayName(user);
-        if (el) el.textContent = nm;
-        if (elAv) elAv.textContent = _initials(nm);
-      });
-    }
-    return;
-  }
-  if (el) el.textContent = nome;
-  if (elAv) elAv.textContent = _initials(nome);
-}
-
-function _initials(nm) {
-  const parts = nm.trim().split(/\s+/);
-  return parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : parts[0].slice(0, 2).toUpperCase();
-}
-
-// Sobrescreve populateUser para usar getDisplayName
-const _origPopulateUser = window.populateUser;
-window.populateUser = function(user) {
-  const result = _origPopulateUser(user);
-  // Sobrescreve com nome customizado se existir
-  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
-  if (saved && saved.trim()) {
-    const el = document.getElementById('user-nome');
-    const elAv = document.getElementById('sb-av-init');
-    if (el) el.textContent = saved.trim();
-    if (elAv) elAv.textContent = _initials(saved.trim());
-  }
-  return result;
-};
-
-// Aplica nome customizado no DOMContentLoaded também
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
-  if (saved && saved.trim()) {
-    const el = document.getElementById('user-nome');
-    const elAv = document.getElementById('sb-av-init');
-    if (el && (el.textContent === '—' || el.textContent.includes('@') || true))
-      el.textContent = saved.trim();
-    if (elAv) elAv.textContent = _initials(saved.trim());
-  }
-  // Adiciona clique no nome para editar
-  const elNome = document.getElementById('user-nome');
-  if (elNome) {
-    elNome.title = 'Clique para alterar seu nome';
-    elNome.style.cursor = 'pointer';
-    elNome.addEventListener('click', window.editDisplayName);
-  }
-}, { once: true });
