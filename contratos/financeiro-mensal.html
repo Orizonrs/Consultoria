@@ -163,7 +163,25 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 /* info box */
 .info-box{padding:.7rem 1rem;border-radius:10px;font-size:.72rem;font-weight:600;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.15);color:rgba(59,130,246,.9);margin-bottom:1rem;line-height:1.6;}
 
-@media(max-width:1100px){.grid-3{grid-template-columns:1fr 1fr;}}
+.c-purple{color:#a78bfa;}
+.tag-purple{background:rgba(167,139,250,.15);color:#a78bfa;}
+
+/* Modal comissão */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);}
+.modal-box{background:var(--card);border:1px solid var(--border2);border-radius:18px;padding:1.8rem;width:100%;max-width:440px;box-shadow:0 24px 80px rgba(0,0,0,.6);animation:fadeUp .25s ease;}
+.modal-title{font-size:1rem;font-weight:900;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem;}
+.modal-grid{display:grid;gap:.8rem;}
+.modal-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1.2rem;}
+.btn-purple{background:linear-gradient(135deg,#6d28d9,#a78bfa);color:#fff;border:none;box-shadow:0 4px 16px rgba(167,139,250,.25);}
+.btn-purple:hover{transform:translateY(-1px);}
+.comissao-list{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem;}
+.comissao-item{display:flex;align-items:center;justify-content:space-between;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.14);border-radius:9px;padding:.5rem .8rem;font-size:.76rem;}
+.comissao-item-info{display:flex;flex-direction:column;gap:.1rem;}
+.comissao-item-val{font-weight:900;color:#a78bfa;}
+.comissao-item-desc{font-size:.62rem;color:var(--muted);}
+.comissao-item-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:.1rem .3rem;border-radius:5px;transition:color .15s;}
+.comissao-item-del:hover{color:var(--red);}
+
 @media(max-width:900px){.grid-3,.grid-2{grid-template-columns:1fr;}.mes-grid{grid-template-columns:repeat(4,1fr);}}
 @media(max-width:600px){.mes-grid{grid-template-columns:repeat(3,1fr);}.kpi-strip{grid-template-columns:1fr 1fr;}.dash-hero{flex-direction:column;}}
 </style>
@@ -213,6 +231,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
     <div class="tb-right">
       <span id="tb-date" class="tb-date"></span>
       <button class="btn btn-ghost" onclick="exportarCSV()">📊 Exportar CSV</button>
+      <button class="btn btn-purple" onclick="abrirModalComissao()">🏆 Lançar Comissão</button>
     </div>
   </div>
 
@@ -220,7 +239,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
     <div class="hero-left">
       <div class="hero-tag"><span class="hero-tag-dot"></span>Histórico Financeiro</div>
       <div class="hero-title">Receita <em>Mensal</em></div>
-      <div class="hero-sub">Estágio (recorrente) + CLT (colocação) · mês a mês</div>
+      <div class="hero-sub">Estágio (recorrente) + CLT (colocação) + Comissões (recrutadores) · mês a mês</div>
     </div>
     <div class="hero-right">
       <div class="year-sel-wrap">
@@ -280,11 +299,12 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
           <th>Mês</th>
           <th>Estágio (recorrente)</th>
           <th>CLT (colocação)</th>
+          <th>🏆 Comissões</th>
           <th>Total Mês</th>
           <th>vs Mês Ant.</th>
           <th>Acumulado Ano</th>
-          <th>Estagiários Ativos</th>
-          <th>CLTs Colocados</th>
+          <th>Estagiários</th>
+          <th>CLTs</th>
         </tr></thead>
         <tbody id="tblAnualBody"></tbody>
         <tfoot id="tblAnualFoot"></tfoot>
@@ -293,6 +313,35 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
 
   </div>
 </div>
+</div>
+
+<!-- Modal Comissão -->
+<div id="modalComissao" class="modal-overlay" style="display:none" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-title">🏆 Lançar Comissão de Recrutador</div>
+    <div class="modal-grid">
+      <div class="form-group" style="margin:0">
+        <label class="fl">Mês de Referência</label>
+        <input type="month" class="fi" id="comMes" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-family:inherit;font-size:.82rem;color:var(--text);width:100%;outline:none"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="fl">Consultor / Recrutador</label>
+        <input type="text" class="fi" id="comConsultor" placeholder="Ex: João Silva" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-family:inherit;font-size:.82rem;color:var(--text);width:100%;outline:none"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="fl">Valor da Comissão (R$)</label>
+        <input type="number" class="fi" id="comValor" placeholder="0,00" min="0" step="0.01" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-family:inherit;font-size:.82rem;color:var(--text);width:100%;outline:none"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="fl">Descrição (opcional)</label>
+        <input type="text" class="fi" id="comDesc" placeholder="Ex: Colocação Empresa X — Cargo Y" style="background:var(--card2);border:1.5px solid var(--border);border-radius:10px;padding:.65rem .9rem;font-family:inherit;font-size:.82rem;color:var(--text);width:100%;outline:none"/>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-purple" onclick="salvarComissao()">✓ Salvar Comissão</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast-ct"></div>
@@ -311,6 +360,20 @@ let anoAtual  = new Date().getFullYear();
 let mesSel    = null; // 'YYYY-MM'
 let chartAnual      = null;
 let chartComparativo = null;
+
+// ─── Comissões (localStorage) ───
+function getComissoes() {
+  try { return JSON.parse(localStorage.getItem('ex_cc_comissoes') || '[]'); } catch { return []; }
+}
+function setComissoes(list) {
+  localStorage.setItem('ex_cc_comissoes', JSON.stringify(list));
+}
+function comissoesMes(anoMes) {
+  return getComissoes().filter(c => c.mes === anoMes);
+}
+function totalComissoesMes(anoMes) {
+  return comissoesMes(anoMes).reduce((s,c) => s + (c.valor||0), 0);
+}
 
 // ─────────────────────────────────────────────
 //  HELPERS
@@ -382,7 +445,9 @@ function receitaMes(anoMes) {
     }
   });
 
-  return { recEst, recClt, total: recEst + recClt, estQtd, cltQtd, detalhes };
+  const recComissao = totalComissoesMes(anoMes);
+
+  return { recEst, recClt, recComissao, total: recEst + recClt + recComissao, estQtd, cltQtd, detalhes };
 }
 
 /** Retorna array de 12 resultados para o ano */
@@ -435,15 +500,17 @@ function renderAnual() {
   const melhorMes  = dados.reduce((m,d) => d.total > m.total ? d : m, {total:0,anoMes:''});
   const totalEst   = dados.reduce((s,d) => s + d.recEst, 0);
   const totalClt   = dados.reduce((s,d) => s + d.recClt, 0);
+  const totalComissao = dados.reduce((s,d) => s + d.recComissao, 0);
   const varVsAnt   = totalAnt ? ((totalAno - totalAnt) / totalAnt * 100) : null;
 
   const kpis = [
-    { v: brl(totalAno),    l: 'Receita Total ' + anoAtual,  cls: 'c-accent', sub: varVsAnt !== null ? (varVsAnt >= 0 ? `▲ ${varVsAnt.toFixed(1)}% vs ${anoAtual-1}` : `▼ ${Math.abs(varVsAnt).toFixed(1)}% vs ${anoAtual-1}`) : '' },
-    { v: brl(mediaAno),    l: 'Média Mensal',                cls: 'c-green',  sub: 'meses com receita' },
-    { v: brl(melhorMes.total||0), l: 'Melhor Mês',          cls: 'c-blue',   sub: melhorMes.anoMes ? MESES_FULL[parseInt(melhorMes.anoMes.slice(5))-1] : '—' },
-    { v: brl(totalEst),    l: 'Rec. Estágio',                cls: 'c-accent', sub: 'recorrente mensal' },
-    { v: brl(totalClt),    l: 'Rec. CLT',                    cls: 'c-blue',   sub: 'colocação (único)' },
-    { v: brl(totalAnt),    l: `Total ${anoAtual-1}`,         cls: 'c-muted',  sub: 'ano anterior' },
+    { v: brl(totalAno),      l: 'Receita Total ' + anoAtual, cls: 'c-accent', sub: varVsAnt !== null ? (varVsAnt >= 0 ? `▲ ${varVsAnt.toFixed(1)}% vs ${anoAtual-1}` : `▼ ${Math.abs(varVsAnt).toFixed(1)}% vs ${anoAtual-1}`) : '' },
+    { v: brl(mediaAno),      l: 'Média Mensal',               cls: 'c-green',  sub: 'meses com receita' },
+    { v: brl(melhorMes.total||0), l: 'Melhor Mês',            cls: 'c-blue',   sub: melhorMes.anoMes ? MESES_FULL[parseInt(melhorMes.anoMes.slice(5))-1] : '—' },
+    { v: brl(totalEst),      l: 'Rec. Estágio',               cls: 'c-accent', sub: 'recorrente mensal' },
+    { v: brl(totalClt),      l: 'Rec. CLT',                   cls: 'c-blue',   sub: 'colocação (único)' },
+    { v: brl(totalComissao), l: 'Comissões',                  cls: 'c-purple', sub: 'recrutadores/consultores' },
+    { v: brl(totalAnt),      l: `Total ${anoAtual-1}`,        cls: 'c-muted',  sub: 'ano anterior' },
   ];
   document.getElementById('kpiStrip').innerHTML = kpis.map(k =>
     `<div class="kpi"><div class="kpi-v ${k.cls}">${k.v}</div><div class="kpi-l">${k.l}</div>${k.sub?`<div class="kpi-sub">${k.sub}</div>`:''}</div>`
@@ -457,8 +524,9 @@ function renderAnual() {
     data: {
       labels: MESES_NOME,
       datasets: [
-        { label: 'Estágio', data: dados.map(d=>d.recEst), backgroundColor: 'rgba(59,130,246,.75)', borderColor:'#3b82f6', borderWidth:1.5, borderRadius:4 },
-        { label: 'CLT',     data: dados.map(d=>d.recClt), backgroundColor: 'rgba(52,152,219,.7)',  borderColor:'#3498db', borderWidth:1.5, borderRadius:4 },
+        { label: 'Estágio',   data: dados.map(d=>d.recEst),      backgroundColor: 'rgba(59,130,246,.75)',  borderColor:'#3b82f6', borderWidth:1.5, borderRadius:4 },
+        { label: 'CLT',       data: dados.map(d=>d.recClt),      backgroundColor: 'rgba(52,152,219,.7)',   borderColor:'#3498db', borderWidth:1.5, borderRadius:4 },
+        { label: 'Comissões', data: dados.map(d=>d.recComissao), backgroundColor: 'rgba(167,139,250,.75)', borderColor:'#a78bfa', borderWidth:1.5, borderRadius:4 },
       ]
     },
     options: {
@@ -534,6 +602,7 @@ function renderAnual() {
       <td class="fw8">${MESES_FULL[i]}</td>
       <td class="c-accent">${futuro?'—':brl(d.recEst)}</td>
       <td class="c-blue">${futuro?'—':brl(d.recClt)}</td>
+      <td class="c-purple">${futuro?'—':brl(d.recComissao)}</td>
       <td class="fw8">${futuro?'—':brl(d.total)}<span class="bar-inline" style="width:${barW}px"></span></td>
       <td>${varHtml}</td>
       <td>${futuro?'—':brl(acum)}</td>
@@ -546,10 +615,12 @@ function renderAnual() {
 
   const totalRecEst = dados.reduce((s,d)=>s+d.recEst,0);
   const totalRecClt = dados.reduce((s,d)=>s+d.recClt,0);
+  const totalRecCom = dados.reduce((s,d)=>s+d.recComissao,0);
   document.getElementById('tblAnualFoot').innerHTML = `<tr>
     <td class="fw8">TOTAL ${anoAtual}</td>
     <td class="c-accent fw8">${brl(totalRecEst)}</td>
     <td class="c-blue fw8">${brl(totalRecClt)}</td>
+    <td class="c-purple fw8">${brl(totalRecCom)}</td>
     <td class="fw8">${brl(totalAno)}</td>
     <td>—</td><td>—</td><td>—</td><td>—</td>
   </tr>`;
@@ -580,6 +651,7 @@ function selecionarMes(idx) {
   // Detalhes dos estagiários
   const ests = d.detalhes.filter(x=>x.tipo==='estagiario');
   const clts = d.detalhes.filter(x=>x.tipo==='clt');
+  const coms = comissoesMes(anoMes);
 
   box.innerHTML = `
     <div class="detalhe-box">
@@ -591,6 +663,7 @@ function selecionarMes(idx) {
         <div class="detalhe-kpis">
           <div class="dk"><div class="dk-v c-accent">${brl(d.recEst)}</div><div class="dk-l">Estágio</div></div>
           <div class="dk"><div class="dk-v c-blue">${brl(d.recClt)}</div><div class="dk-l">CLT</div></div>
+          <div class="dk"><div class="dk-v c-purple">${brl(d.recComissao)}</div><div class="dk-l">Comissões</div></div>
           <div class="dk"><div class="dk-v fw8">${brl(d.total)}</div><div class="dk-l">Total</div></div>
           <div class="dk"><div class="dk-v">${d.estQtd}</div><div class="dk-l">Estagiários</div></div>
           <div class="dk"><div class="dk-v">${d.cltQtd}</div><div class="dk-l">CLTs</div></div>
@@ -639,7 +712,25 @@ function selecionarMes(idx) {
         </table>
       </div>` : ''}
 
-      ${!ests.length && !clts.length ? `<div class="empty">Nenhum contrato ativo ou colocado neste mês.</div>` : ''}
+      ${!ests.length && !clts.length && !coms.length ? `<div class="empty">Nenhum contrato ativo ou comissão lançada neste mês.</div>` : ''}
+
+      ${coms.length ? `
+      <div style="font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.5rem;margin-top:${ests.length||clts.length?'1rem':'0'}">🏆 Comissões de Recrutadores</div>
+      <div class="comissao-list">
+        ${coms.map(c=>`<div class="comissao-item">
+          <div class="comissao-item-info">
+            <span style="font-weight:800">${c.consultor||'—'}</span>
+            <span class="comissao-item-desc">${c.desc||'Sem descrição'}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <span class="comissao-item-val">${brl(c.valor)}</span>
+            <button class="comissao-item-del" onclick="excluirComissao('${c.id}')" title="Excluir">🗑</button>
+          </div>
+        </div>`).join('')}
+        <div style="text-align:right;font-size:.7rem;font-weight:800;color:#a78bfa;padding:.3rem .8rem">
+          Subtotal: ${brl(d.recComissao)}
+        </div>
+      </div>` : ''}
     </div>
   `;
 
@@ -652,10 +743,10 @@ function selecionarMes(idx) {
 function exportarCSV() {
   const dados = receitaAno(anoAtual);
   let acum = 0;
-  const rows = [['Mês','Receita Estágio','Receita CLT','Total Mês','Acumulado Ano','Estagiários Ativos','CLTs Colocados']];
+  const rows = [['Mês','Receita Estágio','Receita CLT','Comissões','Total Mês','Acumulado Ano','Estagiários Ativos','CLTs Colocados']];
   dados.forEach((d,i) => {
     acum += d.total;
-    rows.push([MESES_FULL[i], d.recEst.toFixed(2).replace('.',','), d.recClt.toFixed(2).replace('.',','), d.total.toFixed(2).replace('.',','), acum.toFixed(2).replace('.',','), d.estQtd, d.cltQtd]);
+    rows.push([MESES_FULL[i], d.recEst.toFixed(2).replace('.',','), d.recClt.toFixed(2).replace('.',','), d.recComissao.toFixed(2).replace('.',','), d.total.toFixed(2).replace('.',','), acum.toFixed(2).replace('.',','), d.estQtd, d.cltQtd]);
   });
   const csv = rows.map(r=>r.map(c=>`"${c}"`).join(';')).join('\n');
   const a = Object.assign(document.createElement('a'),{
@@ -675,6 +766,58 @@ function mudarAno(delta) {
   if (idx >= 0 && idx < sel.options.length) {
     sel.selectedIndex = idx;
     renderAnual();
+  }
+}
+
+// ─────────────────────────────────────────────
+//  MODAL COMISSÃO
+// ─────────────────────────────────────────────
+function abrirModalComissao() {
+  const modal = document.getElementById('modalComissao');
+  // pré-preenche com mês atual
+  const hoje = new Date();
+  document.getElementById('comMes').value = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
+  document.getElementById('comConsultor').value = '';
+  document.getElementById('comValor').value = '';
+  document.getElementById('comDesc').value = '';
+  modal.style.display = 'flex';
+}
+
+function fecharModal() {
+  document.getElementById('modalComissao').style.display = 'none';
+}
+
+function salvarComissao() {
+  const mes  = document.getElementById('comMes').value;
+  const cons = document.getElementById('comConsultor').value.trim();
+  const val  = parseFloat(document.getElementById('comValor').value);
+  const desc = document.getElementById('comDesc').value.trim();
+
+  if (!mes)       { if(window.UI?.toast) UI.toast('Selecione o mês','err'); return; }
+  if (!cons)      { if(window.UI?.toast) UI.toast('Informe o consultor','err'); return; }
+  if (!val || val <= 0) { if(window.UI?.toast) UI.toast('Valor inválido','err'); return; }
+
+  const lista = getComissoes();
+  lista.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,5), mes, consultor: cons, valor: val, desc });
+  setComissoes(lista);
+
+  fecharModal();
+  if(window.UI?.toast) UI.toast('Comissão salva!','ok');
+  renderAnual();
+  // re-abre detalhe se estava no mesmo mês
+  if (mesSel === mes) {
+    const idx = parseInt(mes.slice(5)) - 1;
+    selecionarMes(idx);
+  }
+}
+
+function excluirComissao(id) {
+  if (!confirm('Excluir esta comissão?')) return;
+  setComissoes(getComissoes().filter(c => c.id !== id));
+  renderAnual();
+  if (mesSel) {
+    const idx = parseInt(mesSel.slice(5)) - 1;
+    selecionarMes(idx);
   }
 }
 
