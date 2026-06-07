@@ -117,7 +117,12 @@ window.populateUser = function(user) {
   const el_av    = document.getElementById('sb-av-init');
   if (el_nome)  el_nome.textContent  = nm;
   if (el_email) el_email.textContent = user.email || '';
-  if (el_av)    el_av.textContent    = nm.split(' ')[0].slice(0, 2).toUpperCase();
+  // Iniciais: primeira letra do primeiro nome + primeira letra do último sobrenome
+  const partes = nm.trim().split(/\s+/);
+  const iniciais = partes.length >= 2
+    ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+    : partes[0].slice(0, 2).toUpperCase();
+  if (el_av)    el_av.textContent = iniciais;
   return nm;
 };
 
