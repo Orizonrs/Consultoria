@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" href="../../imagens/icone.png" type="image/png"/>
+<meta name="description" content="Cancelamento e Recesso de Estágio — Orizon Consultoria"/>
+<title>Cancelamento &amp; Recesso — Orizon Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="../assets/cr-core.css"/>
+<style>
+/* ── Tipo selector ── */
+.tipo-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; margin-bottom: 1.3rem;
+}
+.tipo-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .95rem 1rem; background: var(--card2);
+  border: 1.5px solid var(--border); border-radius: 13px;
+  cursor: pointer; transition: all .17s;
+}
+.tipo-item:hover { border-color: var(--border2); background: rgba(255,255,255,.03); }
+.tipo-item.ativo  { border-color: var(--accent);  background: rgba(96,165,250,.07); }
+.tipo-item.ativo.orange { border-color: var(--orange); background: rgba(243,156,18,.06); }
+.ti-ico {
+  width: 42px; height: 42px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; flex-shrink: 0;
+}
+.ti-ico.red    { background: rgba(231,76,60,.12);  border: 1px solid rgba(231,76,60,.22); }
+.ti-ico.blue   { background: rgba(52,152,219,.12);  border: 1px solid rgba(52,152,219,.22); }
+.ti-nome { font-size: .82rem; font-weight: 800; margin-bottom: .1rem; }
+.ti-desc { font-size: .62rem; color: var(--muted); line-height: 1.45; }
+
+/* ── Split ── */
+.split-wrap {
+  display: grid; grid-template-columns: 1fr 400px; gap: 1.2rem; align-items: start;
+}
+.form-col { min-width: 0; }
+.preview-col {
+  position: sticky; top: 1rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.preview-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .65rem 1rem; border-bottom: 1px solid var(--border);
+  font-size: .68rem; font-weight: 700;
+}
+.preview-frame { background: #ccc; height: 500px; overflow: hidden; position: relative; }
+.preview-frame iframe {
+  width: 170%; height: 170%; border: none;
+  transform: scale(0.588); transform-origin: top left;
+  pointer-events: none;
+}
+.preview-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; gap: .5rem; color: var(--muted); font-size: .72rem;
+}
+.preview-empty span { font-size: 2rem; opacity: .25; }
+.preview-actions {
+  padding: .65rem 1rem; border-top: 1px solid var(--border);
+  display: flex; gap: .4rem;
+}
+
+/* ── Sec title ── */
+.sec-title { font-size: 1.15rem; font-weight: 900; margin-bottom: .18rem; }
+.sec-title span { color: var(--accent); }
+.sec-sub { font-size: .7rem; color: var(--muted); margin-bottom: 1.2rem; }
+
+/* ── Alert box ── */
+.alert-box {
+  background: rgba(231,76,60,.05); border: 1px solid rgba(231,76,60,.2);
+  border-radius: 9px; padding: .75rem .95rem;
+  font-size: .7rem; color: #f87171; line-height: 1.7; margin-bottom: .8rem;
+}
+.alert-box.orange {
+  background: rgba(243,156,18,.05); border-color: rgba(243,156,18,.2); color: #fbbf24;
+}
+.alert-box.blue {
+  background: rgba(59,157,232,.05); border-color: rgba(59,157,232,.18); color: #93c5fd;
+}
+
+/* ── fi-note ── */
+.fi-note { font-size: .58rem; color: var(--muted2); margin-top: .2rem; }
+
+@media (max-width: 1100px) {
+  .split-wrap  { grid-template-columns: 1fr; }
+  .preview-col { position: static; }
+}
+@media (max-width: 768px) {
+  .tipo-grid { grid-template-columns: 1fr; }
+  .split-wrap { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">
+      <img src="../../imagens/logo123.jpeg" alt="Orizon" onerror="this.parentElement.innerHTML='📄'"/>
+    </div>
+    <div>
+      <div class="sb-name">Orizon <em>Consultoria</em></div>
+      <div class="sb-sub">Cartas Manuais</div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <a class="sb-back" href="../index.html">← Hub Central</a>
+    <div class="sb-sep">Painel</div>
+    <a class="sb-item" href="index-cartas.html"><span class="sb-ico">📋</span>Painel de Cartas</a>
+    <div class="sb-sep">Criar Carta</div>
+    <a class="sb-item" href="nova-carta.html"><span class="sb-ico">📄</span>Nova Carta PDF</a>
+    <a class="sb-item" href="assinar-carta.html"><span class="sb-ico">✍️</span>Carta + Assinatura</a>
+    <a class="sb-item active" href="nova-carta-cancelamento.html"><span class="sb-ico">📋</span>Cancelamento &amp; Recesso</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-av" id="sb-av-init">EX</div>
+    <div>
+      <div class="sb-uname" id="user-nome">—</div>
+      <div class="sb-uemail" id="user-email">—</div>
+    </div>
+    <button class="sb-logout" onclick="doLogout()" title="Sair">⏻</button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc">
+        <a href="../index.html">Hub</a>
+        <span style="opacity:.3">›</span>
+        <a href="index-cartas.html">Cartas</a>
+        <span style="opacity:.3">›</span>
+        <strong>Cancelamento &amp; Recesso</strong>
+      </div>
+    </div>
+    <div class="tb-right">
+      <span class="tb-clock" id="tb-clock"></span>
+      <button class="btn btn-ghost btn-sm" onclick="previsualizar()">👁 Preview</button>
+      <button class="btn btn-primary btn-sm" onclick="gerar()">
+        <span id="btnTxt">📄 Gerar Documento</span>
+        <div class="spinner" id="spGerar" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="sec-title">📋 Cancelamento &amp; <span>Recesso</span></div>
+    <div class="sec-sub">Emita documentos formais de encerramento de estágio (cancelamento) ou concessão de período de recesso (Lei 11.788/2008).</div>
+
+    <!-- TIPO DE DOCUMENTO -->
+    <div class="section-label">📄 Tipo de Documento</div>
+    <div class="tipo-grid">
+      <div class="tipo-item ativo" id="btn-carta_cancelamento" onclick="setTipo('carta_cancelamento')">
+        <div class="ti-ico red">❌</div>
+        <div>
+          <div class="ti-nome">Cancelamento de Estágio</div>
+          <div class="ti-desc">Encerramento formal do vínculo de estágio antes ou no término previsto. Inclui dados financeiros e motivo.</div>
+        </div>
+      </div>
+      <div class="tipo-item" id="btn-carta_recesso" onclick="setTipo('carta_recesso')">
+        <div class="ti-ico blue">🏖️</div>
+        <div>
+          <div class="ti-nome">Recesso de Estágio</div>
+          <div class="ti-desc">Concessão de 15 dias de recesso remunerado, conforme Art. 13 da Lei 11.788/2008.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPLIT: formulário + preview -->
+    <div class="split-wrap">
+
+      <!-- COLUNA FORMULÁRIO -->
+      <div class="form-col">
+
+        <!-- ALERTA CONTEXTUAL -->
+        <div id="alertaCancelamento" class="alert-box">
+          ⚠️ O documento de cancelamento encerra formalmente o vínculo de estágio. Certifique-se de que todos os dados estejam corretos — este documento tem validade jurídica.
+        </div>
+        <div id="alertaRecesso" class="alert-box orange" style="display:none">
+          📋 O recesso deve ser concedido após cada 12 meses de vigência do contrato de estágio (Art. 13, Lei 11.788/2008). O período é de, no mínimo, 15 dias.
+        </div>
+
+        <!-- DADOS DO ESTAGIÁRIO -->
+        <div class="card">
+          <div class="card-label">Dados do Estagiário</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Nome completo <span class="req">*</span></label>
+              <input class="fi" id="nome" placeholder="Nome completo do estagiário" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">CPF</label>
+              <input class="fi" id="cpf" placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this);schedulePreview()"/>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label class="fl">Cargo / Função</label>
+              <input class="fi" id="cargo" placeholder="Ex: Estagiária de Administração" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Curso</label>
+              <input class="fi" id="curso" placeholder="Ex: Bacharelado em Administração" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Semestre / Fase</label>
+              <input class="fi" id="semestre" placeholder="Ex: 7º semestre" oninput="schedulePreview()"/>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Matrícula</label>
+              <input class="fi" id="matricula" placeholder="Ex: 2023001234" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Instituição de Ensino</label>
+              <input class="fi" id="instituicao" placeholder="Ex: Universidade Pitágoras Unopar" oninput="schedulePreview()"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="fl">Endereço do estagiário</label>
+            <input class="fi" id="endereco_est" placeholder="Rua, nº, bairro, cidade/UF" oninput="schedulePreview()"/>
+          </div>
+        </div>
+
+        <!-- EMPRESA -->
+        <div class="card">
+          <div class="card-label">Empresa / Unidade Concedente</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Nome da empresa <span class="req">*</span></label>
+              <input class="fi" id="empresa" placeholder="Razão social" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">CNPJ da empresa</label>
+              <input class="fi" id="cnpj_empresa" placeholder="00.000.000/0001-00" oninput="maskCNPJ(this);schedulePreview()"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="fl">Endereço da empresa</label>
+            <input class="fi" id="endereco_emp" placeholder="Rua, nº, sala, bairro, cidade/UF, CEP" oninput="schedulePreview()"/>
+          </div>
+        </div>
+
+        <!-- PERÍODO DO CONTRATO -->
+        <div class="card">
+          <div class="card-label">Período do Contrato de Estágio</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Início do contrato</label>
+              <input type="date" class="fi" id="periodo_inicio" onchange="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl" id="lbl-fim-contrato">Término previsto</label>
+              <input type="date" class="fi" id="periodo_fim" onchange="schedulePreview()"/>
+            </div>
+          </div>
+          <!-- Campo exclusivo: data de rescisão (cancelamento) -->
+          <div id="bloco-rescisao">
+            <div class="form-group">
+              <label class="fl">Data de rescisão / cancelamento <span class="req">*</span></label>
+              <input type="date" class="fi" id="data_rescisao" onchange="schedulePreview()"/>
+              <div class="fi-note">Data em que o vínculo é formalmente encerrado</div>
+            </div>
+            <div class="form-group">
+              <label class="fl">Motivo do cancelamento</label>
+              <select class="fi" id="motivo_cancelamento" onchange="schedulePreview()">
+                <option value="mutuo_acordo">Mútuo acordo entre as partes</option>
+                <option value="iniciativa_estagiario">Por iniciativa do estagiário</option>
+                <option value="iniciativa_empresa">Por iniciativa da empresa</option>
+                <option value="termino_contrato">Término do prazo contratual</option>
+                <option value="conclusao_curso">Conclusão do curso</option>
+                <option value="desempenho">Desempenho insatisfatório do estagiário</option>
+                <option value="outro">Outro motivo</option>
+              </select>
+            </div>
+            <div class="form-group" id="bloco-motivo-outro" style="display:none">
+              <label class="fl">Descreva o motivo</label>
+              <input class="fi" id="motivo_outro" placeholder="Descreva o motivo do cancelamento" oninput="schedulePreview()"/>
+            </div>
+          </div>
+
+          <!-- Campo exclusivo: período de recesso -->
+          <div id="bloco-recesso" style="display:none">
+            <div class="alert-box blue" style="margin-bottom:.6rem">
+              📅 Preencha o período de recesso concedido. O contrato continua vigente após o recesso.
+            </div>
+            <div class="grid-3">
+              <div class="form-group">
+                <label class="fl">Início do recesso <span class="req">*</span></label>
+                <input type="date" class="fi" id="recesso_inicio" onchange="schedulePreview()"/>
+              </div>
+              <div class="form-group">
+                <label class="fl">Fim do recesso <span class="req">*</span></label>
+                <input type="date" class="fi" id="recesso_fim" onchange="schedulePreview()"/>
+              </div>
+              <div class="form-group">
+                <label class="fl">Nº de dias</label>
+                <input type="number" class="fi" id="dias_recesso" value="15" min="1" max="30" oninput="schedulePreview()"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="fl">Retorno ao trabalho em</label>
+              <input type="date" class="fi" id="recesso_retorno" onchange="schedulePreview()"/>
+              <div class="fi-note">Data de retorno após o recesso (geralmente dia útil seguinte ao fim)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FINANCEIRO -->
+        <div class="card">
+          <div class="card-label">Dados Financeiros</div>
+          <div class="grid-3">
+            <div class="form-group">
+              <label class="fl">Valor da bolsa (R$)</label>
+              <input type="number" class="fi" id="valor_bolsa" placeholder="900.00" step="0.01" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Valor do VT (R$/dia)</label>
+              <input type="number" class="fi" id="valor_vt" placeholder="0.00" step="0.01" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Taxa administrativa (%)</label>
+              <input type="number" class="fi" id="taxa_admin" value="15" oninput="schedulePreview()"/>
+            </div>
+          </div>
+          <div class="form-group" id="bloco-valor-total">
+            <label class="fl">Valor total declarado (R$)</label>
+            <input type="number" class="fi" id="valor_total" placeholder="Ex: 900.00" step="0.01" oninput="schedulePreview()"/>
+            <div class="fi-note">Valor exato a ser declarado no documento de cancelamento</div>
+          </div>
+          <!-- Saldo proporcional (cancelamento) -->
+          <div id="bloco-saldo">
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="fl">Mês de referência (início)</label>
+                <input type="date" class="fi" id="ref_inicio" onchange="schedulePreview()"/>
+              </div>
+              <div class="form-group">
+                <label class="fl">Mês de referência (fim)</label>
+                <input type="date" class="fi" id="ref_fim" onchange="schedulePreview()"/>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ATIVIDADES -->
+        <div class="card">
+          <div class="card-label">Atividades Exercidas</div>
+          <div class="form-group">
+            <label class="fl">Descrição das atividades durante o estágio</label>
+            <textarea class="fi" id="atividades_plano" rows="4"
+              placeholder="Ex: atividades administrativas, suporte em recrutamento, controle de agendamento, organização de documentos..."
+              oninput="schedulePreview()"></textarea>
+          </div>
+        </div>
+
+        <!-- SUPERVISOR -->
+        <div class="card">
+          <div class="card-label">Supervisor / Responsável pela Emissão</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Nome do supervisor</label>
+              <input class="fi" id="supervisor_nome" placeholder="Ex: Elisa Soares Marçal dos Santos Nunes" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Cargo do supervisor</label>
+              <input class="fi" id="supervisor_cargo" placeholder="Ex: Proprietária" oninput="schedulePreview()"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- EMISSÃO -->
+        <div class="card">
+          <div class="card-label">Emissão do Documento</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="fl">Cidade</label>
+              <input class="fi" id="cidade_emissao" value="Guaíba/RS" oninput="schedulePreview()"/>
+            </div>
+            <div class="form-group">
+              <label class="fl">Data de emissão</label>
+              <input type="date" class="fi" id="data_emissao" onchange="schedulePreview()"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- AÇÕES -->
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;padding-bottom:3rem">
+          <button class="btn btn-primary" onclick="gerar()">📄 Gerar Documento</button>
+          <button class="btn btn-ghost" onclick="previsualizar()">👁 Pré-visualizar</button>
+          <a href="index-cartas.html" class="btn btn-ghost">← Cancelar</a>
+        </div>
+
+      </div><!-- /form-col -->
+
+      <!-- COLUNA PREVIEW -->
+      <div class="preview-col">
+        <div class="preview-head">
+          <span>👁 Preview A4</span>
+          <span id="preview-tipo-label" style="color:var(--accent);font-size:.6rem">Cancelamento</span>
+        </div>
+        <div class="preview-frame" id="previewFrame">
+          <div class="preview-empty" id="previewEmpty">
+            <span>📋</span>
+            Preencha os dados<br/>para ver o preview
+          </div>
+          <iframe id="previewIframe" style="display:none" title="Preview do documento"></iframe>
+        </div>
+        <div class="preview-actions">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="previsualizar()">↗ Abrir em nova aba</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="gerar()">🖨️ Gerar PDF</button>
+        </div>
+      </div>
+
+    </div><!-- /split-wrap -->
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+<div id="toast-ct"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../assets/cr-auth.js"></script>
+<script src="../assets/cr-utils.js"></script>
+<script>
+let _tipo = 'carta_cancelamento';
+let _previewTimer = null;
+
+// Inicializa data de emissão com hoje
+document.getElementById('data_emissao').value = new Date().toISOString().slice(0, 10);
+
+// ── Seletor de tipo ──────────────────────────────────────
+function setTipo(t) {
+  _tipo = t;
+
+  // Visual dos botões
+  document.querySelectorAll('.tipo-item').forEach(el => el.classList.remove('ativo', 'orange'));
+  const btn = document.getElementById('btn-' + t);
+  btn.classList.add('ativo');
+  if (t === 'carta_recesso') btn.classList.add('orange');
+
+  const isCan = t === 'carta_cancelamento';
+  const isRec = t === 'carta_recesso';
+
+  // Alertas
+  document.getElementById('alertaCancelamento').style.display = isCan ? '' : 'none';
+  document.getElementById('alertaRecesso').style.display      = isRec ? '' : 'none';
+
+  // Blocos condicionais
+  show('bloco-rescisao', isCan);
+  show('bloco-recesso',  isRec);
+  show('bloco-saldo',    isCan);
+  show('bloco-valor-total', isCan);
+
+  // Label do fim do contrato
+  document.getElementById('lbl-fim-contrato').textContent =
+    isCan ? 'Término previsto (contrato)' : 'Fim do contrato';
+
+  // Label do preview
+  document.getElementById('preview-tipo-label').textContent =
+    isCan ? 'Cancelamento' : 'Recesso';
+
+  schedulePreview();
+}
+
+function show(id, on) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = on ? '' : 'none';
+}
+
+// Motivo "outro" toggle
+document.getElementById('motivo_cancelamento')?.addEventListener('change', function() {
+  show('bloco-motivo-outro', this.value === 'outro');
+  schedulePreview();
+});
+
+// ── Coleta dados do formulário ───────────────────────────
+function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function dadosForm() {
+  const motivoSel = v('motivo_cancelamento');
+  const motivoLabel = {
+    mutuo_acordo:          'Mútuo acordo entre as partes',
+    iniciativa_estagiario: 'Por iniciativa do estagiário',
+    iniciativa_empresa:    'Por iniciativa da empresa',
+    termino_contrato:      'Término do prazo contratual',
+    conclusao_curso:       'Conclusão do curso',
+    desempenho:            'Desempenho insatisfatório do estagiário',
+    outro:                 v('motivo_outro') || 'Outro motivo'
+  };
+
+  return {
+    tipo_doc: _tipo,
+    tipo: 'estagiario',
+    nome:            v('nome'),
+    cpf:             v('cpf'),
+    cargo:           v('cargo'),
+    curso:           v('curso'),
+    semestre:        v('semestre'),
+    matricula:       v('matricula'),
+    instituicao:     v('instituicao'),
+    endereco_est:    v('endereco_est'),
+    empresa:         v('empresa'),
+    cnpj_empresa:    v('cnpj_empresa'),
+    endereco_emp:    v('endereco_emp'),
+    periodo_inicio:  v('periodo_inicio')  || null,
+    periodo_fim:     v('periodo_fim')     || null,
+    data_rescisao:   v('data_rescisao')   || null,
+    motivo_cancelamento: motivoLabel[motivoSel] || motivoLabel.mutuo_acordo,
+    recesso_inicio:  v('recesso_inicio')  || null,
+    recesso_fim:     v('recesso_fim')     || null,
+    recesso_retorno: v('recesso_retorno') || null,
+    dias_recesso:    parseInt(v('dias_recesso')) || 15,
+    ref_inicio:      v('ref_inicio')      || null,
+    ref_fim:         v('ref_fim')         || null,
+    valor_bolsa:     parseFloat(v('valor_bolsa'))  || null,
+    valor_vt:        parseFloat(v('valor_vt'))     || null,
+    taxa_admin:      parseFloat(v('taxa_admin'))   || 15,
+    valor_total:     parseFloat(v('valor_total'))  || null,
+    atividades_plano: v('atividades_plano'),
+    supervisor_nome: v('supervisor_nome'),
+    supervisor_cargo: v('supervisor_cargo'),
+    cidade_emissao:  v('cidade_emissao')  || 'Guaíba/RS',
+    data_emissao:    v('data_emissao')    || new Date().toISOString().slice(0, 10)
+  };
+}
+
+// ── Preview embutido ──────────────────────────────────────
+function schedulePreview() {
+  clearTimeout(_previewTimer);
+  _previewTimer = setTimeout(atualizarPreview, 600);
+}
+
+function atualizarPreview() {
+  const d = dadosForm();
+  if (!d.nome && !d.empresa) {
+    document.getElementById('previewEmpty').style.display = 'flex';
+    document.getElementById('previewIframe').style.display = 'none';
+    return;
+  }
+  d.numero_carta = (_tipo === 'carta_cancelamento' ? 'CAN' : 'RCS') + '-PREVIEW';
+  localStorage.setItem('cr_preview', JSON.stringify(d));
+  const iframe = document.getElementById('previewIframe');
+  iframe.src = 'visualizar.html?preview=1&t=' + Date.now();
+  iframe.style.display = 'block';
+  document.getElementById('previewEmpty').style.display = 'none';
+}
+
+// ── Pré-visualizar em nova aba ────────────────────────────
+function previsualizar() {
+  const d = dadosForm();
+  if (!d.nome) { toast('Informe o nome do estagiário.', 'err'); return; }
+  d.numero_carta = 'PRÉ-VISUALIZAÇÃO';
+  localStorage.setItem('cr_preview', JSON.stringify(d));
+  window.open('visualizar.html', '_blank');
+  setTimeout(() => localStorage.removeItem('cr_preview'), 120000);
+}
+
+// ── Gerar documento ───────────────────────────────────────
+function gerar() {
+  const d = dadosForm();
+  if (!d.nome)    { toast('Informe o nome do estagiário.', 'err'); return; }
+  if (!d.empresa) { toast('Informe a empresa.', 'err'); return; }
+
+  if (_tipo === 'carta_cancelamento' && !d.data_rescisao) {
+    toast('Informe a data de rescisão.', 'err'); return;
+  }
+  if (_tipo === 'carta_recesso' && (!d.recesso_inicio || !d.recesso_fim)) {
+    toast('Informe o período de recesso.', 'err'); return;
+  }
+
+  const prefixo = _tipo === 'carta_cancelamento' ? 'CAN' : 'RCS';
+  const agora   = new Date();
+  d.numero_carta = `${prefixo}-${agora.getFullYear()}-${String(agora.getTime()).slice(-4)}`;
+
+  localStorage.setItem('cr_preview', JSON.stringify(d));
+  window.open('visualizar.html', '_blank');
+  setTimeout(() => localStorage.removeItem('cr_preview'), 120000);
+
+  const label = _tipo === 'carta_cancelamento' ? 'cancelamento' : 'recesso';
+  toast(`✅ Documento de ${label} gerado! Imprima ou salve como PDF na próxima aba.`);
+}
+
+// Inicializa com cancelamento
+setTipo('carta_cancelamento');
+</script>
+</body>
+</html>
