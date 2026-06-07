@@ -155,12 +155,14 @@
 
     <!-- Tabela completa -->
     <div class="tbl-wrap">
-      <div class="tbl-hd">
+      <div class="tbl-hd" onclick="toggleTabelaRec()" style="cursor:pointer;user-select:none">
         <span class="tbl-title">📋 Contratos por Recrutador</span>
-        <div class="tbl-actions">
+        <div class="tbl-actions" onclick="event.stopPropagation()">
           <div class="search-box"><span>🔍</span><input placeholder="Buscar recrutador ou empresa..." oninput="UI.filtrar('tbodyRec',this.value)"/></div>
+          <button class="btn btn-ghost btn-sm" id="btnToggleTabelaRec" onclick="event.stopPropagation();toggleTabelaRec()" style="font-size:.75rem">▼ Mostrar contratos</button>
         </div>
       </div>
+      <div id="tabelaRecCorpo" style="display:none">
       <div class="tbl-scroll">
         <table>
           <thead>
@@ -180,6 +182,7 @@
           <tbody id="tbodyRec"></tbody>
           <tfoot><tr id="tfootRec"><td colspan="10" style="text-align:center;color:var(--muted);font-size:.72rem">Carregando...</td></tr></tfoot>
         </table>
+      </div>
       </div>
     </div>
     <!-- Pagamentos por Consultor -->
@@ -278,6 +281,15 @@
 let _contratos = [];
 let _cfg = {};
 let _chartMensal = null;
+
+function toggleTabelaRec() {
+  const corpo = document.getElementById('tabelaRecCorpo');
+  const btn   = document.getElementById('btnToggleTabelaRec');
+  if (!corpo) return;
+  const aberto = corpo.style.display !== 'none';
+  corpo.style.display = aberto ? 'none' : '';
+  if (btn) btn.textContent = aberto ? '▼ Mostrar contratos' : '▲ Ocultar contratos';
+}
 
 // ── Nomes de recrutadores extras pré-cadastrados ──
 const RECS_KEY = 'ex_cc_recrutadores_extra';
@@ -426,10 +438,11 @@ function _renderCards(recMap) {
       <div class="rec-card" style="cursor:pointer" onclick="abrirDetalhe('${n.replace(/'/g,"\\'")}')">
         <div class="rec-card-head">
           <div class="rec-av ${avCls}">${sigla}</div>
-          <div style="overflow:hidden">
+          <div style="overflow:hidden;flex:1">
             <div style="font-weight:800;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</div>
             <div style="font-size:.64rem;color:var(--muted)">${r.contratos.length} contrato${r.contratos.length!==1?'s':''} · ${ativos} ativo${ativos!==1?'s':''}</div>
           </div>
+          <button onclick="event.stopPropagation();excluirConsultor('${n.replace(/'/g,"\\'")}',${r.contratos.length})" title="Excluir consultor" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:.85rem;padding:.3rem .4rem;border-radius:6px;opacity:.5;transition:opacity .15s;flex-shrink:0" onmouseover="this.style.opacity='1';this.style.color='#e74c3c'" onmouseout="this.style.opacity='.5';this.style.color='var(--muted)'">✕</button>
         </div>
         <div class="rec-card-body">
           <div class="rec-stat-row"><span class="rec-stat-label">Receita gerada</span><span class="rec-stat-val">${Fmt.brl(r.totalReceita)}</span></div>
@@ -643,6 +656,18 @@ function salvarNovoRecrutador() {
   if (!lista.includes(nome)) { lista.push(nome); saveConsultoresExtra(lista); }
   UI.toast(`Recrutador "${nome}" cadastrado!`, 'ok');
   UI.closeModal('modalNovo');
+  render();
+}
+
+function excluirConsultor(nome, qtdContratos) {
+  const msg = qtdContratos > 0
+    ? `Excluir o consultor "${nome}"?\n\nEle tem ${qtdContratos} contrato(s) vinculado(s). O consultor será removido da lista, mas os contratos não serão apagados.`
+    : `Excluir o consultor "${nome}"?`;
+  if (!confirm(msg)) return;
+  // Remove dos extras cadastrados manualmente
+  const extras = getConsultoresExtra().filter(n => n !== nome);
+  saveConsultoresExtra(extras);
+  UI.toast(`Consultor "${nome}" removido`, 'wrn');
   render();
 }
 
