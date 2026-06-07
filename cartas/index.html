@@ -26,6 +26,13 @@
 .wl-title { font-size: 1.25rem; font-weight: 900; margin-bottom: .18rem; color: #f0f4ff; }
 .wl-title em { color: var(--accent); font-style: normal; }
 .wl-sub { font-size: .78rem; color: #94a3b8; }
+.wl-badge {
+  display: flex; align-items: center; gap: .45rem;
+  background: rgba(96,165,250,.07); border: 1px solid rgba(96,165,250,.16);
+  border-radius: 10px; padding: .45rem .75rem;
+  font-size: .72rem; font-weight: 700; color: #60a5fa;
+  flex-shrink: 0;
+}
 
 /* Hub cards — os dois módulos principais */
 .hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; margin-bottom: 1.5rem; }
@@ -114,7 +121,11 @@
 <aside class="sidebar">
   <div class="sb-head">
     <div class="sb-logo">
-      <img src="../imagens/logo123.jpeg" alt="Orizon" onerror="this.parentElement.innerHTML='✉️'"/>
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="7.5" stroke="white" stroke-width="2.2" fill="none" opacity=".9"/>
+          <circle cx="11" cy="11" r="3.2" fill="white" opacity=".85"/>
+          <path d="M11 3.5 L14 1" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+        </svg>
     </div>
     <div>
       <div class="sb-name">Orizon <em>Consultoria</em></div>
@@ -132,12 +143,16 @@
     <a class="sb-item" href="index-contratos.html"><span class="sb-ico">🖊️</span>Contratos Digitais</a>
   </nav>
   <div class="sb-foot">
-    <div class="sb-av" id="sb-av-init">EX</div>
-    <div>
-      <div class="sb-uname" id="user-nome">—</div>
-      <div class="sb-uemail" id="user-email">—</div>
+    <div class="sb-foot-user">
+      <div class="sb-av" id="sb-av-init">EX</div>
+      <div class="sb-user-info">
+        <div class="sb-uname" id="user-nome">—</div>
+        <div class="sb-uemail" id="user-email">—</div>
+      </div>
     </div>
-    <button class="sb-logout" onclick="doLogout()" title="Sair">⏻</button>
+    <button class="sb-logout" onclick="doLogout()" title="Sair">
+      <span class="sb-logout-ico">⏻</span> Sair da conta
+    </button>
   </div>
 </aside>
 
@@ -165,7 +180,14 @@
     <div class="welcome">
       <div>
         <div class="wl-title">Bom dia, <em id="first-name">—</em> 👋</div>
-        <div class="wl-sub" id="wl-date">Carregando...</div>
+        <div class="wl-sub" id="wl-date"><!-- data preenchida via JS --></div>
+      </div>
+      <div class="wl-badge">
+        <svg width="20" height="20" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="7.5" stroke="#60a5fa" stroke-width="2.2" fill="none" opacity=".8"/>
+          <circle cx="11" cy="11" r="3.2" fill="#60a5fa" opacity=".7"/>
+        </svg>
+        <span id="wl-modulo">Orizon Consultoria</span>
       </div>
     </div>
 
@@ -272,8 +294,10 @@ const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsIn
   }
 
   const d = new Date();
+  const diasSemana = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   document.getElementById('wl-date').textContent =
-    d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    diasSemana[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()] + ' de ' + d.getFullYear();
 
   // KPIs
   try {
