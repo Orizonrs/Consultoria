@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
+<title>Documento — Orizon Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<style>
+/* ── Toolbar de controle (só na tela, some ao imprimir) ── */
+:root {
+  --accent:#60a5fa; --primary:#1e40af; --bg:#0e0e0e; --card:#141414;
+  --border:rgba(96,165,250,.12); --text:#efefef; --muted:#5a5a5a;
+  --green:#2ecc71; --orange:#f39c12; --red:#e74c3c; --blue:#3b9de8;
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); font-family:'Sora',sans-serif; min-height:100vh; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  position:sticky; top:0; z-index:100;
+  background:rgba(8,8,8,.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:.6rem 1.4rem;
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+}
+.tb-info { display:flex; align-items:center; gap:.65rem; }
+.tb-logo { width:28px; height:28px; border-radius:7px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+.tb-logo img { width:20px; height:20px; object-fit:contain; }
+.tb-title { font-size:.8rem; font-weight:800; color:var(--text); }
+.tb-title em { color:var(--accent); font-style:normal; }
+.tb-num { font-size:.62rem; color:var(--muted); margin-top:.05rem; font-family:'DM Mono',monospace; }
+.tb-actions { display:flex; gap:.4rem; align-items:center; }
+.btn {
+  display:inline-flex; align-items:center; gap:.35rem;
+  padding:.4rem .85rem; border-radius:8px; border:1px solid transparent;
+  cursor:pointer; font-family:'Sora',sans-serif; font-size:.72rem; font-weight:700;
+  transition:all .14s; text-decoration:none; white-space:nowrap;
+}
+.btn-primary { background:linear-gradient(135deg,var(--primary),var(--accent)); color:#fff; }
+.btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); }
+.btn-ghost { background:rgba(255,255,255,.05); color:var(--muted); border-color:rgba(255,255,255,.09); }
+.btn-ghost:hover { background:rgba(255,255,255,.1); color:var(--text); }
+.btn-sm { padding:.3rem .65rem; font-size:.68rem; }
+
+/* ── ÁREA DO DOCUMENTO ── */
+.doc-area {
+  display:flex; justify-content:center;
+  padding:2rem 1rem 4rem;
+}
+
+/* ── PÁGINA A4 ── */
+.pagina {
+  width:210mm; min-height:297mm;
+  background:#fff; color:#1a1a1a;
+  font-family:'Sora',sans-serif; font-size:10pt;
+  box-shadow:0 8px 48px rgba(0,0,0,.5);
+  position:relative; overflow:hidden;
+  page-break-after:always; break-after:page;
+  margin-bottom:2rem;
+}
+
+/* HEADER */
+.pg-header {
+  background:#1e40af; padding:20px 42px 16px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.hd-left { display:flex; align-items:center; gap:11px; }
+.hd-logo-box {
+  width:48px; height:48px; border-radius:10px;
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.2);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.hd-logo-box img { width:36px; height:36px; object-fit:contain; }
+.hd-company { color:#fff; }
+.hd-company-name { font-size:13pt; font-weight:800; letter-spacing:-.2px; line-height:1.1; }
+.hd-company-name em { color:rgba(255,255,255,.65); font-style:normal; font-weight:300; }
+.hd-company-sub { font-size:6pt; letter-spacing:3.5px; text-transform:uppercase;
+  color:rgba(255,255,255,.5); margin-top:2px; font-weight:600; }
+.hd-right { text-align:right; }
+.hd-num-lbl { font-size:5.5pt; letter-spacing:2.5px; text-transform:uppercase;
+  color:rgba(255,255,255,.45); font-weight:600; margin-bottom:2px; }
+.hd-num { font-size:14pt; font-weight:900; color:#fff; letter-spacing:-.4px; font-family:'DM Mono',monospace; }
+.hd-date { font-size:7.5pt; color:rgba(255,255,255,.55); margin-top:2px; }
+
+/* BANNER TIPO */
+.pg-banner {
+  background:linear-gradient(135deg,#1e3a8a,#1e40af);
+  border-top:1px solid rgba(255,255,255,.08);
+  padding:14px 42px 12px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.banner-tipo { font-size:18pt; font-weight:900; color:#fff; letter-spacing:-.4px; }
+.banner-sub { font-size:6.5pt; letter-spacing:3.5px; text-transform:uppercase;
+  color:rgba(255,255,255,.5); margin-top:2px; font-weight:600; }
+.banner-badge {
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2);
+  border-radius:6px; padding:4px 10px;
+  font-size:7pt; font-weight:700; color:#fff; letter-spacing:1.5px;
+  text-transform:uppercase; white-space:nowrap;
+}
+
+/* CORPO */
+.pg-body { padding:26px 42px 0; flex:1; }
+
+/* Card do colaborador */
+.colab-card {
+  border:1.5px solid #dbeafe; border-radius:10px;
+  padding:13px 17px; margin-bottom:20px; background:#fff;
+}
+.colab-name { font-size:12pt; font-weight:800; color:#1e40af; margin-bottom:9px; }
+.colab-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px 24px; }
+.colab-field-lbl { font-size:5.5pt; font-weight:700; color:#aaa;
+  text-transform:uppercase; letter-spacing:.8px; margin-bottom:2px; }
+.colab-field-val { font-size:9pt; font-weight:600; color:#1a1a1a; }
+
+/* Texto do documento */
+.doc-text { font-size:9.5pt; line-height:1.85; color:#2a2a2a; margin-bottom:16px; }
+.doc-text p { margin-bottom:10px; text-align:justify; }
+.doc-text .destaque {
+  border-left:3px solid #60a5fa;
+  padding:9px 13px 9px 15px;
+  background:#eff6ff; border-radius:0 6px 6px 0;
+  margin:12px 0; font-style:normal; line-height:1.8;
+  color:#1e3a8a;
+}
+.doc-text strong { font-weight:700; color:#1a1a1a; }
+
+/* Data e local */
+.date-line { font-size:9.5pt; color:#555; margin:12px 0 22px; }
+
+/* Assinaturas */
+.sig-sep { border:none; border-top:1px solid #ddd; margin-bottom:20px; }
+.sig-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:22px; }
+.sig-line { border-bottom:1.5px solid #444; min-height:52px; margin-bottom:6px;
+  display:flex; align-items:flex-end; padding-bottom:3px; }
+.sig-name { font-size:9.5pt; font-weight:700; color:#1a1a1a; }
+.sig-role { font-size:7.5pt; color:#666; margin-top:2px; }
+.sig-org { font-size:7pt; color:#1e40af; font-weight:700; margin-top:1px; }
+
+/* Caixa de autenticidade */
+.auth-box {
+  background:#eff6ff; border:1.5px solid #93c5fd;
+  border-radius:8px; padding:11px 17px; font-size:7pt; line-height:2;
+}
+.auth-title { font-size:6.5pt; font-weight:800; color:#1e40af;
+  text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
+.auth-row { display:flex; gap:8px; }
+.auth-lbl { color:#777; font-weight:600; min-width:140px; flex-shrink:0; }
+.auth-val { color:#1a1a1a; font-family:'DM Mono',monospace; font-size:6.5pt; word-break:break-all; }
+.auth-val.nm { font-family:'Sora',sans-serif; color:#1e40af; font-weight:700; }
+
+/* FOOTER */
+.pg-footer {
+  background:#1e40af; padding:10px 42px;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:auto;
+}
+.ft-left { font-size:6.5pt; color:rgba(255,255,255,.75); line-height:1.85; }
+.ft-left strong { color:#fff; font-weight:700; }
+.ft-right { font-size:6.5pt; color:rgba(255,255,255,.6); font-weight:600; white-space:nowrap; }
+
+/* Página 2 (assinaturas / auditoria) */
+.pg2 { width:210mm; min-height:297mm; background:#fff; color:#1a1a1a;
+  font-family:'Sora',sans-serif; font-size:10pt;
+  box-shadow:0 8px 48px rgba(0,0,0,.5);
+  position:relative; display:flex; flex-direction:column;
+  margin-bottom:2rem;
+}
+.pg2-body { padding:32px 42px 0; flex:1; }
+
+/* TCE — tabela de dados */
+.tce-section { margin-bottom:18px; }
+.tce-section-title {
+  font-size:7pt; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+  color:#1e40af; border-bottom:1px solid #dbeafe; padding-bottom:4px; margin-bottom:8px;
+}
+.tce-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px 22px; }
+.tce-grid.cols3 { grid-template-columns:1fr 1fr 1fr; }
+.tce-lbl { font-size:5.5pt; color:#aaa; text-transform:uppercase; letter-spacing:.7px; font-weight:700; margin-bottom:2px; }
+.tce-val { font-size:8.5pt; font-weight:600; color:#1a1a1a; border-bottom:1px solid #eee; padding-bottom:3px; }
+.tce-full { grid-column:1/-1; }
+.tce-atividades {
+  background:#f8faff; border:1px solid #dbeafe; border-radius:6px;
+  padding:8px 12px; font-size:8pt; line-height:1.7; color:#2a2a2a; margin-top:4px;
+}
+
+/* Cancelamento / Recesso — info box */
+.canc-box {
+  background:#fff5f5; border:1.5px solid #fca5a5; border-radius:8px;
+  padding:13px 17px; margin-bottom:18px;
+}
+.canc-box.recesso { background:#f0fdf4; border-color:#86efac; }
+.canc-box-title { font-size:8pt; font-weight:800; color:#dc2626; margin-bottom:6px; }
+.canc-box.recesso .canc-box-title { color:#16a34a; }
+
+@media print {
+  body { background:#fff !important; }
+  .toolbar { display:none !important; }
+  .doc-area { padding:0 !important; }
+  .pagina, .pg2 { box-shadow:none !important; margin-bottom:0 !important; page-break-after:always; }
+  @page { margin:0; size:A4; }
+}
+
+/* Modo iframe (preview sem toolbar) */
+body.preview-mode .toolbar { display:none; }
+body.preview-mode .doc-area { padding:.5rem !important; }
+body.preview-mode .pagina, body.preview-mode .pg2 { box-shadow:none !important; }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="toolbar" id="toolbar">
+  <div class="tb-info">
+    <div class="tb-logo">
+      <img src="../imagens/logo123.jpeg" alt="Orizon" onerror="this.parentElement.innerHTML='📄'"/>
+    </div>
+    <div>
+      <div class="tb-title">Orizon <em>Consultoria</em></div>
+      <div class="tb-num" id="tbNum">—</div>
+    </div>
+  </div>
+  <div class="tb-actions">
+    <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="btn btn-ghost btn-sm" onclick="window.close()">✕ Fechar</button>
+    <button class="btn btn-primary btn-sm" onclick="window.print()">📥 Salvar PDF</button>
+  </div>
+</div>
+
+<!-- DOCUMENTO -->
+<div class="doc-area" id="docArea">
+  <div id="docContent">
+    <!-- Gerado por JS -->
+  </div>
+</div>
+
+<script>
+const LOGO = '../imagens/logo123.jpeg';
+const ORIZON = {
+  nome: 'Orizon Consultoria Recrutamento e Seleção LTDA',
+  cnpj: '46.599.025/0001-54',
+  end:  'Rua São José, nº 584, sala 202 — Centro, Guaíba/RS · CEP 92704-380',
+  tel:  '(51) 99850-3183',
+  email:'adm@orizon.com.br'
+};
+
+// ── Detecta modo preview (chamado via iframe) ──
+const params = new URLSearchParams(window.location.search);
+if (params.get('preview') === '1') {
+  document.body.classList.add('preview-mode');
+}
+
+// ── Utilitários ──
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d.includes('T') ? d : d + 'T12:00:00');
+  if (isNaN(dt)) return '—';
+  return dt.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+function fmtDateShort(d) {
+  if (!d) return '—';
+  const dt = new Date(d.includes('T') ? d : d + 'T12:00:00');
+  if (isNaN(dt)) return '—';
+  return dt.toLocaleDateString('pt-BR');
+}
+function brl(v) {
+  if (!v) return '—';
+  return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+}
+function genHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h|0; }
+  return Math.abs(h).toString(16).toUpperCase().padStart(8,'0');
+}
+
+// ── Lê dados do localStorage ──
+const raw = localStorage.getItem('cr_preview');
+if (!raw) {
+  document.getElementById('docContent').innerHTML =
+    '<div style="text-align:center;padding:4rem;color:#888;font-family:Sora,sans-serif">⚠️ Nenhum dado encontrado. Volte e gere o documento novamente.</div>';
+} else {
+  const d = JSON.parse(raw);
+  render(d);
+}
+
+function render(d) {
+  document.getElementById('tbNum').textContent = d.numero_carta || '—';
+  document.title = `${tipoLabel(d.tipo_doc)} — ${d.nome || 'Orizon'}`;
+
+  const dataAtual = fmtDate(d.data_emissao || new Date().toISOString().slice(0,10));
+  const hash = genHash((d.nome||'') + (d.numero_carta||'') + (d.data_emissao||''));
+
+  switch (d.tipo_doc) {
+    case 'carta_cancelamento': renderCancelamento(d, dataAtual, hash); break;
+    case 'carta_recesso':      renderRecesso(d, dataAtual, hash); break;
+    case 'tce':                renderTCE(d, dataAtual, hash); break;
+    default:                   renderRecomendacao(d, dataAtual, hash);
+  }
+}
+
+function tipoLabel(t) {
+  return { carta_recomendacao:'Carta de Recomendação', carta_cancelamento:'Carta de Cancelamento',
+           carta_recesso:'Carta de Recesso', tce:'Termo de Compromisso de Estágio' }[t] || 'Documento';
+}
+
+// ──────────────────────────────────────
+// HEADER e FOOTER helpers
+// ──────────────────────────────────────
+function mkHeader(d, dataAtual) {
+  return `
+  <div class="pg-header">
+    <div class="hd-left">
+      <div class="hd-logo-box"><img src="${LOGO}" onerror="this.src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'"/></div>
+      <div class="hd-company">
+        <div class="hd-company-name">Orizon <em>Consultoria</em></div>
+        <div class="hd-company-sub">Recrutamento · Seleção · Estágios</div>
+      </div>
+    </div>
+    <div class="hd-right">
+      <div class="hd-num-lbl">Nº do Documento</div>
+      <div class="hd-num">${d.numero_carta || '—'}</div>
+      <div class="hd-date">${dataAtual}</div>
+    </div>
+  </div>`;
+}
+
+function mkBanner(tipo, subtitulo, badge) {
+  return `
+  <div class="pg-banner">
+    <div>
+      <div class="banner-tipo">${tipo.toUpperCase()}</div>
+      <div class="banner-sub">${subtitulo}</div>
+    </div>
+    ${badge ? `<div class="banner-badge">${badge}</div>` : ''}
+  </div>`;
+}
+
+function mkFooter(pg, total) {
+  return `
+  <div class="pg-footer">
+    <div class="ft-left">
+      <strong>${ORIZON.nome}</strong> · CNPJ ${ORIZON.cnpj}<br/>
+      ${ORIZON.end} · ${ORIZON.email} · ${ORIZON.tel}
+    </div>
+    <div class="ft-right">Página ${pg} de ${total}</div>
+  </div>`;
+}
+
+function mkColabCard(d, campos) {
+  const rows = campos.map(([lbl,val]) => val ? `
+    <div>
+      <div class="colab-field-lbl">${lbl}</div>
+      <div class="colab-field-val">${val}</div>
+    </div>` : '').join('');
+  return `
+  <div class="colab-card">
+    <div class="colab-name">${d.nome}</div>
+    <div class="colab-grid">${rows}</div>
+  </div>`;
+}
+
+function mkAuth(d, dataAtual, hash) {
+  return `
+  <div class="auth-box">
+    <div class="auth-title">🔒 Dados de Autenticidade</div>
+    <div class="auth-row"><span class="auth-lbl">Hash do documento:</span><span class="auth-val nm">${hash}</span></div>
+    <div class="auth-row"><span class="auth-lbl">Documento:</span><span class="auth-val">${tipoLabel(d.tipo_doc)} · ${d.numero_carta||'—'}</span></div>
+    <div class="auth-row"><span class="auth-lbl">Emitido em:</span><span class="auth-val nm">${dataAtual}</span></div>
+    <div class="auth-row"><span class="auth-lbl">Emitido por:</span><span class="auth-val nm">Orizon Consultoria</span></div>
+  </div>`;
+}
+
+function mkSigGrid(d) {
+  return `
+  <hr class="sig-sep"/>
+  <div class="sig-grid">
+    <div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${d.supervisor_nome || 'Responsável da Agência'}</div>
+      <div class="sig-role">${d.supervisor_cargo || 'Responsável'}</div>
+      <div class="sig-org">Orizon Consultoria</div>
+    </div>
+    <div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${d.nome}</div>
+      <div class="sig-role">${d.cargo || (d.tipo === 'estagiario' ? 'Estagiário(a)' : 'Colaborador(a)')}</div>
+      <div class="sig-org">${d.empresa || 'Empresa'}</div>
+    </div>
+  </div>`;
+}
+
+// ──────────────────────────────────────
+// CARTA DE RECOMENDAÇÃO
+// ──────────────────────────────────────
+function renderRecomendacao(d, dataAtual, hash) {
+  const temPer = d.periodo_inicio || d.periodo_fim;
+  const perStr = temPer
+    ? `de ${fmtDate(d.periodo_inicio)} a ${fmtDate(d.periodo_fim)}`
+    : '';
+
+  const html = `
+  <!-- PÁG 1 -->
+  <div class="pagina" style="display:flex;flex-direction:column;">
+    ${mkHeader(d, dataAtual)}
+    ${mkBanner('Carta de Recomendação', d.tipo === 'estagiario' ? 'Estágio Profissional' : 'Colaborador CLT', d.tipo === 'estagiario' ? '🎓 Estagiário' : '💼 Efetivo')}
+    <div class="pg-body">
+      <div class="doc-text">
+        <p>À quem possa interessar,</p>
+        <p>A <strong>Orizon Consultoria Recrutamento e Seleção LTDA</strong>, por meio do presente documento, tem a honra de recomendar <strong>${d.nome}</strong>${d.cpf ? `, CPF <strong>${d.cpf}</strong>` : ''}${d.cargo ? `, que atuou como <strong>${d.cargo}</strong>` : ''}${d.empresa && d.empresa !== 'Orizon Consultoria' ? ` junto à empresa <strong>${d.empresa}</strong>` : ' junto à nossa empresa'}${perStr ? ` no período ${perStr}` : ''}.</p>
+      </div>
+      ${mkColabCard(d, [
+        ['Cargo / Função', d.cargo],
+        ['Empresa', d.empresa],
+        ['Tipo de Vínculo', d.tipo === 'estagiario' ? 'Estagiário(a)' : 'Efetivo(a) — CLT'],
+        temPer ? ['Período', `${fmtDateShort(d.periodo_inicio)} → ${fmtDateShort(d.periodo_fim)}`] : null,
+        d.curso ? ['Curso', d.curso] : null,
+        d.instituicao ? ['Instituição', d.instituicao] : null,
+      ].filter(Boolean))}
+      <div class="doc-text">
+        ${d.texto_livre ? `<div class="destaque">${d.texto_livre.replace(/\n/g,'<br/>')}</div>` : `
+        <div class="destaque">
+          Durante o período de estágio, ${d.nome} demonstrou comprometimento, responsabilidade e postura profissional exemplar. Apresentou proatividade, facilidade de adaptação às rotinas da empresa e bom relacionamento interpessoal com toda a equipe.
+        </div>`}
+      </div>
+    </div>
+    ${mkFooter(1, 2)}
+  </div>
+
+  <!-- PÁG 2 -->
+  <div class="pg2">
+    ${mkHeader(d, dataAtual)}
+    <div class="pg2-body">
+      <div class="doc-text" style="margin-bottom:8px">
+        <p>Recomendamos ${d.nome} sem quaisquer reservas, atestando sua competência técnica, ética profissional e caráter. Colocamo-nos à disposição para quaisquer informações adicionais que se façam necessárias.</p>
+      </div>
+      <div class="date-line">${d.cidade_emissao || 'Guaíba/RS'}, ${dataAtual}</div>
+      ${mkSigGrid(d)}
+      ${mkAuth(d, dataAtual, hash)}
+    </div>
+    ${mkFooter(2, 2)}
+  </div>`;
+
+  document.getElementById('docContent').innerHTML = html;
+}
+
+// ──────────────────────────────────────
+// CARTA DE CANCELAMENTO
+// ──────────────────────────────────────
+function renderCancelamento(d, dataAtual, hash) {
+  const html = `
+  <!-- PÁG 1 -->
+  <div class="pagina" style="display:flex;flex-direction:column;">
+    ${mkHeader(d, dataAtual)}
+    ${mkBanner('Carta de Cancelamento', 'Encerramento de Vínculo de Estágio', '❌ Cancelamento')}
+    <div class="pg-body">
+      <p style="font-size:9pt;color:#555;margin-bottom:14px">À quem possa interessar,</p>
+      <div class="doc-text">
+        <p>A <strong>Orizon Consultoria Recrutamento e Seleção LTDA</strong>, CNPJ ${ORIZON.cnpj}, vem por meio desta comunicar o encerramento do contrato de estágio do(a) <strong>${d.nome}</strong>${d.cpf ? `, CPF ${d.cpf}` : ''}${d.empresa ? `, junto à empresa <strong>${d.empresa}</strong>` : ''}, a partir de <strong>${fmtDate(d.periodo_fim) !== '—' ? fmtDate(d.periodo_fim) : dataAtual}</strong>.</p>
+        ${d.periodo_ref ? `<p>O período de referência para liquidação é <strong>${d.periodo_ref}</strong>.</p>` : ''}
+        ${d.valor_total || d.valor_bolsa ? `<p>O valor total a ser recebido pelo(a) estagiário(a) é de <strong>${brl(d.valor_total || d.valor_bolsa)}</strong>.</p>` : ''}
+        ${d.recesso_gozado ? `<p>O recesso remunerado já foi gozado no período de <strong>${d.recesso_gozado}</strong>.</p>` : ''}
+      </div>
+      ${mkColabCard(d, [
+        ['Estagiário(a)', d.nome],
+        d.cpf ? ['CPF', d.cpf] : null,
+        d.cargo ? ['Cargo / Função', d.cargo] : null,
+        d.empresa ? ['Empresa', d.empresa] : null,
+        d.curso ? ['Curso', d.curso] : null,
+        d.instituicao ? ['IES', d.instituicao] : null,
+        (d.periodo_inicio||d.periodo_fim) ? ['Período do Estágio', `${fmtDateShort(d.periodo_inicio)} → ${fmtDateShort(d.periodo_fim)}`] : null,
+        (d.valor_total||d.valor_bolsa) ? ['Valor a Receber', brl(d.valor_total||d.valor_bolsa)] : null,
+      ].filter(Boolean))}
+    </div>
+    ${mkFooter(1, 2)}
+  </div>
+
+  <!-- PÁG 2 -->
+  <div class="pg2">
+    ${mkHeader(d, dataAtual)}
+    <div class="pg2-body">
+      <div class="doc-text">
+        <p>Declaramos que o encerramento se dá em conformidade com a Lei nº 11.788/2008 (Lei do Estágio) e que todas as obrigações decorrentes do contrato de estágio serão devidamente cumpridas pelas partes envolvidas.</p>
+      </div>
+      <div class="date-line">${d.cidade_emissao || 'Guaíba/RS'}, ${dataAtual}</div>
+      ${mkSigGrid(d)}
+      ${mkAuth(d, dataAtual, hash)}
+    </div>
+    ${mkFooter(2, 2)}
+  </div>`;
+
+  document.getElementById('docContent').innerHTML = html;
+}
+
+// ──────────────────────────────────────
+// CARTA DE RECESSO
+// ──────────────────────────────────────
+function renderRecesso(d, dataAtual, hash) {
+  const rIni = fmtDate(d.recesso_inicio);
+  const rFim = fmtDate(d.recesso_fim);
+  const dias = d.dias_recesso || 15;
+
+  const html = `
+  <!-- PÁG 1 -->
+  <div class="pagina" style="display:flex;flex-direction:column;">
+    ${mkHeader(d, dataAtual)}
+    ${mkBanner('Carta de Recesso de Estágio', 'Período de Descanso Remunerado — Lei 11.788/2008', '🌿 Recesso')}
+    <div class="pg-body">
+      <p style="font-size:9pt;color:#555;margin-bottom:14px">À quem possa interessar,</p>
+      <div class="doc-text">
+        <p>A <strong>Orizon Consultoria Recrutamento e Seleção LTDA</strong>, CNPJ ${ORIZON.cnpj}, por meio desta carta, comunica a concessão do recesso remunerado de estágio ao(à) estagiário(a) <strong>${d.nome}</strong>${d.cpf ? `, CPF ${d.cpf}` : ''}${d.empresa ? `, designado(a) junto à empresa <strong>${d.empresa}</strong>` : ''}.</p>
+        <p>Conforme disposto no <strong>Art. 13 da Lei nº 11.788/2008</strong>, o(a) estagiário(a) terá direito a um recesso remunerado de <strong>${dias} dias</strong>, a ser gozado no período de <strong>${rIni}</strong> a <strong>${rFim}</strong>.</p>
+        ${d.valor_bolsa ? `<p>Durante o período de recesso, o(a) estagiário(a) receberá normalmente a bolsa de complementação educacional no valor de <strong>${brl(d.valor_bolsa)}</strong>.</p>` : ''}
+      </div>
+      ${mkColabCard(d, [
+        ['Estagiário(a)', d.nome],
+        d.cpf ? ['CPF', d.cpf] : null,
+        d.cargo ? ['Cargo / Função', d.cargo] : null,
+        d.empresa ? ['Empresa', d.empresa] : null,
+        d.curso ? ['Curso', d.curso] : null,
+        d.instituicao ? ['IES', d.instituicao] : null,
+        ['Período do Recesso', `${rIni} → ${rFim}`],
+        ['Dias de Recesso', `${dias} dias`],
+        d.valor_bolsa ? ['Bolsa Mensal', brl(d.valor_bolsa)] : null,
+      ].filter(Boolean))}
+    </div>
+    ${mkFooter(1, 2)}
+  </div>
+
+  <!-- PÁG 2 -->
+  <div class="pg2">
+    ${mkHeader(d, dataAtual)}
+    <div class="pg2-body">
+      <div class="doc-text">
+        <p>O presente documento tem por finalidade comprovar a concessão e fruição do recesso remunerado, em atendimento à legislação vigente, sendo assinado pelas partes como prova de concordância.</p>
+      </div>
+      <div class="date-line">${d.cidade_emissao || 'Guaíba/RS'}, ${dataAtual}</div>
+      ${mkSigGrid(d)}
+      ${mkAuth(d, dataAtual, hash)}
+    </div>
+    ${mkFooter(2, 2)}
+  </div>`;
+
+  document.getElementById('docContent').innerHTML = html;
+}
+
+// ──────────────────────────────────────
+// TCE — TERMO DE COMPROMISSO DE ESTÁGIO
+// ──────────────────────────────────────
+function renderTCE(d, dataAtual, hash) {
+  const html = `
+  <!-- PÁG 1 -->
+  <div class="pagina" style="display:flex;flex-direction:column;">
+    ${mkHeader(d, dataAtual)}
+    ${mkBanner('Termo de Compromisso de Estágio', 'TCE — Lei nº 11.788/2008', '📄 TCE')}
+    <div class="pg-body" style="padding-top:20px">
+      <div class="tce-section">
+        <div class="tce-section-title">I — Instituição de Ensino (Interveniente)</div>
+        <div class="tce-grid">
+          <div class="tce-full">
+            <div class="tce-lbl">Nome da Instituição</div>
+            <div class="tce-val">${d.instituicao || '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tce-section">
+        <div class="tce-section-title">II — Parte Concedente (Empresa)</div>
+        <div class="tce-grid">
+          <div>
+            <div class="tce-lbl">Razão Social</div>
+            <div class="tce-val">${d.empresa || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">CNPJ</div>
+            <div class="tce-val">${d.cnpj_empresa || '—'}</div>
+          </div>
+          <div class="tce-full">
+            <div class="tce-lbl">Endereço</div>
+            <div class="tce-val">${d.endereco_emp || '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tce-section">
+        <div class="tce-section-title">III — Estagiário</div>
+        <div class="tce-grid cols3">
+          <div>
+            <div class="tce-lbl">Nome Completo</div>
+            <div class="tce-val">${d.nome}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">CPF</div>
+            <div class="tce-val">${d.cpf || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Matrícula</div>
+            <div class="tce-val">${d.matricula || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Curso</div>
+            <div class="tce-val">${d.curso || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Semestre</div>
+            <div class="tce-val">${d.semestre || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Cargo / Função</div>
+            <div class="tce-val">${d.cargo || '—'}</div>
+          </div>
+          <div class="tce-full">
+            <div class="tce-lbl">Endereço</div>
+            <div class="tce-val">${d.endereco_est || '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tce-section">
+        <div class="tce-section-title">IV — Condições do Estágio</div>
+        <div class="tce-grid cols3">
+          <div>
+            <div class="tce-lbl">Início</div>
+            <div class="tce-val">${fmtDateShort(d.periodo_inicio)}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Término</div>
+            <div class="tce-val">${fmtDateShort(d.periodo_fim)}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Jornada</div>
+            <div class="tce-val">${d.jornada_horas || '6h/dia · 30h/sem'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Bolsa Mensal</div>
+            <div class="tce-val">${brl(d.valor_bolsa)}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Vale-Transporte</div>
+            <div class="tce-val">${d.valor_vt ? brl(d.valor_vt)+'/dia' : '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Apólice de Seguro</div>
+            <div class="tce-val">${d.apolice_seguro || '—'}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    ${mkFooter(1, 3)}
+  </div>
+
+  <!-- PÁG 2 — Atividades + Cláusulas -->
+  <div class="pg2">
+    ${mkHeader(d, dataAtual)}
+    <div class="pg2-body">
+      <div class="tce-section">
+        <div class="tce-section-title">V — Plano de Atividades (Anexo I)</div>
+        ${d.atividades_plano
+          ? `<div class="tce-atividades">${d.atividades_plano.replace(/\n/g,'<br/>')}</div>`
+          : '<div class="tce-atividades" style="color:#888">A definir conforme orientação do supervisor.</div>'}
+      </div>
+      <div class="tce-section" style="margin-top:14px">
+        <div class="tce-section-title">VI — Supervisor Responsável</div>
+        <div class="tce-grid">
+          <div>
+            <div class="tce-lbl">Nome do Supervisor</div>
+            <div class="tce-val">${d.supervisor_nome || '—'}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">Cargo / Função</div>
+            <div class="tce-val">${d.supervisor_cargo || '—'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="tce-section" style="margin-top:14px">
+        <div class="tce-section-title">VII — Parte Interveniente (Agência de Integração)</div>
+        <div class="tce-grid">
+          <div>
+            <div class="tce-lbl">Razão Social</div>
+            <div class="tce-val">${ORIZON.nome}</div>
+          </div>
+          <div>
+            <div class="tce-lbl">CNPJ</div>
+            <div class="tce-val">${ORIZON.cnpj}</div>
+          </div>
+          <div class="tce-full">
+            <div class="tce-lbl">Endereço</div>
+            <div class="tce-val">${ORIZON.end}</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:7.5pt;line-height:1.85;color:#444">
+        <p style="margin-bottom:7px"><strong>Cláusula 1ª — Objeto:</strong> O presente Termo de Compromisso de Estágio rege-se pela Lei nº 11.788, de 25 de setembro de 2008.</p>
+        <p style="margin-bottom:7px"><strong>Cláusula 2ª — Rescisão:</strong> O presente instrumento poderá ser rescindido por qualquer das partes mediante comunicação prévia de 30 (trinta) dias, sem ônus para qualquer das partes.</p>
+        <p style="margin-bottom:7px"><strong>Cláusula 3ª — Seguro:</strong> O estagiário está coberto por apólice de seguro contra acidentes pessoais nº ${d.apolice_seguro || '—'}.</p>
+      </div>
+    </div>
+    ${mkFooter(2, 3)}
+  </div>
+
+  <!-- PÁG 3 — Assinaturas -->
+  <div class="pg2">
+    ${mkHeader(d, dataAtual)}
+    <div class="pg2-body">
+      <p style="font-size:9.5pt;color:#444;line-height:1.8;margin-bottom:18px">
+        E, por estarem assim justos e contratados, as partes assinam o presente Termo de Compromisso de Estágio em 3 (três) vias de igual teor e valor jurídico, na presença de 2 (duas) testemunhas.
+      </p>
+      <div class="date-line">${d.cidade_emissao || 'Guaíba/RS'}, ${dataAtual}</div>
+      <hr class="sig-sep"/>
+      <div class="sig-grid">
+        <div>
+          <div class="sig-line"></div>
+          <div class="sig-name">${d.supervisor_nome || 'Responsável'}</div>
+          <div class="sig-role">${d.supervisor_cargo || 'Responsável'}</div>
+          <div class="sig-org">Empresa Concedente — ${d.empresa || '—'}</div>
+        </div>
+        <div>
+          <div class="sig-line"></div>
+          <div class="sig-name">${d.nome}</div>
+          <div class="sig-role">${d.cargo || 'Estagiário(a)'}</div>
+          <div class="sig-org">Estagiário(a)</div>
+        </div>
+      </div>
+      <div class="sig-grid" style="margin-top:18px">
+        <div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Orizon Consultoria</div>
+          <div class="sig-role">Agência de Integração</div>
+          <div class="sig-org">CNPJ ${ORIZON.cnpj}</div>
+        </div>
+        <div>
+          <div class="sig-line"></div>
+          <div class="sig-name">Instituição de Ensino</div>
+          <div class="sig-role">Interveniente</div>
+          <div class="sig-org">${d.instituicao || '—'}</div>
+        </div>
+      </div>
+      ${mkAuth(d, dataAtual, hash)}
+    </div>
+    ${mkFooter(3, 3)}
+  </div>`;
+
+  document.getElementById('docContent').innerHTML = html;
+}
+</script>
+</body>
+</html>
