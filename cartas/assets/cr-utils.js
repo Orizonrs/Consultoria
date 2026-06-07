@@ -229,3 +229,100 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); })
   );
 });
+
+// ── Nome de exibição customizado ──────────────────────────────
+// Chave usada para salvar o nome escolhido pelo usuário
+const _DISPLAY_NAME_KEY = 'cr_display_name';
+
+/**
+ * Retorna o nome de exibição na ordem de prioridade:
+ * 1. Nome salvo manualmente (localStorage cr_display_name)
+ * 2. full_name / name do metadata do Supabase
+ * 3. Parte antes do @ do e-mail
+ */
+window.getDisplayName = function(user) {
+  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+  if (saved && saved.trim()) return saved.trim();
+  if (!user) return 'Usuário';
+  return user.user_metadata?.full_name
+      || user.user_metadata?.name
+      || user.email?.split('@')[0]
+      || 'Usuário';
+};
+
+/**
+ * Abre um prompt para o usuário digitar o nome de exibição
+ * e atualiza todos os elementos na página.
+ */
+window.editDisplayName = function() {
+  const current = localStorage.getItem(_DISPLAY_NAME_KEY) || '';
+  const novo = window.prompt('Como você quer ser chamado(a)?', current);
+  if (novo === null) return; // cancelou
+  const trimmed = novo.trim();
+  if (!trimmed) {
+    localStorage.removeItem(_DISPLAY_NAME_KEY);
+  } else {
+    localStorage.setItem(_DISPLAY_NAME_KEY, trimmed);
+  }
+  // Atualiza imediatamente na tela
+  _applyDisplayName(trimmed || null);
+};
+
+function _applyDisplayName(nome) {
+  const el = document.getElementById('user-nome');
+  const elAv = document.getElementById('sb-av-init');
+  if (!nome) {
+    // Sem nome customizado — tenta pegar do Supabase
+    if (window._sb) {
+      window._sb.auth.getUser().then(({ data: { user } }) => {
+        const nm = getDisplayName(user);
+        if (el) el.textContent = nm;
+        if (elAv) elAv.textContent = _initials(nm);
+      });
+    }
+    return;
+  }
+  if (el) el.textContent = nome;
+  if (elAv) elAv.textContent = _initials(nome);
+}
+
+function _initials(nm) {
+  const parts = nm.trim().split(/\s+/);
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : parts[0].slice(0, 2).toUpperCase();
+}
+
+// Sobrescreve populateUser para usar getDisplayName
+const _origPopulateUser = window.populateUser;
+window.populateUser = function(user) {
+  const result = _origPopulateUser(user);
+  // Sobrescreve com nome customizado se existir
+  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+  if (saved && saved.trim()) {
+    const el = document.getElementById('user-nome');
+    const elAv = document.getElementById('sb-av-init');
+    if (el) el.textContent = saved.trim();
+    if (elAv) elAv.textContent = _initials(saved.trim());
+  }
+  return result;
+};
+
+// Aplica nome customizado no DOMContentLoaded também
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(_DISPLAY_NAME_KEY);
+  if (saved && saved.trim()) {
+    const el = document.getElementById('user-nome');
+    const elAv = document.getElementById('sb-av-init');
+    if (el && (el.textContent === '—' || el.textContent.includes('@') || true))
+      el.textContent = saved.trim();
+    if (elAv) elAv.textContent = _initials(saved.trim());
+  }
+  // Adiciona clique no nome para editar
+  const elNome = document.getElementById('user-nome');
+  if (elNome) {
+    elNome.title = 'Clique para alterar seu nome';
+    elNome.style.cursor = 'pointer';
+    elNome.addEventListener('click', window.editDisplayName);
+  }
+}, { once: true });
