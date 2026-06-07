@@ -5,8 +5,8 @@
 
 'use strict';
 
-const SB_URL = 'https://huycenqggwkfhvoynnhi.supabase.co';
-const SB_KEY = 'sb_publishable_XPRq5RZwkFLToHc8cYcXXg_5YnPr-TA';
+const SB_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
 
 // ══════════════════════════════════════════
 // 1. DP — STORAGE (Supabase com cache local)
