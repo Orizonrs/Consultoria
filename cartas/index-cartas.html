@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" href="../imagens/icone.png" type="image/png"/>
+<meta name="description" content="Painel de Cartas Manuais — Orizon Consultoria"/>
+<title>Cartas Manuais — Orizon Consultoria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+/* ── Welcome bar ── */
+.welcome-bar {
+  background: linear-gradient(135deg, rgba(30,64,175,.16) 0%, rgba(96,165,250,.05) 100%);
+  border: 1px solid rgba(96,165,250,.16);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.3rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.wl-title { font-size: 1.08rem; font-weight: 900; margin-bottom: .16rem; }
+.wl-title em { color: var(--accent); font-style: normal; }
+.wl-sub { font-size: .68rem; color: var(--muted); }
+.wl-right { display: flex; gap: .45rem; flex-shrink: 0; flex-wrap: wrap; }
+
+/* ── Action cards ── */
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .65rem; margin-bottom: 1.3rem; }
+.action-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 13px; padding: .95rem 1.05rem;
+  cursor: pointer; text-decoration: none; color: inherit;
+  transition: all .17s; display: flex; flex-direction: column; gap: .45rem;
+  position: relative; overflow: hidden;
+}
+.action-card::before {
+  content: ''; position: absolute; inset: 0; opacity: 0;
+  transition: opacity .17s;
+  background: linear-gradient(135deg, rgba(96,165,250,.05), transparent);
+}
+.action-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.3); }
+.action-card:hover::before { opacity: 1; }
+.action-card.featured { border-color: rgba(96,165,250,.22); background: rgba(96,165,250,.03); }
+.action-card.featured:hover { border-color: rgba(96,165,250,.45); }
+.action-card.orange { border-color: rgba(243,156,18,.18); background: rgba(243,156,18,.02); }
+.action-card.orange:hover { border-color: rgba(243,156,18,.38); }
+.ac-top { display: flex; align-items: center; justify-content: space-between; }
+.ac-ico {
+  width: 36px; height: 36px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem; flex-shrink: 0;
+}
+.ac-ico.azul  { background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.2); }
+.ac-ico.laranja { background: rgba(243,156,18,.12); border: 1px solid rgba(243,156,18,.2); }
+.ac-arr { color: var(--muted2); font-size: .85rem; transition: transform .17s; }
+.action-card:hover .ac-arr { transform: translate(3px,-3px); color: var(--accent); }
+.ac-title { font-size: .8rem; font-weight: 800; margin-bottom: .08rem; }
+.ac-desc { font-size: .63rem; color: var(--muted); line-height: 1.55; }
+.ac-tag {
+  display: inline-flex; align-items: center; gap: .28rem;
+  font-size: .55rem; font-weight: 700; padding: .13rem .42rem;
+  border-radius: 5px; width: fit-content; margin-top: .18rem;
+}
+.ac-tag.sig { background: rgba(96,165,250,.09); color: var(--accent); }
+.ac-tag.pdf { background: rgba(59,157,232,.09); color: var(--blue); }
+.ac-tag.doc { background: rgba(243,156,18,.09); color: var(--orange); }
+
+/* ── Dots assinatura ── */
+.sig-dots { display: flex; gap: .22rem; align-items: center; flex-wrap: wrap; }
+.sig-dot { width: 9px; height: 9px; border-radius: 50%; border: 1px solid; }
+.sig-dot.ok   { background: var(--green); border-color: var(--green); }
+.sig-dot.pend { background: transparent; border-color: var(--orange); }
+
+@media (max-width: 768px) {
+  .grid3 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 960px) {
+  .grid3 { grid-template-columns: 1fr 1fr !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sb-head">
+    <div class="sb-logo">
+      <img src="../imagens/logo123.jpeg" alt="Orizon" onerror="this.parentElement.innerHTML='📄'"/>
+    </div>
+    <div>
+      <div class="sb-name">Orizon <em>Consultoria</em></div>
+      <div class="sb-sub">Cartas Manuais</div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <a class="sb-back" href="index.html">← Hub Central</a>
+    <div class="sb-sep">Painel</div>
+    <a class="sb-item active" href="index-cartas.html"><span class="sb-ico">📋</span>Painel de Cartas</a>
+    <div class="sb-sep">Criar Carta</div>
+    <a class="sb-item" href="nova-carta.html"><span class="sb-ico">📄</span>Nova Carta PDF</a>
+    <a class="sb-item" href="assinar-carta.html"><span class="sb-ico">✍️</span>Carta + Assinatura</a>
+    <a class="sb-item" href="nova-carta-cancelamento.html"><span class="sb-ico">📋</span>Cancelamento &amp; Recesso</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-av" id="sb-av-init">EX</div>
+    <div>
+      <div class="sb-uname" id="user-nome">—</div>
+      <div class="sb-uemail" id="user-email">—</div>
+    </div>
+    <button class="sb-logout" onclick="doLogout()" title="Sair">⏻</button>
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc">
+        <a href="index.html">Hub</a>
+        <span style="opacity:.3">›</span>
+        <strong>Cartas Manuais</strong>
+      </div>
+    </div>
+    <div class="tb-right">
+      <span class="tb-clock" id="tb-clock"></span>
+      <a href="assinar-carta.html" class="btn btn-primary btn-sm">🖊️ Nova Carta</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Welcome -->
+    <div class="welcome-bar">
+      <div>
+        <div class="wl-title">📄 Cartas <em>Manuais</em></div>
+        <div class="wl-sub">Geração de cartas de recomendação e documentos de estágio</div>
+      </div>
+      <div class="wl-right">
+        <a href="nova-carta.html" class="btn btn-ghost btn-sm">📄 Carta PDF</a>
+        <a href="assinar-carta.html" class="btn btn-primary btn-sm">🖊️ Carta + Assinatura</a>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-row kpi-4">
+      <div class="kpi">
+        <div class="kpi-top"><span class="kpi-ico">📋</span><span class="kpi-delta up" id="kDeltaTotal">↑ novo</span></div>
+        <div class="kpi-v c-accent" id="kTotal">—</div>
+        <div class="kpi-l">Cartas Emitidas</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top"><span class="kpi-ico">🎓</span><span class="kpi-delta neu">estagiários</span></div>
+        <div class="kpi-v c-blue" id="kEst">—</div>
+        <div class="kpi-l">Cartas de Estágio</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top"><span class="kpi-ico">💼</span><span class="kpi-delta neu">efetivos</span></div>
+        <div class="kpi-v c-orange" id="kEfe">—</div>
+        <div class="kpi-l">Cartas Efetivos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top"><span class="kpi-ico">📅</span><span class="kpi-delta up">este mês</span></div>
+        <div class="kpi-v c-green" id="kMes">—</div>
+        <div class="kpi-l">Emitidas Este Mês</div>
+      </div>
+    </div>
+
+    <!-- Ações rápidas -->
+    <div class="section-label">🚀 Criar Documento</div>
+    <div class="grid3">
+      <a class="action-card featured" href="nova-carta.html">
+        <div class="ac-top">
+          <div class="ac-ico azul">📄</div>
+          <span class="ac-arr">↗</span>
+        </div>
+        <div>
+          <div class="ac-title">Carta de Recomendação</div>
+          <div class="ac-desc">Gera PDF profissional direto para download. Sem necessidade de assinatura.</div>
+          <div class="ac-tag pdf">📥 Gera PDF</div>
+        </div>
+      </a>
+      <a class="action-card featured" href="assinar-carta.html">
+        <div class="ac-top">
+          <div class="ac-ico azul">🖊️</div>
+          <span class="ac-arr">↗</span>
+        </div>
+        <div>
+          <div class="ac-title">Carta + Assinatura Digital</div>
+          <div class="ac-desc">Agência assina primeiro, estagiário recebe link para assinar também.</div>
+          <div class="ac-tag sig">✅ Assinatura Digital</div>
+        </div>
+      </a>
+      <a class="action-card orange" href="nova-carta-cancelamento.html">
+        <div class="ac-top">
+          <div class="ac-ico laranja">📋</div>
+          <span class="ac-arr">↗</span>
+        </div>
+        <div>
+          <div class="ac-title">Cancelamento &amp; Recesso</div>
+          <div class="ac-desc">Documentos de encerramento de vínculo de estágio com validade formal.</div>
+          <div class="ac-tag doc">📄 Documento Formal</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Histórico -->
+    <div class="panel">
+      <div class="panel-hd">
+        <span class="panel-title">📋 Cartas Emitidas</span>
+        <div class="panel-actions">
+          <div class="search-box">🔍 <input id="busca" placeholder="Buscar nome..." oninput="filtrar()"/></div>
+          <select id="filtroTipo" class="btn btn-ghost btn-sm" onchange="filtrar()" style="cursor:pointer">
+            <option value="">Todos</option>
+            <option value="estagiario">🎓 Estagiários</option>
+            <option value="efetivo">💼 Efetivos</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>Nº</th><th>Nome</th><th>Tipo</th><th>Cargo</th><th>Empresa</th><th>Emissão</th><th>Ações</th></tr>
+          </thead>
+          <tbody id="tbodyCartas">
+            <tr><td colspan="7"><div class="empty"><span>⏳</span>Carregando histórico...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script>
+const SB_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
+let _sb, _cartas = [];
+
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  _sb = window._sb;
+  try {
+    const { data: { user } } = await _sb.auth.getUser();
+    if (user) populateUser(user);
+  } catch(e) {}
+  await carregar();
+  const tipo = new URLSearchParams(window.location.search).get('tipo');
+  if (tipo) { document.getElementById('filtroTipo').value = tipo; filtrar(); }
+})();
+
+async function carregar() {
+  try {
+    const { data, error } = await _sb.from('cr_cartas').select('*').order('criado_em', { ascending: false }).limit(50);
+    if (error) throw error;
+    _cartas = data || [];
+    renderKPIs();
+    renderTabela(_cartas);
+  } catch(e) {
+    toast('Erro ao carregar dados', 'err');
+    document.getElementById('tbodyCartas').innerHTML =
+      '<tr><td colspan="7"><div class="empty"><span>⚠️</span>Erro ao carregar. Tente recarregar.</div></td></tr>';
+  }
+}
+
+function renderKPIs() {
+  const mes = new Date().toISOString().slice(0, 7);
+  document.getElementById('kTotal').textContent    = _cartas.length;
+  document.getElementById('kEst').textContent      = _cartas.filter(c => c.tipo === 'estagiario').length;
+  document.getElementById('kEfe').textContent      = _cartas.filter(c => c.tipo === 'efetivo').length;
+  document.getElementById('kMes').textContent      = _cartas.filter(c => c.criado_em?.startsWith(mes)).length;
+  document.getElementById('kDeltaTotal').textContent = '↑ ' + _cartas.length + ' total';
+}
+
+function renderTabela(lista) {
+  const tb = document.getElementById('tbodyCartas');
+  if (!lista.length) {
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty"><span>✉️</span>Nenhuma carta emitida ainda.<br/>
+      <a href="nova-carta.html" style="color:var(--accent)">Emitir primeira carta →</a></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = lista.map(c => `
+    <tr>
+      <td><span style="font-size:.66rem;color:var(--accent);font-weight:800;font-family:var(--mono)">${c.numero_carta || '—'}</span></td>
+      <td><strong>${c.nome}</strong></td>
+      <td><span class="tag ${c.tipo === 'estagiario' ? 'tag-blue' : 'tag-orange'}">${c.tipo === 'estagiario' ? '🎓 Est.' : '💼 Efet.'}</span></td>
+      <td style="color:var(--muted);font-size:.7rem">${c.cargo || '—'}</td>
+      <td style="font-size:.7rem">${c.empresa || '—'}</td>
+      <td style="font-size:.66rem;color:var(--muted)">${c.criado_em ? fmtDateShort(c.criado_em) : ''}</td>
+      <td><div style="display:flex;gap:.28rem">
+        <button class="btn btn-ghost btn-sm" onclick="reimprimir(${c.id})" title="Visualizar">👁️</button>
+        <button class="btn btn-red btn-sm" onclick="excluir(${c.id})" title="Excluir">🗑️</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filtrar() {
+  const q    = document.getElementById('busca').value.toLowerCase();
+  const tipo = document.getElementById('filtroTipo').value;
+  let lista  = _cartas;
+  if (tipo) lista = lista.filter(c => c.tipo === tipo);
+  if (q)    lista = lista.filter(c => (c.nome + c.empresa + c.cargo).toLowerCase().includes(q));
+  renderTabela(lista);
+}
+
+function reimprimir(id) {
+  const c = _cartas.find(x => x.id === id);
+  if (!c) return;
+  localStorage.setItem('cr_preview', JSON.stringify(c));
+  window.open('visualizar.html', '_blank');
+}
+
+async function excluir(id) {
+  if (!confirm('Excluir esta carta do histórico?')) return;
+  const { error } = await _sb.from('cr_cartas').delete().eq('id', id);
+  if (error) { toast('Erro ao excluir', 'err'); return; }
+  _cartas = _cartas.filter(c => c.id !== id);
+  renderKPIs(); filtrar();
+  toast('Carta excluída ✓');
+}
+</script>
+</body>
+</html>
