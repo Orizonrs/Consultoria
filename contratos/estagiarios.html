@@ -124,6 +124,23 @@
         </table>
       </div>
     </div>
+
+    <!-- ═══ CONTROLE MENSAL ═══ -->
+    <div style="margin-top:2rem">
+      <div class="sec-hd" style="margin-bottom:1rem">
+        <div>
+          <div class="sec-title">📅 Controle Mensal de <span>Estagiários</span></div>
+          <div class="sec-sub">Cada mês com seus próprios contratos e dashboard de receita recorrente · Clique no mês para expandir</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <button class="btn btn-ghost btn-sm" onclick="anoMensal--;renderMensal()">◀</button>
+          <span id="anoMensalLabel" style="font-weight:800;font-size:1rem;min-width:50px;text-align:center"></span>
+          <button class="btn btn-ghost btn-sm" onclick="anoMensal++;renderMensal()">▶</button>
+        </div>
+      </div>
+      <div id="mensal-est"></div>
+    </div>
+
   </div>
 </div>
 </div>
@@ -509,7 +526,158 @@ async function excluir(id) {
   }
 }
 
-function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); }
+function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); renderMensal(); }
+
+let anoMensal = new Date().getFullYear();
+
+const MESES_NOMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function abrirModalMes(mesIdx, ano) {
+  // Pré-preenche a data de início com o 1º dia do mês selecionado
+  const dataIni = `${ano}-${String(mesIdx+1).padStart(2,'0')}-01`;
+  abrirModal();
+  setTimeout(() => {
+    const el = document.getElementById('mInicio1');
+    if (el) { el.value = dataIni; calcFim(); }
+  }, 50);
+}
+
+function toggleMesEst(id) {
+  const body = document.getElementById('mb-' + id);
+  const btn  = document.getElementById('mbt-' + id);
+  if (!body) return;
+  const aberto = body.style.display !== 'none';
+  body.style.display = aberto ? 'none' : '';
+  if (btn) btn.textContent = aberto ? '▼' : '▲';
+}
+
+function renderMensal() {
+  document.getElementById('anoMensalLabel').textContent = anoMensal;
+  const lista = estagiarios();
+  const wrap  = document.getElementById('mensal-est');
+  if (!wrap) return;
+
+  // Para estagiários: receita é RECORRENTE. Cada mês mostramos quem estava ativo
+  // e também quem COMEÇOU naquele mês (inicio1 começa naquele mês)
+  // Dashboard geral do ano: soma receita mensal de todos os meses do ano
+  let totRecAno = 0;
+  let totComAno = 0;
+  let iniciadosAno = 0;
+  for (let m = 0; m < 12; m++) {
+    const mesStr = `${anoMensal}-${String(m+1).padStart(2,'0')}`;
+    const ativos = lista.filter(c => c.situacao === 'ativo' && c.inicio1 && c.inicio1 <= mesStr + '-31');
+    ativos.forEach(c => { totRecAno += Calc.receita(c); totComAno += calcComissaoRec(c); });
+    iniciadosAno += lista.filter(c => c.inicio1 && c.inicio1.startsWith(mesStr)).length;
+  }
+  const totLiqAno = totRecAno - totComAno;
+
+  let html = `
+    <div class="tbl-wrap" style="padding:1.2rem;margin-bottom:1.2rem;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.05));border:1px solid rgba(99,102,241,.2)">
+      <div class="tbl-title" style="margin-bottom:.9rem">📊 Resumo do Ano ${anoMensal}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem">
+        <div class="kpi" style="margin:0"><div class="kpi-v c-accent">${iniciadosAno}</div><div class="kpi-l">Estagiários iniciados em ${anoMensal}</div></div>
+        <div class="kpi" style="margin:0"><div class="kpi-v c-green">${Fmt.brl(totRecAno)}</div><div class="kpi-l">Receita bruta acumulada do ano</div></div>
+        <div class="kpi" style="margin:0"><div class="kpi-v c-blue">${Fmt.brl(totLiqAno)}</div><div class="kpi-l">Líquido acumulado do ano</div></div>
+        <div class="kpi" style="margin:0"><div class="kpi-v c-muted">${lista.filter(c=>c.situacao==='ativo').length}</div><div class="kpi-l">Ativos hoje</div></div>
+      </div>
+    </div>`;
+
+  MESES_NOMES.forEach((nomeMes, i) => {
+    const mesStr    = `${anoMensal}-${String(i+1).padStart(2,'0')}`;
+    // Iniciados neste mês
+    const iniciados = lista.filter(c => c.inicio1 && c.inicio1.startsWith(mesStr));
+    // Ativos neste mês (para receita recorrente)
+    const ativosNoMes = lista.filter(c => c.situacao === 'ativo' && c.inicio1 && c.inicio1 <= mesStr + '-31');
+    // Encerrados neste mês (cancelado/concluido/efetivado com inicio no mês — aproximação)
+    const encerrados = lista.filter(c => ['cancelado','concluido','efetivado'].includes(c.situacao) && c.inicio1 && c.inicio1.startsWith(mesStr));
+
+    const totRec = ativosNoMes.reduce((s,c)=>s+Calc.receita(c),0);
+    const totCom = ativosNoMes.reduce((s,c)=>s+calcComissaoRec(c),0);
+    const totLiq = totRec - totCom;
+
+    const temDados = iniciados.length > 0 || encerrados.length > 0;
+    const hoje = new Date();
+    const ehMesAtual = (hoje.getFullYear() === anoMensal && hoje.getMonth() === i);
+
+    const corBorda = ehMesAtual ? 'rgba(99,102,241,.5)' : (temDados ? 'rgba(139,92,246,.25)' : 'var(--border)');
+    const bgHeader = ehMesAtual ? 'rgba(99,102,241,.1)' : (temDados ? 'rgba(139,92,246,.05)' : 'transparent');
+
+    html += `
+      <div class="tbl-wrap" style="margin-bottom:.6rem;border:1px solid ${corBorda}">
+        <div onclick="toggleMesEst('${mesStr}')" style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;cursor:pointer;background:${bgHeader};border-radius:inherit;user-select:none">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-weight:800;font-size:.95rem">${nomeMes} ${anoMensal}</span>
+            ${ehMesAtual ? '<span class="tag tag-blue" style="font-size:.6rem">Mês atual</span>' : ''}
+            ${iniciados.length > 0 ? `<span class="tag tag-green" style="font-size:.6rem">+${iniciados.length} iniciado(s)</span>` : ''}
+            ${encerrados.length > 0 ? `<span class="tag tag-red" style="font-size:.6rem">-${encerrados.length} encerrado(s)</span>` : ''}
+            ${!temDados && ativosNoMes.length > 0 ? `<span class="tag tag-accent" style="font-size:.6rem">${ativosNoMes.length} ativo(s)</span>` : ''}
+            ${!temDados && ativosNoMes.length === 0 ? '<span style="font-size:.72rem;color:var(--muted);opacity:.5">Sem atividade</span>' : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            ${ativosNoMes.length > 0 ? `<span style="font-size:.78rem;font-weight:700;color:var(--accent)">${Fmt.brl(totRec)}/mês</span>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();abrirModalMes(${i},${anoMensal})" style="font-size:.68rem;padding:.25rem .6rem">＋ Adicionar Estagiário</button>
+            <span id="mbt-${mesStr}" style="color:var(--muted);font-size:.8rem">▼</span>
+          </div>
+        </div>
+
+        <div id="mb-${mesStr}" style="display:${(temDados || ehMesAtual) ? '' : 'none'};padding:1rem;border-top:1px solid var(--border)">
+          <!-- Dashboard de receita recorrente do mês -->
+          ${ativosNoMes.length > 0 ? `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin-bottom:1rem">
+            <div class="kpi" style="margin:0;padding:.7rem"><div class="kpi-v c-accent" style="font-size:1.3rem">${ativosNoMes.length}</div><div class="kpi-l">Ativos neste mês</div></div>
+            <div class="kpi" style="margin:0;padding:.7rem"><div class="kpi-v c-green" style="font-size:1.3rem">${Fmt.brl(totRec)}</div><div class="kpi-l">Receita bruta/mês</div></div>
+            ${totCom > 0 ? `<div class="kpi" style="margin:0;padding:.7rem"><div class="kpi-v c-orange" style="font-size:1.3rem">${Fmt.brl(totCom)}</div><div class="kpi-l">Minha comissão/mês</div></div>` : ''}
+            <div class="kpi" style="margin:0;padding:.7rem"><div class="kpi-v c-blue" style="font-size:1.3rem">${Fmt.brl(totLiq)}</div><div class="kpi-l">Líquido empresa/mês</div></div>
+          </div>` : ''}
+
+          ${iniciados.length > 0 ? `
+          <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Iniciados em ${nomeMes}</div>
+          <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.8rem">
+            ${iniciados.map(c => {
+              const rec = Calc.receita(c);
+              const com = calcComissaoRec(c);
+              const liq = rec - com;
+              return `<div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;background:rgba(99,102,241,.05);border-radius:8px;border:1px solid rgba(99,102,241,.15)">
+                <div style="display:flex;align-items:center;gap:.6rem">
+                  <div class="av ${Fmt.avCls(c.id)}" style="width:28px;height:28px;font-size:.65rem">${Fmt.ini(c.nome)}</div>
+                  <div>
+                    <div style="font-weight:700;font-size:.82rem">${c.nome}</div>
+                    <div style="font-size:.68rem;color:var(--muted)">${c.empresa} · ${c.taxa}% da bolsa · ${c.periodoAtual}º período</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:.8rem">
+                  <div style="text-align:right">
+                    <div style="font-weight:800;font-size:.85rem;color:var(--accent)">${Fmt.brl(rec)}/mês</div>
+                    <div style="font-size:.6rem;color:var(--muted)">receita recorrente</div>
+                  </div>
+                  <span class="tag ${c.situacao==='ativo'?'tag-green':c.situacao==='cancelado'?'tag-red':'tag-orange'}">${c.situacao}</span>
+                  <button class="btn btn-blue btn-sm" onclick="abrirModal(${c.id})" style="padding:.2rem .5rem">✏️</button>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>` : ''}
+
+          ${encerrados.length > 0 ? `
+          <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem">Encerrados (iniciados em ${nomeMes})</div>
+          <div style="display:flex;flex-direction:column;gap:.4rem">
+            ${encerrados.map(c => `<div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem .8rem;background:rgba(239,68,68,.04);border-radius:8px;border:1px solid rgba(239,68,68,.15)">
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <div class="av av-red" style="width:26px;height:26px;font-size:.65rem">${Fmt.ini(c.nome)}</div>
+                <div style="font-size:.8rem;font-weight:600">${c.nome}</div>
+              </div>
+              <div style="font-size:.7rem;color:var(--muted)">${c.empresa}</div>
+              <span class="tag ${c.situacao==='efetivado'?'tag-blue':'tag-gray'}">${c.situacao}</span>
+              <button class="btn btn-blue btn-sm" onclick="abrirModal(${c.id})" style="padding:.2rem .5rem">✏️</button>
+            </div>`).join('')}
+          </div>` : ''}
+
+          ${!temDados && ativosNoMes.length === 0 ? `<div style="text-align:center;padding:1rem;color:var(--muted);font-size:.8rem">Nenhum estagiário neste mês.</div>` : ''}
+        </div>
+      </div>`;
+  });
+
+  wrap.innerHTML = html;
+}
 
 function exportarCSV() {
   Export.csv(
