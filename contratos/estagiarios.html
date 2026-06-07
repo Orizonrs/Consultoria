@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <div class="info-box accent">📌 Cada contrato de estágio tem até <strong>4 períodos de 6 meses</strong> (máximo 2 anos na mesma empresa — Lei 11.788/2008). O sistema alerta automaticamente quando um período está próximo do vencimento.</div>
+    <div class="info-box accent">📌 Cada contrato de estágio tem até <strong>4 períodos de 6 meses</strong> (máx. 2 anos — Lei 11.788/2008). O sistema alerta quando um período está próximo do vencimento. A <strong>taxa cobrada da empresa</strong> é a receita bruta gerada; sua comissão é o que entra no seu bolso.</div>
 
     <!-- KPIs -->
     <div class="kpi-row" id="kpiArea"></div>
@@ -72,7 +72,7 @@
       <div class="tbl-hd">
         <span class="tbl-title">📋 Lista de Estagiários</span>
         <div class="tbl-actions">
-          <div class="search-box"><span>🔍</span><input placeholder="Buscar nome ou empresa..." oninput="UI.filtrar('tbodyEst',this.value)"/></div>
+          <div class="search-box"><span>🔍</span><input placeholder="Buscar nome, empresa, agência..." oninput="UI.filtrar('tbodyEst',this.value)"/></div>
           <select class="fi" id="filtStatus" style="font-size:.72rem;padding:.32rem .6rem" onchange="renderTabela()">
             <option value="">Todos</option>
             <option value="ativo">Ativos</option>
@@ -95,13 +95,14 @@
           <thead>
             <tr>
               <th>Estagiário</th>
-              <th>Empresa</th>
+              <th>Empresa Cliente</th>
+              <th>Agência / Origem</th>
               <th>VT / Fretado</th>
               <th>Bolsa</th>
               <th>Taxa</th>
-              <th>Receita Consultoria/mês</th>
-              <th>Consultor / Comissão</th>
-              <th>Líquido Consultoria/mês</th>
+              <th>Receita Bruta/mês</th>
+              <th>Minha Comissão</th>
+              <th>Líquido p/ Empresa/mês</th>
               <th>Períodos (6m cada → 2 anos)</th>
               <th>Fim do Contrato</th>
               <th>Status</th>
@@ -111,12 +112,12 @@
           <tbody id="tbodyEst"></tbody>
           <tfoot>
             <tr>
-              <td colspan="3">TOTAIS</td>
+              <td colspan="4">TOTAIS</td>
               <td id="tfBolsa"></td>
               <td>—</td>
               <td id="tfReceita" class="c-accent"></td>
               <td>—</td>
-              <td id="tfLiqEst" class="c-accent fw8" title="Líquido consultoria após comissões"></td>
+              <td id="tfLiqEst" class="c-accent fw8" title="Líquido da empresa após minha comissão"></td>
               <td colspan="4"></td>
             </tr>
           </tfoot>
@@ -138,7 +139,21 @@
     <div class="form-group fg-full"><label class="fl">Nome Completo *</label>
       <input class="fi" id="mNome" placeholder="Nome completo do estagiário"/></div>
     <div class="form-group fg-full"><label class="fl">Empresa Cliente *</label>
-      <input class="fi" id="mEmpresa" placeholder="Nome da empresa onde está alocado"/></div>
+      <input class="fi" id="mEmpresa" placeholder="Ex: Masterflake — empresa onde o estagiário fica alocado"/>
+      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Empresa onde o estagiário trabalha no dia a dia</span>
+    </div>
+    <div class="form-group"><label class="fl">🏢 Agência / Origem da Vaga</label>
+      <input class="fi" id="mAgencia" placeholder="Ex: Exittus, CIEE, IEL, Direta..."/>
+      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Quem abriu a vaga ou intermediou o contrato</span>
+    </div>
+    <div class="form-group"><label class="fl">Tipo de Origem</label>
+      <select class="fi" id="mTipoOrigem">
+        <option value="agencia">Agência (ex: Exittus, CIEE)</option>
+        <option value="direta">Direta — empresa me contratou direto</option>
+        <option value="indicacao">Indicação</option>
+        <option value="outros">Outros</option>
+      </select>
+    </div>
     <div class="form-group"><label class="fl">Vale Transporte</label>
       <select class="fi" id="mVT">
         <option value="nao">Não</option>
@@ -150,22 +165,22 @@
       <input type="number" class="fi" id="mValorVT" value="0" min="0" step="0.01"/></div>
     <div class="form-group"><label class="fl">Bolsa Auxílio (R$/mês) *</label>
       <input type="number" class="fi" id="mBolsa" value="0" min="0" step="0.01" oninput="calcReceita()"/></div>
-    <div class="form-group"><label class="fl">Taxa da Consultoria (%)</label>
+    <div class="form-group"><label class="fl">Taxa cobrada da empresa (%)</label>
       <input type="number" class="fi" id="mTaxa" value="15" min="0" max="100" step="0.5" oninput="calcReceita()"/>
-      <span style="font-size:.63rem;color:var(--muted);margin-top:.2rem">Padrão da config: <span id="taxaHint">15</span>%</span>
+      <span style="font-size:.63rem;color:var(--muted);margin-top:.2rem">Taxa que a empresa paga sobre a bolsa do estagiário</span>
     </div>
-    <div class="form-group"><label class="fl">Receita Consultoria/mês (calculado)</label>
+    <div class="form-group"><label class="fl">Receita Bruta gerada/mês (calculado)</label>
       <input class="fi fi-calc" id="mReceita" readonly/></div>
     <div class="form-group" style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:.9rem;margin-top:.2rem">
-      <label class="fl" style="font-size:.7rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.05em">👤 Consultor Externo (opcional)</label>
+      <label class="fl" style="font-size:.7rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.05em">💰 Minha Comissão (opcional)</label>
     </div>
-    <div class="form-group"><label class="fl">Nome do Consultor</label>
-      <input class="fi" id="mConsultor" placeholder="Ex: João Silva"/></div>
+    <div class="form-group"><label class="fl">Meu Nome / Identificação</label>
+      <input class="fi" id="mConsultor" placeholder="Ex: João Silva — Meu nome"/></div>
     <div class="form-group"><label class="fl">Tipo de Comissão</label>
       <select class="fi" id="mTipoComissao" onchange="calcReceita()">
-        <option value="none">Sem consultor externo</option>
-        <option value="pct">Porcentagem (% da receita)</option>
-        <option value="fixo">Valor fixo (R$/mês)</option>
+        <option value="none">Sem comissão definida</option>
+        <option value="pct">% da receita bruta gerada</option>
+        <option value="fixo">Valor fixo mensal (R$/mês)</option>
       </select>
     </div>
     <div class="form-group" id="grpComissaoPct" style="display:none"><label class="fl">Percentual (%)</label>
@@ -177,7 +192,7 @@
         <option value="40">40%</option>
         <option value="45">45%</option>
       </select>
-      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">% sobre a receita mensal da consultoria</span>
+      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">% sobre a receita bruta que a empresa paga</span>
     </div>
     <div class="form-group" id="grpComissaoFixo" style="display:none"><label class="fl">Valor Fixo (R$/mês)</label>
       <select class="fi" id="mComissaoFixo" onchange="calcReceita()">
@@ -186,11 +201,11 @@
         <option value="40">R$ 40,00/mês</option>
         <option value="50">R$ 50,00/mês</option>
       </select>
-      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Valor fixo descontado da receita mensal</span>
+      <span style="font-size:.62rem;color:var(--muted);margin-top:.2rem">Valor fixo que recebo por mês deste contrato</span>
     </div>
-    <div class="form-group"><label class="fl">Comissão do Consultor/mês (calculado)</label>
+    <div class="form-group"><label class="fl">Minha Comissão/mês (calculado)</label>
       <input class="fi fi-calc" id="mValorRec" readonly/></div>
-    <div class="form-group"><label class="fl">Líquido Consultoria/mês após Comissão</label>
+    <div class="form-group"><label class="fl">Líquido p/ empresa após minha comissão</label>
       <input class="fi fi-calc" id="mLiqAgencia" readonly style="color:var(--accent);font-weight:700"/></div>
     <div class="form-group"><label class="fl">Início do 1º Período *</label>
       <input type="date" class="fi" id="mInicio1" oninput="calcFim()"/></div>
@@ -261,9 +276,9 @@ function renderKPIs() {
 
   document.getElementById('kpiArea').innerHTML = [
     { v:ativos.length,         l:'Estagiários Ativos',                                                  cls:'c-accent' },
-    { v:Fmt.brl(totalBolsa),   l:'Custo Bolsas p/ Clientes/mês',  sub:'Valor pago pelas empresas',     cls:'c-text' },
-    { v:Fmt.brl(totalReceita), l:'Receita Consultoria/mês (bruto)',    sub:totalComiss>0?`${(totalReceita>0?(totalComiss/totalReceita*100).toFixed(0):0)}% vai p/ consultores`:'100% da receita para consultoria', cls:'c-green' },
-    { v:Fmt.brl(totalLiq),     l:'✔ Líquido Consultoria/mês',         sub:totalComiss>0?`Comissões: − ${Fmt.brl(totalComiss)}`:'Sem comissões externas', cls:'c-accent' },
+    { v:Fmt.brl(totalBolsa),   l:'Total Bolsas (custo empresas/mês)', sub:'Valor que as empresas pagam aos estagiários',     cls:'c-text' },
+    { v:Fmt.brl(totalReceita), l:'Receita Bruta gerada/mês',    sub:totalComiss>0?`Minha comissão: ${(totalReceita>0?(totalComiss/totalReceita*100).toFixed(0):0)}% do bruto`:'Configure sua comissão em cada contrato', cls:'c-green' },
+    { v:Fmt.brl(totalLiq),     l:'💰 Minha Comissão Total/mês',         sub:totalComiss>0?`Receita bruta: ${Fmt.brl(totalReceita)}`:'Defina sua % em cada contrato', cls:'c-accent' },
     { v:alerts.w+alerts.v,     l:'Alertas de Período',             cls:alerts.w+alerts.v>0?'c-orange':'c-green' },
     { v:lista.filter(c=>c.situacao==='efetivado').length, l:'Efetivados CLT', cls:'c-blue' },
     { v:lista.filter(c=>c.situacao==='concluido').length, l:'Concluídos',     cls:'c-muted' },
@@ -288,7 +303,7 @@ function renderKPIs() {
   }
   recArea.style.display = '';
   recArea.innerHTML = `
-    <div class="tbl-title" style="margin-bottom:.7rem">👤 Comissões por Consultor Externo</div>
+    <div class="tbl-title" style="margin-bottom:.7rem">💰 Minhas Comissões por Contrato</div>
     <div style="display:flex;flex-wrap:wrap;gap:.6rem">
       ${recEntries.map(([nome,d])=>`
         <div style="background:rgba(243,156,18,.07);border:1px solid rgba(243,156,18,.2);border-radius:10px;padding:.7rem 1rem;min-width:160px">
@@ -344,12 +359,17 @@ function renderTabela() {
         const vtHtml = c.vt==='fretado'?'<span class="tag tag-blue">Fretado</span>'
           :c.vt==='sim'?`<span class="tag tag-accent">VT ${c.valorVT>0?Fmt.brl(c.valorVT):''}</span>`
           :'<span class="tag tag-gray">Não</span>';
-        return `<tr data-search="${(c.nome+' '+c.empresa+' '+(c.recrutador||'')).toLowerCase()}"
+        return `<tr data-search="${(c.nome+' '+c.empresa+' '+(c.agencia||'')+' '+(c.recrutador||'')).toLowerCase()}"
           <td><div class="ci"><div class="av ${Fmt.avCls(c.id)}">${Fmt.ini(c.nome)}</div>
             <div><div class="ci-name">${c.nome}</div>
             ${c.obs?`<div class="ci-sub">${c.obs}</div>`:''}
             </div></div></td>
           <td>${c.empresa}</td>
+          <td style="font-size:.76rem">${
+            c.agencia
+              ? `<div style="font-weight:700">${c.agencia}</div><span class="tag ${c.tipoOrigem==='direta'?'tag-green':c.tipoOrigem==='indicacao'?'tag-blue':'tag-orange'}" style="margin-top:.2rem">${{agencia:'Agência',direta:'Direta',indicacao:'Indicação',outros:'Outros'}[c.tipoOrigem]||'Agência'}</span>`
+              : `<span style="opacity:.35">—</span>`
+          }</td>
           <td>${vtHtml}</td>
           <td class="fw8">${Fmt.brl(c.bolsa)}</td>
           <td><span class="tag tag-accent">${c.taxa}%</span></td>
@@ -391,6 +411,8 @@ function abrirModal(id=null) {
   document.getElementById('taxaHint').textContent = cfg.taxaEstPadrao;
   UI.setVal('mNome',        c?.nome        || '');
   UI.setVal('mEmpresa',     c?.empresa     || '');
+  UI.setVal('mAgencia',     c?.agencia     || '');
+  UI.setVal('mTipoOrigem',  c?.tipoOrigem  || 'agencia');
   UI.setVal('mVT',          c?.vt          || 'nao');
   UI.setVal('mValorVT',     c?.valorVT     || 0);
   UI.setVal('mBolsa',        c?.bolsa       || 0);
@@ -441,6 +463,8 @@ async function salvar() {
   if (!nome || !emp || !ini) { UI.toast('Preencha nome, empresa e início do 1º período','err'); return; }
   const dados = {
     tipo:'estagiario', nome, empresa:emp,
+    agencia: UI.val('mAgencia').trim(),
+    tipoOrigem: UI.val('mTipoOrigem') || 'agencia',
     vt: UI.val('mVT'), valorVT: parseFloat(UI.val('mValorVT'))||0,
     bolsa: parseFloat(UI.val('mBolsa'))||0,
     taxa:  parseFloat(UI.val('mTaxa'))||cfg.taxaEstPadrao,
