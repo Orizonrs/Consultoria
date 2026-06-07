@@ -528,146 +528,159 @@ function renderDashMensal() {
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const MESES_CURTOS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  let anoTotRec=0, anoTotComiss=0, anoTotLiq=0, anoTotAdmit=0, anoTotAtivos=0;
+  // Acumuladores do painel geral do ano
+  let anoTotRec=0, anoTotComiss=0, anoTotLiq=0, anoTotAdmit=0, anoPickHeadcount=0;
 
   const dropdowns = MESES.map((nomeMes, mi) => {
     const anoMes    = `${anoDash}-${String(mi+1).padStart(2,'0')}`;
     const futuro    = anoMes > mesHojeStr;
     const isAtual   = anoMes === mesHojeStr;
-    const admitidos = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
-    const desligados= lista.filter(c => c.desligamento && c.desligamento.slice(0,7) === anoMes);
-    const ativos    = lista.filter(c => cltAtivoNoMes(c, anoMes));
-    // CLT: receita = taxa única só no mês da admissão
+
+    // CLT: receita gerada APENAS no mês da admissão (taxa única)
+    const admitidos  = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
+    const desligados = lista.filter(c => c.desligamento && c.desligamento.slice(0,7) === anoMes);
+    const headcount  = lista.filter(c => cltAtivoNoMes(c, anoMes));
+
     const rec    = admitidos.reduce((s,c) => s + Calc.receita(c), 0);
     const comiss = admitidos.reduce((s,c) => s + calcComissaoRec(c), 0);
     const liq    = rec - comiss;
 
+    // Acumula no painel geral
     anoTotRec    += rec;
     anoTotComiss += comiss;
     anoTotLiq    += liq;
     anoTotAdmit  += admitidos.length;
-    if (!futuro) anoTotAtivos = Math.max(anoTotAtivos, ativos.length);
+    if (!futuro) anoPickHeadcount = Math.max(anoPickHeadcount, headcount.length);
 
-    const dropId  = `clt-drop-${mi}`;
-    // Abre automaticamente o mês atual
-    const aberto  = isAtual;
+    const dropId = `clt-drop-${mi}`;
+    const aberto = isAtual;
 
-    // Header cor
-    const borderLeft = isAtual ? '4px solid var(--accent)' : admitidos.length > 0 ? '4px solid #10b981' : '4px solid var(--border)';
-    const bgHeader   = isAtual ? 'rgba(59,130,246,.05)' : futuro && admitidos.length===0 ? 'rgba(0,0,0,.01)' : '';
+    // ── Cores do header ──
+    const borderLeft = isAtual
+      ? '4px solid var(--accent)'
+      : admitidos.length > 0 ? '4px solid #10b981' : '4px solid var(--border)';
+    const bgHeader = isAtual
+      ? 'var(--bg2)'
+      : admitidos.length > 0 ? 'rgba(16,185,129,.04)' : 'var(--bg)';
 
-    // Badges do header
+    // ── Badges ──
     const badges = [
-      isAtual ? `<span style="font-size:.55rem;background:var(--accent);color:#fff;border-radius:5px;padding:.12rem .38rem;font-weight:800">MÊS ATUAL</span>` : '',
+      isAtual ? `<span style="font-size:.55rem;background:var(--accent);color:#fff;border-radius:5px;padding:.12rem .38rem;font-weight:800;letter-spacing:.02em">MÊS ATUAL</span>` : '',
       admitidos.length > 0 ? `<span style="font-size:.6rem;background:rgba(16,185,129,.15);color:#10b981;border-radius:5px;padding:.12rem .38rem;font-weight:700">+${admitidos.length} admitido${admitidos.length>1?'s':''}</span>` : '',
       desligados.length > 0 ? `<span style="font-size:.6rem;background:rgba(239,68,68,.1);color:#ef4444;border-radius:5px;padding:.12rem .38rem;font-weight:700">-${desligados.length} saída${desligados.length>1?'s':''}</span>` : '',
     ].filter(Boolean).join(' ');
 
-    // Resumo financeiro visível no header (só se tiver receita)
+    // ── Resumo financeiro no header ──
+    // CLT: só mostra valores financeiros se houve admissão neste mês (taxa única)
+    // Meses sem admissão mostram apenas headcount informativo — sem valores financeiros
     const headerFinanceiro = rec > 0
-      ? `<div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
-          <span style="font-size:.72rem;font-weight:800;color:#10b981">${Fmt.brl(rec)} <span style="font-weight:400;opacity:.6;font-size:.62rem">receita</span></span>
-          ${comiss>0?`<span style="font-size:.7rem;color:var(--orange)">${Fmt.brl(comiss)} comissão</span>`:''}
-          <span style="font-size:.72rem;font-weight:800;color:var(--accent)">${Fmt.brl(liq)} líquido</span>
+      ? `<div style="display:flex;gap:.9rem;align-items:center;flex-wrap:wrap">
+          <span style="font-size:.73rem;font-weight:800;color:#10b981">${Fmt.brl(rec)}<span style="font-weight:400;opacity:.55;font-size:.6rem;margin-left:.2rem">receita</span></span>
+          ${comiss>0?`<span style="font-size:.68rem;color:var(--orange)">−${Fmt.brl(comiss)} comissão</span>`:''}
+          <span style="font-size:.73rem;font-weight:800;color:var(--accent)">${Fmt.brl(liq)}<span style="font-weight:400;opacity:.55;font-size:.6rem;margin-left:.2rem">líquido</span></span>
         </div>`
-      : ativos.length > 0
-        ? `<span style="font-size:.68rem;color:var(--muted)">👥 ${ativos.length} ativo${ativos.length>1?'s':''} — sem nova receita neste mês</span>`
-        : `<span style="font-size:.65rem;color:var(--muted);opacity:.5">${futuro?'Período futuro':'Nenhuma movimentação'}</span>`;
+      : headcount.length > 0 && !futuro
+        ? `<span style="font-size:.67rem;color:var(--muted)">👥 ${headcount.length} no quadro</span>`
+        : `<span style="font-size:.64rem;color:var(--muted);opacity:.4">${futuro?'—':'Nenhuma movimentação'}</span>`;
 
-    // Conteúdo expandido
+    // ── Conteúdo expandido ──
+
+    // Mini-dashboard financeiro: APENAS para meses com admissão (onde há receita real)
+    const dashFinanceiro = admitidos.length > 0
+      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:.5rem;padding:.65rem .75rem;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:.85rem">
+          <div style="text-align:center">
+            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">Colocações</div>
+            <div style="font-size:1.4rem;font-weight:900;color:#10b981">${admitidos.length}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">Receita Bruta</div>
+            <div style="font-size:${rec>=10000?'.85':'1.05'}rem;font-weight:900;color:#10b981">${Fmt.brl(rec)}</div>
+            <div style="font-size:.58rem;color:var(--muted);opacity:.6">taxa única</div>
+          </div>
+          ${comiss>0?`<div style="text-align:center">
+            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">Comissão</div>
+            <div style="font-size:${comiss>=10000?'.85':'1.05'}rem;font-weight:800;color:var(--orange)">−${Fmt.brl(comiss)}</div>
+          </div>`:''}
+          <div style="text-align:center">
+            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem">Líquido Empresa</div>
+            <div style="font-size:${liq>=10000?'.85':'1.05'}rem;font-weight:900;color:var(--accent)">${Fmt.brl(liq)}</div>
+          </div>
+        </div>` : '';
+
+    // Lista de admitidos com detalhes
     const admHtml = admitidos.length > 0
-      ? `<div style="margin-bottom:1rem">
-          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.55rem;font-weight:700">✅ Admitidos neste mês</div>
-          <div style="display:flex;flex-direction:column;gap:.4rem">
+      ? `<div style="margin-bottom:.9rem">
+          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;font-weight:700">✅ Admitidos neste mês</div>
+          <div style="display:flex;flex-direction:column;gap:.35rem">
             ${admitidos.map(c => {
               const r = Calc.receita(c);
               const cm = calcComissaoRec(c);
-              return `<div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:.6rem .8rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem">
+              return `<div style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:9px;padding:.55rem .8rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.4rem">
                 <div>
-                  <div style="font-size:.8rem;font-weight:800">${c.nome}</div>
-                  <div style="font-size:.67rem;color:var(--muted);margin-top:.1rem">${c.empresa}${c.cargo?' · '+c.cargo:''}</div>
-                  <div style="font-size:.64rem;color:var(--muted)">Admissão: ${Fmt.dt(c.admissao)} · Salário: ${Fmt.brl(c.salario)} · Taxa: ${c.taxa}%</div>
+                  <div style="font-size:.82rem;font-weight:800;color:var(--text)">${c.nome}</div>
+                  <div style="font-size:.68rem;color:var(--muted);margin-top:.1rem">${c.empresa}${c.cargo?' · '+c.cargo:''}</div>
+                  <div style="font-size:.63rem;color:var(--muted);margin-top:.05rem">Admissão: ${Fmt.dt(c.admissao)} · Salário: ${Fmt.brl(c.salario||0)} · Taxa: ${c.taxa}%</div>
                 </div>
-                <div style="text-align:right">
-                  <div style="font-size:.75rem;font-weight:900;color:#10b981">${Fmt.brl(r)}</div>
-                  <div style="font-size:.6rem;color:var(--muted)">receita colocação</div>
+                <div style="text-align:right;flex-shrink:0">
+                  <div style="font-size:.78rem;font-weight:900;color:#10b981">${Fmt.brl(r)}</div>
+                  <div style="font-size:.58rem;color:var(--muted)">taxa de colocação</div>
                   ${cm>0?`<div style="font-size:.65rem;color:var(--orange);margin-top:.1rem">−${Fmt.brl(cm)} comissão</div>`:''}
-                  <div style="font-size:.72rem;font-weight:800;color:var(--accent)">${Fmt.brl(r-cm)} líquido</div>
+                  <div style="font-size:.74rem;font-weight:800;color:var(--accent)">${Fmt.brl(r-cm)} líquido</div>
                 </div>
               </div>`;
             }).join('')}
           </div>
         </div>` : '';
 
-    const ativosHtml = ativos.length > 0
-      ? `<div style="margin-bottom:.8rem">
-          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem;font-weight:700">👥 Headcount ativo no mês (${ativos.length})</div>
+    // Headcount ativo no mês (quem estava no quadro)
+    const headcountHtml = headcount.length > 0
+      ? `<div style="margin-bottom:.7rem">
+          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;font-weight:700">👥 Headcount ativo em ${MESES_CURTOS[mi]} (${headcount.length})</div>
           <div style="display:flex;flex-wrap:wrap;gap:.3rem">
-            ${ativos.map(c=>`<span style="font-size:.68rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.2rem .5rem;font-weight:600">${c.nome.split(' ').slice(0,2).join(' ')}<span style="opacity:.5;font-weight:400"> · ${c.empresa}</span></span>`).join('')}
+            ${headcount.map(c=>{
+              const isNovo = admitidos.find(a=>a.id===c.id);
+              return `<span style="font-size:.67rem;background:${isNovo?'rgba(16,185,129,.1)':'var(--bg2)'};border:1px solid ${isNovo?'rgba(16,185,129,.3)':'var(--border)'};border-radius:6px;padding:.2rem .5rem;font-weight:600;color:var(--text)">${c.nome.split(' ').slice(0,2).join(' ')}<span style="opacity:.45;font-weight:400"> · ${c.empresa}</span>${isNovo?'<span style="color:#10b981;font-size:.58rem;margin-left:.2rem">NOVO</span>':''}</span>`;
+            }).join('')}
           </div>
         </div>` : '';
 
+    // Desligados do mês
     const deslHtml = desligados.length > 0
-      ? `<div style="margin-bottom:.8rem">
-          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem;font-weight:700">❌ Desligados neste mês</div>
+      ? `<div style="margin-bottom:.7rem">
+          <div style="font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;font-weight:700">❌ Desligados em ${MESES_CURTOS[mi]}</div>
           <div style="display:flex;flex-wrap:wrap;gap:.3rem">
-            ${desligados.map(c=>`<span style="font-size:.68rem;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:.2rem .5rem;font-weight:600;color:#ef4444">${c.nome.split(' ').slice(0,2).join(' ')}</span>`).join('')}
+            ${desligados.map(c=>`<span style="font-size:.67rem;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:.2rem .5rem;font-weight:600;color:#ef4444">${c.nome.split(' ').slice(0,2).join(' ')}<span style="opacity:.65;font-weight:400"> · ${c.empresa}</span></span>`).join('')}
           </div>
         </div>` : '';
 
-    // Mini dashboard financeiro dentro do dropdown (só se tiver dados)
-    const dashFinanceiro = rec > 0 || ativos.length > 0
-      ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.5rem;padding:.7rem;background:var(--bg2);border-radius:9px;margin-bottom:.8rem">
-          <div style="text-align:center">
-            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Admitidos</div>
-            <div style="font-size:1.3rem;font-weight:900;color:${admitidos.length>0?'#10b981':'var(--muted)'};">${admitidos.length}</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Headcount</div>
-            <div style="font-size:1.3rem;font-weight:900;color:var(--accent)">${ativos.length}</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Receita</div>
-            <div style="font-size:${rec>=10000?'.82':'1.05'}rem;font-weight:900;color:#10b981">${rec>0?Fmt.brl(rec):'—'}</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Comissão</div>
-            <div style="font-size:${comiss>=10000?'.82':'1.0'}rem;font-weight:800;color:var(--orange)">${comiss>0?Fmt.brl(comiss):'—'}</div>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Líquido</div>
-            <div style="font-size:${liq>=10000?'.82':'1.0'}rem;font-weight:900;color:var(--accent)">${liq>0?Fmt.brl(liq):'—'}</div>
-          </div>
-        </div>` : '';
+    const vazio = admitidos.length===0 && headcount.length===0 && desligados.length===0;
 
-    const vazio = admitidos.length===0 && ativos.length===0 && desligados.length===0;
-
-    return `<div style="border:1.5px solid ${isAtual?'rgba(59,130,246,.4)':admitidos.length>0?'rgba(16,185,129,.3)':'var(--border)'};border-radius:11px;overflow:hidden;${futuro&&vazio?'opacity:.4':''}">
-      <button onclick="toggleDropCLT('${dropId}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:.65rem .9rem;background:${bgHeader};border:none;cursor:pointer;border-left:${borderLeft};text-align:left;gap:.6rem">
-        <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;flex:1">
-          <div style="font-size:.82rem;font-weight:900;min-width:80px;color:${isAtual?'var(--accent)':'var(--text)'}">${nomeMes} <span style="font-size:.62rem;opacity:.45;font-weight:400">${MESES_CURTOS[mi]}</span></div>
+    return `<div style="border:1.5px solid ${isAtual?'rgba(59,130,246,.4)':admitidos.length>0?'rgba(16,185,129,.3)':'var(--border)'};border-radius:11px;overflow:hidden;${futuro&&vazio?'opacity:.35':''}">
+      <button onclick="toggleDropCLT('${dropId}')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:.65rem .9rem;background:${bgHeader};color:var(--text);border:none;cursor:pointer;border-left:${borderLeft};text-align:left;gap:.6rem">
+        <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;flex:1;min-width:0">
+          <div style="font-size:.83rem;font-weight:900;min-width:78px;color:${isAtual?'var(--accent)':'var(--text)'};flex-shrink:0">${nomeMes}</div>
           <div style="display:flex;gap:.3rem;flex-wrap:wrap">${badges}</div>
-          <div style="margin-left:auto">${headerFinanceiro}</div>
+          <div style="margin-left:auto;flex-shrink:0">${headerFinanceiro}</div>
         </div>
-        <span id="${dropId}-ico" style="font-size:.75rem;transition:transform .2s;transform:${aberto?'rotate(180deg)':'none'};flex-shrink:0">▼</span>
+        <span id="${dropId}-ico" style="font-size:.7rem;transition:transform .2s;transform:${aberto?'rotate(180deg)':'none'};flex-shrink:0;margin-left:.4rem;color:var(--muted)">▼</span>
       </button>
-      <div id="${dropId}" style="display:${aberto?'block':'none'};padding:.8rem .9rem .9rem;border-top:1px solid var(--border)">
+      <div id="${dropId}" style="display:${aberto?'block':'none'};padding:.85rem .9rem .9rem;border-top:1px solid var(--border);background:var(--bg)">
         ${vazio
-          ? `<div style="text-align:center;padding:1rem;color:var(--muted);font-size:.75rem;opacity:.6">${futuro?'📅 Período futuro — nenhum dado ainda':'Nenhuma movimentação neste mês'}</div>`
-          : dashFinanceiro + admHtml + ativosHtml + deslHtml}
+          ? `<div style="text-align:center;padding:1.2rem;color:var(--muted);font-size:.75rem;opacity:.55">${futuro?'📅 Período futuro — nenhum dado ainda':'Nenhuma movimentação registrada neste mês'}</div>`
+          : dashFinanceiro + admHtml + headcountHtml + deslHtml}
       </div>
     </div>`;
   }).join('');
 
   document.getElementById('dashMensalDropdowns').innerHTML = dropdowns;
 
-  // Painel Geral do Ano
+  // ── Painel Geral do Ano ──
   document.getElementById('dashResumoAno').innerHTML = [
-    { icon:'🆕', label:`Colocações em ${anoDash}`,             val: anoTotAdmit,              cls:'color:#10b981' },
-    { icon:'👥', label:`Pico de headcount em ${anoDash}`,      val: anoTotAtivos,             cls:'color:var(--accent)' },
-    { icon:'💵', label:'Receita Bruta total (taxa única)',      val: Fmt.brl(anoTotRec),       cls:'color:#10b981;font-size:1.15rem' },
-    { icon:'💰', label:'Comissão total',                       val: Fmt.brl(anoTotComiss),    cls:'color:var(--orange);font-size:1.1rem' },
-    { icon:'🏆', label:'Líquido total p/ Empresa',             val: Fmt.brl(anoTotLiq),       cls:'color:var(--accent);font-size:1.15rem' },
+    { icon:'🆕', label:`Colocações em ${anoDash}`,           val: anoTotAdmit,              cls:'color:#10b981' },
+    { icon:'👥', label:`Pico de headcount em ${anoDash}`,    val: anoPickHeadcount,         cls:'color:var(--accent)' },
+    { icon:'💵', label:'Receita Bruta do ano (taxa única)',   val: Fmt.brl(anoTotRec),       cls:'color:#10b981;font-size:1.15rem' },
+    { icon:'💰', label:'Comissão total do ano',               val: Fmt.brl(anoTotComiss),    cls:'color:var(--orange);font-size:1.1rem' },
+    { icon:'🏆', label:'Líquido total p/ Empresa',           val: Fmt.brl(anoTotLiq),       cls:'color:var(--accent);font-size:1.15rem' },
   ].map(k=>`<div style="flex:1;min-width:130px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem">
     <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">${k.icon} ${k.label}</div>
     <div style="font-size:1.3rem;font-weight:900;${k.cls}">${k.val}</div>
