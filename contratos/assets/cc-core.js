@@ -165,6 +165,8 @@ function _toRow(c) {
     tipo_comissao:  c.tipoComissao || 'none',
     comissao_rec:   c.comissaoRec  ?? 0,
     comissao_fixo:  c.comissaoFixo ?? 0,
+    agencia:        c.agencia      || null,
+    tipo_origem:    c.tipoOrigem   || null,
     admissao:       c.admissao     || null,
     inicio1:        c.inicio1      || null,
     periodo_atual:  c.periodoAtual ?? null,
@@ -192,6 +194,8 @@ function _fromRow(r) {
     admissao:     r.admissao     || null,
     inicio1:      r.inicio1      || null,
     periodoAtual: r.periodo_atual ?? 1,
+    agencia:      r.agencia      || '',
+    tipoOrigem:   r.tipo_origem  || '',
     situacao:     r.situacao     || 'ativo',
     obs:          r.obs          || '',
   };
