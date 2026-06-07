@@ -64,23 +64,6 @@
     <div class="kpi-row" id="kpiArea"></div>
     <div class="tbl-wrap" id="consultorArea" style="display:none;padding:1rem;margin-top:.8rem"></div>
 
-    <!-- DASHBOARD MENSAL PROFISSIONAL -->
-    <div class="tbl-wrap" style="margin-top:1rem;overflow:hidden" id="dashMensalWrap">
-      <div class="tbl-hd" style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.1rem;flex-wrap:wrap;gap:.5rem">
-        <div>
-          <span class="tbl-title">📅 Dashboard Mensal — Estagiários</span>
-          <div style="font-size:.68rem;color:var(--muted);margin-top:.15rem">Iniciados por mês · Receita recorrente · Controle profissional</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:.4rem">
-          <button class="btn btn-ghost btn-sm" onclick="mudarAnoDash(-1)">◀</button>
-          <span id="anoDashLabel" style="font-size:.9rem;font-weight:900;min-width:50px;text-align:center"></span>
-          <button class="btn btn-ghost btn-sm" onclick="mudarAnoDash(+1)">▶</button>
-        </div>
-      </div>
-      <div id="dashResumoAno" style="display:flex;flex-wrap:wrap;gap:.7rem;padding:.3rem 1.1rem 1rem;border-bottom:1px solid var(--border)"></div>
-      <div id="dashMensalCards" style="padding:.9rem 1.1rem 1.1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:.8rem"></div>
-    </div>
-
     <!-- Alertas -->
     <div id="alertasArea"></div>
 
@@ -138,31 +121,6 @@
               <td colspan="4"></td>
             </tr>
           </tfoot>
-        </table>
-      </div>
-    </div>
-  <!-- Histórico Mensal -->
-    <div class="tbl-wrap" style="margin-top:1rem;overflow:hidden">
-      <div class="tbl-hd" style="display:flex;align-items:center;justify-content:space-between;padding:.8rem 1rem">
-        <span class="tbl-title">📅 Histórico Mensal de Estagiários</span>
-        <div style="display:flex;align-items:center;gap:.5rem">
-          <button class="btn btn-ghost btn-sm" onclick="mudarAnoEst(-1)">◀</button>
-          <span id="anoEstLabel" style="font-size:.82rem;font-weight:800;min-width:45px;text-align:center"></span>
-          <button class="btn btn-ghost btn-sm" onclick="mudarAnoEst(+1)">▶</button>
-        </div>
-      </div>
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr>
-            <th>Mês</th>
-            <th>Ativos no Mês</th>
-            <th>Total Bolsas</th>
-            <th>Receita Bruta</th>
-            <th>Minha Comissão</th>
-            <th>Líquido p/ Empresa</th>
-          </tr></thead>
-          <tbody id="tbodyMensalEst"></tbody>
-          <tfoot id="tfootMensalEst"></tfoot>
         </table>
       </div>
     </div>
@@ -320,7 +278,7 @@ function renderKPIs() {
     { v:ativos.length,         l:'Estagiários Ativos',                                                  cls:'c-accent' },
     { v:Fmt.brl(totalBolsa),   l:'Total Bolsas (custo empresas/mês)', sub:'Valor que as empresas pagam aos estagiários',     cls:'c-text' },
     { v:Fmt.brl(totalReceita), l:'Receita Bruta gerada/mês',    sub:totalComiss>0?`Minha comissão: ${(totalReceita>0?(totalComiss/totalReceita*100).toFixed(0):0)}% do bruto`:'Configure sua comissão em cada contrato', cls:'c-green' },
-    { v:Fmt.brl(totalComiss), l:'💰 Minha Comissão Total/mês', sub:totalComiss>0?`Receita bruta: ${Fmt.brl(totalReceita)}`:'Defina sua % em cada contrato', cls:'c-accent' },
+    { v:Fmt.brl(totalLiq),     l:'💰 Minha Comissão Total/mês',         sub:totalComiss>0?`Receita bruta: ${Fmt.brl(totalReceita)}`:'Defina sua % em cada contrato', cls:'c-accent' },
     { v:alerts.w+alerts.v,     l:'Alertas de Período',             cls:alerts.w+alerts.v>0?'c-orange':'c-green' },
     { v:lista.filter(c=>c.situacao==='efetivado').length, l:'Efetivados CLT', cls:'c-blue' },
     { v:lista.filter(c=>c.situacao==='concluido').length, l:'Concluídos',     cls:'c-muted' },
@@ -551,206 +509,7 @@ async function excluir(id) {
   }
 }
 
-function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); renderMensalEst(); renderDashMensal(); }
-
-// ── Dashboard Mensal Profissional ──
-let anoDash = new Date().getFullYear();
-
-function mudarAnoDash(delta) {
-  anoDash += delta;
-  renderDashMensal();
-}
-
-function renderDashMensal() {
-  const lbl = document.getElementById('anoDashLabel');
-  if (lbl) lbl.textContent = anoDash;
-  const lista = estagiarios();
-  const hoje = new Date();
-  const mesHojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
-  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
-  let anoTotRec=0, anoTotComiss=0, anoTotLiq=0, anoTotAtivos=0, anoTotAdmit=0;
-
-  const cards = MESES.map((nomeMes, mi) => {
-    const anoMes = `${anoDash}-${String(mi+1).padStart(2,'0')}`;
-    const futuro = anoMes > mesHojeStr;
-
-    const iniciados  = lista.filter(c => c.inicio1 && c.inicio1.slice(0,7) === anoMes);
-    const encerrados = lista.filter(c => {
-      if (!c.inicio1) return false;
-      const fimMax = new Date(c.inicio1 + 'T12:00:00');
-      fimMax.setMonth(fimMax.getMonth() + 24);
-      return fimMax.toISOString().slice(0,7) === anoMes;
-    });
-    const ativos = lista.filter(c => estagiarioAtivoNoMes(c, anoMes));
-    const rec    = ativos.reduce((s,c) => s + Calc.receita(c), 0);
-    const comiss = ativos.reduce((s,c) => s + calcComissaoRec(c), 0);
-    const liq    = rec - comiss;
-
-    if (!futuro || iniciados.length > 0 || ativos.length > 0) {
-      anoTotRec    += rec;
-      anoTotComiss += comiss;
-      anoTotLiq    += liq;
-      anoTotAtivos += ativos.length;
-      anoTotAdmit  += iniciados.length;
-    }
-
-    const isAtual   = anoMes === mesHojeStr;
-    const opacity   = futuro && ativos.length === 0 ? 'opacity:.35;' : '';
-    const borderClr = isAtual ? 'rgba(59,130,246,.5)' : iniciados.length > 0 ? 'rgba(16,185,129,.3)' : 'var(--border)';
-    const bgClr     = isAtual ? 'rgba(59,130,246,.04)' : '';
-
-    const inicHtml = iniciados.length > 0
-      ? `<div style="margin-top:.5rem;padding:.45rem .6rem;background:rgba(16,185,129,.07);border-radius:7px;border-left:3px solid rgba(16,185,129,.5)">
-          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem">✅ Iniciados neste mês</div>
-          ${iniciados.map(c=>`<div style="font-size:.73rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:.18rem">
-            <span>${c.nome.split(' ').slice(0,2).join(' ')}</span>
-            <span style="font-size:.63rem;color:var(--muted)">${c.empresa}</span>
-          </div>`).join('')}
-        </div>` : '';
-
-    const encHtml = encerrados.length > 0
-      ? `<div style="margin-top:.4rem;padding:.4rem .6rem;background:rgba(239,68,68,.06);border-radius:7px;border-left:3px solid rgba(239,68,68,.4)">
-          <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem">⏹ Encerrando neste mês</div>
-          ${encerrados.map(c=>`<div style="font-size:.7rem;font-weight:600;color:var(--muted)">${c.nome.split(' ').slice(0,2).join(' ')}</div>`).join('')}
-        </div>` : '';
-
-    return `<div style="${opacity}background:${bgClr};border:1.5px solid ${borderClr};border-radius:12px;padding:.85rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
-        <div>
-          <div style="font-size:.82rem;font-weight:900;color:${isAtual?'var(--accent)':'var(--text)'}">${nomeMes}</div>
-          <div style="font-size:.6rem;color:var(--muted)">${anoDash}</div>
-        </div>
-        <div style="display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-          ${isAtual ? '<span style="font-size:.55rem;background:var(--accent);color:#fff;border-radius:5px;padding:.15rem .4rem;font-weight:800">MÊS ATUAL</span>' : ''}
-          ${iniciados.length > 0 ? `<span style="font-size:.55rem;background:rgba(16,185,129,.15);color:#10b981;border-radius:5px;padding:.15rem .4rem;font-weight:700">+${iniciados.length} novo${iniciados.length>1?'s':''}</span>` : ''}
-          ${encerrados.length > 0 ? `<span style="font-size:.55rem;background:rgba(239,68,68,.12);color:#ef4444;border-radius:5px;padding:.15rem .4rem;font-weight:700">⏹${encerrados.length} enc.</span>` : ''}
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:.5rem">
-        <div style="background:rgba(59,130,246,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Ativos</div>
-          <div style="font-size:1.1rem;font-weight:900;color:var(--accent)">${ativos.length}</div>
-        </div>
-        <div style="background:rgba(16,185,129,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Rec. Bruta</div>
-          <div style="font-size:${rec>=10000?'.75':'1.05'}rem;font-weight:900;color:#10b981">${rec>0?Fmt.brl(rec):'—'}</div>
-        </div>
-        <div style="background:rgba(243,156,18,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Comissão</div>
-          <div style="font-size:${comiss>=10000?'.75':'1.0'}rem;font-weight:800;color:var(--orange)">${comiss>0?Fmt.brl(comiss):'—'}</div>
-        </div>
-        <div style="background:rgba(139,92,246,.06);border-radius:8px;padding:.5rem .6rem;text-align:center">
-          <div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Líquido</div>
-          <div style="font-size:${liq>=10000?'.75':'1.0'}rem;font-weight:900;color:var(--accent)">${liq>0?Fmt.brl(liq):'—'}</div>
-        </div>
-      </div>
-      ${inicHtml}
-      ${encHtml}
-      ${ativos.length > 0 ? `<div style="margin-top:.45rem;font-size:.63rem;color:var(--muted);line-height:1.5" title="${ativos.map(c=>c.nome).join(', ')}">
-        👥 ${ativos.slice(0,3).map(c=>c.nome.split(' ')[0]).join(', ')}${ativos.length>3?` +${ativos.length-3} mais`:''}
-      </div>` : `<div style="margin-top:.4rem;font-size:.65rem;color:var(--muted);text-align:center;opacity:.5">${futuro?'Período futuro':'Nenhum ativo'}</div>`}
-    </div>`;
-  }).join('');
-
-  document.getElementById('dashMensalCards').innerHTML = cards;
-
-  document.getElementById('dashResumoAno').innerHTML = [
-    { icon:'📅', label:`Total Ativos (mês·ativo em ${anoDash})`, val: anoTotAtivos,          cls:'color:var(--accent)' },
-    { icon:'🆕', label:`Iniciados em ${anoDash}`,                val: anoTotAdmit,            cls:'color:#10b981' },
-    { icon:'💵', label:'Receita Bruta Acumulada',                val: Fmt.brl(anoTotRec),     cls:'color:#10b981;font-size:1.15rem' },
-    { icon:'💰', label:'Comissão Acumulada',                     val: Fmt.brl(anoTotComiss),  cls:'color:var(--orange);font-size:1.1rem' },
-    { icon:'🏆', label:'Líquido Acumulado p/ Empresa',           val: Fmt.brl(anoTotLiq),     cls:'color:var(--accent);font-size:1.15rem' },
-  ].map(k=>`<div style="flex:1;min-width:140px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem">
-    <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">${k.icon} ${k.label}</div>
-    <div style="font-size:1.3rem;font-weight:900;${k.cls}">${k.val}</div>
-  </div>`).join('');
-}
-
-
-// ── Histórico Mensal Estagiários ──
-let anoEst = new Date().getFullYear();
-const MESES_FULL_EST = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-
-function mudarAnoEst(delta) {
-  anoEst += delta;
-  renderMensalEst();
-}
-
-function estagiarioAtivoNoMes(c, anoMes) {
-  // Um estagiário é ativo num mês se inicio1 <= anoMes e situacao não é cancelado/concluido naquele ponto
-  if (!c.inicio1) return false;
-  if (c.inicio1.slice(0,7) > anoMes) return false;
-  // Verifica fim máximo: inicio1 + 24 meses
-  const fimMax = new Date(c.inicio1 + 'T12:00:00');
-  fimMax.setMonth(fimMax.getMonth() + 24);
-  const fimStr = fimMax.toISOString().slice(0,7);
-  if (anoMes > fimStr) return false;
-  // Se desligado/cancelado, usa data de admissao como proxy do fim (não temos data de saída explícita)
-  if (c.situacao === 'cancelado' || c.situacao === 'concluido' || c.situacao === 'desligado') {
-    // Mostra apenas se o mês for anterior ou igual ao mês atual real
-    const hoje = new Date();
-    const mesHoje = hoje.toISOString().slice(0,7);
-    return anoMes <= mesHoje;
-  }
-  return true;
-}
-
-function renderMensalEst() {
-  const label = document.getElementById('anoEstLabel');
-  if (label) label.textContent = anoEst;
-  const tbody = document.getElementById('tbodyMensalEst');
-  const tfoot = document.getElementById('tfootMensalEst');
-  if (!tbody) return;
-
-  const lista = estagiarios();
-  const hoje = new Date();
-  let totRec = 0, totComiss = 0, totLiq = 0;
-
-  const rows = MESES_FULL_EST.map((nome, mi) => {
-    const anoMes = `${anoEst}-${String(mi+1).padStart(2,'0')}`;
-    const futuro = anoEst > hoje.getFullYear() || (anoEst === hoje.getFullYear() && mi > hoje.getMonth());
-
-    const ativos = lista.filter(c => estagiarioAtivoNoMes(c, anoMes));
-    const rec    = ativos.reduce((s,c) => s + Calc.receita(c), 0);
-    const comiss = ativos.reduce((s,c) => s + calcComissaoRec(c), 0);
-    const liq    = rec - comiss;
-
-    totRec    += rec;
-    totComiss += comiss;
-    totLiq    += liq;
-
-    if (futuro && ativos.length === 0) {
-      return `<tr style="opacity:.3">
-        <td style="font-size:.78rem;font-weight:700">${nome}</td>
-        <td>—</td><td>—</td><td>—</td><td>—</td><td>—</td>
-      </tr>`;
-    }
-
-    const isMesAtual = anoMes === `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
-
-    return `<tr style="${isMesAtual ? 'background:rgba(59,130,246,.04)' : ''}">
-      <td style="font-size:.78rem;font-weight:${isMesAtual ? '900' : '700'};color:${isMesAtual ? 'var(--accent)' : 'var(--text)'}">
-        ${nome}${isMesAtual ? ' <span class="tag tag-blue" style="font-size:.55rem">Atual</span>' : ''}
-      </td>
-      <td><span class="tag ${ativos.length > 0 ? 'tag-green' : 'tag-gray'}">${ativos.length}</span></td>
-      <td style="font-size:.78rem">${rec > 0 ? Fmt.brl(ativos.reduce((s,c)=>s+c.bolsa,0)) : '<span style="opacity:.35">—</span>'}</td>
-      <td class="fw8">${rec > 0 ? Fmt.brl(rec) : '<span style="opacity:.35">—</span>'}</td>
-      <td style="color:var(--orange)">${comiss > 0 ? Fmt.brl(comiss) : '<span style="opacity:.35">—</span>'}</td>
-      <td class="fw8" style="color:var(--accent)">${liq > 0 ? Fmt.brl(liq) : '<span style="opacity:.35">—</span>'}</td>
-    </tr>`;
-  }).join('');
-
-  tbody.innerHTML = rows;
-  tfoot.innerHTML = `<tr>
-    <td style="font-weight:800">TOTAL ${anoEst}</td>
-    <td>—</td>
-    <td>—</td>
-    <td class="fw8">${Fmt.brl(totRec)}</td>
-    <td style="color:var(--orange);font-weight:800">${Fmt.brl(totComiss)}</td>
-    <td class="fw8 c-accent">${Fmt.brl(totLiq)}</td>
-  </tr>`;
-}
+function renderTudo() { renderKPIs(); renderAlertas(); renderTabela(); }
 
 function exportarCSV() {
   Export.csv(
