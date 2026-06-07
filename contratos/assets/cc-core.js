@@ -298,7 +298,7 @@ const Calc = {
   // ── Comissão do recrutador em um contrato ──
   comissaoRecrutador(c) {
     if (!c.recrutador) return 0;
-    if (c.tipoComissao === 'percentual') {
+    if (c.tipoComissao === 'percentual' || c.tipoComissao === 'pct') {
       return Calc.receita(c) * ((c.comissaoRec || 0) / 100);
     }
     if (c.tipoComissao === 'fixo') {
