@@ -142,9 +142,89 @@ window.copiarTexto = function(txt, btn) {
   });
 };
 
+// ── Preencher usuário imediatamente via localStorage (sem esperar Supabase) ──
+(function preencherUsuarioImediato() {
+  try {
+    // Supabase salva a sessão no localStorage com chave que começa com 'sb-'
+    // Tenta múltiplas variações de chave do Supabase v2
+    let raw = null;
+    const candidates = [
+      'sb-yunoxkembhskpnprffoi-auth-token',
+      'supabase.auth.token',
+    ];
+    for (const k of candidates) {
+      raw = localStorage.getItem(k);
+      if (raw) break;
+    }
+    // Fallback: procura qualquer chave sb-* com token
+    if (!raw) {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          raw = localStorage.getItem(k); break;
+        }
+      }
+    }
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    const user = session?.user || session;
+    if (!user) return;
+
+    const nm = user.user_metadata?.full_name
+            || user.user_metadata?.name
+            || user.email?.split('@')[0]
+            || '';
+    if (!nm) return;
+
+    const partes = nm.trim().split(/\s+/);
+    const iniciais = partes.length >= 2
+      ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+      : partes[0].slice(0, 2).toUpperCase();
+
+    const elNome  = document.getElementById('user-nome');
+    const elEmail = document.getElementById('user-email');
+    const elAv    = document.getElementById('sb-av-init');
+
+    if (elNome)  elNome.textContent  = nm;
+    if (elEmail) elEmail.textContent = user.email || '';
+    if (elAv)    elAv.textContent    = iniciais;
+  } catch(e) { /* silencioso */ }
+})();
+
 // ── Fechar sidebar ao clicar em link (mobile) ─────────────────
 document.addEventListener('DOMContentLoaded', () => {
   startClock();
+  // Tenta preencher novamente no DOMContentLoaded (fallback)
+  try {
+    let raw = null;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        raw = localStorage.getItem(k); break;
+      }
+    }
+    if (!raw) raw = localStorage.getItem('supabase.auth.token');
+    if (raw) {
+      const session = JSON.parse(raw);
+      const user = session?.user || session;
+      const nm = user?.user_metadata?.full_name
+              || user?.user_metadata?.name
+              || user?.email?.split('@')[0] || '';
+      if (nm) {
+        const partes = nm.trim().split(/\s+/);
+        const iniciais = partes.length >= 2
+          ? (partes[0][0] + partes[partes.length - 1][0]).toUpperCase()
+          : partes[0].slice(0, 2).toUpperCase();
+        const elNome  = document.getElementById('user-nome');
+        const elEmail = document.getElementById('user-email');
+        const elAv    = document.getElementById('sb-av-init');
+        if (elNome && elNome.textContent === '—')  elNome.textContent  = nm;
+        if (elEmail && elEmail.textContent === '—') elEmail.textContent = user.email || '';
+        if (elAv && elAv.textContent === 'OR') elAv.textContent = iniciais;
+      }
+    }
+  } catch(e) {}
+
   document.querySelectorAll('.sb-item').forEach(el =>
     el.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); })
   );
