@@ -164,11 +164,12 @@
         <table>
           <thead><tr>
             <th>Mês</th>
-            <th>Ativos no Mês</th>
-            <th>Receita Bruta/mês</th>
+            <th>Admitidos</th>
+            <th>Headcount Ativo</th>
+            <th>Receita (taxa única)</th>
             <th>Minha Comissão</th>
             <th>Líquido p/ Empresa</th>
-            <th>Colaboradores</th>
+            <th>Colaboradores Admitidos</th>
           </tr></thead>
           <tbody id="tbodyMensal"></tbody>
           <tfoot id="tfootMensal"></tfoot>
@@ -702,79 +703,83 @@ function renderMensal() {
   if (!tbody) return;
 
   const lista = clts();
-  let totRec = 0, totComiss = 0, totLiq = 0, totAtivos = 0;
   const hoje = new Date();
+  const mesHojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
 
-  // Atualiza cabeçalho da tabela para refletir receita mensal recorrente
+  // Totais do ano — apenas colocações reais (taxa única no mês da admissão)
+  let totColocacoes = 0, totComiss = 0, totLiq = 0, totAdmitidos = 0;
+
+  // Atualiza cabeçalho
   const thead = tbody.closest('table')?.querySelector('thead tr');
   if (thead) {
     thead.innerHTML = `
       <th>Mês</th>
-      <th>Ativos no Mês</th>
-      <th>Receita Bruta/mês</th>
+      <th>Admitidos</th>
+      <th>Headcount Ativo</th>
+      <th>Receita (taxa única)</th>
       <th>Minha Comissão</th>
       <th>Líquido p/ Empresa</th>
-      <th>Colaboradores</th>`;
+      <th>Colaboradores Admitidos</th>`;
   }
 
   const rows = MESES_FULL_CLT.map((nomeMes, mi) => {
     const anoMes = `${anoCLT}-${String(mi+1).padStart(2,'0')}`;
-    const futuro = anoCLT > hoje.getFullYear() || (anoCLT === hoje.getFullYear() && mi > hoje.getMonth());
+    const futuro = anoMes > mesHojeStr;
 
-    // CLTs ativos neste mês (receita recorrente mensal)
-    const ativos = lista.filter(c => cltAtivoNoMes(c, anoMes));
+    // Admitidos NESTE mês — geram receita (taxa única de colocação)
+    const admitidos   = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
+    // Desligados neste mês
+    const desligados  = lista.filter(c => c.desligamento && c.desligamento.slice(0,7) === anoMes);
+    // Headcount: quantos CLTs estavam ativos no mês (informativo, sem gerar receita nova)
+    const headcount   = lista.filter(c => cltAtivoNoMes(c, anoMes)).length;
 
-    // Receita mensal = soma das taxas mensais de cada ativo
-    // Para CLT: taxa cobrada mensalmente sobre o salário
-    const rec    = ativos.reduce((s, c) => s + Calc.receita(c), 0);
-    const comiss = ativos.reduce((s, c) => s + calcComissaoRec(c), 0);
+    // Receita = APENAS os admitidos neste mês (taxa única)
+    const rec    = admitidos.reduce((s,c) => s + Calc.receita(c), 0);
+    const comiss = admitidos.reduce((s,c) => s + calcComissaoRec(c), 0);
     const liq    = rec - comiss;
 
-    totRec    += rec;
-    totComiss += comiss;
-    totLiq    += liq;
-    totAtivos += ativos.length;
+    if (!futuro) {
+      totColocacoes += rec;
+      totComiss     += comiss;
+      totLiq        += liq;
+      totAdmitidos  += admitidos.length;
+    }
 
-    if (futuro && ativos.length === 0) {
-      return `<tr style="opacity:.3">
+    const isMesAtual = anoMes === mesHojeStr;
+
+    // Linha vazia (sem admissão e sem headcount ou futuro)
+    if (futuro && admitidos.length === 0) {
+      return `<tr style="opacity:.28">
         <td style="font-size:.78rem;font-weight:700">${nomeMes}</td>
-        <td><span class="tag tag-gray">—</span></td>
-        <td style="color:var(--muted)">—</td>
-        <td style="color:var(--muted)">—</td>
-        <td style="color:var(--muted)">—</td>
-        <td style="color:var(--muted);font-size:.7rem">—</td>
+        <td>—</td><td style="color:var(--muted)">${headcount > 0 ? headcount : '—'}</td>
+        <td>—</td><td>—</td><td>—</td><td style="font-size:.7rem;color:var(--muted)">—</td>
       </tr>`;
     }
 
-    const isMesAtual = anoMes === `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}`;
-    const nomes = ativos.map(c => c.nome.split(' ')[0]).join(', ') || '—';
-
-    // Destaque visual para admitidos neste mês
-    const admitidosNoMes = lista.filter(c => c.admissao && c.admissao.slice(0,7) === anoMes);
-    const desligadosNoMes = lista.filter(c => c.desligamento && c.desligamento.slice(0,7) === anoMes);
-    const badges = [
-      admitidosNoMes.length > 0 ? `<span class="tag tag-green" style="font-size:.55rem" title="${admitidosNoMes.map(c=>c.nome).join(', ')}">+${admitidosNoMes.length} entrada${admitidosNoMes.length>1?'s':''}</span>` : '',
-      desligadosNoMes.length > 0 ? `<span class="tag tag-red" style="font-size:.55rem" title="${desligadosNoMes.map(c=>c.nome).join(', ')}">-${desligadosNoMes.length} saída${desligadosNoMes.length>1?'s':''}</span>` : '',
-    ].filter(Boolean).join(' ');
+    const nomes = admitidos.map(c => c.nome.split(' ').slice(0,2).join(' ')).join(', ') || '—';
+    const deslBadge = desligados.length > 0
+      ? `<span class="tag tag-red" style="font-size:.55rem;margin-left:.3rem" title="${desligados.map(c=>c.nome).join(', ')}">-${desligados.length} saída${desligados.length>1?'s':''}</span>` : '';
 
     return `<tr style="${isMesAtual ? 'background:rgba(59,130,246,.06)' : ''}">
-      <td style="font-size:.78rem;font-weight:${isMesAtual ? '900' : '700'};color:${isMesAtual ? 'var(--accent)' : 'var(--text)'}">
+      <td style="font-size:.78rem;font-weight:${isMesAtual?'900':'700'};color:${isMesAtual?'var(--accent)':'var(--text)'}">
         ${nomeMes}${isMesAtual ? ' <span class="tag tag-blue" style="font-size:.55rem">Atual</span>' : ''}
-        ${badges ? `<div style="margin-top:.2rem">${badges}</div>` : ''}
+        ${deslBadge}
       </td>
-      <td><span class="tag ${ativos.length > 0 ? 'tag-green' : 'tag-gray'}">${ativos.length}</span></td>
+      <td><span class="tag ${admitidos.length > 0 ? 'tag-green' : 'tag-gray'}">${admitidos.length > 0 ? '+'+admitidos.length : '0'}</span></td>
+      <td style="font-size:.8rem;color:var(--muted)">${headcount}</td>
       <td class="fw8">${rec > 0 ? Fmt.brl(rec) : '<span style="opacity:.35">—</span>'}</td>
       <td style="color:var(--orange)">${comiss > 0 ? Fmt.brl(comiss) : '<span style="opacity:.35">—</span>'}</td>
       <td class="fw8" style="color:var(--accent)">${liq > 0 ? Fmt.brl(liq) : '<span style="opacity:.35">—</span>'}</td>
-      <td style="font-size:.7rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${ativos.map(c=>c.nome).join(', ')}">${nomes}</td>
+      <td style="font-size:.7rem;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${admitidos.map(c=>c.nome).join(', ')}">${nomes}</td>
     </tr>`;
   }).join('');
 
   tbody.innerHTML = rows;
   tfoot.innerHTML = `<tr>
     <td style="font-weight:800">TOTAL ${anoCLT}</td>
-    <td><span class="tag tag-blue">${totAtivos} mês·ativo${totAtivos!==1?'s':''}</span></td>
-    <td class="fw8">${Fmt.brl(totRec)}</td>
+    <td><span class="tag tag-blue">${totAdmitidos} colocação${totAdmitidos!==1?'ões':''}</span></td>
+    <td>—</td>
+    <td class="fw8">${Fmt.brl(totColocacoes)}</td>
     <td style="color:var(--orange);font-weight:800">${Fmt.brl(totComiss)}</td>
     <td class="fw8 c-accent">${Fmt.brl(totLiq)}</td>
     <td></td>
