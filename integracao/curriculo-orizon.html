@@ -641,12 +641,12 @@
       <div class="grid-3">
         <div class="field-group">
           <label class="field-label">Telefone / WhatsApp <span class="req">*</span></label>
-          <input type="tel" class="field-input" id="cTelefone" placeholder="(51) 99999-9999" autocomplete="tel" oninput="autosave()"/>
+          <input type="tel" class="field-input" id="cTelefone" placeholder="(51) 99999-9999" autocomplete="tel" oninput="mascaraTel(this);autosave()"/>
           <div class="field-hint">Formato: <em>(DDD) 9XXXX-XXXX</em>. Nas versões digitais o número vira link clicável.</div>
         </div>
         <div class="field-group">
           <label class="field-label">Telefone secundário (opcional)</label>
-          <input type="tel" class="field-input" id="cTelefone2" placeholder="" oninput="autosave()"/>
+          <input type="tel" class="field-input" id="cTelefone2" placeholder="" oninput="mascaraTel(this);autosave()"/>
         </div>
         <div class="field-group">
           <label class="field-label">LinkedIn (opcional)</label>
@@ -987,8 +987,33 @@
 
 <script>
 // ══════════════════════════════════════════════════
-// ESTADO GLOBAL
+// MÁSCARA DE TELEFONE
 // ══════════════════════════════════════════════════
+function mascaraTel(el) {
+  var v = el.value.replace(/\D/g, '').substring(0, 11);
+  if (v.length <= 2) {
+    el.value = v.length ? '(' + v : '';
+  } else if (v.length <= 6) {
+    el.value = '(' + v.substring(0,2) + ') ' + v.substring(2);
+  } else if (v.length <= 10) {
+    el.value = '(' + v.substring(0,2) + ') ' + v.substring(2,6) + '-' + v.substring(6);
+  } else {
+    el.value = '(' + v.substring(0,2) + ') ' + v.substring(2,7) + '-' + v.substring(7);
+  }
+}
+
+function telParaWpp(tel) {
+  var nums = (tel||'').replace(/\D/g,'');
+  if (!nums) return '';
+  if (nums.length <= 11) nums = '55' + nums;
+  return 'https://wa.me/' + nums;
+}
+
+function emailParaMailto(email) {
+  return 'mailto:' + (email||'').trim();
+}
+
+
 let stepAtual = 0;
 let exps = [];
 let formacoes = [];
@@ -1744,8 +1769,14 @@ function gerarEBaixarPDF(tipo) {
 
   var contatos = [];
   if (c.cidade)              contatos.push('📍 '+esc(c.cidade)+(c.bairro?' · '+esc(c.bairro):''));
-  if (c.telefone)            contatos.push('📱 '+esc(c.telefone));
-  if (c.email)               contatos.push('✉ '+esc(c.email));
+  if (c.telefone) {
+    if (isATS) contatos.push('📱 '+esc(c.telefone));
+    else contatos.push('📱 <a href="'+telParaWpp(c.telefone)+'" style="color:inherit;text-decoration:none;" target="_blank">'+esc(c.telefone)+'</a>');
+  }
+  if (c.email) {
+    if (isATS) contatos.push('✉ '+esc(c.email));
+    else contatos.push('✉ <a href="'+emailParaMailto(c.email)+'" style="color:inherit;text-decoration:none;">'+esc(c.email)+'</a>');
+  }
   if (!isATS && c.linkedin)  contatos.push('🔗 '+esc(c.linkedin));
   if (!isATS && c.portfolio) contatos.push('🌐 '+esc(c.portfolio));
 
