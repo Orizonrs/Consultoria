@@ -1054,9 +1054,9 @@ function irPara(n){
         var top=nav.getBoundingClientRect().top+window.scrollY-80;
         window.scrollTo({top:Math.max(0,top),behavior:'smooth'});
       }
-    }catch(e)
-    try{salvarDados(true);}catch(e)
-  }catch(err)
+    }catch(e){}
+    try{salvarDados(true);}catch(e){}
+  }catch(err){}
 }
 
 // Mobile bottom nav helpers
@@ -1086,7 +1086,7 @@ function mobileNavNext(){ if(stepAtual < 5){ irPara(stepAtual+1); atualizarMobil
 
 // Patch irPara to always update mobile nav
 var _irParaOrig = irPara;
-function irPara(n){ _irParaOrig(n); atualizarMobileNav(); atualizarContador(); }
+irPara = function(n){ _irParaOrig(n); atualizarMobileNav(); atualizarContador(); };
 let tipoResumo = 'resumo';
 
 function setTipoResumo(tipo){
@@ -1485,7 +1485,7 @@ function salvarDados(silencioso){
 
 function carregarDados(){
   try{
-    var raw=null; try{raw=localStorage.getItem(LS_KEY);}catch(e)
+    var raw=null; try{raw=localStorage.getItem(LS_KEY);}catch(e){}
     if(!raw){ toast('Nenhum dado salvo encontrado.','warn'); return; }
     const d = JSON.parse(raw);
     if(!d||!d.cabecalho){ toast('Nenhum dado salvo encontrado.','warn'); return; }
@@ -1515,7 +1515,7 @@ function autosave(){
     try{
       localStorage.setItem(LS_KEY, JSON.stringify(coletarTudo()));
       if(dot){dot.classList.remove('saving');dot.classList.add('saved');setTimeout(()=>{dot&&dot.classList.remove('saved');},2000);}
-    }catch(e)
+    }catch(e){}
   }, 1200);
 }
 
@@ -1527,7 +1527,14 @@ function atualizarChecklist(){
   if(!grid) return;
   var d = coletarTudo();
   var itens = [
-    { label:'Nome',        ok: !!(d.cabecalho.nome) } { label:'Cidade',      ok: !!(d.cabecalho.cidade) } { label:'E-mail',      ok: !!(d.cabecalho.email) } { label:'Telefone',    ok: !!(d.cabecalho.telefone) } { label:'Resumo/Obj.', ok: !!(d.tipoResumo==='objetivo' ? d.objetivo : d.resumo) } { label:'Experiências',ok: d.exps && d.exps.length > 0 } { label:'Formação',    ok: d.formacoes && d.formacoes.length > 0 } { label:'Habilidades', ok: (d.habTec && d.habTec.length > 0) || (d.habComp && d.habComp.length > 0) },
+    { label:'Nome',        ok: !!(d.cabecalho.nome) },
+    { label:'Cidade',      ok: !!(d.cabecalho.cidade) },
+    { label:'E-mail',      ok: !!(d.cabecalho.email) },
+    { label:'Telefone',    ok: !!(d.cabecalho.telefone) },
+    { label:'Resumo/Obj.', ok: !!(d.tipoResumo==='objetivo' ? d.objetivo : d.resumo) },
+    { label:'Experiências',ok: d.exps && d.exps.length > 0 },
+    { label:'Formação',    ok: d.formacoes && d.formacoes.length > 0 },
+    { label:'Habilidades', ok: (d.habTec && d.habTec.length > 0) || (d.habComp && d.habComp.length > 0) },
   ];
   var total = itens.length, feitos = itens.filter(function(i){return i.ok;}).length;
   var pct = Math.round(feitos/total*100);
@@ -1698,7 +1705,7 @@ function init(){
   renderIdiomas();
 
   // Tenta carregar dados salvos automaticamente
-  var saved=null; try{saved=localStorage.getItem(LS_KEY);}catch(e)
+  var saved=null; try{saved=localStorage.getItem(LS_KEY);}catch(e){}
   if(saved){
     try{
       const d = JSON.parse(saved);
@@ -1716,7 +1723,7 @@ function init(){
         renderTags('tec'); renderTags('comp');
         contarResumo('resumo');
       }
-    }catch(e)
+    }catch(e){}
   }
 }
 
@@ -1842,7 +1849,7 @@ async function iaChamarWorker(prompt, btnId, labelFinal) {
       body: JSON.stringify({ prompt })
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ());
+      const err = await res.json().catch(() => ({}));
       toast('Erro da IA: ' + (err?.error || res.status), 'erro');
       return null;
     }
@@ -1949,7 +1956,7 @@ function iaUsarObjetivo() {
 }
 
 // ── GERAR BULLETS ──
-let _iaBulletsTemp = ;
+let _iaBulletsTemp = {};
 
 async function iaGerarBullets(i) {
   const e = exps[i];
