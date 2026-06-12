@@ -408,7 +408,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
 }
 .card-section-val {
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
+  font-size: var(--sec-size, 12px);
   font-weight: 500;
   opacity: 1;
   line-height: 1.65;
@@ -581,6 +581,30 @@ function doLogin() {
         <button class="pos-btn on" onclick="setPosDetails('bottom-left',this)">↙ Inf. Esq</button>
         <button class="pos-btn" onclick="setPosDetails('bottom-right',this)">↘ Inf. Dir</button>
       </div>
+    </div>
+
+    <!-- TEXTO -->
+    <div class="sec">
+      <div class="sec-label">Texto</div>
+      <label class="fl">Tamanho da Fonte (Atividades / Requisitos / Benefícios)</label>
+      <div class="slider-row">
+        <input type="range" id="i-secfonte" min="8" max="24" value="12" oninput="updSecFonte(this.value)">
+        <span id="secfonte-size-lbl">12px</span>
+      </div>
+      <div class="tog-row" style="margin-top:10px;">
+        <span class="tog-label">Exibir Bullets</span>
+        <label class="tog"><input type="checkbox" id="t-bullets" checked onchange="upd()"><span class="tog-s"></span></label>
+      </div>
+      <label class="fl" style="margin-top:10px;">Modelo de Bullet</label>
+      <select id="i-bullet-style" onchange="upd()">
+        <option value="·">· Ponto médio</option>
+        <option value="•">• Bullet clássico</option>
+        <option value="-">- Hífen</option>
+        <option value="►">► Seta</option>
+        <option value="✓">✓ Check</option>
+        <option value="✦">✦ Estrela</option>
+        <option value="▸">▸ Triângulo</option>
+      </select>
     </div>
 
     <!-- ATIVIDADES -->
@@ -857,6 +881,11 @@ function updFonte(v) {
   document.getElementById('fonte-size-lbl').textContent = v + 'px';
 }
 
+function updSecFonte(v) {
+  document.getElementById('card').style.setProperty('--sec-size', v + 'px');
+  document.getElementById('secfonte-size-lbl').textContent = v + 'px';
+}
+
 function updLogo(v) {
   var wrap = document.getElementById('c-logo-svg');
   wrap.style.height = v + 'px';
@@ -980,7 +1009,9 @@ function upd() {
   document.getElementById('c-atv').style.display = (showAtv && vAtv) ? '' : 'none';
   if (vAtv) {
     var alines = vAtv.split('\n').filter(l => l.trim());
-    document.getElementById('c-atv-v').innerHTML = alines.map(l => '· ' + l).join('<br>');
+    var bAtv = document.getElementById('t-bullets').checked;
+    var symAtv = document.getElementById('i-bullet-style').value;
+    document.getElementById('c-atv-v').innerHTML = alines.map(l => (bAtv ? symAtv + ' ' : '') + l).join('<br>');
   }
 
   var showReq = document.getElementById('t-req').checked;
@@ -988,7 +1019,9 @@ function upd() {
   document.getElementById('c-req').style.display = (showReq && vReq) ? '' : 'none';
   if (vReq) {
     var lines = vReq.split('\n').filter(l => l.trim());
-    document.getElementById('c-req-v').innerHTML = lines.map(l => '· ' + l).join('<br>');
+    var bReq = document.getElementById('t-bullets').checked;
+    var symReq = document.getElementById('i-bullet-style').value;
+    document.getElementById('c-req-v').innerHTML = lines.map(l => (bReq ? symReq + ' ' : '') + l).join('<br>');
   }
 
   var showBen = document.getElementById('t-ben').checked;
@@ -996,7 +1029,9 @@ function upd() {
   document.getElementById('c-ben').style.display = (showBen && vBen) ? '' : 'none';
   if (vBen) {
     var blines = vBen.split('\n').filter(l => l.trim());
-    document.getElementById('c-ben-v').innerHTML = blines.map(l => '· ' + l).join('<br>');
+    var bBen = document.getElementById('t-bullets').checked;
+    var symBen = document.getElementById('i-bullet-style').value;
+    document.getElementById('c-ben-v').innerHTML = blines.map(l => (bBen ? symBen + ' ' : '') + l).join('<br>');
   }
 
   var showCont = document.getElementById('t-cont').checked;
@@ -1078,7 +1113,7 @@ function scaleCard() {
 }
 
 window.addEventListener('resize', scaleCard);
-window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); });
+window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); updSecFonte(12); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); });
 </script>
 </body>
 </html>
