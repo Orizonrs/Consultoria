@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orizon · Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060d18;
+  --surf: #0b1627;
+  --bd: rgba(0,200,255,0.12);
+  --cy: #00c8ff;
+  --cg: rgba(0,200,255,0.28);
+  --wh: #e8f4ff;
+  --mu: rgba(200,230,255,0.45);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--wh);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* FUNDO ANIMADO */
+.bg-grid {
+  position: fixed; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(0,200,255,.025) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0,200,255,.025) 60px);
+}
+.bg-glow1 {
+  position: fixed; top: -200px; left: -200px;
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,200,255,.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.bg-glow2 {
+  position: fixed; bottom: -150px; right: -150px;
+  width: 500px; height: 500px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,200,255,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── TELA DE LOGIN ── */
+#screen-login {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  animation: fadeIn .4s ease;
+}
+
+.login-box {
+  width: 360px;
+  border: 1px solid rgba(0,200,255,.25);
+  background: rgba(0,200,255,.03);
+  padding: 48px 40px 40px;
+  position: relative;
+}
+.corner { position: absolute; width: 14px; height: 14px; opacity: .6; }
+.corner.tl { top: 8px; left: 8px; border-top: 1.5px solid var(--cy); border-left: 1.5px solid var(--cy); }
+.corner.tr { top: 8px; right: 8px; border-top: 1.5px solid var(--cy); border-right: 1.5px solid var(--cy); }
+.corner.bl { bottom: 8px; left: 8px; border-bottom: 1.5px solid var(--cy); border-left: 1.5px solid var(--cy); }
+.corner.br { bottom: 8px; right: 8px; border-bottom: 1.5px solid var(--cy); border-right: 1.5px solid var(--cy); }
+
+.login-logo { text-align: center; margin-bottom: 36px; }
+.login-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 3px;
+  color: rgba(0,200,255,.5); margin-top: 6px;
+}
+
+.fld-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(0,200,255,.6); margin-bottom: 6px;
+}
+.fld-wrap { margin-bottom: 16px; }
+.fld-wrap input {
+  width: 100%;
+  background: rgba(0,200,255,.05);
+  border: 1px solid rgba(0,200,255,.2);
+  color: var(--wh);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px; padding: 10px 12px; outline: none;
+  transition: border-color .2s;
+}
+.fld-wrap input:focus { border-color: rgba(0,200,255,.6); }
+
+.login-err {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; color: #ff4d4d;
+  text-align: center; min-height: 14px; margin-bottom: 12px;
+}
+
+.btn-login {
+  width: 100%; padding: 13px;
+  background: rgba(0,200,255,.1);
+  border: 1px solid rgba(0,200,255,.4);
+  color: var(--cy);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: 3px;
+  cursor: pointer; transition: background .2s, box-shadow .2s;
+}
+.btn-login:hover {
+  background: rgba(0,200,255,.2);
+  box-shadow: 0 0 20px rgba(0,200,255,.15);
+}
+
+/* ── TELA HOME ── */
+#screen-home {
+  display: none;
+  position: relative; z-index: 10;
+  flex-direction: column; align-items: center;
+  animation: fadeIn .4s ease;
+}
+
+.home-header { text-align: center; margin-bottom: 56px; }
+.home-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px; letter-spacing: 4px; text-transform: uppercase;
+  color: rgba(0,200,255,.5); margin-top: 8px;
+}
+.home-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(0,200,255,.4); margin-top: 20px;
+}
+
+.cards-grid {
+  display: flex; gap: 24px;
+}
+
+.tool-card {
+  width: 280px;
+  border: 1px solid rgba(0,200,255,.15);
+  background: rgba(0,200,255,.03);
+  padding: 36px 28px 28px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color .25s, box-shadow .25s, transform .2s;
+  text-decoration: none; color: inherit;
+  display: block;
+}
+.tool-card:hover {
+  border-color: rgba(0,200,255,.5);
+  box-shadow: 0 0 40px rgba(0,200,255,.1);
+  transform: translateY(-3px);
+}
+.tool-card .corner { opacity: .4; transition: opacity .25s; }
+.tool-card:hover .corner { opacity: .9; }
+
+.tool-icon {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(0,200,255,.08);
+  border: 1px solid rgba(0,200,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+.tool-icon svg { width: 22px; height: 22px; fill: none; stroke: var(--cy); stroke-width: 1.8; }
+
+.tool-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 7px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(0,200,255,.5); margin-bottom: 8px;
+}
+.tool-name {
+  font-size: 20px; font-weight: 700; color: var(--wh);
+  margin-bottom: 10px; line-height: 1.2;
+}
+.tool-desc {
+  font-size: 12px; color: var(--mu); line-height: 1.6;
+  margin-bottom: 24px;
+}
+.tool-btn {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--cy);
+}
+.tool-btn-line {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--cy), transparent);
+}
+
+.home-logout {
+  margin-top: 48px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(0,200,255,.35); cursor: pointer;
+  background: none; border: none;
+  transition: color .2s;
+}
+.home-logout:hover { color: rgba(0,200,255,.7); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow1"></div>
+<div class="bg-glow2"></div>
+
+<!-- ══ LOGIN ══ -->
+<div id="screen-login">
+  <div class="login-box">
+    <span class="corner tl"></span>
+    <span class="corner tr"></span>
+    <span class="corner bl"></span>
+    <span class="corner br"></span>
+
+    <div class="login-logo">
+      <svg width="130" height="36" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="gl"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+        <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gl)">ORIZON</text>
+      </svg>
+      <div class="login-sub">// sistema de gestão //</div>
+    </div>
+
+    <div class="fld-wrap">
+      <div class="fld-label">Usuário</div>
+      <input id="l-user" type="text" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="fld-wrap" style="margin-bottom:28px">
+      <div class="fld-label">Senha</div>
+      <input id="l-pass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <div class="login-err" id="l-err"></div>
+    <button class="btn-login" onclick="doLogin()">ENTRAR &rarr;</button>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="screen-home">
+  <div class="home-header">
+    <svg width="160" height="44" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="gl2"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gl2)">ORIZON</text>
+    </svg>
+    <div class="home-sub">// sistema de gestão //</div>
+    <div class="home-title">Selecione uma ferramenta</div>
+  </div>
+
+  <div class="cards-grid">
+
+    <!-- Card 1: Gerador de Vagas -->
+    <a class="tool-card" href="gerador_vaga.html" target="_blank">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <div class="tool-tag">// 01 // gerador</div>
+      <div class="tool-name">Gerador de Vagas</div>
+      <div class="tool-desc">Crie posts de vagas para PDF e redes sociais com layout profissional em segundos.</div>
+      <div class="tool-btn">
+        <span>Abrir ferramenta</span>
+        <div class="tool-btn-line"></div>
+        <span>→</span>
+      </div>
+    </a>
+
+    <!-- Card 2: Gerador de Cards -->
+    <a class="tool-card" href="card.html" target="_blank">
+      <span class="corner tl"></span>
+      <span class="corner tr"></span>
+      <span class="corner bl"></span>
+      <span class="corner br"></span>
+      <div class="tool-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+      </div>
+      <div class="tool-tag">// 02 // gerador</div>
+      <div class="tool-name">Gerador de Cards</div>
+      <div class="tool-desc">Crie cards visuais para conteúdo, dicas e comunicados da Orizon para redes sociais.</div>
+      <div class="tool-btn">
+        <span>Abrir ferramenta</span>
+        <div class="tool-btn-line"></div>
+        <span>→</span>
+      </div>
+    </a>
+
+  </div>
+
+  <button class="home-logout" onclick="doLogout()">// sair da sessão //</button>
+</div>
+
+<script>
+const USERS = [
+  { user: 'admin', pass: 'admin' }
+];
+
+function doLogin() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  const ok = USERS.find(x => x.user === u && x.pass === p);
+  if (ok) {
+    document.getElementById('screen-login').style.display = 'none';
+    const home = document.getElementById('screen-home');
+    home.style.display = 'flex';
+    sessionStorage.setItem('orizon_auth', '1');
+  } else {
+    const err = document.getElementById('l-err');
+    err.textContent = '// usuário ou senha incorretos //';
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('orizon_auth');
+  document.getElementById('screen-home').style.display = 'none';
+  const login = document.getElementById('screen-login');
+  login.style.display = 'flex';
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+}
+
+// Manter sessão ao recarregar
+if (sessionStorage.getItem('orizon_auth')) {
+  document.getElementById('screen-login').style.display = 'none';
+  document.getElementById('screen-home').style.display = 'flex';
+}
+</script>
+</body>
+</html>

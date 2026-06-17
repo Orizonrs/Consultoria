@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orizon · Gerador de Vaga PDF</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060d18;--surf:#0b1627;--bd:rgba(0,200,255,0.12);--cy:#00c8ff;--cg:rgba(0,200,255,0.28);--cd:rgba(0,200,255,0.55);--wh:#e8f4ff;--mu:rgba(200,230,255,0.45)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--wh);min-height:100vh;display:flex;flex-direction:column}
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 24px;border-bottom:1px solid var(--bd);background:rgba(6,13,24,.97);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.hlogo{display:flex;align-items:center;gap:10px}
+.hlogo svg{height:36px}
+.htag{font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:3px;text-transform:uppercase;color:var(--cd);border:1px solid var(--bd);padding:3px 10px;border-radius:2px}
+.hdl{background:rgba(0,200,255,.1);border:1px solid var(--cy);color:var(--cy);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;padding:8px 22px;border-radius:3px;cursor:pointer;transition:.2s;letter-spacing:.4px;display:flex;align-items:center;gap:8px}
+.hdl:hover{background:rgba(0,200,255,.2);box-shadow:0 0 18px var(--cg)}
+.hdl:disabled{opacity:.4;cursor:default}
+/* LAYOUT */
+.app{display:flex;flex:1;min-height:calc(100vh - 58px)}
+/* PANEL */
+.panel{width:310px;min-width:310px;background:var(--surf);border-right:1px solid var(--bd);padding:16px 14px;overflow-y:auto;max-height:calc(100vh - 58px)}
+.panel::-webkit-scrollbar{width:2px}
+.panel::-webkit-scrollbar-thumb{background:rgba(0,200,255,.15)}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{flex:1;padding:8px 4px;background:transparent;border:1px solid var(--bd);border-radius:2px;color:var(--mu);font-size:11px;cursor:pointer;transition:.18s;font-family:'DM Sans',sans-serif}
+.tab.on{border-color:var(--cy);color:var(--cy);background:rgba(0,200,255,.06)}
+.step{display:none}.step.on{display:block}
+/* SECTIONS */
+.sec{margin-bottom:18px}
+.slbl{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:4px;text-transform:uppercase;color:var(--cd);padding-bottom:7px;border-bottom:1px solid var(--bd);margin-bottom:12px}
+/* FIELDS */
+.fld{margin-bottom:9px}
+.fld label{font-size:10px;color:var(--mu);letter-spacing:.4px;display:block;margin-bottom:3px;text-transform:uppercase}
+.fld input,.fld textarea,.fld select{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--bd);border-radius:2px;color:var(--wh);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 9px;outline:none;transition:.18s;resize:vertical}
+.fld textarea{min-height:60px}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:rgba(0,200,255,.45);background:rgba(0,200,255,.03)}
+.fld select option{background:#0b1627}
+/* TOGGLES */
+.togr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.togl{font-size:12px;color:rgba(220,240,255,.65)}
+.tog{position:relative;width:38px;height:21px;cursor:pointer;display:block;flex-shrink:0}
+.tog input{display:none}
+.togs{position:absolute;inset:0;background:#040b14;border:1px solid rgba(0,200,255,.2);border-radius:11px;transition:.22s}
+.togs::before{content:'';position:absolute;width:13px;height:13px;left:3px;top:3px;background:#091828;border-radius:50%;transition:.22s}
+.tog input:checked~.togs{border-color:var(--cy);background:rgba(0,200,255,.1)}
+.tog input:checked~.togs::before{transform:translateX(17px);background:var(--cy);box-shadow:0 0 7px var(--cg)}
+/* LIST EDITOR */
+.led{display:flex;flex-direction:column;gap:5px}
+.lr{display:flex;gap:5px;align-items:center}
+.lr input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--bd);border-radius:2px;color:var(--wh);font-size:12px;padding:6px 8px;outline:none;transition:.18s;font-family:'DM Sans',sans-serif}
+.lr input:focus{border-color:rgba(0,200,255,.35)}
+.bx{width:22px;height:22px;border:1px solid rgba(255,80,80,.22);border-radius:2px;background:transparent;color:rgba(255,80,80,.5);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.bx:hover{border-color:rgba(255,80,80,.7);color:#ff5050}
+.badd{margin-top:4px;width:100%;background:transparent;border:1px dashed rgba(0,200,255,.18);border-radius:2px;color:var(--cd);font-size:11px;padding:6px;cursor:pointer;transition:.18s;font-family:'DM Sans',sans-serif}
+.badd:hover{border-color:rgba(0,200,255,.5);color:var(--cy)}
+/* SWATCHES */
+.sws{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.sw{width:26px;height:26px;border-radius:3px;cursor:pointer;border:2px solid transparent;transition:.15s}
+.sw.on{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,.25)}
+.sw:hover{transform:scale(1.12)}
+/* PREVIEW */
+.preview{flex:1;padding:28px 32px;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,200,255,.025) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,200,255,.025) 40px),#060d18}
+/* ═══════ PDF PAGES 794×1123 ═══════ */
+.pdfwrap{display:flex;flex-direction:column;gap:14px;width:794px}
+.page{width:794px;height:1123px;position:relative;overflow:hidden;background:#060d18;box-shadow:0 0 0 1px rgba(0,200,255,.1),0 24px 70px rgba(0,0,0,.85)}
+/* DECORAÇÃO COMUM */
+.pgrid{position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(0,200,255,.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(0,200,255,.025) 60px)}
+.glow{position:absolute;pointer-events:none;border-radius:50%}
+.gtl{top:-150px;left:-150px;width:480px;height:480px;background:radial-gradient(circle,rgba(0,200,255,.08) 0%,transparent 70%)}
+.gbr{bottom:-100px;right:-100px;width:380px;height:380px;background:radial-gradient(circle,rgba(0,200,255,.05) 0%,transparent 70%)}
+.bk{position:absolute;width:14px;height:14px;pointer-events:none}
+.bktl{top:12px;left:12px;border-top:1.5px solid rgba(0,200,255,.38);border-left:1.5px solid rgba(0,200,255,.38)}
+.bktr{top:12px;right:12px;border-top:1.5px solid rgba(0,200,255,.38);border-right:1.5px solid rgba(0,200,255,.38)}
+.bkbl{bottom:12px;left:12px;border-bottom:1.5px solid rgba(0,200,255,.38);border-left:1.5px solid rgba(0,200,255,.38)}
+.bkbr{bottom:12px;right:12px;border-bottom:1.5px solid rgba(0,200,255,.38);border-right:1.5px solid rgba(0,200,255,.38)}
+.topline{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#00c8ff,transparent);opacity:.7}
+/* PAGE 1 */
+.p1diag{position:absolute;top:0;right:0;width:46%;height:100%;background:linear-gradient(180deg,rgba(0,200,255,.04) 0%,rgba(0,200,255,.01) 100%);clip-path:polygon(18% 0,100% 0,100% 100%,0% 100%);border-left:1px solid rgba(0,200,255,.1)}
+.p1body{position:relative;z-index:2;display:flex;flex-direction:column;height:1123px;padding:0 52px}
+.p1top{display:flex;align-items:flex-start;justify-content:space-between;padding-top:36px;margin-bottom:48px}
+.p1logo svg{height:60px;width:auto}
+.p1badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#00c8ff;border:1px solid rgba(0,200,255,.35);background:rgba(0,200,255,.07);padding:6px 16px;border-radius:2px;margin-top:12px}
+.p1ey{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:5px;text-transform:uppercase;color:rgba(0,200,255,.6);margin-bottom:16px}
+.p1pre{font-size:26px;font-weight:300;color:rgba(232,244,255,.55);margin-bottom:6px;letter-spacing:-.2px}
+.p1title{font-size:72px;font-weight:700;line-height:.9;letter-spacing:-2.5px;color:#fff;text-transform:uppercase;margin-bottom:10px;word-break:break-word}
+.p1acc{color:#00c8ff;display:block}
+.p1div{width:72px;height:2px;background:linear-gradient(90deg,#00c8ff,transparent);margin-bottom:42px;border-radius:1px}
+.p1pills{display:flex;flex-direction:column;gap:10px;margin-bottom:46px}
+.p1pill{display:flex;align-items:center;gap:14px;padding:12px 16px;background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.16);border-radius:3px}
+.p1pic{width:28px;height:28px;border-radius:50%;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.p1pic svg{width:13px;height:13px;fill:none;stroke:#00c8ff;stroke-width:2}
+.p1pk{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(0,200,255,.55)}
+.p1pv{font-size:15px;font-weight:600;color:#e8f4ff}
+.p1cta{margin-top:auto;padding-bottom:42px}
+.p1ctai{display:flex;align-items:center;gap:16px;background:rgba(0,0,0,.45);border:1px solid rgba(0,200,255,.28);border-radius:4px;padding:16px 20px}
+.p1ctalk{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:rgba(0,200,255,.55);margin-bottom:4px}
+.p1ctam{font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
+.p1ctaic{width:36px;height:36px;border-radius:50%;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.28);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:auto}
+.p1ctaic svg{width:15px;height:15px;fill:none;stroke:#00c8ff;stroke-width:2}
+/* PAGES 2 & 3 */
+.pgbody{position:relative;z-index:2;padding:44px 54px;display:flex;flex-direction:column;height:1123px}
+.pghdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;padding-bottom:14px;border-bottom:1px solid rgba(0,200,255,.18)}
+.pghdrlogo svg{height:34px;width:auto}
+.pghdrr{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(0,200,255,.5);letter-spacing:2px;text-align:right}
+.sb{margin-bottom:28px}
+.shead{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.snum{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(0,200,255,.45);letter-spacing:2px;min-width:22px}
+.stitle{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:3.5px;color:#00c8ff}
+.srule{flex:1;height:1px;background:rgba(0,200,255,.18)}
+.item{display:flex;align-items:flex-start;gap:11px;margin-bottom:8px;padding:10px 14px;background:rgba(0,200,255,.025);border-left:2px solid rgba(0,200,255,.28);border-radius:0 2px 2px 0}
+.idot{width:5px;height:5px;border-radius:50%;background:#00c8ff;box-shadow:0 0 6px rgba(0,200,255,.55);margin-top:8px;flex-shrink:0}
+.itxt{font-size:15px;color:rgba(232,244,255,.82);line-height:1.65}
+.diffs{display:flex;flex-wrap:wrap;gap:7px}
+.dtag{background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.22);color:rgba(232,244,255,.75);font-size:13px;padding:6px 15px;border-radius:2px}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.icell{background:rgba(0,0,0,.4);border:1px solid rgba(0,200,255,.14);border-radius:3px;padding:13px 15px}
+.ick{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;text-transform:uppercase;color:rgba(0,200,255,.5);margin-bottom:4px}
+.icv{font-size:15px;font-weight:600;color:#e8f4ff;line-height:1.4}
+.pgftr{margin-top:auto;padding-top:14px;border-top:1px solid rgba(0,200,255,.1);display:flex;align-items:center;justify-content:space-between}
+.pgftrl{font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,255,255,.75);letter-spacing:2px}
+.pgftrm{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#fff;font-weight:600}
+/* Logo size control */
+.fld input[type=range]{padding:4px 0;background:transparent;border:none;accent-color:var(--cy)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal{background:#0b1627;border:1px solid rgba(0,200,255,.2);border-radius:6px;padding:28px 30px;width:360px;max-width:90vw}
+.modal h3{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#00c8ff;margin-bottom:20px}
+.mopt{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+.mrow{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.14);border-radius:3px;cursor:pointer;transition:.18s}
+.mrow:hover{border-color:rgba(0,200,255,.4);background:rgba(0,200,255,.08)}
+.mrow.sel{border-color:#00c8ff;background:rgba(0,200,255,.1)}
+.mrow-l{display:flex;flex-direction:column;gap:3px}
+.mrow-t{font-size:13px;font-weight:600;color:#e8f4ff}
+.mrow-s{font-size:11px;color:rgba(200,230,255,.45)}
+.mrow-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#00c8ff;border:1px solid rgba(0,200,255,.3);padding:2px 8px;border-radius:2px}
+.mbts{display:flex;gap:8px;justify-content:flex-end}
+.mbtn{padding:9px 22px;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;transition:.18s;font-family:'DM Sans',sans-serif}
+.mbtn-c{background:transparent;border:1px solid rgba(200,230,255,.15);color:rgba(200,230,255,.5)}
+.mbtn-c:hover{border-color:rgba(200,230,255,.4);color:#e8f4ff}
+.mbtn-ok{background:rgba(0,200,255,.1);border:1px solid #00c8ff;color:#00c8ff}
+.mbtn-ok:hover{background:rgba(0,200,255,.22)}
+/* P3 CTA */
+.p3cta{margin-top:auto;background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.22);border-radius:4px;padding:26px 28px;text-align:center}
+.p3ctaey{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:4px;text-transform:uppercase;color:rgba(0,200,255,.55);margin-bottom:10px}
+.p3ctamsg{font-size:24px;font-weight:700;color:#fff;margin-bottom:4px}
+.p3ctaco{font-size:13px;color:rgba(232,244,255,.45);margin-bottom:16px}
+.p3ctabox{display:inline-block;border:2px solid #00c8ff;border-radius:3px;padding:10px 28px}
+.p3ctabox span{font-size:18px;font-weight:700;color:#00c8ff;letter-spacing:.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="hlogo">
+    <svg width="130" height="36" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+      <defs><filter id="gh"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+      <text x="250" y="20" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="9" letter-spacing="4" opacity="0.7" filter="url(#gh)">// SISTEMA DE GESTÃO //</text>
+      <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gh)">ORIZON</text>
+      <line x1="60" y1="96" x2="170" y2="96" stroke="#00c8ff" stroke-width="0.8" opacity="0.4"/>
+      <line x1="330" y1="96" x2="440" y2="96" stroke="#00c8ff" stroke-width="0.8" opacity="0.4"/>
+      <text x="250" y="116" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="9.5" letter-spacing="3" opacity="0.8" filter="url(#gh)">CONSULTORIA  +  RH &amp; GESTÃO</text>
+    </svg>
+    <span class="htag">Gerador de Vagas PDF</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="hdl" id="imgBtn" onclick="gerarImagens()">📷 Salvar Imagens</button>
+    <button class="hdl" id="dlBtn" onclick="gerarPDF()">⬇ Baixar PDF</button>
+  </div>
+</header>
+
+<div class="app">
+<!-- PAINEL -->
+<div class="panel">
+  <div class="tabs">
+    <button class="tab on" onclick="goTab(0,this)">Empresa</button>
+    <button class="tab" onclick="goTab(1,this)">Vaga</button>
+    <button class="tab" onclick="goTab(2,this)">Detalhes</button>
+  </div>
+
+  <!-- ABA 0: EMPRESA -->
+  <div class="step on" id="s0">
+    <div class="sec">
+      <div class="slbl">Identidade</div>
+      <div class="fld"><label>Nome da Empresa</label><input id="empresa" value="ORIZON" oninput="upd()"></div>
+      <div class="togr"><span class="togl">Exibir "Tem vaga na / Empresa"</span><label class="tog"><input type="checkbox" id="tEmpNome" checked onchange="upd()"><span class="togs"></span></label></div>
+      <div class="fld"><label>Setor / Subtítulo</label><input id="subtit" value="Consultoria + RH &amp; Gestão" oninput="upd()"></div>
+      <div class="fld"><label>E-mail de candidatura</label><input id="email" value="vagas@orizon.com.br" oninput="upd()"></div>
+    </div>
+    <div class="sec">
+      <div class="slbl">Tamanho da Logo</div>
+      <div class="fld">
+        <label>Tamanho: <span id="logoSzLabel">100%</span></label>
+        <input type="range" id="logoSz" min="40" max="180" value="100" step="5" oninput="updLogoSize(this.value)">
+      </div>
+    </div>
+    <div class="sec">
+      <div class="slbl">Tema de Cor</div>
+      <div class="sws" id="swatches">
+        <div class="sw on" style="background:linear-gradient(135deg,#060d18,#00c8ff)" data-t="cyan" onclick="setTh('cyan',this)" title="Cyan"></div>
+        <div class="sw" style="background:linear-gradient(135deg,#0a0018,#8b00ff)" data-t="night" onclick="setTh('night',this)" title="Noite"></div>
+        <div class="sw" style="background:linear-gradient(135deg,#0d0600,#ff6b35)" data-t="sunset" onclick="setTh('sunset',this)" title="Sunset"></div>
+        <div class="sw" style="background:linear-gradient(135deg,#020e06,#00b86e)" data-t="emerald" onclick="setTh('emerald',this)" title="Esmeralda"></div>
+        <div class="sw" style="background:linear-gradient(135deg,#090f1a,#5580aa)" data-t="slate" onclick="setTh('slate',this)" title="Ardósia"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA 1: VAGA -->
+  <div class="step" id="s1">
+    <div class="sec">
+      <div class="slbl">Cargo</div>
+      <div class="fld">
+        <label>Tipo de Contrato</label>
+        <select id="tipo" onchange="upd()">
+          <option>ESTÁGIO</option><option>CLT</option><option>PJ</option>
+          <option>TEMPORÁRIO</option><option>FREELANCE</option>
+        </select>
+      </div>
+      <div class="fld"><label>Cargo / Título</label><input id="cargo" value="ANALISTA DE RH" oninput="upd()"></div>
+      <div class="fld">
+        <label>Tamanho do Título — <span id="tituloSzLabel">72</span>px</label>
+        <input type="range" id="tituloSz" min="32" max="160" value="72" step="2" oninput="updTituloSize(this.value)" style="width:100%;accent-color:#00c8ff;cursor:pointer;margin-top:4px">
+      </div>
+      <div class="fld"><label>Área (opcional)</label><input id="area" value="" placeholder="ex: Recrutamento &amp; Seleção" oninput="upd()"></div>
+    </div>
+    <div class="sec">
+      <div class="slbl">Atividades</div>
+      <div class="led" id="lAtiv"></div>
+      <button class="badd" onclick="addI('ativ')">+ Adicionar atividade</button>
+    </div>
+    <div class="sec">
+      <div class="slbl">Requisitos</div>
+      <div class="led" id="lReq"></div>
+      <button class="badd" onclick="addI('req')">+ Adicionar requisito</button>
+    </div>
+  </div>
+
+  <!-- ABA 2: DETALHES -->
+  <div class="step" id="s2">
+    <div class="sec">
+      <div class="slbl">Localização &amp; Horário</div>
+      <div class="fld"><label>Localidade</label><input id="local" value="São Paulo / SP" oninput="upd()"></div>
+      <div class="fld">
+        <label>Modalidade</label>
+        <select id="modal" onchange="upd()">
+          <option>Presencial</option><option>Híbrido</option><option>Remoto</option>
+        </select>
+      </div>
+      <div class="fld"><label>Horário</label><input id="horario" value="Segunda a Sexta — 08h às 17h" oninput="upd()"></div>
+      <div class="fld"><label>Remuneração (opcional)</label><input id="sal" value="" placeholder="ex: R$ 3.500,00" oninput="upd()"></div>
+    </div>
+    <div class="sec">
+      <div class="slbl">Diferenciais</div>
+      <div class="led" id="lDiff"></div>
+      <button class="badd" onclick="addI('diff')">+ Adicionar diferencial</button>
+    </div>
+    <div class="sec">
+      <div class="slbl">Benefícios (opcional)</div>
+      <div class="led" id="lBenef"></div>
+      <button class="badd" onclick="addI('benef')">+ Adicionar benefício</button>
+    </div>
+    <div class="sec">
+      <div class="slbl">Exibição</div>
+      <div class="togr"><span class="togl">Mostrar Diferenciais</span><label class="tog"><input type="checkbox" id="tDiff" checked onchange="upd()"><span class="togs"></span></label></div>
+      <div class="togr"><span class="togl">Mostrar Benefícios</span><label class="tog"><input type="checkbox" id="tBenef" onchange="upd()"><span class="togs"></span></label></div>
+      <div class="togr"><span class="togl">Mostrar Remuneração</span><label class="tog"><input type="checkbox" id="tSal" onchange="upd()"><span class="togs"></span></label></div>
+    </div>
+  </div>
+</div>
+
+<!-- PREVIEW -->
+<div class="preview">
+<div class="pdfwrap" id="pdfWrap">
+
+<!-- ══ PÁGINA 1 ══ -->
+<div class="page" id="pg1">
+  <div class="pgrid"></div>
+  <div class="glow gtl"></div><div class="glow gbr"></div>
+  <div class="bk bktl"></div><div class="bk bktr"></div>
+  <div class="bk bkbl"></div><div class="bk bkbr"></div>
+  <div class="topline"></div>
+  <div class="p1diag"></div>
+  <div class="p1body">
+    <div class="p1top">
+      <div class="p1logo">
+        <svg width="190" height="50" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+          <defs><filter id="gf1"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <text x="250" y="20" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="9" letter-spacing="4" opacity="0.7" filter="url(#gf1)">// SISTEMA DE GESTÃO //</text>
+          <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gf1)">ORIZON</text>
+          <line x1="60" y1="96" x2="170" y2="96" stroke="#00c8ff" stroke-width="0.8" opacity="0.4"/>
+          <line x1="330" y1="96" x2="440" y2="96" stroke="#00c8ff" stroke-width="0.8" opacity="0.4"/>
+          <text x="250" y="116" text-anchor="middle" fill="#00c8ff" font-family="'Courier New',monospace" font-size="9.5" letter-spacing="3" opacity="0.8" filter="url(#gf1)">CONSULTORIA  +  RH &amp; GESTÃO</text>
+        </svg>
+      </div>
+      <div class="p1badge" id="p1badge">TEM VAGA</div>
+    </div>
+    <div class="p1ey" id="p1ey">ESTÁGIO · OPORTUNIDADE</div>
+    <div class="p1pre" style="color:#fff;text-transform:uppercase;font-size:32px;font-weight:600;letter-spacing:1px">Temos Vaga</div>
+    <div class="p1title">
+      <span id="p1t1" id="p1empnome">ORIZON</span>
+    </div>
+    <div class="p1title" style="margin-bottom:10px">
+      <span class="p1acc" id="p1t2">ANALISTA DE RH</span>
+    </div>
+    <div class="p1div"></div>
+    <div class="p1pills">
+      <div class="p1pill">
+        <div class="p1pic"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+        <div><div class="p1pk">Localidade</div><div class="p1pv" id="p1loc">São Paulo / SP</div></div>
+      </div>
+      <div class="p1pill">
+        <div class="p1pic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+        <div><div class="p1pk">Modalidade</div><div class="p1pv" id="p1mod">Presencial</div></div>
+      </div>
+      <div class="p1pill">
+        <div class="p1pic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <div><div class="p1pk">Horário</div><div class="p1pv" id="p1hor">Segunda a Sexta — 08h às 17h</div></div>
+      </div>
+    </div>
+    <div class="p1cta">
+      <div class="p1ctai">
+        <div>
+          <div class="p1ctalk">Envie seu currículo para</div>
+          <div class="p1ctam" id="p1mail">vagas@orizon.com.br</div>
+        </div>
+        <div class="p1ctaic"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PÁGINA 2 ══ -->
+<div class="page" id="pg2">
+  <div class="pgrid"></div>
+  <div class="glow gtl"></div>
+  <div class="bk bktl"></div><div class="bk bktr"></div>
+  <div class="bk bkbl"></div><div class="bk bkbr"></div>
+  <div class="topline"></div>
+  <div class="pgbody">
+    <div class="pghdr">
+      <div class="pghdrlogo">
+        <svg width="100" height="28" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+          <defs><filter id="gp2"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gp2)">ORIZON</text>
+        </svg>
+      </div>
+      <div class="pghdrr" id="p2hdr">ESTÁGIO · ANALISTA DE RH<br><span style="opacity:.5;font-size:8px">2 / 3</span></div>
+    </div>
+    <div class="sb">
+      <div class="shead"><span class="snum">01</span><span class="stitle">Atividades</span><div class="srule"></div></div>
+      <div id="p2ativ"></div>
+    </div>
+    <div class="sb">
+      <div class="shead"><span class="snum">02</span><span class="stitle">Requisitos</span><div class="srule"></div></div>
+      <div id="p2req"></div>
+    </div>
+    <div class="pgftr">
+      <span class="pgftrl" id="p2ftl">ORIZON · CONSULTORIA + RH</span>
+      <span class="pgftrm" id="p2mail">vagas@orizon.com.br</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PÁGINA 3 ══ -->
+<div class="page" id="pg3">
+  <div class="pgrid"></div>
+  <div class="glow gbr"></div>
+  <div class="bk bktl"></div><div class="bk bktr"></div>
+  <div class="bk bkbl"></div><div class="bk bkbr"></div>
+  <div class="topline"></div>
+  <div class="pgbody">
+    <div class="pghdr">
+      <div class="pghdrlogo">
+        <svg width="100" height="28" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+          <defs><filter id="gp3"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+          <text x="250" y="86" text-anchor="middle" fill="#00c8ff" font-family="'Arial Black','Impact',sans-serif" font-size="60" font-weight="900" letter-spacing="12" filter="url(#gp3)">ORIZON</text>
+        </svg>
+      </div>
+      <div class="pghdrr" id="p3hdr">ESTÁGIO · ANALISTA DE RH<br><span style="opacity:.5;font-size:8px">3 / 3</span></div>
+    </div>
+    <div class="sb" id="sb-diff">
+      <div class="shead"><span class="snum" id="ndiff">03</span><span class="stitle">Diferenciais</span><div class="srule"></div></div>
+      <div class="diffs" id="p3diff"></div>
+    </div>
+    <div class="sb" id="sb-benef">
+      <div class="shead"><span class="snum" id="nbenef">04</span><span class="stitle">Benefícios</span><div class="srule"></div></div>
+      <div id="p3benef"></div>
+    </div>
+    <div class="sb">
+      <div class="shead"><span class="snum" id="ninfo">05</span><span class="stitle">Informações da Vaga</span><div class="srule"></div></div>
+      <div class="igrid" id="p3info"></div>
+    </div>
+    <div class="p3cta">
+      <div class="p3ctaey">Envie seu currículo</div>
+      <div class="p3ctamsg">Venha fazer parte da equipe</div>
+      <div class="p3ctaco" id="p3co">ORIZON</div>
+      <div class="p3ctabox"><span id="p3mail">vagas@orizon.com.br</span></div>
+    </div>
+    <div class="pgftr">
+      <span class="pgftrl" id="p3ftl">ORIZON · CONSULTORIA + RH</span>
+      <span class="pgftrm" id="p3mail2">vagas@orizon.com.br</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /pdfwrap -->
+</div><!-- /preview -->
+</div><!-- /app -->
+
+<!-- MODAL IMAGENS -->
+<div class="modal-bg" id="imgModal" style="display:none" onclick="if(event.target===this)fecharModal()">
+  <div class="modal" style="width:520px;max-width:96vw">
+    <h3>Exportar Imagens — Redes Sociais</h3>
+    <p style="font-size:12px;color:rgba(200,230,255,.45);margin-bottom:20px">As 3 páginas serão geradas em alta qualidade e baixadas em <strong style="color:#e8f4ff">ZIP</strong>. Cada página preenche o formato por completo, sem barras pretas.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+
+      <!-- Feed 4:5 -->
+      <div class="mrow sel" id="opt-feed" onclick="selOpt('feed')" style="padding:14px 16px;gap:12px;align-items:center">
+        <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:44px;height:55px;background:rgba(0,200,255,.08);border:1.5px solid rgba(0,200,255,.35);border-radius:3px;position:relative">
+          <span style="font-size:8px;font-family:monospace;color:#00c8ff;letter-spacing:1px">4:5</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px">Feed Retrato</div>
+          <div style="font-size:11px;color:rgba(200,230,255,.45);margin-bottom:5px">1080 × 1350 px</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Instagram</span>
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">LinkedIn</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stories 9:16 -->
+      <div class="mrow" id="opt-stories" onclick="selOpt('stories')" style="padding:14px 16px;gap:12px;align-items:center">
+        <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:32px;height:55px;background:rgba(0,200,255,.08);border:1.5px solid rgba(0,200,255,.35);border-radius:3px">
+          <span style="font-size:8px;font-family:monospace;color:#00c8ff;letter-spacing:1px">9:16</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px">Stories / Reels</div>
+          <div style="font-size:11px;color:rgba(200,230,255,.45);margin-bottom:5px">1080 × 1920 px</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Stories</span>
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">TikTok</span>
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Reels</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quadrado 1:1 -->
+      <div class="mrow" id="opt-square" onclick="selOpt('square')" style="padding:14px 16px;gap:12px;align-items:center">
+        <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:46px;height:46px;background:rgba(0,200,255,.08);border:1.5px solid rgba(0,200,255,.35);border-radius:3px">
+          <span style="font-size:8px;font-family:monospace;color:#00c8ff;letter-spacing:1px">1:1</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px">Quadrado</div>
+          <div style="font-size:11px;color:rgba(200,230,255,.45);margin-bottom:5px">1080 × 1080 px</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Feed</span>
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">WhatsApp</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- A4 Alta Res -->
+      <div class="mrow" id="opt-original" onclick="selOpt('original')" style="padding:14px 16px;gap:12px;align-items:center">
+        <div style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:40px;height:55px;background:rgba(0,200,255,.08);border:1.5px solid rgba(0,200,255,.35);border-radius:3px">
+          <span style="font-size:8px;font-family:monospace;color:#00c8ff;letter-spacing:1px">A4</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#e8f4ff;margin-bottom:2px">A4 Alta Resolução</div>
+          <div style="font-size:11px;color:rgba(200,230,255,.45);margin-bottom:5px">2480 × 3508 px</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Impressão</span>
+            <span style="font-size:9px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.25);color:#00c8ff;padding:1px 6px;border-radius:2px">Alta Res</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Info box -->
+    <div style="padding:11px 14px;background:rgba(0,200,255,.04);border:1px solid rgba(0,200,255,.12);border-radius:3px;display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <span style="font-size:16px">📦</span>
+      <span style="font-size:11px;color:rgba(200,230,255,.55);line-height:1.5">3 imagens PNG · preenchem o formato inteiro · nomeadas automaticamente · prontas para postar</span>
+    </div>
+
+    <div id="exportProgress" style="display:none;margin-bottom:14px">
+      <div style="font-size:11px;color:rgba(200,230,255,.55);margin-bottom:6px" id="exportMsg">Gerando...</div>
+      <div style="height:3px;background:rgba(0,200,255,.1);border-radius:2px;overflow:hidden">
+        <div id="exportBar" style="height:100%;background:#00c8ff;width:0%;transition:width .3s;border-radius:2px"></div>
+      </div>
+    </div>
+
+    <div class="mbts">
+      <button class="mbtn mbtn-c" onclick="fecharModal()">Cancelar</button>
+      <button class="mbtn mbtn-ok" id="btnExportar" onclick="exportarImagens()">⬇ Gerar e Baixar ZIP</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ── DADOS ────────────────────────────────────────────────────────
+let ativ  = ['Suporte ao processo de recrutamento e seleção','Elaboração e publicação de vagas nas plataformas digitais','Triagem de currículos e agendamento de entrevistas'];
+let req   = ['Cursando Psicologia, Administração ou áreas afins','Boa comunicação oral e escrita','Organização e atenção aos detalhes','Proatividade e trabalho em equipe'];
+let diff  = ['Experiência com sistemas ATS','Inglês intermediário','Vivência em consultoria de RH'];
+let benef = [];
+
+// ── TEMAS ────────────────────────────────────────────────────────
+const TH = {
+  cyan:    { a:'#00c8ff', bg:'#060d18' },
+  night:   { a:'#8b00ff', bg:'#0a0018' },
+  sunset:  { a:'#ff6b35', bg:'#0d0600' },
+  emerald: { a:'#00b86e', bg:'#020e06' },
+  slate:   { a:'#5580aa', bg:'#090f1a' },
+};
+let curTh = 'cyan';
+
+function setTh(t,el){
+  curTh=t;
+  document.querySelectorAll('.sw').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  applyTh();
+}
+function hRGB(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)].join(',')}
+
+function applyTh(){
+  const {a,bg}=TH[curTh]; const r=hRGB(a);
+  // Fundo das páginas
+  document.querySelectorAll('.page').forEach(p=>p.style.background=bg);
+  // Grid
+  document.querySelectorAll('.pgrid').forEach(g=>g.style.backgroundImage=
+    `repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(${r},.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(${r},.025) 60px)`);
+  // Glows
+  document.querySelectorAll('.gtl').forEach(g=>g.style.background=`radial-gradient(circle,rgba(${r},.08) 0%,transparent 70%)`);
+  document.querySelectorAll('.gbr').forEach(g=>g.style.background=`radial-gradient(circle,rgba(${r},.05) 0%,transparent 70%)`);
+  // Brackets
+  document.querySelectorAll('.bk').forEach(b=>{b.style.borderColor=`rgba(${r},.38)`;});
+  // Topline
+  document.querySelectorAll('.topline').forEach(l=>l.style.background=`linear-gradient(90deg,transparent,${a},transparent)`);
+  // P1 diagonal
+  document.querySelectorAll('.p1diag').forEach(d=>{d.style.background=`linear-gradient(180deg,rgba(${r},.04) 0%,rgba(${r},.01) 100%)`;d.style.borderLeft=`1px solid rgba(${r},.1)`;});
+  // Cores de texto cyan
+  document.querySelectorAll('.p1badge,.p1pk,.p1ey,.p1acc,.p1ctalk,.pghdrr,.stitle,.ick,.pgftrm,.p3ctaey,.p3ctabox span').forEach(e=>e.style.color=a);
+  // Dividers
+  document.querySelectorAll('.p1div').forEach(e=>e.style.background=`linear-gradient(90deg,${a},transparent)`);
+  document.querySelectorAll('.srule').forEach(e=>e.style.background=`rgba(${r},.18)`);
+  document.querySelectorAll('.pghdr').forEach(e=>e.style.borderBottomColor=`rgba(${r},.18)`);
+  document.querySelectorAll('.pgftr').forEach(e=>e.style.borderTopColor=`rgba(${r},.1)`);
+  // Pills
+  document.querySelectorAll('.p1pic').forEach(e=>{e.style.background=`rgba(${r},.1)`;e.style.borderColor=`rgba(${r},.25)`;});
+  document.querySelectorAll('.p1pic svg').forEach(e=>e.style.stroke=a);
+  document.querySelectorAll('.p1pill').forEach(e=>{e.style.background=`rgba(${r},.04)`;e.style.borderColor=`rgba(${r},.16)`;});
+  // CTA box
+  document.querySelectorAll('.p1ctai').forEach(e=>e.style.borderColor=`rgba(${r},.28)`);
+  document.querySelectorAll('.p1ctam').forEach(e=>e.style.color='#fff');
+  document.querySelectorAll('.p1ctaic').forEach(e=>{e.style.background=`rgba(${r},.1)`;e.style.borderColor=`rgba(${r},.28)`;});
+  document.querySelectorAll('.p1ctaic svg').forEach(e=>e.style.stroke=a);
+  document.querySelectorAll('.p1badge').forEach(e=>{e.style.borderColor=`rgba(${r},.35)`;e.style.background=`rgba(${r},.07)`;e.style.color=a;});
+  // Items
+  document.querySelectorAll('.item').forEach(e=>{e.style.background=`rgba(${r},.025)`;e.style.borderLeftColor=`rgba(${r},.28)`;});
+  document.querySelectorAll('.idot').forEach(e=>{e.style.background=a;e.style.boxShadow=`0 0 6px rgba(${r},.55)`;});
+  // Diff tags
+  document.querySelectorAll('.dtag').forEach(e=>{e.style.background=`rgba(${r},.07)`;e.style.borderColor=`rgba(${r},.22)`;});
+  // Info cells
+  document.querySelectorAll('.icell').forEach(e=>e.style.borderColor=`rgba(${r},.14)`);
+  document.querySelectorAll('.ick').forEach(e=>e.style.color=`rgba(${r},.5)`);
+  document.querySelectorAll('.snum').forEach(e=>e.style.color=`rgba(${r},.45)`);
+  // P3 CTA
+  document.querySelectorAll('.p3cta').forEach(e=>{e.style.background=`rgba(${r},.04)`;e.style.borderColor=`rgba(${r},.22)`;});
+  document.querySelectorAll('.p3ctabox').forEach(e=>e.style.borderColor=a);
+  document.querySelectorAll('.pgftrl').forEach(e=>e.style.color='rgba(255,255,255,.75)');
+  document.querySelectorAll('.pgftrm').forEach(e=>e.style.color='#fff');
+  // SVGs fill/stroke — todos os textos de logo
+  document.querySelectorAll('[data-lcycolor]').forEach(e=>e.setAttribute('fill',a));
+}
+
+// ── TABS ────────────────────────────────────────────────────────
+function goTab(i,btn){
+  document.querySelectorAll('.step').forEach((s,j)=>s.classList.toggle('on',j===i));
+  document.querySelectorAll('.tab').forEach((b,j)=>b.classList.toggle('on',j===i));
+}
+
+// ── LIST EDITORS ─────────────────────────────────────────────────
+function renderLists(){rl('lAtiv',ativ,'ativ');rl('lReq',req,'req');rl('lDiff',diff,'diff');rl('lBenef',benef,'benef');}
+function rl(id,arr,k){
+  document.getElementById(id).innerHTML=arr.map((v,i)=>
+    `<div class="lr"><input value="${esc(v)}" onchange="au('${k}',${i},this.value)"><button class="bx" onclick="del('${k}',${i})">✕</button></div>`
+  ).join('');
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}
+function au(k,i,v){ga(k)[i]=v;upd()}
+function del(k,i){ga(k).splice(i,1);renderLists();upd()}
+function addI(k){ga(k).push('');renderLists();upd()}
+function ga(k){return k==='ativ'?ativ:k==='req'?req:k==='diff'?diff:benef}
+
+// ── UPDATE PREVIEW ───────────────────────────────────────────────
+function v(id){return document.getElementById(id).value}
+function set(id,t){const e=document.getElementById(id);if(e)e.textContent=t}
+function pad(n){return n<10?'0'+n:''+n}
+function itemHtml(txt){return`<div class="item"><div class="idot"></div><div class="itxt">${txt}</div></div>`}
+
+function upd(){
+  const emp=v('empresa')||'EMPRESA';
+  const sub=v('subtit');
+  const mail=v('email');
+  const tipo=v('tipo');
+  const cargo=v('cargo')||'CARGO';
+  const area=v('area');
+  const loc=v('local');
+  const mod=v('modal');
+  const hor=v('horario');
+  const sal=v('sal');
+  const sDiff=document.getElementById('tDiff').checked;
+  const sBenef=document.getElementById('tBenef').checked;
+  const sSal=document.getElementById('tSal').checked;
+  const sEmpNome=document.getElementById('tEmpNome').checked;
+  document.getElementById('p1t1').style.display=sEmpNome?'':'none';
+  // P1
+  set('p1t1',emp.toUpperCase());
+  set('p1t2',cargo.toUpperCase());
+  set('p1ey',`${tipo} · OPORTUNIDADE DE CARREIRA${area?' · '+area:''}`);
+  set('p1loc',loc); set('p1mod',mod); set('p1hor',hor); set('p1mail',mail);
+  // P2
+  const cfull=`${tipo} · ${cargo.toUpperCase()}`;
+  set('p2hdr',cfull);
+  document.getElementById('p2ativ').innerHTML=ativ.map(itemHtml).join('');
+  document.getElementById('p2req').innerHTML=req.map(itemHtml).join('');
+  set('p2mail',mail); set('p2ftl',`${emp.toUpperCase()} · ${sub.slice(0,28).toUpperCase()}`);
+  // P3
+  set('p3hdr',cfull);
+  document.getElementById('sb-diff').style.display=sDiff?'':'none';
+  document.getElementById('sb-benef').style.display=(sBenef&&benef.length)?'':'none';
+  if(sDiff) document.getElementById('p3diff').innerHTML=diff.map(d=>`<div class="dtag">${d}</div>`).join('');
+  if(sBenef&&benef.length) document.getElementById('p3benef').innerHTML=benef.map(itemHtml).join('');
+  // Info grid
+  const cells=[{k:'Localidade',v:loc},{k:'Modalidade',v:mod},{k:'Horário',v:hor},{k:'Contrato',v:tipo}];
+  if(sSal&&sal) cells.push({k:'Remuneração',v:sal});
+  if(area) cells.push({k:'Área',v:area});
+  document.getElementById('p3info').innerHTML=cells.map(c=>`<div class="icell"><div class="ick">${c.k}</div><div class="icv">${c.v}</div></div>`).join('');
+  // Numeração seções p3
+  let n=3;
+  set('ndiff',pad(n)); if(sDiff)n++;
+  set('nbenef',pad(n)); if(sBenef&&benef.length)n++;
+  set('ninfo',pad(n));
+  set('p3co',emp.toUpperCase()); set('p3mail',mail); set('p3mail2',mail);
+  set('p3ftl',`${emp.toUpperCase()} · ${sub.slice(0,28).toUpperCase()}`);
+  applyTh();
+}
+
+// ── PDF EXPORT ───────────────────────────────────────────────────
+async function gerarPDF(){
+  const btn=document.getElementById('dlBtn');
+  btn.textContent='Gerando PDF...'; btn.disabled=true;
+  try{
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123],compress:true});
+    for(let i=0;i<3;i++){
+      const el=document.getElementById(['pg1','pg2','pg3'][i]);
+      const cv=await html2canvas(el,{scale:2,useCORS:true,allowTaint:true,backgroundColor:null,width:794,height:1123,logging:false});
+      if(i>0) pdf.addPage();
+      pdf.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,794,1123,undefined,'FAST');
+    }
+    const fname=`${v('empresa')}-${v('cargo')}-vaga.pdf`.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'').toLowerCase();
+    pdf.save(fname||'vaga-orizon.pdf');
+  }catch(e){alert('Erro ao gerar PDF: '+e.message)}
+  btn.innerHTML='⬇ Baixar PDF'; btn.disabled=false;
+}
+
+// ── IMAGENS ──────────────────────────────────────────────────────
+let imgFmt = 'feed';
+const FMT = {
+  feed:     { w:1080, h:1350 },
+  stories:  { w:1080, h:1920 },
+  square:   { w:1080, h:1080 },
+  original: { w:2480, h:3508 },
+};
+
+function gerarImagens(){ document.getElementById('imgModal').style.display='flex'; }
+function fecharModal(){ document.getElementById('imgModal').style.display='none'; }
+function selOpt(fmt){
+  imgFmt=fmt;
+  document.querySelectorAll('.mrow').forEach(r=>r.classList.remove('sel'));
+  document.getElementById('opt-'+fmt).classList.add('sel');
+}
+
+// Coleta todos os dados atuais do formulário
+function getDados(){
+  const sDiff  = document.getElementById('tDiff').checked;
+  const sBenef = document.getElementById('tBenef').checked;
+  const sSal   = document.getElementById('tSal').checked;
+  const sEmp   = document.getElementById('tEmpNome').checked;
+  const sal    = v('sal');
+  const area   = v('area');
+  const loc    = v('local');
+  const mod    = v('modal');
+  const hor    = v('horario');
+  const tipo   = v('tipo');
+  const cells  = [{k:'Localidade',v:loc},{k:'Modalidade',v:mod},{k:'Horário',v:hor},{k:'Contrato',v:tipo}];
+  if(sSal&&sal) cells.push({k:'Remuneração',v:sal});
+  if(area) cells.push({k:'Área',v:area});
+  return {
+    emp:   v('empresa')||'EMPRESA',
+    sub:   v('subtit'),
+    mail:  v('email'),
+    tipo,
+    cargo: v('cargo')||'CARGO',
+    area,  loc, mod, hor, sal,
+    sDiff, sBenef, sSal, sEmp,
+    ativ:  [...ativ], req:[...req], diff:[...diff], benef:[...benef],
+    cells,
+    accentColor: TH[curTh].a,
+    bgColor:     TH[curTh].bg,
+  };
+}
+
+// Gera o HTML completo de uma página social com dimensões nativas
+function buildSocialPage(pageNum, w, h, d){
+  const a = d.accentColor;
+  const bg = d.bgColor;
+  const r = a.replace('#','').match(/.{2}/g).map(x=>parseInt(x,16)).join(',');
+
+  // Base adaptativa: capa usa fonte grande, páginas de conteúdo menor
+  const base = pageNum === 1 ? w / 22 : w / 32;
+  const F = {
+    mono:  `font-family:'Courier New',monospace`,
+    sans:  `font-family:'Arial',sans-serif`,
+    tiny:  `${Math.round(base*0.38)}px`,
+    xs:    `${Math.round(base*0.5)}px`,
+    sm:    `${Math.round(base*0.6)}px`,
+    md:    `${Math.round(base*0.75)}px`,
+    lg:    `${Math.round(base*1.1)}px`,
+    xl:    `${Math.round(base*1.8)}px`,
+    xxl:   `${Math.round(base*2.8)}px`,
+    huge:  `${Math.round(base*4.2)}px`,
+  };
+  const pad  = Math.round(w * 0.052);
+  const padV = Math.round(h * 0.032);
+
+  // Tamanho do título: usa o slider se disponível, senão adaptativo
+  function fitTitle(emp, cargo, showEmp) {
+    const sliderEl = document.getElementById('tituloSz');
+    if (sliderEl) {
+      // Escala o valor do slider (baseado em 794px PDF) para o formato atual
+      const pdfBase = parseInt(sliderEl.value);
+      return Math.round(pdfBase * w / 794) + 'px';
+    }
+    const txt = showEmp ? emp + cargo : cargo;
+    const len = txt.length;
+    let px = Math.round(base * 3.6);
+    if (len > 20) px = Math.round(base * 2.8);
+    if (len > 30) px = Math.round(base * 2.2);
+    if (len > 40) px = Math.round(base * 1.8);
+    return px + 'px';
+  }
+
+  const logoSvg = `<svg width="${Math.round(w*0.28)}" height="${Math.round(w*0.07)}" viewBox="0 0 500 128" xmlns="http://www.w3.org/2000/svg">
+    <text x="250" y="86" text-anchor="middle" fill="${a}" font-family="'Arial Black',sans-serif" font-size="60" font-weight="900" letter-spacing="12">${d.emp.toUpperCase()}</text>
+    <text x="250" y="116" text-anchor="middle" fill="${a}" font-family="'Courier New',monospace" font-size="9" letter-spacing="3" opacity="0.7">${d.sub.toUpperCase()}</text>
+  </svg>`;
+
+  const itemStyle = `display:flex;align-items:flex-start;gap:${Math.round(base*0.4)}px;
+    padding:${Math.round(base*0.45)}px ${Math.round(base*0.55)}px;
+    background:rgba(${r},.04);border-left:3px solid rgba(${r},.5);
+    border-radius:0 4px 4px 0;margin-bottom:${Math.round(base*0.3)}px`;
+
+  const dotStyle = `width:${Math.round(base*0.28)}px;height:${Math.round(base*0.28)}px;border-radius:50%;
+    background:${a};box-shadow:0 0 8px rgba(${r},.6);flex-shrink:0;margin-top:${Math.round(base*0.28)}px`;
+
+  const txtStyle = `font-size:${F.md};color:rgba(232,244,255,.88);line-height:1.55;${F.sans}`;
+
+  const secHead = (num, title) => `
+    <div style="display:flex;align-items:center;gap:${Math.round(base*0.4)}px;margin-bottom:${Math.round(base*0.5)}px">
+      <span style="font-size:${F.xs};color:rgba(${r},.5);letter-spacing:2px;${F.mono}">${num}</span>
+      <span style="font-size:${F.sm};font-weight:700;text-transform:uppercase;letter-spacing:4px;color:${a};${F.sans}">${title}</span>
+      <div style="flex:1;height:1px;background:rgba(${r},.2)"></div>
+    </div>`;
+
+  const items = arr => arr.map(t=>`<div style="${itemStyle}"><div style="${dotStyle}"></div><span style="${txtStyle}">${t}</span></div>`).join('');
+
+  // ── PAGE 1: CAPA ──────────────────────────────────────────────
+  if(pageNum === 1){
+    const pill = (icon, label, val) => `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${Math.round(base*0.25)}px;
+        padding:${Math.round(base*0.55)}px ${Math.round(base*0.3)}px;
+        background:rgba(${r},.05);border:1px solid rgba(${r},.2);border-radius:6px;text-align:center">
+        <div style="width:${Math.round(base*1.0)}px;height:${Math.round(base*1.0)}px;border-radius:50%;
+          background:rgba(${r},.12);border:1px solid rgba(${r},.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="${Math.round(base*0.5)}" height="${Math.round(base*0.5)}" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2">${icon}</svg>
+        </div>
+        <div style="font-size:${F.tiny};letter-spacing:2px;text-transform:uppercase;color:rgba(${r},.55);${F.mono}">${label}</div>
+        <div style="font-size:${F.sm};font-weight:700;color:#e8f4ff;${F.sans};text-align:center;word-break:break-word">${val}</div>
+      </div>`;
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>*{box-sizing:border-box;margin:0;padding:0}</style></head>
+    <body style="width:${w}px;height:${h}px;background:${bg};overflow:hidden;position:relative">
+      <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(${r},.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(${r},.025) 60px)"></div>
+      <div style="position:absolute;top:-${Math.round(h*0.15)}px;left:-${Math.round(w*0.15)}px;width:${Math.round(w*0.7)}px;height:${Math.round(w*0.7)}px;background:radial-gradient(circle,rgba(${r},.1) 0%,transparent 70%);border-radius:50%"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${a},transparent)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;top:0;right:0;width:46%;height:100%;background:linear-gradient(180deg,rgba(${r},.04),rgba(${r},.01));clip-path:polygon(18% 0,100% 0,100% 100%,0% 100%);border-left:1px solid rgba(${r},.1)"></div>
+
+      <div style="position:relative;z-index:2;display:flex;flex-direction:column;height:${h}px;padding:${padV}px ${pad}px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:${Math.round(h*0.07)}px">
+          ${logoSvg}
+          <div style="font-size:${F.tiny};letter-spacing:3px;color:${a};border:1px solid rgba(${r},.35);background:rgba(${r},.08);padding:${Math.round(base*0.25)}px ${Math.round(base*0.6)}px;border-radius:2px;${F.mono};margin-top:${Math.round(base*0.3)}px">TEM VAGA</div>
+        </div>
+
+        <div style="font-size:${F.xs};letter-spacing:5px;text-transform:uppercase;color:rgba(${r},.65);${F.mono};margin-bottom:${Math.round(base*0.5)}px">${d.tipo} · OPORTUNIDADE DE CARREIRA</div>
+        <div style="font-size:${F.lg};font-weight:300;color:rgba(232,244,255,.55);${F.sans};margin-bottom:${Math.round(base*0.15)}px;text-transform:uppercase;letter-spacing:1px">Temos Vaga</div>
+        ${d.sEmp?`<div style="font-size:${fitTitle(d.emp,d.cargo,true)};font-weight:700;line-height:.9;letter-spacing:-2px;color:#fff;text-transform:uppercase;${F.sans};word-break:break-word;margin-bottom:${Math.round(base*0.1)}px">${d.emp.toUpperCase()}</div>`:''}
+        <div style="font-size:${fitTitle(d.emp,d.cargo,d.sEmp)};font-weight:700;line-height:.9;letter-spacing:-2px;color:${a};text-transform:uppercase;${F.sans};word-break:break-word;margin-bottom:${Math.round(base*0.5)}px">${d.cargo.toUpperCase()}</div>
+        <div style="width:${Math.round(base*2.5)}px;height:3px;background:linear-gradient(90deg,${a},transparent);border-radius:2px;margin-bottom:${Math.round(h*0.04)}px"></div>
+
+        <div style="display:flex;flex-direction:row;gap:${Math.round(base*0.35)}px;margin-bottom:${Math.round(h*0.04)}px">
+          ${pill('<path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>','Local',d.loc)}
+          ${pill('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>','Modo',d.mod)}
+          ${pill('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>','Horário',d.hor)}
+        </div>
+
+        <div style="margin-top:auto">
+          <div style="display:flex;align-items:center;gap:${Math.round(base*0.7)}px;background:rgba(0,0,0,.4);border:1px solid rgba(${r},.3);border-radius:5px;padding:${Math.round(base*0.6)}px ${Math.round(base*0.8)}px">
+            <div>
+              <div style="font-size:${F.tiny};letter-spacing:3px;text-transform:uppercase;color:rgba(${r},.55);${F.mono};margin-bottom:4px">Envie seu currículo para</div>
+              <div style="font-size:${F.lg};font-weight:700;color:#fff;${F.sans}">${d.mail}</div>
+            </div>
+            <div style="margin-left:auto;width:${Math.round(base*1.2)}px;height:${Math.round(base*1.2)}px;border-radius:50%;background:rgba(${r},.12);border:1px solid rgba(${r},.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="${Math.round(base*0.6)}" height="${Math.round(base*0.6)}" viewBox="0 0 24 24" fill="none" stroke="${a}" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body></html>`;
+  }
+
+  // ── PAGE 2: ATIVIDADES + REQUISITOS ──────────────────────────
+  if(pageNum === 2){
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>*{box-sizing:border-box;margin:0;padding:0}</style></head>
+    <body style="width:${w}px;height:${h}px;background:${bg};overflow:hidden;position:relative">
+      <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(${r},.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(${r},.025) 60px)"></div>
+      <div style="position:absolute;top:-${Math.round(h*0.15)}px;left:-${Math.round(w*0.15)}px;width:${Math.round(w*0.7)}px;height:${Math.round(w*0.7)}px;background:radial-gradient(circle,rgba(${r},.08) 0%,transparent 70%);border-radius:50%"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${a},transparent)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+
+      <div style="position:relative;z-index:2;display:flex;flex-direction:column;height:${h}px;padding:${padV}px ${pad}px">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
+          ${logoSvg}
+          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+        </div>
+        <!-- Atividades -->
+        <div style="margin-bottom:${Math.round(h*0.045)}px">
+          ${secHead('01','Atividades')}
+          ${items(d.ativ)}
+        </div>
+        <!-- Requisitos -->
+        <div style="margin-bottom:auto">
+          ${secHead('02','Requisitos')}
+          ${items(d.req)}
+        </div>
+        <!-- Footer -->
+        <div style="padding-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
+        </div>
+      </div>
+    </body></html>`;
+  }
+
+  // ── PAGE 3: DIFERENCIAIS + INFOS + CTA ───────────────────────
+  if(pageNum === 3){
+    const tagStyle = `background:rgba(${r},.08);border:1px solid rgba(${r},.25);color:rgba(232,244,255,.82);font-size:${F.md};padding:${Math.round(base*0.3)}px ${Math.round(base*0.6)}px;border-radius:3px;${F.sans}`;
+    const cellStyle = `background:rgba(0,0,0,.35);border:1px solid rgba(${r},.16);border-radius:4px;padding:${Math.round(base*0.6)}px ${Math.round(base*0.7)}px`;
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>*{box-sizing:border-box;margin:0;padding:0}</style></head>
+    <body style="width:${w}px;height:${h}px;background:${bg};overflow:hidden;position:relative">
+      <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(${r},.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(${r},.025) 60px)"></div>
+      <div style="position:absolute;bottom:-${Math.round(h*0.1)}px;right:-${Math.round(w*0.1)}px;width:${Math.round(w*0.6)}px;height:${Math.round(w*0.6)}px;background:radial-gradient(circle,rgba(${r},.07) 0%,transparent 70%);border-radius:50%"></div>
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${a},transparent)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;top:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-top:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;left:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-left:2px solid rgba(${r},.45)"></div>
+      <div style="position:absolute;bottom:${Math.round(w*0.018)}px;right:${Math.round(w*0.018)}px;width:${Math.round(w*0.028)}px;height:${Math.round(w*0.028)}px;border-bottom:2px solid rgba(${r},.45);border-right:2px solid rgba(${r},.45)"></div>
+
+      <div style="position:relative;z-index:2;display:flex;flex-direction:column;height:${h}px;padding:${padV}px ${pad}px">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
+          ${logoSvg}
+          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+        </div>
+
+        ${d.sDiff && d.diff.length ? `<div style="margin-bottom:${Math.round(h*0.045)}px">
+          ${secHead('03','Diferenciais')}
+          <div style="display:flex;flex-wrap:wrap;gap:${Math.round(base*0.3)}px">${d.diff.map(t=>`<span style="${tagStyle}">${t}</span>`).join('')}</div>
+        </div>` : ''}
+
+        <div style="margin-bottom:${Math.round(h*0.045)}px">
+          ${secHead('04','Informações da Vaga')}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:${Math.round(base*0.4)}px">
+            ${d.cells.map(c=>`<div style="${cellStyle}">
+              <div style="font-size:${F.tiny};letter-spacing:3px;text-transform:uppercase;color:rgba(${r},.5);${F.mono};margin-bottom:${Math.round(base*0.15)}px">${c.k}</div>
+              <div style="font-size:${F.md};font-weight:600;color:#e8f4ff;${F.sans}">${c.v}</div>
+            </div>`).join('')}
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="margin-top:auto;background:rgba(${r},.05);border:1px solid rgba(${r},.25);border-radius:6px;padding:${Math.round(base*1.1)}px ${Math.round(base*1.2)}px;text-align:center">
+          <div style="font-size:${F.xs};letter-spacing:4px;text-transform:uppercase;color:rgba(${r},.6);${F.mono};margin-bottom:${Math.round(base*0.4)}px">Envie seu currículo</div>
+          <div style="font-size:${F.xl};font-weight:700;color:#fff;${F.sans};margin-bottom:${Math.round(base*0.2)}px">Venha fazer parte da equipe</div>
+          <div style="font-size:${F.sm};color:rgba(232,244,255,.4);${F.sans};margin-bottom:${Math.round(base*0.7)}px">${d.emp.toUpperCase()}</div>
+          <div style="display:inline-block;border:2px solid ${a};border-radius:4px;padding:${Math.round(base*0.4)}px ${Math.round(base*1.2)}px">
+            <span style="font-size:${F.lg};font-weight:700;color:${a};${F.sans}">${d.mail}</span>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding-top:${Math.round(base*0.5)}px;margin-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
+        </div>
+      </div>
+    </body></html>`;
+  }
+}
+
+// Renderiza uma página social via iframe oculto
+async function renderSocialPage(pageNum, w, h, d){
+  const html = buildSocialPage(pageNum, w, h, d);
+
+  // Iframe posicionado à esquerda da tela (fora de vista mas renderizável)
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = `position:fixed;top:0;left:-${w+50}px;width:${w}px;height:${h}px;border:none;z-index:9999;overflow:hidden;`;
+  iframe.srcdoc = html;
+  document.body.appendChild(iframe);
+
+  await new Promise(r=>{
+    iframe.onload = ()=> setTimeout(r, 600);
+    setTimeout(r, 2500);
+  });
+
+  const target = iframe.contentDocument.documentElement;
+  const cv = await html2canvas(target, {
+    scale: 1,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: d.bgColor,
+    width: w,
+    height: h,
+    windowWidth: w,
+    windowHeight: h,
+    logging: false,
+    imageTimeout: 0,
+    x: 0,
+    y: 0,
+  });
+
+  document.body.removeChild(iframe);
+  return cv;
+}
+
+function canvasToBlob(canvas){
+  return new Promise(res => canvas.toBlob(blob => res(blob), 'image/png', 1.0));
+}
+
+async function exportarImagens(){
+  const btn  = document.getElementById('btnExportar');
+  const prog = document.getElementById('exportProgress');
+  const msg  = document.getElementById('exportMsg');
+  const bar  = document.getElementById('exportBar');
+  const {w, h} = FMT[imgFmt];
+  const d    = getDados();
+  const cargo = d.cargo.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'').toLowerCase();
+  const emp   = d.emp.replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-]/g,'').toLowerCase();
+  const labels = ['capa','atividades-requisitos','detalhes'];
+
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Gerando...';
+  prog.style.display = 'block';
+
+  const zip = new JSZip();
+  const folder = zip.folder(`${emp}-${cargo}-${imgFmt}`);
+
+  for(let i = 0; i < 3; i++){
+    bar.style.width = Math.round((i/3)*75)+'%';
+    msg.textContent = `Gerando imagem ${i+1} de 3... (${w}×${h}px)`;
+    await new Promise(r=>setTimeout(r,60));
+    const canvas = await renderSocialPage(i+1, w, h, d);
+    const blob   = await canvasToBlob(canvas);
+    folder.file(`${emp}-${cargo}-${labels[i]}.png`, blob);
+  }
+
+  bar.style.width = '88%';
+  msg.textContent = 'Comprimindo ZIP...';
+  await new Promise(r=>setTimeout(r,80));
+  const zipBlob = await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+  bar.style.width = '100%';
+  msg.textContent = 'Pronto! Baixando...';
+
+  const url = URL.createObjectURL(zipBlob);
+  const a2 = document.createElement('a');
+  a2.href = url; a2.download = `${emp}-${cargo}-${imgFmt}.zip`; a2.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+
+  setTimeout(()=>{
+    btn.innerHTML='⬇ Gerar e Baixar ZIP'; btn.disabled=false;
+    prog.style.display='none'; bar.style.width='0%';
+    fecharModal();
+  }, 1200);
+}
+
+// ── TITULO SIZE ──────────────────────────────────────────────────
+function updTituloSize(val){
+  document.getElementById('tituloSzLabel').textContent = val;
+  // Atualiza a preview (página 1 do PDF)
+  const t1 = document.getElementById('p1t1');
+  const t2 = document.getElementById('p1t2');
+  if(t1) t1.closest('.p1title').style.fontSize = val + 'px';
+  if(t2) t2.closest('.p1title').style.fontSize = val + 'px';
+}
+
+// ── LOGO SIZE ────────────────────────────────────────────────────
+function updLogoSize(val){
+  document.getElementById('logoSzLabel').textContent=val+'%';
+  const s=val/100;
+  // P1 logo (header principal)
+  const p1logo=document.querySelector('.p1logo svg');
+  if(p1logo){p1logo.style.width=(190*s)+'px';p1logo.style.height=(50*s)+'px';}
+  // P2 e P3 logos (mini header)
+  document.querySelectorAll('.pghdrlogo svg').forEach(svg=>{svg.style.width=(100*s)+'px';svg.style.height=(28*s)+'px';});
+  // Header logo
+  const hsvg=document.querySelector('.hlogo svg');
+  if(hsvg){hsvg.style.height=(36*s)+'px';}
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+renderLists();
+upd();
+</script>
+</body>
+</html>
