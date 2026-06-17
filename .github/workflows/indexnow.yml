@@ -1,1 +1,62 @@
+name: IndexNow — Notificar vagas novas
 
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "minivagas/**.html"
+      - "sitemap.xml"
+
+jobs:
+  notify-indexnow:
+    runs-on: ubuntu-latest
+    name: Enviar URLs para IndexNow
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detectar arquivos alterados
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- 'minivagas/*.html' | head -20)
+          echo "Arquivos alterados: $CHANGED"
+
+          BASE="https://orizonrs.github.io/Consultoria"
+          URLS=""
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            URLS="$URLS,\"$BASE/$file\""
+          done <<< "$CHANGED"
+
+          URLS="[${URLS#,}]"
+          echo "urls=$URLS" >> $GITHUB_OUTPUT
+          echo "URLs geradas: $URLS"
+
+      - name: Notificar IndexNow
+        if: steps.changed.outputs.urls != '[]' && steps.changed.outputs.urls != ''
+        run: |
+          URLS='${{ steps.changed.outputs.urls }}'
+          KEY="${{ secrets.INDEXNOW_KEY }}"
+          HOST="orizonrs.github.io"
+
+          BODY="{\"host\":\"$HOST\",\"key\":\"$KEY\",\"keyLocation\":\"https://$HOST/$KEY.txt\",\"urlList\":$URLS}"
+
+          echo "Enviando para IndexNow..."
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "https://api.indexnow.org/IndexNow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            -d "$BODY")
+
+          echo "HTTP Status: $STATUS"
+
+          if [ "$STATUS" = "200" ] || [ "$STATUS" = "202" ]; then
+            echo "✅ IndexNow notificado com sucesso!"
+          else
+            echo "❌ Erro HTTP $STATUS"
+            exit 1
+          fi
