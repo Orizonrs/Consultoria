@@ -5,10 +5,12 @@
  * Todos os HTMLs que precisam do Supabase incluem:
  *   <script src="../supabase-config.js"></script>
  */
-const ORIZON_SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
-const ORIZON_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
+
+const ORIZON_SB_URL = 'https://yunoxkembhskpnprffoi.supabase.co';
+const ORIZON_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
 
 // ─── Helpers globais ─────────────────────────────────────────────
+
 function sbHeaders(extra = {}) {
   return {
     'apikey': ORIZON_SB_KEY,
@@ -18,12 +20,14 @@ function sbHeaders(extra = {}) {
     ...extra
   };
 }
+
 async function sbGet(tabela, query = '') {
   const url = `${ORIZON_SB_URL}/rest/v1/${tabela}${query ? '?' + query : ''}`;
   const r = await fetch(url, { headers: sbHeaders() });
   if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
+
 async function sbPost(tabela, dados) {
   const r = await fetch(`${ORIZON_SB_URL}/rest/v1/${tabela}`, {
     method: 'POST',
@@ -34,6 +38,7 @@ async function sbPost(tabela, dados) {
   const res = await r.json();
   return Array.isArray(res) ? res[0] : res;
 }
+
 async function sbPatch(tabela, id, dados) {
   const r = await fetch(`${ORIZON_SB_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}`, {
     method: 'PATCH',
@@ -42,6 +47,7 @@ async function sbPatch(tabela, id, dados) {
   });
   if (!r.ok) throw new Error(await r.text());
 }
+
 async function sbDelete(tabela, id) {
   const r = await fetch(`${ORIZON_SB_URL}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}`, {
     method: 'DELETE',
@@ -49,6 +55,7 @@ async function sbDelete(tabela, id) {
   });
   if (!r.ok) throw new Error(await r.text());
 }
+
 // ─── Propaga contexto para todos os módulos ───────────────────────
 (function propagarCtx() {
   try {
@@ -61,6 +68,7 @@ async function sbDelete(tabela, id) {
     console.warn('supabase-config: não foi possível gravar orizon_ctx_v1', e);
   }
 })();
+
 window.ORIZON_SB_URL = ORIZON_SB_URL;
 window.ORIZON_SB_KEY = ORIZON_SB_KEY;
 window.sbHeaders = sbHeaders;
