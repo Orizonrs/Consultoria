@@ -1,11 +1,11 @@
 /* ════════════════════════════════════════════
    cc-core.js — Orizon Consultoria
-   Projeto Supabase: yunoxkembhskpnprffoi
+   Projeto Supabase: zxivdljbpdpwijtporff
    ════════════════════════════════════════════ */
 'use strict';
 
-const SB_URL  = 'https://yunoxkembhskpnprffoi.supabase.co';
-const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
+const SB_URL  = 'https://zxivdljbpdpwijtporff.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
 
 // ── Retorna o token JWT do usuário autenticado (ou a anon key como fallback) ──
 function _authToken() {
