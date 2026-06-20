@@ -426,14 +426,10 @@ ALTER TABLE vagas ADD COLUMN IF NOT EXISTS horario TEXT;</pre>
     <div class="divider"></div>
     <div class="section-label">📲 Botões de candidatura</div>
     <div class="modal-toggles">
-      <label class="mtoggle"><input type="checkbox" id="mForms" checked/> 📋 Google Forms</label>
-      <label class="mtoggle"><input type="checkbox" id="mInterno" checked/> 📝 Formulário Interno</label>
-      <label class="mtoggle"><input type="checkbox" id="mWpp1"/> 💬 WhatsApp Comercial</label>
-      <label class="mtoggle"><input type="checkbox" id="mWpp2"/> 💬 WhatsApp Recrutamento</label>
-      <label class="mtoggle"><input type="checkbox" id="mEmail1" checked/> 📧 adm.orizon@outlook.com</label>
-      <label class="mtoggle"><input type="checkbox" id="mEmail2" checked/> 📧 bancodetalentosexittus@gmail.com</label>
-      <label class="mtoggle"><input type="checkbox" id="mEmail3" checked/> 📧 adm.orizon@outlook.com</label>
-      <label class="mtoggle"><input type="checkbox" id="mTelegram"/> ✈️ Telegram</label>
+      <label class="mtoggle"><input type="checkbox" id="mWpp1" checked/> 💬 WhatsApp Recrutamento</label>
+      <label class="mtoggle"><input type="checkbox" id="mWpp2" checked/> 💬 WhatsApp Atendimento</label>
+      <label class="mtoggle"><input type="checkbox" id="mEmail1" checked/> 📧 curriculos.nexus@gmail.com</label>
+      <label class="mtoggle"><input type="checkbox" id="mEmail2" checked/> 📧 recruta.nexus@gmail.com</label>
     </div>
 
     <button class="btn-gerar" onclick="gerarHTML()">⚡ Gerar HTML da Vaga</button>
@@ -966,15 +962,10 @@ async function gerarHTML(){
 
   // Canais ativos — monta array para data-attribute do card
   const canaisAtivos=[];
-  if(document.getElementById('mForms').checked)    canaisAtivos.push('forms');
-  if(document.getElementById('mInterno').checked)  canaisAtivos.push('formulario');
   if(document.getElementById('mWpp1').checked)     canaisAtivos.push('whatsapp1');
   if(document.getElementById('mWpp2').checked)     canaisAtivos.push('whatsapp2');
   if(document.getElementById('mEmail1').checked)   canaisAtivos.push('email1');
   if(document.getElementById('mEmail2').checked)   canaisAtivos.push('email2');
-  if(document.getElementById('mEmail3').checked)   canaisAtivos.push('email3');
-
-  if(document.getElementById('mTelegram').checked) canaisAtivos.push('telegram1');
   const canaisJSON=JSON.stringify(canaisAtivos);
 
   _htmlGerado = `      <!-- VAGA: ${titulo.toUpperCase()} -->
@@ -1436,7 +1427,7 @@ function gerarCardCompleto(v){
   const slug=v.slug||'';
   const tituloEsc=esc(v.titulo||'');
   const cidadeEsc=esc(v.cidade||'');
-  const canaisCard = JSON.stringify(v.canais_ativos || ['email2','email3','forms']);
+  const canaisCard = JSON.stringify(v.canais_ativos || ['email1','email2','whatsapp1','whatsapp2']);
   const ll=txt=>(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`                <li><span class="li-icon"></span> ${esc(l)}</li>`).join('\n');
   return `      <!-- VAGA: ${(v.titulo||'').toUpperCase()} -->
       <!-- ================================ -->
@@ -1964,7 +1955,7 @@ let _tt;function toast(msg,err=false){const t=document.getElementById('toast');t
 const DRAFT_KEY='orizon_vaga_draft_v1';
 const DRAFT_TEXT  =['vTitulo','vEmpresa','vSegmento','vCidade','vSalario','vHorario','vDescricao','vRequisitos','vBeneficios'];
 const DRAFT_SELECT=['vArea','vRegime','vModalidade','vNivel','vEscolaridade','vStatus'];
-const DRAFT_CHECK =['vConfidencial','mForms','mInterno','mWpp1','mWpp2','mEmail1','mEmail2','mEmail3','mTelegram'];
+const DRAFT_CHECK =['vConfidencial','mWpp1','mWpp2','mEmail1','mEmail2'];
 
 function salvarRascunho(){
   try{
