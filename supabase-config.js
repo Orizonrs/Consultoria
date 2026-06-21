@@ -11,10 +11,20 @@ const ORIZON_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 // ─── Helpers globais ─────────────────────────────────────────────
 
+function sbGetToken() {
+  try {
+    // Tenta pegar o access_token da sessão salva pelo login
+    const sessao = JSON.parse(localStorage.getItem('orizon_session_v3') || 'null');
+    if (sessao && sessao.access_token) return sessao.access_token;
+  } catch(e) {}
+  // Fallback: usa a anon key (sem RLS)
+  return ORIZON_SB_KEY;
+}
+
 function sbHeaders(extra = {}) {
   return {
     'apikey': ORIZON_SB_KEY,
-    'Authorization': 'Bearer ' + ORIZON_SB_KEY,
+    'Authorization': 'Bearer ' + sbGetToken(),
     'Content-Type': 'application/json',
     'Prefer': 'return=representation',
     ...extra
@@ -71,8 +81,9 @@ async function sbDelete(tabela, id) {
 
 window.ORIZON_SB_URL = ORIZON_SB_URL;
 window.ORIZON_SB_KEY = ORIZON_SB_KEY;
-window.sbHeaders = sbHeaders;
-window.sbGet     = sbGet;
-window.sbPost    = sbPost;
-window.sbPatch   = sbPatch;
-window.sbDelete  = sbDelete;
+window.sbGetToken = sbGetToken;
+window.sbHeaders  = sbHeaders;
+window.sbGet      = sbGet;
+window.sbPost     = sbPost;
+window.sbPatch    = sbPatch;
+window.sbDelete   = sbDelete;
