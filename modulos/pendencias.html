@@ -370,7 +370,7 @@ let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
 // ── Recebe credenciais do shell via localStorage + postMessage ──
 (function(){
   try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
-  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; SUPABASE_TOKEN=e.data.sb_token||e.data.sb_key; } });
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
 })();
 
 const SB_PEND = 'pendencias_assign'; // tabela de assign: { cand_id TEXT PRIMARY KEY, tipo TEXT, nota TEXT, atualizado_em TIMESTAMPTZ }
@@ -409,7 +409,7 @@ function mascaraTel(el){
 async function sbFetch(path, opts={}){
   const res = await fetch(SUPABASE_URL+path,{
     ...opts,
-    headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json',...(opts.headers||{})}
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...(opts.headers||{})}
   });
   return res;
 }
@@ -856,7 +856,7 @@ async function abrirModalAdicionarBanco(){
   document.getElementById('bancoCandsList').innerHTML = '<p style="text-align:center;color:#666;font-size:0.8rem;padding:1.5rem;">⏳ Carregando…</p>';
   document.getElementById('bancoCandCount').textContent = '';
   try{
-    const H = {'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)};
+    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY};
     const resCands = await fetch(SUPABASE_URL+'/rest/v1/disc_historico?select=id,nome,vaga,dom,sec,data&order=criado_em.desc', {headers:H});
     const allCands = resCands.ok ? await resCands.json() : [];
     // Exclui quem já está em pendências
@@ -902,7 +902,7 @@ function renderBancoModal(lista){
 
 async function adicionarDoBanco(id, nome){
   try{
-    const H = {'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json'};
+    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
     const res = await fetch(SUPABASE_URL+`/rest/v1/${SB_PEND}`,{
       method:'POST',
       headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},
@@ -921,7 +921,7 @@ async function adicionarDoBanco(id, nome){
     // Adiciona ao estado local e re-renderiza lista
     _pendIds.add(String(id));
     _pendMeta[String(id)] = {tipo:'sem_retorno', nota:''};
-    fetch(SUPABASE_URL+`/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}&select=*`,{headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}})
+    fetch(SUPABASE_URL+`/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}&select=*`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
       .then(r=>r.json()).then(rows=>{
         if(Array.isArray(rows)&&rows[0]&&!_allCands.find(c=>String(c.id)===String(id))){
           _allCands.push(rows[0]); renderStats(); filtrar();
@@ -971,14 +971,14 @@ async function moverParaPendencias(id, nome, tipo){
   try{
     const res = await fetch(SUPABASE_URL+'/rest/v1/pendencias_assign',{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id), tipo:tipo})
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
     // Também salva status_contato no disc_historico
     fetch(SUPABASE_URL+'/rest/v1/disc_historico?id=eq.'+encodeURIComponent(id),{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({status_contato:tipo})
     }).catch(()=>{});
     mostrarToastDesfazer('⏳ '+nome+' movido para Pendências!', ()=>desfazerMoverPendencias(id,nome));
@@ -990,7 +990,7 @@ async function moverParaPendencias(id, nome, tipo){
 async function desfazerMoverPendencias(id, nome){
   await fetch(SUPABASE_URL+'/rest/v1/pendencias_assign?cand_id=eq.'+encodeURIComponent(id),{
     method:'DELETE',
-    headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Prefer':'return=minimal'}
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
   });
   mostrarToast('↩️ '+nome+' retornou ao Banco!');
   filtrarCands();

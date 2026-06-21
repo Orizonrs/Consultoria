@@ -345,7 +345,8 @@ function _getCtx(){try{const c=localStorage.getItem('orizon_ctx_v3');if(c){const
 const _ctx=_getCtx();
 const SUPABASE_URL = _ctx.url;
 const SUPABASE_KEY = _ctx.key;
-const HEADERS = {'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json'};
+var SUPABASE_TOKEN = window.SUPABASE_TOKEN || SUPABASE_KEY;
+const HEADERS = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_TOKEN,'Content-Type':'application/json'};
 window.addEventListener('message',e=>{if(e.data&&e.data.type==='orizon_ctx'){const u=e.data.url||'';const k=e.data.key||'';if(u){Object.defineProperty(window,'SUPABASE_URL',{value:u,writable:true});Object.defineProperty(window,'SUPABASE_KEY',{value:k,writable:true});HEADERS['apikey']=k;HEADERS['Authorization']='Bearer '+k;}}});
 const LS_KEY = 'orizon_listanegra_v1';
 
@@ -903,7 +904,41 @@ document.getElementById('modalHist').addEventListener('click',function(e){ if(e.
 // CREATE POLICY "allow_anon_update" ON lista_negra FOR UPDATE TO anon USING (true);
 // CREATE POLICY "allow_anon_delete" ON lista_negra FOR DELETE TO anon USING (true);
 
-init();
-</script>
+
+// ── AGUARDA CTX COM TOKEN ANTES DE INICIAR ──────────────────
+function _aguardarCtxEIniciar(fn) {
+  // Tenta pelo localStorage primeiro
+  try {
+    const c = JSON.parse(localStorage.getItem('orizon_ctx_v3') || '{}');
+    if (c.sb_url && c.sb_token) {
+      if (typeof SUPABASE_URL !== 'undefined') { window.SUPABASE_URL = c.sb_url; }
+      if (typeof SUPABASE_KEY !== 'undefined') { window.SUPABASE_KEY = c.sb_key; }
+      window.SUPABASE_TOKEN = c.sb_token;
+      if (typeof HEADERS !== 'undefined') {
+        HEADERS['Authorization'] = 'Bearer ' + c.sb_token;
+      }
+      fn(); return;
+    }
+  } catch(e) {}
+  // Aguarda postMessage por até 3 segundos
+  let _done = false;
+  const _t = setTimeout(() => { if (!_done) { _done = true; fn(); } }, 3000);
+  window.addEventListener('message', function _ctxListener(e) {
+    if (e.data && e.data.tipo === 'orizon_ctx' && e.data.sb_token) {
+      if (!_done) {
+        _done = true;
+        clearTimeout(_t);
+        window.removeEventListener('message', _ctxListener);
+        window.SUPABASE_TOKEN = e.data.sb_token;
+        if (typeof HEADERS !== 'undefined') {
+          HEADERS['Authorization'] = 'Bearer ' + e.data.sb_token;
+        }
+        fn();
+      }
+    }
+  });
+}
+
+_aguardarCtxEIniciar(init);</script>
 </body>
 </html>

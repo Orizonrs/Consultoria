@@ -615,9 +615,9 @@ let idSeq = 0;
 let SUPABASE_URL = SB, SUPABASE_KEY = KEY;
 (function(){
   try{ var c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}'); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
-  window.addEventListener('message',function(e){ if(e.data&&e.data.tipo==='orizon_ctx'){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; SUPABASE_TOKEN=e.data.sb_token||e.data.sb_key; } });
+  window.addEventListener('message',function(e){ if(e.data&&e.data.tipo==='orizon_ctx'){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
 })();
-const SB_HEADERS = () => ({'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'});
+const SB_HEADERS = () => ({'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'});
 
 function navegar(mod){ window.parent.postMessage({tipo:'orizon_navegar',mod},'*'); }
 
@@ -626,7 +626,7 @@ async function carregarVagas(){
   if(!SUPABASE_URL || !SUPABASE_KEY) return;
   try{
     const r = await fetch(SUPABASE_URL+'/rest/v1/vagas?select=id,titulo&order=criado_em.desc',
-      {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
     if(!r.ok) return;
     const vagas = await r.json();
     if(!Array.isArray(vagas)||!vagas.length) return;
@@ -858,7 +858,7 @@ async function buscarCandidatos(q){
       // Busca por nome OU email, traz os 12 mais recentes
       const enc = encodeURIComponent(q.toLowerCase());
       const url = `${SUPABASE_URL}/rest/v1/disc_historico?or=(nome.ilike.*${enc}*,email_externo.ilike.*${enc}*)&select=id,nome,vaga,email_externo,score_curriculo,nivel_curriculo,fit_score&order=criado_em.desc&limit=12`;
-      const r = await fetch(url, {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
+      const r = await fetch(url, {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
       const cands = await r.json();
       if(!Array.isArray(cands)||!cands.length){
         lista.innerHTML = '<div class="modal-empty">Nenhum candidato encontrado.</div>'; return;
@@ -942,7 +942,7 @@ async function extrairComIA(arquivo, vagaAlvo) {
 
   const edgeResp = await fetch(`${SUPABASE_URL}/functions/v1/analisar-curriculo`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY) },
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_KEY },
     body: JSON.stringify(payload),
   });
 
@@ -1098,7 +1098,7 @@ async function processarCurriculo(f) {
         : `nome=eq.${encodeURIComponent(nomeFinal)}&vaga=eq.${encodeURIComponent(vagaAlvo)}`;
 
       const chk = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?${campoDup}&select=id`,
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY) } });
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } });
 
       if (chk.ok) {
         const existe = await chk.json();
@@ -1453,7 +1453,7 @@ async function executarScoreIA() {
 
   try {
     // Busca dados completos do candidato no Supabase
-    const hdrsGet = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY) };
+    const hdrsGet = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_scvCandId)}&select=*`,
       { headers: hdrsGet }
@@ -1497,7 +1497,7 @@ async function executarScoreIA() {
     try {
       const edgeRes = await fetch(`${SUPABASE_URL}/functions/v1/analisar-candidato`, {
         method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY), 'Content-Type': 'application/json' },
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, max_tokens: 800 })
       });
       if (edgeRes.ok) {

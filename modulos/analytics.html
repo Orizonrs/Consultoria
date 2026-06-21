@@ -269,8 +269,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 
 <script>
 let SB_URL='',SB_KEY='';
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;if(!_loaded)init();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;if(!_loaded)init();}});
 
 let _hist=[],_contratados=[],_periodo=7,_loaded=false;
 const CHARTS={};
@@ -288,8 +288,8 @@ async function init(){
   _loaded=true;
   try{
     const [rHist, rCont] = await Promise.all([
-      fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}}),
-      fetch(`${SB_URL}/rest/v1/contratados?select=id,candidato,vaga,data_contratacao&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}})
+      fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}),
+      fetch(`${SB_URL}/rest/v1/contratados?select=id,candidato,vaga,data_contratacao&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
     ]);
     _hist=await rHist.json(); if(!Array.isArray(_hist)) _hist=[];
     _contratados=await rCont.json(); if(!Array.isArray(_contratados)) _contratados=[];

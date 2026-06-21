@@ -227,8 +227,8 @@ CREATE POLICY "allow_all" ON orizon_config FOR ALL USING (true) WITH CHECK (true
 <script>
 let SB_URL='',SB_KEY='',PIPE_KEY='orizon_pipeline_v1';
 let _autoSyncInterval=null;
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;verificarStatus();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;verificarStatus();}});
 
 function log(msg,tipo='info'){
   const box=document.getElementById('logBox');
@@ -244,7 +244,7 @@ function setProg(pct){document.getElementById('prog').style.width=pct+'%';}
 
 async function sbGet(chave){
   const r=await fetch(`${SB_URL}/rest/v1/orizon_config?chave=eq.${encodeURIComponent(chave)}&select=valor`,
-    {headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
+    {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
   if(!r.ok) throw new Error('GET '+r.status);
   const arr=await r.json();
   return arr.length?arr[0].valor:null;
@@ -253,7 +253,7 @@ async function sbGet(chave){
 async function sbUpsert(chave,valor){
   const r=await fetch(`${SB_URL}/rest/v1/orizon_config`,{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
     body:JSON.stringify({chave,valor,atualizado_em:new Date().toISOString()}),
   });
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.message||e.hint||'UPSERT '+r.status);}
