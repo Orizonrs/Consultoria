@@ -1023,7 +1023,7 @@ let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
 // ── Recebe credenciais do shell via localStorage + postMessage ──
 (function(){
   try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
-  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; SUPABASE_TOKEN=e.data.sb_token||e.data.sb_key; } });
 })();
 
 /* ═══ STORAGE KEYS (localStorage — fallback local) ═══ */
@@ -1073,14 +1073,14 @@ function gerarId(){ return Date.now().toString(36)+Math.random().toString(36).sl
 /* ═══ SUPABASE HELPERS ═══ */
 async function sbGet(table, filter=''){
   const url = `${SUPABASE_URL}/rest/v1/${table}?select=*${filter}`;
-  const res = await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const res = await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
   if(!res.ok){ const txt = await res.text(); throw new Error('sbGet '+table+' HTTP '+res.status+': '+txt); }
   return res.json();
 }
 async function sbUpsert(table, data){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
     method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,
+    headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),
       'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
     body:JSON.stringify(data)
   });
@@ -1091,7 +1091,7 @@ async function sbDelete(table, eq){
   const [col,val] = eq.split('=');
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${col}=eq.${encodeURIComponent(val)}`,{
     method:'DELETE',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}
   });
   if(!res.ok) throw new Error(await res.text());
 }
@@ -1137,7 +1137,7 @@ async function carregarAssignDB(){
   // ── SUPABASE É A FONTE DE VERDADE ──────────────────────────
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_ASSIGN}?select=cand_id,secao_id`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Cache-Control':'no-cache'}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Cache-Control':'no-cache'}});
     if(res.ok){
       const rows = await res.json();
       const result = {};
@@ -1227,7 +1227,7 @@ async function fetchCandidatos(){
     while(true){
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/disc_historico?select=*&order=criado_em.desc&limit=${limite}&offset=${offset}`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Cache-Control':'no-cache'}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Cache-Control':'no-cache'}}
       );
       if(!res.ok){ const txt = await res.text(); throw new Error('HTTP '+res.status+': '+txt); }
       const data = await res.json();
@@ -1317,7 +1317,7 @@ function calcularAderencia(h){
 async function carregarTodosPesos(){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/configuracoes_aderencia?select=*`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
     if(res.ok){
       const rows=await res.json();
       if(Array.isArray(rows)){
@@ -1340,7 +1340,7 @@ async function diagnosticarSupabase(){
   for(const t of tabelas){
     try{
       const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?select=id&limit=1`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+        {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
       const txt = await r.text();
       resultado += `${t}: HTTP ${r.status} → ${txt.slice(0,120)}\n`;
     }catch(e){
@@ -1356,7 +1356,7 @@ async function verificarTabelasSupabase(){
   for(const t of tabelas){
     try{
       const r = await fetch(`${SUPABASE_URL}/rest/v1/${t}?select=id&limit=1`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+        {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
       // 200 ou 406 (sem dados) = tabela existe; 404 = não existe
       if(r.status === 404) faltando.push(t);
     }catch(_){ /* rede offline — ignora */ }
@@ -1934,7 +1934,7 @@ function confirmarAddCand(){
     setVagasCand(id, vagas);
     fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({em_entrevistados:true})
     }).catch(()=>{});
   });
@@ -2139,7 +2139,7 @@ async function salvarParecerFinal(){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({...payload, extra_dados:JSON.stringify(extra)})
     });
     if(!res.ok){ const b=await res.text(); throw new Error('Supabase '+res.status+': '+b); }
@@ -2185,7 +2185,7 @@ function removerDoEntrevistados(){
   // Tenta também marcar em_entrevistados=false no Supabase (se a coluna existir)
   fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
     method:'PATCH',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify({em_entrevistados:false})
   }).catch(()=>{}); // ignora erro silenciosamente se coluna não existir
   fecharModalMover();
@@ -2237,7 +2237,7 @@ async function abrirPerfil(id){
   // Busca dados frescos para ter extra_dados atualizado
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}&select=*`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}});
     const rows=await res.json();
     if(Array.isArray(rows)&&rows.length){ Object.assign(h,rows[0]); _perfilAtual=h; }
   }catch(e){}
@@ -2507,7 +2507,7 @@ async function salvarCampoP(payload,msgId){
   if(!_perfilAtual) return;
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error(res.status);
     Object.assign(_perfilAtual,payload);
     const idx=_allCands.findIndex(x=>String(x.id)===String(_perfilAtual.id));
@@ -2520,7 +2520,7 @@ async function salvarExtraP(extra,cb){
   if(!_perfilAtual) return;
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({extra_dados:JSON.stringify(extra)})});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({extra_dados:JSON.stringify(extra)})});
     if(!res.ok) throw new Error(res.status);
     _perfilAtual.extra_dados=extra;
     const idx=_allCands.findIndex(x=>String(x.id)===String(_perfilAtual.id));
@@ -2664,7 +2664,7 @@ function salvarEquipeSecao(secaoId, membros){
     secao.equipe = membros;
     fetch(`${SUPABASE_URL}/rest/v1/${SB_SECOES}?id=eq.${encodeURIComponent(secaoId)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({equipe:JSON.stringify(membros)})
     }).catch(()=>{});
   }
@@ -3010,7 +3010,7 @@ async function _buscarHashEsperado(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/configuracoes_aderencia?vaga_key=eq._sistema&select=pesos`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization': 'Bearer ' + (typeof SUPABASE_TOKEN!=='undefined'?SUPABASE_TOKEN:SUPABASE_KEY)}}
     );
     if(!res.ok) return null;
     const rows = await res.json();

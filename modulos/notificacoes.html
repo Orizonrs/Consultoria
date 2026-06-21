@@ -375,14 +375,14 @@ async function init() {
     try {
       // Pega último ID de candidatos
       const r1 = await fetch(`${SB_URL}/rest/v1/disc_historico?select=id&order=id.desc&limit=1`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY) }
       });
       const arr1 = await r1.json();
       if (arr1.length) _ultimoIdDisc = arr1[0].id;
 
       // Pega último ID de agendamentos
       const r2 = await fetch(`${SB_URL}/rest/v1/agendamentos?select=id&order=criado_em.desc&limit=1`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY) }
       });
       const arr2 = await r2.json();
       if (Array.isArray(arr2) && arr2.length) _ultimoIdAgenda = arr2[0].id;
@@ -507,7 +507,7 @@ async function verificarNovos() {
   if (prefs.candidatos !== false) {
     try {
       const r = await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,data&order=id.desc&limit=10`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY) }
       });
       const arr = await r.json();
       if (Array.isArray(arr) && arr.length) {
@@ -538,7 +538,7 @@ async function verificarNovos() {
   if (prefs.entrevistas !== false) {
     try {
       const r2 = await fetch(`${SB_URL}/rest/v1/agendamentos?select=id,candidato,vaga,datetime,tipo&order=criado_em.desc&limit=5`, {
-        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY) }
       });
       const arr2 = await r2.json();
       if (Array.isArray(arr2) && arr2.length) {
@@ -780,7 +780,7 @@ async function verificarLembretes() {
   if (!SB_URL) return;
   try {
     const r = await fetch(`${SB_URL}/rest/v1/agendamentos?select=id,candidato,vaga,datetime,tipo,local&order=datetime.asc`, {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY) }
     });
     const eventos = await r.json();
     if (!Array.isArray(eventos)) return;

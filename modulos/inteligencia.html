@@ -360,8 +360,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 </div>
 <script>
 let SB_URL='',SB_KEY='',PIPE_KEY='orizon_pipeline_v1';
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;if(!_loaded)init();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;if(!_loaded)init();}});
 const COR={D:'#e74c3c',I:'#f39c12',S:'#2ecc71',C:'#3498db'};
 const EMO={D:'🔴',I:'🟠',S:'🟢',C:'🔵'};
 
@@ -388,7 +388,7 @@ async function init(){
   _loaded=true; log('Centro de IA aberto');
   try{
     const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,data,fit_score,fit_nivel,entrevista_json,resumo_ia,criado_em&order=criado_em.desc`,
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      {headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     _hist=await r.json(); if(!Array.isArray(_hist)) _hist=[];
     if(_hist.length) _ultimoId=Math.max(..._hist.map(r=>r.id||0));
     log(`${_hist.length} candidatos carregados`);
@@ -422,7 +422,7 @@ async function buscarIA(q){
     el.innerHTML='<div class="empty-inline"><span class="spinner"></span> Buscando...</div>';
     try{
       const r=await fetch(`${SB_URL}/rest/v1/disc_historico?or=(nome.ilike.*${encodeURIComponent(q)}*,vaga.ilike.*${encodeURIComponent(q)}*)&select=id,nome,vaga,data,fit_score,dom,sec&order=criado_em.desc&limit=25`,
-        {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+        {headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
       const arr=await r.json();
       if(!Array.isArray(arr)||!arr.length){el.innerHTML='<div class="empty-inline">Nenhum resultado.</div>';cnt.textContent='';return;}
       cnt.textContent=arr.length+' resultado'+(arr.length>1?'s':'');
@@ -464,7 +464,7 @@ async function togglePolling(){
 async function verificarNovos(){
   try{
     const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,data,criado_em&order=criado_em.desc&limit=20`,
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      {headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     const arr=await r.json(); if(!Array.isArray(arr)||!arr.length) return;
     const maxId=Math.max(...arr.map(x=>x.id||0));
     if(_ultimoId===null){_ultimoId=maxId;return;}
@@ -497,7 +497,7 @@ async function carregarSemEnt(){
   lista.innerHTML='<div class="empty-inline"><span class="spinner"></span> Carregando...</div>';
   try{
     const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,data,entrevista_json,resumo_ia&order=criado_em.desc`,
-      {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+      {headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     const todos=await r.json(); if(!Array.isArray(todos)){lista.innerHTML='<div class="empty-inline" style="color:var(--red);">Erro.</div>';return;}
     _semEntCache=todos.filter(h=>{
       if(!h.entrevista_json&&!h.resumo_ia) return true;

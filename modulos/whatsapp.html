@@ -141,8 +141,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 </div>
 <script>
 let SB_URL='',SB_KEY='';
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;carregarCands();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;carregarCands();}});
 const TPLS=[
   {nome:'Convite entrevista',texto:'Olá {nome}! Tudo bem? 😊\n\nSomos da Orizon e gostaríamos de convidá-lo(a) para uma entrevista.\n\nQuando teria disponibilidade esta semana?'},
   {nome:'Negativa gentil',texto:'Olá {nome}, tudo bem?\n\nAgradecemos muito seu interesse e participação em nosso processo seletivo.\n\nNo momento optamos por outro candidato, mas seu perfil ficará em nosso banco de talentos! 🙏'},
@@ -212,7 +212,7 @@ function enviarManual() {
 async function carregarCands(){
   lerCtx();if(!SB_URL){document.getElementById('candList').innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);font-size:0.75rem;">Supabase não configurado</div>';return;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,tel_externo&tel_externo=not.is.null&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,vaga,tel_externo&tel_externo=not.is.null&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     const arr=await r.json();if(!Array.isArray(arr)){document.getElementById('candList').innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);font-size:0.75rem;">Erro ao carregar</div>';return;}
     if(!arr.length){document.getElementById('candList').innerHTML='<div style="text-align:center;padding:1rem;color:var(--muted);font-size:0.75rem;">Nenhum candidato com telefone cadastrado.<br/>Adicione telefones no módulo Banco de Talentos.</div>';return;}
     document.getElementById('candList').innerHTML=arr.map(h=>`

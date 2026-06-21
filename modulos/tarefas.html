@@ -122,16 +122,16 @@ let SB_URL='',SB_KEY='',_tasks=[],_filtro='todas',_sbOk=false;
 const hoje=new Date().toISOString().split('T')[0];
 
 function lerCtx(){
-  try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}
+  try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;}}catch(e){}
 }
 window.addEventListener('message',e=>{
-  if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;init();}
+  if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;init();}
 });
 
 /* ─── SUPABASE HELPERS ─────────────────────── */
 async function sbFetch(tabela, qs=''){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?${qs}`,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}
+    headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'}
   });
   if(!r.ok) throw new Error(await r.text());
   return r.json();
@@ -139,7 +139,7 @@ async function sbFetch(tabela, qs=''){
 async function sbInsert(tabela, dados){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}`,{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(dados)
   });
   if(!r.ok) throw new Error(await r.text());
@@ -148,7 +148,7 @@ async function sbInsert(tabela, dados){
 async function sbUpdate(tabela, id, dados){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
     method:'PATCH',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(dados)
   });
   if(!r.ok) throw new Error(await r.text());
@@ -157,7 +157,7 @@ async function sbUpdate(tabela, id, dados){
 async function sbDelete(tabela, id){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
     method:'DELETE',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}
   });
   if(!r.ok) throw new Error(await r.text());
 }

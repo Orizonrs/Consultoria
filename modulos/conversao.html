@@ -190,14 +190,14 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 </div>
 <script>
 let SB_URL='',SB_KEY='',PIPE_KEY='orizon_pipeline_v1';
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;if(!_loaded)init();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;PIPE_KEY=c.pipe_key||PIPE_KEY;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;if(!_loaded)init();}});
 let _loaded=false;
 async function init(){
   lerCtx();if(!SB_URL){setTimeout(()=>{lerCtx();if(SB_URL)init();},500);return;}
   _loaded=true;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     const hist=await r.json();if(!Array.isArray(hist))return;
     const pipe=(() => {try{return JSON.parse(localStorage.getItem(PIPE_KEY)||'{}');}catch(e){return {};}})();
     let pipeTotal=0,aprovados=0;

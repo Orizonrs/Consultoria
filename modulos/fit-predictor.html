@@ -269,15 +269,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear
 <script>
 const KEY='orizon_fitpred_v1';
 let SB_URL='',SB_KEY='',_hist=[],_lastResult=null,_cands=[];
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;carregarCands();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;carregarCands();}});
 function lerHist(){try{return JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){return[];}}
 function salvarHistLocal(){try{localStorage.setItem(KEY,JSON.stringify(_hist));}catch(e){}}
 
 async function carregarCands(){
   lerCtx();if(!SB_URL)return;
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,dom,pct_d,pct_i,pct_s,pct_c,fit_score&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id,nome,dom,pct_d,pct_i,pct_s,pct_c,fit_score&order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     _cands=await r.json();if(!Array.isArray(_cands))_cands=[];
     const sel=document.getElementById('cSelect');
     sel.innerHTML='<option value="">— selecione ou preencha manual —</option>'+_cands.map(c=>`<option value="${c.id}">${esc(c.nome||'?')} (${c.dom||'?'})</option>`).join('');

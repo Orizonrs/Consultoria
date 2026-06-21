@@ -310,16 +310,16 @@ const COR_ST={nova:'var(--green)',andamento:'var(--orange)',leva1:'var(--blue)',
 const CLS_ST={nova:'sn',andamento:'sa',leva1:'sl',encerrada:'se'};
 const LBL_ST={nova:'🟢 Nova',andamento:'🟡 Andamento',leva1:'🔵 Leva 1',encerrada:'🔴 Encerrada'};
 
-function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key;}}catch(e){}}
-window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key;carregarVagas();}});
+function lerCtx(){try{const c=JSON.parse(localStorage.getItem('orizon_ctx_v3')||'{}');if(c.sb_url){SB_URL=c.sb_url;SB_KEY=c.sb_key; SB_TOKEN=c.sb_token||c.sb_key;}}catch(e){}}
+window.addEventListener('message',e=>{if(e.data?.tipo==='orizon_ctx'){SB_URL=e.data.sb_url;SB_KEY=e.data.sb_key; SB_TOKEN=e.data.sb_token||e.data.sb_key;carregarVagas();}});
 
 async function carregarVagas(){
   lerCtx();if(!SB_URL){document.getElementById('vagasGrid').innerHTML='<div class="empty">Supabase não configurado.</div>';return;}
   document.getElementById('vagasGrid').innerHTML='<div class="empty"><div class="spinner"></div></div>';
   try{
     const [r1,r2]=await Promise.all([
-      fetch(`${SB_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}}),
-      fetch(`${SB_URL}/rest/v1/disc_historico?select=vaga`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+      fetch(`${SB_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}}),
+      fetch(`${SB_URL}/rest/v1/disc_historico?select=vaga`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}})
     ]);
     _vagas=await r1.json();if(!Array.isArray(_vagas))_vagas=[];
     const cands=await r2.json();if(Array.isArray(cands))cands.forEach(c=>{if(c.vaga)_candCnt[c.vaga]=(_candCnt[c.vaga]||0)+1;});
@@ -420,7 +420,7 @@ async function salvarVaga(){
     ativo:true};
   try{
     const r=await fetch(`${SB_URL}/rest/v1/vagas`,{
-      method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      method:'POST',headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify(payload)
     });
     if(!r.ok){const e=await r.json();throw new Error(e.message||e.hint||r.status);}
@@ -436,7 +436,7 @@ let _editV=null;
 async function abrirEdit(slug){
   lerCtx();
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}&limit=1`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}&limit=1`,{headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY)}});
     const arr=await r.json();if(!arr.length){toast('Não encontrada',true);return;}
     _editV=arr[0];
     document.getElementById('editSlug').value=slug;
@@ -459,7 +459,7 @@ async function confirmarEdit(){
   const msg=document.getElementById('editMsg');
   const payload={titulo:document.getElementById('eTitle').value.trim(),empresa:document.getElementById('eEmpresa').value.trim(),cliente:document.getElementById('eCliente').value.trim(),cidade:document.getElementById('eCidade').value.trim(),salario:document.getElementById('eSalario').value.trim(),status:document.getElementById('eStatus').value,descricao:document.getElementById('eDesc').value.trim(),beneficios:document.getElementById('eObs').value.trim()};
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!r.ok)throw new Error(r.status);
     msg.className='status-msg ok';msg.textContent='✅ Atualizado!';
     const idx=_vagas.findIndex(v=>v.slug===slug);if(idx>=0)Object.assign(_vagas[idx],payload);
@@ -471,7 +471,7 @@ async function excluir(slug,titulo){
   if(!confirm(`Excluir a vaga "${titulo}" do Supabase?\n\nOs candidatos associados permanecem no banco.`))return;
   lerCtx();
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=minimal'}});
+    const r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(slug)}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization': 'Bearer ' + (typeof SB_TOKEN!=='undefined'?SB_TOKEN:SB_KEY),'Prefer':'return=minimal'}});
     if(!r.ok)throw new Error(r.status);
     _vagas=_vagas.filter(v=>v.slug!==slug);filtrar();toast('Vaga removida');
   }catch(e){toast('Erro: '+e.message,true);}
