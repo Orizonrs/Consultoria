@@ -14,9 +14,11 @@ const ORIZON_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 function sbHeaders(extra = {}) {
   let token = ORIZON_SB_KEY;
   try {
-    // Pega token da sessão salva pelo login (orizon_session_v3)
-    const s = JSON.parse(localStorage.getItem('orizon_session_v3') || 'null');
-    if (s && s.access_token) token = s.access_token;
+    // Lê o contexto salvo pelo disc-admin.html (orizon_ctx_v3)
+    const ctx = JSON.parse(localStorage.getItem('orizon_ctx_v3') || 'null');
+    if (ctx && ctx.usuario && ctx.usuario.access_token) {
+      token = ctx.usuario.access_token;
+    }
   } catch(e) {}
   return {
     'apikey': ORIZON_SB_KEY,
