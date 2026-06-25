@@ -67,10 +67,33 @@ async function sbDelete(tabela, id) {
 // ─── Propaga contexto para todos os módulos ───────────────────────
 (function propagarCtx() {
   try {
-    const ctx = { sb_url: ORIZON_SB_URL, sb_key: ORIZON_SB_KEY, pipe_key: 'orizon_pipeline_v1' };
+    // Lê o token da sessão ativa (salvo pelo disc-admin.html)
+    let sb_token = ORIZON_SB_KEY;
+    let usuario  = null;
+    try {
+      const ctx3 = JSON.parse(localStorage.getItem('orizon_ctx_v3') || 'null');
+      if (ctx3 && ctx3.usuario && ctx3.usuario.access_token) {
+        sb_token = ctx3.usuario.access_token;
+        usuario  = ctx3.usuario;
+      }
+    } catch(e) {}
+
+    const ctx = {
+      sb_url   : ORIZON_SB_URL,
+      sb_key   : ORIZON_SB_KEY,
+      sb_token : sb_token,       // token autenticado quando disponível
+      pipe_key : 'orizon_pipeline_v1',
+      usuario  : usuario
+    };
     localStorage.setItem('orizon_ctx_v1', JSON.stringify(ctx));
     try {
-      window.parent.postMessage({ tipo: 'orizon_ctx', sb_url: ORIZON_SB_URL, sb_key: ORIZON_SB_KEY }, '*');
+      window.parent.postMessage({
+        tipo    : 'orizon_ctx',
+        sb_url  : ORIZON_SB_URL,
+        sb_key  : ORIZON_SB_KEY,
+        sb_token: sb_token,
+        usuario : usuario
+      }, '*');
     } catch(e) {}
   } catch(e) {
     console.warn('supabase-config: não foi possível gravar orizon_ctx_v1', e);
