@@ -732,14 +732,14 @@ function mascaraTelArea(input){
 /* ═══ SUPABASE HELPERS ═══ */
 async function sbGet(table, filter=''){
   const url = `${SUPABASE_URL}/rest/v1/${table}?select=*${filter}&order=criado_em.asc`;
-  const res = await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+  const res = await fetch(url,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}});
   if(!res.ok){ const txt = await res.text(); throw new Error('sbGet '+table+' HTTP '+res.status+': '+txt); }
   return res.json();
 }
 async function sbUpsert(table, data){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{
     method:'POST',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
     body:JSON.stringify(data)
   });
   if(!res.ok) throw new Error(await res.text());
@@ -749,14 +749,14 @@ async function sbDelete(table, eq){
   const [col,val] = eq.split('=');
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${col}=eq.${encodeURIComponent(val)}`,{
     method:'DELETE',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}
   });
   if(!res.ok) throw new Error(await res.text());
 }
 async function sbPatch(table, filter, data){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}`,{
     method:'PATCH',
-    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
     body:JSON.stringify(data)
   });
   if(!res.ok) throw new Error('Supabase '+res.status);
@@ -801,7 +801,7 @@ async function carregarAssignDB(){
   // ── SUPABASE É A FONTE DE VERDADE ──────────────────────────
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${SB_ASSIGN}?select=cand_id,area_id,vaga`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Cache-Control':'no-cache'}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Cache-Control':'no-cache'}});
     if(res.ok){
       const rows = await res.json();
       const assignFinal = {};
@@ -871,7 +871,7 @@ async function fetchCandidatos(){
     while(true){
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/disc_historico?select=*&order=criado_em.desc&limit=${limite}&offset=${offset}`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Cache-Control':'no-cache'}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Cache-Control':'no-cache'}}
       );
       if(!res.ok){ const txt = await res.text(); throw new Error('HTTP '+res.status+': '+txt); }
       const data = await res.json();
@@ -1008,7 +1008,7 @@ function onBuscaKey(e){
 
 // ═══ PIPELINE — salvar/remover ═══
 async function savePipeEntry(vagaSlug, candId, etapa){
-  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'};
+  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'};
   const r=await fetch(SUPABASE_URL+'/rest/v1/pipeline?on_conflict=vaga_slug,candidato_id',{method:'POST',headers:h,body:JSON.stringify({vaga_slug:vagaSlug,candidato_id:String(candId),etapa,atualizado_em:new Date().toISOString()})});
   if(!r.ok){const t=await r.text();throw new Error(r.status+': '+t);}
   try{const pipe=JSON.parse(localStorage.getItem(PIPE_KEY)||'{}');if(!pipe[vagaSlug])pipe[vagaSlug]={};pipe[vagaSlug][String(candId)]=etapa;localStorage.setItem(PIPE_KEY,JSON.stringify(pipe));}catch(e){}
@@ -1020,7 +1020,7 @@ async function init(){
     _assign = await carregarAssignDB();
     await fetchCandidatos();
     // Carrega vagas
-    fetch(`${SUPABASE_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+    fetch(`${SUPABASE_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
       .then(r=>r.json()).then(v=>{ if(Array.isArray(v)) _vagasList=v; }).catch(()=>{});
     renderTudo();
     document.getElementById('statsBar').style.display = 'flex';
@@ -1856,7 +1856,7 @@ function abrirPerfilArea(id){
     if(_vagasList && _vagasList.length){
       paMoverVaga.innerHTML = '<option value="">Selecione uma vaga ativa…</option>' + _vagasList.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo)}</option>`).join('');
     } else {
-      fetch(`${SUPABASE_URL}/rest/v1/vagas?select=slug,titulo&order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+      fetch(`${SUPABASE_URL}/rest/v1/vagas?select=slug,titulo&order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
         .then(r=>r.json()).then(vagas=>{
           if(Array.isArray(vagas)&&vagas.length){ _vagasList=vagas; paMoverVaga.innerHTML='<option value="">Selecione uma vaga ativa…</option>'+vagas.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo)}</option>`).join(''); }
           else paMoverVaga.innerHTML='<option value="">Nenhuma vaga encontrada</option>';
@@ -2210,7 +2210,7 @@ function abrirMiniPipeArea(id, nome){
         _vagasList.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo)}</option>`).join('');
     } else {
       fetch(`${SUPABASE_URL}/rest/v1/vagas?select=slug,titulo&order=criado_em.desc`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
         .then(r=>r.json()).then(vagas=>{
           if(Array.isArray(vagas)&&vagas.length){
             _vagasList = vagas;
@@ -2435,7 +2435,7 @@ async function _buscarHashEsperadoArea(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/configuracoes_aderencia?vaga_key=eq._sistema&select=pesos`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
     );
     if(!res.ok) return null;
     const rows = await res.json();
@@ -2523,7 +2523,7 @@ async function salvarParecerFinalArea(){
   const btn = document.getElementById('pfSaveBtnArea');
   btn.disabled=true; btn.textContent='⏳ Salvando…';
   try{
-    const heads = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'};
+    const heads = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'};
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
       {method:'PATCH', headers:heads, body:JSON.stringify(payload)});
     if(!res.ok){ const b=await res.text(); throw new Error('Supabase '+res.status+': '+b); }
@@ -2767,7 +2767,7 @@ async function iaConfirmar(){
   const btn=document.getElementById('iaBtnConfirmar');
   btn.disabled=true; btn.textContent='⏳ Importando...';
 
-  const hdrs={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+  const hdrs={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json'};
   const existMap={};
   _allCands.forEach(x=>{existMap[(x.nome||'').toLowerCase().trim()+'||'+(x.vaga||'').toLowerCase().trim()]=x;});
 

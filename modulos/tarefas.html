@@ -131,7 +131,7 @@ window.addEventListener('message',e=>{
 /* ─── SUPABASE HELPERS ─────────────────────── */
 async function sbFetch(tabela, qs=''){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?${qs}`,{
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'}
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'}
   });
   if(!r.ok) throw new Error(await r.text());
   return r.json();
@@ -139,7 +139,7 @@ async function sbFetch(tabela, qs=''){
 async function sbInsert(tabela, dados){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}`,{
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(dados)
   });
   if(!r.ok) throw new Error(await r.text());
@@ -148,7 +148,7 @@ async function sbInsert(tabela, dados){
 async function sbUpdate(tabela, id, dados){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
     method:'PATCH',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(dados)
   });
   if(!r.ok) throw new Error(await r.text());
@@ -157,7 +157,7 @@ async function sbUpdate(tabela, id, dados){
 async function sbDelete(tabela, id){
   const r=await fetch(`${SB_URL}/rest/v1/${tabela}?id=eq.${id}`,{
     method:'DELETE',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}
   });
   if(!r.ok) throw new Error(await r.text());
 }

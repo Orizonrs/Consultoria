@@ -280,8 +280,8 @@ let _cands=[],_vagas=[];
 
 async function init(){
   lerCtx(); if(!SB_URL){setTimeout(()=>{lerCtx();if(SB_URL)init();},500);return;}
-  try{const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});const d=await r.json();if(Array.isArray(d))document.getElementById('cntCands').textContent=d.length+' candidatos';}catch(e){document.getElementById('cntCands').textContent='Erro ao conectar';}
-  try{const r=await fetch(`${SB_URL}/rest/v1/vagas?select=id`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});const d=await r.json();if(Array.isArray(d))document.getElementById('cntVagas').textContent=d.length+' vagas';}catch(e){document.getElementById('cntVagas').textContent='Erro ao conectar';}
+  try{const r=await fetch(`${SB_URL}/rest/v1/disc_historico?select=id`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}});const d=await r.json();if(Array.isArray(d))document.getElementById('cntCands').textContent=d.length+' candidatos';}catch(e){document.getElementById('cntCands').textContent='Erro ao conectar';}
+  try{const r=await fetch(`${SB_URL}/rest/v1/vagas?select=id`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}});const d=await r.json();if(Array.isArray(d))document.getElementById('cntVagas').textContent=d.length+' vagas';}catch(e){document.getElementById('cntVagas').textContent='Erro ao conectar';}
   try{const pipe=JSON.parse(localStorage.getItem(PIPE_KEY)||'{}');let total=0;Object.values(pipe).forEach(vm=>total+=Object.keys(vm||{}).length);document.getElementById('cntPipe').textContent=total+' candidatos no pipeline';}catch(e){}
   try{const agenda=JSON.parse(localStorage.getItem('orizon_agenda_v1')||'[]');document.getElementById('cntAgenda').textContent=agenda.length+' eventos';}catch(e){}
   try{const log=JSON.parse(localStorage.getItem('orizon_audit_log')||'[]');document.getElementById('cntLog').textContent=log.length+' registros';}catch(e){}
@@ -290,7 +290,7 @@ async function init(){
 async function exportarCands(fmt){
   if(!SB_URL){toast('Supabase não configurado',true);return;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}});
     const d=await r.json(); if(!Array.isArray(d)){toast('Erro ao buscar dados',true);return;}
     if(fmt==='json'){baixar(JSON.stringify(d,null,2),'candidatos.json','application/json');}
     else{
@@ -306,7 +306,7 @@ async function exportarCands(fmt){
 async function exportarVagas(fmt){
   if(!SB_URL){toast('Supabase não configurado',true);return;}
   try{
-    const r=await fetch(`${SB_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+    const r=await fetch(`${SB_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}});
     const d=await r.json(); if(!Array.isArray(d)){toast('Erro',true);return;}
     if(fmt==='json') baixar(JSON.stringify(d,null,2),'vagas.json','application/json');
     else{const cab=['Título','Empresa','Cidade','Área','Salário','Status','Criado'];const e=v=>String(v||'');const linhas=d.map(v=>[e(v.titulo),e(v.empresa),e(v.cidade),e(v.area),e(v.salario),e(v.status),e(v.criado_em)].map(x=>`"${x.replace(/"/g,'""')}"`).join(';'));baixar('\uFEFF'+cab.join(';')+'\n'+linhas.join('\n'),`vagas-${ts()}.csv`,'text/csv;charset=utf-8;');}

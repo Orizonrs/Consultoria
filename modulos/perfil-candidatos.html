@@ -3057,7 +3057,7 @@ function abrirMiniPipe(id, nome) {
     };
 
     fetch(`${SB_URL}/rest/v1/vagas?select=slug,titulo&order=titulo.asc`, {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + (window.SB_TOKEN||SB_KEY) }
     })
       .then(r => { if(!r.ok) throw new Error(r.status); return r.json(); })
       .then(_preencherVagas)
@@ -3482,7 +3482,7 @@ async function evCarregarDb(){
   try{
     const res = await fetch(
       `${SB_URL}/rest/v1/${EV_TABLE}?select=*&order=criado_em.asc`,
-      { headers:{ 'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Accept':'application/json','Cache-Control':'no-cache' } }
+      { headers:{ 'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Accept':'application/json','Cache-Control':'no-cache' } }
     );
     if(res.ok){
       const rows = await res.json();
@@ -3612,7 +3612,7 @@ async function evConfirmar(){
   try{
     await fetch(`${SB_URL}/rest/v1/${EV_TABLE}`,{
       method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
       body:JSON.stringify({id:'gestao_principal',dados:_evDb,criado_em:new Date().toISOString()})
     });
   }catch(e){ console.warn('[evConfirmar] Supabase falhou:',e.message); }

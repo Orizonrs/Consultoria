@@ -246,8 +246,8 @@ let SUPABASE_URL = 'https://soyogedsgrvduygjsgqg.supabase.co';
 let SUPABASE_KEY = 'sb_publishable_pEbfDDewFmXfBWXg4HtGNw_gb_nOMxb';
 // ── Recebe credenciais do shell via localStorage + postMessage ──
 (function(){
-  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; } }catch(e){}
-  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; } });
+  try{ var c=JSON.parse(localStorage.getItem("orizon_ctx_v3")||"{}"); if(c.sb_url){ SUPABASE_URL=c.sb_url; SUPABASE_KEY=c.sb_key; if(c.sb_token) window.SUPABASE_TOKEN=c.sb_token; } }catch(e){}
+  window.addEventListener("message",function(e){ if(e.data&&e.data.tipo==="orizon_ctx"){ SUPABASE_URL=e.data.sb_url; SUPABASE_KEY=e.data.sb_key; if(e.data.sb_token) window.SUPABASE_TOKEN=e.data.sb_token; } });
 })();
 const PIPE_KEY = 'orizon_pipeline_v1';
 
@@ -290,7 +290,7 @@ function setFiltro(f){
 async function loadPipe(){
   try{
     const r=await fetch(`${SUPABASE_URL}/rest/v1/pipeline?select=vaga_slug,candidato_id,etapa`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY)}});
     const rows=await r.json();
     _pipe={};
     if(Array.isArray(rows)) rows.forEach(row=>{
@@ -311,7 +311,7 @@ async function limparFantasmasOrfaos(){
   try{
     const res=await fetch(
       `${SUPABASE_URL}/rest/v1/pipeline?candidato_id=in.(${orfaos.join(',')})`,
-      {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}}
+      {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY),'Prefer':'return=minimal'}}
     );
     if(res.ok){
       console.log(`🧹 ${orfaos.length} entrada(s) fantasma removida(s) do pipeline`);
@@ -327,7 +327,7 @@ async function saveEntry(vagaSlug,candId,etapa){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/pipeline?on_conflict=vaga_slug,candidato_id`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({vaga_slug:vagaSlug,candidato_id:String(candId),etapa,atualizado_em:new Date().toISOString()})
     });
     if(!res.ok) throw new Error('HTTP '+res.status);
@@ -340,8 +340,8 @@ async function saveEntry(vagaSlug,candId,etapa){
 async function init(){
   try{
     const [r1,r2]=await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}),
-      fetch(`${SUPABASE_URL}/rest/v1/vagas?select=id,titulo,icone,empresa,cidade,slug,ativo,status`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}),
+      fetch(`${SUPABASE_URL}/rest/v1/disc_historico?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY)}}),
+      fetch(`${SUPABASE_URL}/rest/v1/vagas?select=id,titulo,icone,empresa,cidade,slug,ativo,status`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY)}}),
     ]);
     _cands=await r1.json(); if(!Array.isArray(_cands)) _cands=[];
     _candIds=new Set(_cands.map(c=>String(c.id)));
@@ -482,12 +482,12 @@ async function excluirVaga(id, slug, titulo, btn){
     // Remove candidatos do pipeline associados
     await fetch(`${SUPABASE_URL}/rest/v1/pipeline?vaga_slug=eq.${encodeURIComponent(slug)}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY),'Prefer':'return=minimal'}
     });
     // Remove a vaga
     const r = await fetch(`${SUPABASE_URL}/rest/v1/vagas?id=eq.${id}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(window.SUPABASE_TOKEN||SUPABASE_KEY),'Prefer':'return=minimal'}
     });
     if(r.ok){ toast('🗑️ Vaga excluída!'); await carregarDados(); }
     else{ btn.innerHTML='❌'; btn.disabled=false; }

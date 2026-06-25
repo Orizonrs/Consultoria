@@ -47,7 +47,7 @@ async function diagnosticar() {
   const email=document.getElementById('inEmail').value.trim().toLowerCase();
   const out=document.getElementById('resultado');
   out.innerHTML='<p style="color:#777">⏳ Buscando...</p>';
-  const hdrs={'apikey':KEY,'Authorization':'Bearer '+KEY,'Accept':'application/json'};
+  const hdrs={'apikey':KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Accept':'application/json'};
   let cands=[];
   if(email){const r=await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(email)}&select=*&order=criado_em.desc&limit=20`,{headers:hdrs});if(r.ok)cands=await r.json();}
   if(!cands.length&&nome){const r=await fetch(`${SB}/rest/v1/disc_historico?nome=ilike.*${encodeURIComponent(nome.split(' ')[0])}*&select=*&order=criado_em.desc&limit=20`,{headers:hdrs});if(r.ok)cands=await r.json();}
@@ -107,7 +107,7 @@ async function _patch(id,fonte){
   try{
     const r=await fetch(`${SB}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
       method:'PATCH',
-      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({dom:fonte.disc_perfil,disc_perfil:fonte.disc_perfil,sec:fonte.sec||null,pct_d:fonte.pct_d||null,pct_i:fonte.pct_i||null,pct_s:fonte.pct_s||null,pct_c:fonte.pct_c||null,url:fonte.url||null,disc_atualizado_em:new Date().toISOString()})
     });
     return r.ok||r.status===204;
