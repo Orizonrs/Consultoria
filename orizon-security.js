@@ -124,10 +124,27 @@
     return new Promise(resolve => { _passResolvers.push(resolve); });
   }
 
+  /* ── TOKEN DA SESSÃO ── */
+  function _getToken() {
+    try {
+      // Tenta orizon_ctx_v3 (salvo pelo disc-admin.html após login)
+      const ctx3 = JSON.parse(localStorage.getItem('orizon_ctx_v3') || 'null');
+      if (ctx3 && ctx3.usuario && ctx3.usuario.access_token) return ctx3.usuario.access_token;
+      // Fallback: orizon_ctx_v1 (propagado pelo supabase-config.js)
+      const ctx1 = JSON.parse(localStorage.getItem('orizon_ctx_v1') || 'null');
+      if (ctx1 && ctx1.sb_token && ctx1.sb_token !== _k) return ctx1.sb_token;
+    } catch(e) {}
+    return _k; // anon key como último recurso
+  }
+
+  function _authHeaders(extra = {}) {
+    return { 'apikey': _k, 'Authorization': 'Bearer ' + _getToken(), ...extra };
+  }
+
   /* ── HELPERS SUPABASE ── */
   async function sbGet(table, filter = '') {
     const url = `${_u}/rest/v1/${table}?select=*${filter}&order=criado_em.asc`;
-    const res = await fetch(url, { headers: { 'apikey': _k, 'Authorization': 'Bearer ' + _k, 'Range': '0-9999', 'Prefer': 'count=none' } });
+    const res = await fetch(url, { headers: _authHeaders({ 'Range': '0-9999', 'Prefer': 'count=none' }) });
     if (!res.ok) { const txt = await res.text(); throw new Error('sbGet ' + table + ' HTTP ' + res.status + ': ' + txt); }
     return res.json();
   }
@@ -135,7 +152,7 @@
   async function sbUpsert(table, data) {
     const res = await fetch(`${_u}/rest/v1/${table}`, {
       method: 'POST',
-      headers: { 'apikey': _k, 'Authorization': 'Bearer ' + _k, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' },
+      headers: _authHeaders({ 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates' }),
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error(await res.text());
@@ -146,7 +163,7 @@
     const [col, val] = eq.split('=');
     const res = await fetch(`${_u}/rest/v1/${table}?${col}=eq.${encodeURIComponent(val)}`, {
       method: 'DELETE',
-      headers: { 'apikey': _k, 'Authorization': 'Bearer ' + _k }
+      headers: _authHeaders()
     });
     if (!res.ok) throw new Error(await res.text());
   }
@@ -154,7 +171,7 @@
   async function sbPatch(table, filter, payload) {
     const res = await fetch(`${_u}/rest/v1/${table}?${filter}`, {
       method: 'PATCH',
-      headers: { 'apikey': _k, 'Authorization': 'Bearer ' + _k, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      headers: _authHeaders({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }),
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(await res.text());
@@ -164,7 +181,7 @@
   async function sbPost(table, payload, prefer = 'return=representation') {
     const res = await fetch(`${_u}/rest/v1/${table}`, {
       method: 'POST',
-      headers: { 'apikey': _k, 'Authorization': 'Bearer ' + _k, 'Content-Type': 'application/json', 'Prefer': prefer },
+      headers: _authHeaders({ 'Content-Type': 'application/json', 'Prefer': prefer }),
       body: JSON.stringify(payload)
     });
     if (!res.ok) throw new Error(await res.text());
@@ -221,6 +238,7 @@
   global.OrizonSec = {
     _url: _u,
     _key: _k,
+    getToken: _getToken,
     sbGet, sbUpsert, sbDelete, sbPatch, sbPost,
     encryptParecer, decryptParecer, isEncrypted, encryptText, decryptText,
     requirePassword, hasSessionPassword, getSessionPassword, setSessionPassword, clearSessionPassword,
