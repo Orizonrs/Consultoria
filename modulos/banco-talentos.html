@@ -1206,7 +1206,7 @@ async function salvarStatusContato(id, sel){
   if(idx>=0) _allCands[idx].status_contato = valor;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
        body:JSON.stringify({status_contato: valor})});
     if(!res.ok) throw new Error('Supabase '+res.status);
     mostrarToast(valor ? '💬 Status salvo: '+(_SC_LABELS[valor]||valor) : '💬 Status removido');
@@ -1246,7 +1246,7 @@ async function carregarDados(){
     try{
       const resAssign = await fetch(
         `${SUPABASE_URL}/rest/v1/entrevistados_assign?select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resAssign.ok){
         const assignRows = await resAssign.json();
@@ -1258,7 +1258,7 @@ async function carregarDados(){
     try{
       const resAreas = await fetch(
         `${SUPABASE_URL}/rest/v1/areas_assign?select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resAreas.ok){
         const areasRows = await resAreas.json();
@@ -1272,7 +1272,7 @@ async function carregarDados(){
     try{
       const resPend = await fetch(
         `${SUPABASE_URL}/rest/v1/pendencias_assign?select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resPend.ok){
         const pendRows = await resPend.json();
@@ -1284,7 +1284,7 @@ async function carregarDados(){
     try{
       const resInbox = await fetch(
         `${SUPABASE_URL}/rest/v1/inbox_assign?select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resInbox.ok){
         const inboxRows = await resInbox.json();
@@ -1295,7 +1295,7 @@ async function carregarDados(){
     // Carrega assign de cargos
     try{
       const resCargos = await fetch(`${SUPABASE_URL}/rest/v1/cargos_assign?select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}});
       if(resCargos.ok){
         const cargosRows = await resCargos.json();
         _idsEmCargos = new Set(Array.isArray(cargosRows) ? cargosRows.map(r=>String(r.cand_id)) : []);
@@ -1306,7 +1306,7 @@ async function carregarDados(){
     try{
       const resAreasDisp = await fetch(
         `${SUPABASE_URL}/rest/v1/areas_secoes?select=id,nome,cor&order=criado_em.asc`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resAreasDisp.ok){
         const areasData = await resAreasDisp.json();
@@ -1318,7 +1318,7 @@ async function carregarDados(){
     try{
       const resCargosDisp = await fetch(
         `${SUPABASE_URL}/rest/v1/cargos_secoes?select=id,nome,cor&order=criado_em.asc`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       if(resCargosDisp.ok){
         const cargosData = await resCargosDisp.json();
@@ -1328,7 +1328,7 @@ async function carregarDados(){
 
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?select=*&order=criado_em.desc`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Accept':'application/json','Cache-Control':'no-cache'}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Accept':'application/json','Cache-Control':'no-cache'}}
     );
     const hist = await res.json();
     _allCands = Array.isArray(hist) ? hist : [];
@@ -1364,7 +1364,7 @@ async function carregarDados(){
     semDom.forEach(h => {
       fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(h.id)}`, {
         method: 'PATCH',
-        headers: {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        headers: {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
         body: JSON.stringify({ dom: h.disc_perfil })
       }).catch(()=>{});
     });
@@ -1373,7 +1373,7 @@ async function carregarDados(){
     renderAlertaDuplicatas();
     // Carrega vagas para o select de mover
     fetch(`${SUPABASE_URL}/rest/v1/vagas?order=criado_em.desc`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
       .then(r=>r.json()).then(vagas=>{
         if(!Array.isArray(vagas)) return;
         _vagasList = vagas;
@@ -1426,7 +1426,7 @@ async function salvarStatusContatoPerfil(){
   _perfilAtual.status_contato = valor;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
        body:JSON.stringify({status_contato: valor})});
     if(!res.ok) throw new Error('Supabase '+res.status);
     mostrarToast(valor ? '💬 Status salvo: '+(_SC_LABELS[valor]||valor) : '💬 Status removido');
@@ -1768,7 +1768,7 @@ async function mesclarNeste(idA, idB, idDestino){
   try{
     if(Object.keys(payload).length){
       const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(idDestino)}`,
-        {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+        {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
       if(!res.ok) throw new Error('Supabase '+res.status);
       Object.assign(destino, payload);
       const idx=_allCands.findIndex(x=>String(x.id)===String(idDestino));
@@ -1776,7 +1776,7 @@ async function mesclarNeste(idA, idB, idDestino){
     }
     // Exclui o outro
     const del = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(idOutro)}`,
-      {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}});
+      {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}});
     if(!del.ok) throw new Error('Erro ao excluir duplicata: Supabase '+del.status);
     _allCands = _allCands.filter(x=>String(x.id)!==String(idOutro));
     mostrarToast('✅ Registros mesclados! Duplicata removida.');
@@ -1876,7 +1876,7 @@ async function carregarTodosPesos(){
   // ── SUPABASE É A FONTE DE VERDADE ──────────────────────────
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes_aderencia?select=*`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Cache-Control':'no-cache'}});
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Cache-Control':'no-cache'}});
     if(res.ok){
       const rows = await res.json();
       if(Array.isArray(rows)){
@@ -1917,7 +1917,7 @@ async function setPesosSupabase(vagaKey, pesos){
     const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes_aderencia`,{
       method:'POST',
       headers:{
-        'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,
+        'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),
         'Content-Type':'application/json',
         'Prefer':'resolution=merge-duplicates,return=minimal'
       },
@@ -2080,7 +2080,7 @@ async function salvarAderenciaCalculada(id, valor){
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
       body: JSON.stringify({ aderencia_calculada: valor })
     });
   }catch(e){}
@@ -2122,7 +2122,7 @@ async function moverParaInbox(id, nome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/inbox_assign`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id)})
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
@@ -2137,7 +2137,7 @@ async function desfazerMoverInbox(id, nome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/inbox_assign?cand_id=eq.${encodeURIComponent(id)}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
     _idsEmInbox.delete(String(id));
@@ -2218,13 +2218,13 @@ async function confirmarInboxMoverVaga(){
     const fitScore = cand ? (parseFloat(cand.fit_score||cand.fit_manual||0)||0) : 0;
     const res = await fetch(`${SUPABASE_URL}/rest/v1/pipeline?on_conflict=vaga_slug,candidato_id`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({vaga_slug:vagaSlug,candidato_id:String(id),etapa,fit_score:fitScore,atualizado_em:new Date().toISOString()})
     });
     if(!res.ok){ let e='Supabase '+res.status; try{const b=await res.json();e+=': '+(b.message||b.hint||'');}catch(e2){} throw new Error(e); }
     // Remove da inbox
     await fetch(`${SUPABASE_URL}/rest/v1/inbox_assign?cand_id=eq.${encodeURIComponent(id)}`,{
-      method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}
     });
     _idsEmInbox.delete(String(id));
     try{ const pipe=JSON.parse(localStorage.getItem(PIPE_KEY)||'{}'); if(!pipe[vagaSlug]) pipe[vagaSlug]={}; pipe[vagaSlug][String(id)]={etapa,fit_score:fitScore}; localStorage.setItem(PIPE_KEY,JSON.stringify(pipe)); }catch(e2){}
@@ -2323,7 +2323,7 @@ async function confirmarBancoMassa(){
   for(const id of ids){
     try{
       const r = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${id}`,
-        {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+        {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
          body:JSON.stringify({no_banco:true})});
       if(r.ok){ const c=_allCands.find(x=>String(x.id)===String(id)); if(c) c.no_banco=true; ok++; }
       else err++;
@@ -2344,7 +2344,7 @@ async function confirmarExcluirMassa(){
   for(const id of ids){
     try{
       const r = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${id}`,
-        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}});
       if(r.ok){ _allCands = _allCands.filter(x=>String(x.id)!==String(id)); ok++; }
       else err++;
     }catch(e){ err++; }
@@ -2433,12 +2433,12 @@ async function confirmarAreaCargoMassa(){
         // Se mover, remove de outras áreas/cargos primeiro
         if(modo==='mover'){
           await fetch(`${SUPABASE_URL}/rest/v1/${tabela}?cand_id=eq.${candId}`,
-            {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});
+            {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}});
           if(window._acTab==='area') _idsEmAreas.delete(String(candId));
           else _idsEmCargos.delete(String(candId));
         }
         const r = await fetch(`${SUPABASE_URL}/rest/v1/${tabela}`,
-          {method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+          {method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
            body:JSON.stringify({cand_id:candId, [window._acTab==='area'?'area_id':'cargo_id']:destId})});
         if(r.ok){
           if(window._acTab==='area') _idsEmAreas.add(String(candId));
@@ -2470,7 +2470,7 @@ async function confirmarMoverMassa(){
       const fitScore = cand ? (parseFloat(cand.fit_score||cand.fit_manual||0)||0) : 0;
       const res = await fetch(`${SUPABASE_URL}/rest/v1/pipeline?on_conflict=vaga_slug,candidato_id`,{
         method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
         body:JSON.stringify({vaga_slug:vagaSlug,candidato_id:String(id),etapa,fit_score:fitScore,atualizado_em:new Date().toISOString()})
       });
       if(!res.ok) throw new Error('HTTP '+res.status);
@@ -3267,7 +3267,7 @@ function abrirPerfil(id){
     if(_vagasList && _vagasList.length){
       pMoverVaga.innerHTML = '<option value="">Selecione uma vaga ativa…</option>' + _vagasList.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo)}</option>`).join('');
     } else {
-      fetch(`${SUPABASE_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+      fetch(`${SUPABASE_URL}/rest/v1/vagas?order=criado_em.desc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
         .then(r=>r.json()).then(vagas=>{
           if(Array.isArray(vagas)&&vagas.length){ _vagasList=vagas; pMoverVaga.innerHTML='<option value="">Selecione uma vaga ativa…</option>'+vagas.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo)}</option>`).join(''); }
           else { pMoverVaga.innerHTML='<option value="">Nenhuma vaga encontrada</option>'; }
@@ -3329,7 +3329,7 @@ function abrirPerfil(id){
     try{
       const chk = await fetch(
         `${SUPABASE_URL}/rest/v1/hall_craques_assign?cand_id=eq.${encodeURIComponent(h.id)}&select=cand_id`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
       );
       const rows = await chk.json();
       const btn = document.getElementById('btnHallCraques_' + h.id);
@@ -3653,7 +3653,7 @@ async function fecharPerfil(){
     if(Object.keys(payload).length){
       try{
         await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-          {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+          {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
         Object.assign(_perfilAtual, payload);
         const idx=_allCands.findIndex(x=>x.id===_perfilAtual.id);
         if(idx>=0) Object.assign(_allCands[idx], payload);
@@ -3887,7 +3887,7 @@ async function toggleDocCompleta(id, labelEl){
   filtrarCands();
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({doc_completa:novoVal})});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({doc_completa:novoVal})});
     if(!res.ok){ h.doc_completa=!novoVal; filtrarCands(); mostrarToast('Erro ao salvar docs',true); return; }
     mostrarToast(novoVal?'📁 Documentação marcada como completa':'📁 Documentação desmarcada');
   }catch(e){ h.doc_completa=!novoVal; filtrarCands(); mostrarToast('Erro: '+e.message,true); }
@@ -3915,7 +3915,7 @@ async function moverCandParaVagaPerfil(){
       method:'POST',
       headers:{
         'apikey':SUPABASE_KEY,
-        'Authorization':'Bearer '+SUPABASE_KEY,
+        'Authorization':'Bearer '+OrizonSec.getToken(),
         'Content-Type':'application/json',
         'Prefer':'resolution=merge-duplicates,return=minimal'
       },
@@ -3971,7 +3971,7 @@ async function salvarNomeVaga(){
   if(!Object.keys(payload).length){ mostrarToast('Sem alterações para salvar',true); return; }
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(payload)});
     if(!res.ok){ let e='Supabase '+res.status; try{const b=await res.json();e+=': '+(b.message||b.hint||'');}catch(e2){} throw new Error(e); }
     Object.assign(_perfilAtual, payload);
     const idx=_allCands.findIndex(x=>x.id===_perfilAtual.id);
@@ -4013,7 +4013,7 @@ async function confirmarDuplicar(){
   fecharDuplicar();
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico`,
-      {method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(clone)});
+      {method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(clone)});
     if(!res.ok){ let e='Supabase '+res.status; try{const b=await res.json();e+=': '+(b.message||b.hint||'');}catch(e2){} throw new Error(e); }
     const created = await res.json();
     const novo = Array.isArray(created)?created[0]:created;
@@ -4032,7 +4032,7 @@ async function enviarParaHall(candId, candNome){
   try{
     const chk = await fetch(
       `${SUPABASE_URL}/rest/v1/hall_craques_assign?cand_id=eq.${encodeURIComponent(candId)}&select=cand_id`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
     );
     const rows = await chk.json();
     if(Array.isArray(rows) && rows.length > 0){
@@ -4047,7 +4047,7 @@ async function enviarParaHall(candId, candNome){
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Authorization': 'Bearer ' + OrizonSec.getToken(),
         'Content-Type': 'application/json',
         'Prefer': 'resolution=ignore-duplicates,return=minimal'
       },
@@ -4139,7 +4139,7 @@ async function importarUrl(){
   if(btn) btn.disabled=true;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok){
       let errMsg = 'Supabase '+res.status;
       try{ const b=await res.json(); errMsg += ': '+(b.message||b.hint||b.details||JSON.stringify(b)); }catch(e2){}
@@ -4181,7 +4181,7 @@ async function salvarDadosCandidato(){
   if(!Object.keys(payload).length){ mostrarToast('Sem alterações',true); return; }
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error('Supabase '+res.status);
     Object.assign(_perfilAtual, payload);
     const idx=_allCands.findIndex(x=>x.id===_perfilAtual.id);
@@ -4204,7 +4204,7 @@ async function limparFitManual(){
   if(!confirm('Remover o Fit Manual de '+(_perfilAtual.nome||'este candidato')+'? O Fit automático será restaurado.')) return;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({fit_manual:null})});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({fit_manual:null})});
     if(!res.ok) throw new Error('Supabase '+res.status);
     _perfilAtual.fit_manual = null;
     const idx = _allCands.findIndex(x=>x.id===_perfilAtual.id);
@@ -4263,7 +4263,7 @@ async function salvarManual(){
   if(!Object.keys(payload).length){ mostrarToast('Nenhuma alteração para salvar',true); return; }
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok){
       let errMsg = 'Supabase '+res.status;
       try{ const errBody=await res.json(); errMsg += ': '+(errBody.message||errBody.hint||JSON.stringify(errBody)); }catch(e2){}
@@ -4319,11 +4319,11 @@ async function executarDelCand(){
     // Apaga de todas as tabelas — independente de no_banco
     await Promise.allSettled([
       fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,
-        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}}),
+        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}}),
       fetch(`${SUPABASE_URL}/rest/v1/entrevistados_assign?cand_id=eq.${encodeURIComponent(id)}`,
-        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}}),
+        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}}),
       fetch(`${SUPABASE_URL}/rest/v1/areas_assign?cand_id=eq.${encodeURIComponent(id)}`,
-        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}}),
+        {method:'DELETE',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}}),
     ]);
     _allCands = _allCands.filter(x=>String(x.id)!==String(id));
     atualizarStatsCands(_allCands);
@@ -4409,7 +4409,7 @@ async function moverParaEntrevistados(id, nome){
     // O recrutador organiza em seções dentro de entrevistados.html
     const res = await fetch(`${SUPABASE_URL}/rest/v1/entrevistados_assign`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id)})
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
@@ -4417,7 +4417,7 @@ async function moverParaEntrevistados(id, nome){
     // Também tenta marcar em_entrevistados=true no registro (silencioso se coluna não existir)
     fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({em_entrevistados:true})
     }).catch(()=>{});
     mostrarToastDesfazer(`🎤 ${nome} movido para Entrevistados!`, ()=>desfazerMoverEntrevistados(id,nome));
@@ -4431,14 +4431,14 @@ async function desfazerMoverEntrevistados(id, nome){
     // Remove do assign de entrevistados
     const res = await fetch(`${SUPABASE_URL}/rest/v1/entrevistados_assign?cand_id=eq.${encodeURIComponent(id)}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
     _idsEmEntrevistados.delete(String(id));
     // Também tenta marcar em_entrevistados=false (silencioso)
     fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,{
       method:'PATCH',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({em_entrevistados:false})
     }).catch(()=>{});
     mostrarToast(`↩️ ${nome} retornou ao Banco de Talentos!`);
@@ -4453,7 +4453,7 @@ async function moverParaPendencias(id, nome){
   if(!cand){ mostrarToast('Candidato não encontrado',true); return; }
   if(_idsEmPendencias.has(String(id))){ mostrarToast(`${nome} já está em Pendências!`); return; }
   try{
-    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json'};
     const res = await fetch(`${SUPABASE_URL}/rest/v1/pendencias_assign`,{
       method:'POST',
       headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},
@@ -4477,7 +4477,7 @@ async function moverParaEntrevistaPendente(id, nome, vaga){
   const cand = _allCands.find(x=>String(x.id)===String(id));
   if(!cand){ mostrarToast('Candidato não encontrado', true); return; }
   try{
-    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+    const H = {'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json'};
     const data = {
       cand_id: String(id),
       nome: nome || 'Sem nome',
@@ -4506,7 +4506,7 @@ async function desfazerMoverPendencias(id, nome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/pendencias_assign?cand_id=eq.${encodeURIComponent(id)}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
     _idsEmPendencias.delete(String(id));
@@ -4543,7 +4543,7 @@ async function moverParaBanco(id, nome){
   if(cand.no_banco){ mostrarToast(`${nome} já está no Banco!`); return; }
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},
        body:JSON.stringify({no_banco:true})});
     if(!res.ok) throw new Error('Supabase '+res.status);
     cand.no_banco = true;
@@ -4638,7 +4638,7 @@ async function buscarDiscPorEmail(){
     // 1. Busca no Supabase por email_externo
     const res1 = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?email_externo=ilike.${encodeURIComponent(email)}&select=id,nome,vaga,data,url,url_resultado_fit,pct_d,pct_i,pct_s,pct_c,dom,sec,combo_nome`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
     );
     const rows1 = await res1.json();
 
@@ -4714,7 +4714,7 @@ async function importarDiscDeRegistro(srcId, dom, sec, d, i, s, c, url){
   if(url) payload.url = url;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error('Supabase '+res.status);
     Object.assign(_perfilAtual, payload);
     const idx=_allCands.findIndex(x=>x.id===_perfilAtual.id);
@@ -4731,7 +4731,7 @@ async function lookupDiscPorEmailNovo(email, nome){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?email_externo=ilike.${encodeURIComponent(email.toLowerCase().trim())}&select=id,nome,vaga,data,url,pct_d,pct_i,pct_s,pct_c,dom,sec,combo_nome`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
     );
     const rows = await res.json();
     if(!Array.isArray(rows)) return null;
@@ -4821,7 +4821,7 @@ async function confirmarMoverArea(areaId, areaNome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/areas_assign`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id), area_id:areaId})
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
@@ -4840,7 +4840,7 @@ async function desfazerMoverArea(id, nome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/areas_assign?cand_id=eq.${encodeURIComponent(id)}`,{
       method:'DELETE',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Prefer':'return=minimal'}
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Prefer':'return=minimal'}
     });
     if(!res.ok){ const t=await res.text(); throw new Error('Supabase '+res.status+': '+t); }
     _idsEmAreas.delete(String(id));
@@ -4952,7 +4952,7 @@ async function amcConfirmarMover(areaId, areaNome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/areas_assign`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id), area_id:areaId})
     });
     if(!res.ok){ const t=await res.text(); throw new Error(t); }
@@ -4972,7 +4972,7 @@ async function amcConfirmarCopiar(){
     const promises = [..._cargosSelecionados].map(areaId =>
       fetch(`${SUPABASE_URL}/rest/v1/areas_assign`,{
         method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
         body:JSON.stringify({cand_id:String(id), area_id:areaId})
       })
     );
@@ -5080,7 +5080,7 @@ async function cmcConfirmarMover(cargoId, cargoNome){
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/cargos_assign`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
       body:JSON.stringify({cand_id:String(id), cargo_id:cargoId})
     });
     if(!res.ok){ const t=await res.text(); throw new Error(t); }
@@ -5099,7 +5099,7 @@ async function cmcConfirmarCopiar(){
     const promises = [..._cargosSelecionadosCargo].map(cargoId =>
       fetch(`${SUPABASE_URL}/rest/v1/cargos_assign`,{
         method:'POST',
-        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+        headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
         body:JSON.stringify({cand_id:String(id), cargo_id:cargoId})
       })
     );
@@ -5175,7 +5175,7 @@ async function _autoRefreshTick(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?select=id,atualizado_em,criado_em&order=atualizado_em.desc.nullslast,criado_em.desc`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Accept':'application/json','Cache-Control':'no-cache'}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Accept':'application/json','Cache-Control':'no-cache'}}
     );
     if(!res.ok) return;
     const rows = await res.json();
@@ -5276,7 +5276,7 @@ async function salvarNovoCand(){
   try{
     const res=await fetch(`${SUPABASE_URL}/rest/v1/disc_historico`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify(payload)
     });
     if(!res.ok){ const e=await res.json(); throw new Error(e.message||e.hint||res.status); }
@@ -5557,7 +5557,7 @@ async function _buscarHashEsperado(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/configuracoes_aderencia?vaga_key=eq._sistema&select=pesos`,
-      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}}
+      {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}}
     );
     if(!res.ok) return null;
     const rows = await res.json();
@@ -5693,7 +5693,7 @@ async function salvarParecerFinal(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_perfilAtual.id)}`,
-      {method:'PATCH', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}, body:JSON.stringify(payload)}
+      {method:'PATCH', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'}, body:JSON.stringify(payload)}
     );
     if(!res.ok){ const b=await res.text(); throw new Error('Supabase '+res.status+': '+b); }
 
@@ -5765,7 +5765,7 @@ function abrirMiniPipe(id, nome) {
     } else {
       // Fetch if not loaded
       fetch(`${SUPABASE_URL}/rest/v1/disc_vagas?select=slug,titulo&status=eq.ativa&order=criado_em.desc`,
-        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}})
+        {headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken()}})
         .then(r=>r.json()).then(vagas=>{
           if(Array.isArray(vagas)&&vagas.length){
             _vagasList = vagas;
@@ -5808,7 +5808,7 @@ async function confirmarMiniPipe() {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Authorization': 'Bearer ' + OrizonSec.getToken(),
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates,return=minimal'
       },
@@ -5836,7 +5836,7 @@ async function confirmarMiniPipe() {
         method: 'DELETE',
         headers: {
           'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Authorization': 'Bearer ' + OrizonSec.getToken(),
           'Prefer': 'return=minimal'
         }
       });
@@ -5907,7 +5907,7 @@ async function confirmarImportarDisc(srcId, dom, sec, d, i, s, c, url){
   if(url) payload.url = url;
   try{
     const res = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_importDiscNovoId)}`,
-      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
+      {method:'PATCH',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(payload)});
     if(!res.ok) throw new Error('Supabase '+res.status);
     const idx = _allCands.findIndex(x=>String(x.id)===String(_importDiscNovoId));
     if(idx>=0) Object.assign(_allCands[idx], payload);
@@ -6227,7 +6227,7 @@ async function recalcularCurriculo(id, nome, vaga, btnEl) {
 
   try {
     // 1. Busca dados completos do candidato no Supabase
-    const hdrs = {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY};
+    const hdrs = {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + OrizonSec.getToken()};
     const res  = await fetch(`${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(id)}&select=*`, {headers: hdrs});
     if (!res.ok) throw new Error('Supabase ' + res.status);
     const rows = await res.json();
@@ -6359,7 +6359,7 @@ Retorne APENAS este JSON válido (sem markdown, sem texto fora do JSON):
     // 5. Chama a IA (usa Edge Function do Supabase)
     const edgeRes = await fetch(`${SUPABASE_URL}/functions/v1/analisar-candidato`, {
       method: 'POST',
-      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json'},
+      headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + OrizonSec.getToken(), 'Content-Type': 'application/json'},
       body: JSON.stringify({ prompt, max_tokens: 2000 })
     });
 
@@ -6510,7 +6510,7 @@ async function salvarCurriculoUrl() {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_addCvCandId)}`,
-      { method:'PATCH', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'return=minimal'}, body: JSON.stringify({ curriculo_url: url }) }
+      { method:'PATCH', headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'return=minimal'}, body: JSON.stringify({ curriculo_url: url }) }
     );
     if (!res.ok) throw new Error('Supabase ' + res.status);
     const idx = _allCands.findIndex(x => String(x.id) === String(_addCvCandId));
@@ -6577,7 +6577,7 @@ async function evCarregarDb(){
   try{
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/${EV_TABLE}?select=*&order=criado_em.asc`,
-      { headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Accept':'application/json','Cache-Control':'no-cache' } }
+      { headers:{ 'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Accept':'application/json','Cache-Control':'no-cache' } }
     );
     if(res.ok){
       const rows = await res.json();
@@ -6704,7 +6704,7 @@ async function evConfirmar(){
   try{
     await fetch(`${SUPABASE_URL}/rest/v1/${EV_TABLE}`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+OrizonSec.getToken(),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
       body:JSON.stringify({id:'gestao_principal',dados:_evDb,criado_em:new Date().toISOString()})
     });
   }catch(e){ console.warn('[evConfirmar] Supabase falhou:',e.message); }
@@ -6913,7 +6913,7 @@ async function salvarScoreCvManual() {
   try {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_scoreCvId)}`,
-      { method: 'PATCH', headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal'},
+      { method: 'PATCH', headers: {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + OrizonSec.getToken(), 'Content-Type': 'application/json', 'Prefer': 'return=minimal'},
         body: JSON.stringify(patch) }
     );
     if (!res.ok) throw new Error('Supabase ' + res.status);
