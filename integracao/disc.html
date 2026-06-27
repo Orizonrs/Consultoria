@@ -2704,16 +2704,16 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
     // Tentativa 1: email exato (filtro mais forte)
     if (emailC) {
       const r = await fetch(
-        `${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
+        `${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
         { headers: sbDiscHeaders() }
       );
       if (r.ok) candidatos = await r.json();
     }
 
-    // Tentativa 2: se não achou por email, tenta por data_nascimento
+    // Tentativa 2: se não achou por email, tenta por nome_mae
     if ((!candidatos || candidatos.length === 0) && maeC) {
       const r = await fetch(
-        `${SB_DISC}/rest/v1/disc_historico?data_nascimento=eq.${encodeURIComponent(maeC.trim())}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
+        `${SB_DISC}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(maeC.trim())}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
         { headers: sbDiscHeaders() }
       );
       if (r.ok) candidatos = await r.json();
@@ -2723,12 +2723,12 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
     function pontuar(c) {
       let pts = 0;
       const cEmail = (c.email_externo || '').toLowerCase().trim();
-      const cMae   = (c.data_nascimento || '').trim();
+      const cMae   = (c.nome_mae     || '').toLowerCase().trim();
       const cNome  = (c.nome         || '').toLowerCase().trim();
       const cTel   = (c.tel_externo  || '').replace(/\D/g, '');
 
       if (emailC && cEmail === emailC.toLowerCase().trim())  pts += 4; // peso máximo
-      if (maeC   && cMae   === maeC.trim())                  pts += 3;
+      if (maeC   && cMae   === maeC.toLowerCase().trim())    pts += 3;
       if (telDigits && cTel === telDigits)                   pts += 2;
       if (nomeC  && cNome  === nomeC.toLowerCase().trim())   pts += 1;
       return pts;
@@ -2776,7 +2776,7 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
           nome:           nomeC || 'Não informado',
           email_externo:  emailC ? emailC.toLowerCase().trim() : null,
           tel_externo:    telC || null,
-          data_nascimento: maeC || null,
+          nome_mae:       maeC || null,
           ...patchData,
           criado_em: agora,
         }),

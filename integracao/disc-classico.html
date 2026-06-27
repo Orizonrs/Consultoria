@@ -2531,17 +2531,17 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
     const limiteData = new Date(Date.now() - TTL_DISC_MS).toISOString(); // 2 meses
     let candidatos = [];
     if (emailC) {
-      const r = await fetch(`${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&criado_em=gte.${encodeURIComponent(limiteData)}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`, { headers: sbDiscHeaders() });
+      const r = await fetch(`${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&criado_em=gte.${encodeURIComponent(limiteData)}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`, { headers: sbDiscHeaders() });
       if (r.ok) candidatos = await r.json();
     }
     if ((!candidatos || candidatos.length === 0) && maeC) {
-      const r = await fetch(`${SB_DISC}/rest/v1/disc_historico?data_nascimento=eq.${encodeURIComponent(maeC.trim())}&criado_em=gte.${encodeURIComponent(limiteData)}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`, { headers: sbDiscHeaders() });
+      const r = await fetch(`${SB_DISC}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(maeC.trim())}&criado_em=gte.${encodeURIComponent(limiteData)}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`, { headers: sbDiscHeaders() });
       if (r.ok) candidatos = await r.json();
     }
     function pontuar(c) {
       let pts = 0;
       if (emailC && (c.email_externo||'').toLowerCase().trim() === emailC.toLowerCase().trim()) pts += 4;
-      if (maeC   && (c.data_nascimento ||'').trim() === maeC.trim())                            pts += 3;
+      if (maeC   && (c.nome_mae    ||'').toLowerCase().trim() === maeC.toLowerCase().trim())   pts += 3;
       if (telDigits && (c.tel_externo||'').replace(/\D/g,'') === telDigits)                   pts += 2;
       if (nomeC  && (c.nome        ||'').toLowerCase().trim() === nomeC.toLowerCase().trim())  pts += 1;
       return pts;
@@ -2553,7 +2553,7 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
     if (idAlvo) {
       await fetch(`${SB_DISC}/rest/v1/disc_historico?id=eq.${idAlvo}`, { method: 'PATCH', headers: { ...sbDiscHeaders(), 'Prefer': 'return=minimal' }, body: JSON.stringify(patchData) });
     } else {
-      await fetch(`${SB_DISC}/rest/v1/disc_historico`, { method: 'POST', headers: { ...sbDiscHeaders(), 'Prefer': 'return=representation' }, body: JSON.stringify({ nome: nomeC||'Não informado', email_externo: emailC?emailC.toLowerCase().trim():null, tel_externo: telC||null, data_nascimento: maeC||null, ...patchData, criado_em: agora }) });
+      await fetch(`${SB_DISC}/rest/v1/disc_historico`, { method: 'POST', headers: { ...sbDiscHeaders(), 'Prefer': 'return=representation' }, body: JSON.stringify({ nome: nomeC||'Não informado', email_externo: emailC?emailC.toLowerCase().trim():null, tel_externo: telC||null, nome_mae: maeC||null, ...patchData, criado_em: agora }) });
     }
     console.log('✅ DISC Clássico salvo no Supabase');
   } catch(e) { console.warn('⚠️ Erro ao salvar DISC no Supabase:', e); }
@@ -3203,20 +3203,20 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
   try {
     if (emailC) {
       const r = await fetch(
-        `${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
+        `${SB_DISC}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailC.toLowerCase().trim())}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
         { headers: { 'apikey': KEY_DISC, 'Authorization': 'Bearer ' + KEY_DISC } });
       if (r.ok) candidatos = await r.json();
     }
     if ((!candidatos || candidatos.length === 0) && maeC) {
       const r = await fetch(
-        `${SB_DISC}/rest/v1/disc_historico?data_nascimento=eq.${encodeURIComponent(maeC.trim())}&select=id,nome,email_externo,tel_externo,data_nascimento,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
+        `${SB_DISC}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(maeC.trim())}&select=id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&order=criado_em.desc&limit=10`,
         { headers: { 'apikey': KEY_DISC, 'Authorization': 'Bearer ' + KEY_DISC } });
       if (r.ok) candidatos = await r.json();
     }
     function pontuar(x) {
       let pts = 0;
       if (emailC && (x.email_externo||'').toLowerCase().trim() === emailC.toLowerCase().trim()) pts += 4;
-      if (maeC   && (x.data_nascimento ||'').trim() === maeC.trim())                            pts += 3;
+      if (maeC   && (x.nome_mae    ||'').toLowerCase().trim() === maeC.toLowerCase().trim())   pts += 3;
       if (telDigits && (x.tel_externo||'').replace(/\D/g,'') === telDigits)                   pts += 2;
       if (nomeC  && (x.nome        ||'').toLowerCase().trim() === nomeC.toLowerCase().trim())  pts += 1;
       return pts;
@@ -3231,7 +3231,7 @@ async function salvarDiscNoSupabase(dominante, secundario, pct, nomeC, telC, ema
       pct_d: String(pct.D), pct_i: String(pct.I), pct_s: String(pct.S), pct_c: String(pct.C),
       url: resUrl, nome: nomeC,
       email_externo: emailC ? emailC.toLowerCase().trim() : null,
-      tel_externo: telC || null, data_nascimento: maeC || null,
+      tel_externo: telC || null, nome_mae: maeC || null,
       vaga: urlParams.get('vaga') || null,
       data: new Date().toLocaleDateString('pt-BR'),
       disc_atualizado_em: agora,

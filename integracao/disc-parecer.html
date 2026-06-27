@@ -1601,6 +1601,7 @@ async function preencherDadosCandidatura(){
   setIfEmpty('fBairro',          formatarBairro(bairroCand));
   setIfEmpty('fIdade',           idadeCand ? (String(idadeCand).includes('ano') ? idadeCand : idadeCand + ' anos') : '');
   setIfEmpty('fDisponibilidade', disponibCand);
+  setIfEmpty('fMae',             maeUrlCand ? maeUrlCand.replace(/\b\w/g, c=>c.toUpperCase()) : '');
 
   // Se URL já trouxe cidade+bairro+idade+disponibilidade, não busca no Supabase
   if(cidadeCand && bairroCand && idadeCand && disponibCand) return;
@@ -1608,7 +1609,7 @@ async function preencherDadosCandidatura(){
   // 2) Busca no Supabase
   if(!candidatoId && !nomeCand) return;
   const sbH = {'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY};
-  const CAMPOS = 'nome,cidade,bairro,idade,disponibilidade,vaga,entrevista_json';
+  const CAMPOS = 'nome,cidade,bairro,idade,disponibilidade,vaga,nome_mae,entrevista_json';
 
   const urls = [];
   if(candidatoId){
@@ -1639,6 +1640,7 @@ async function preencherDadosCandidatura(){
         if(elVaga && !elVaga.value.trim()) elVaga.value = d.vaga;
       }
       setIfEmpty('fNome',            d.nome);
+      setIfEmpty('fMae',             d.nome_mae);
       setIfEmpty('fCidade',          formatarCidade(d.cidade));
       setIfEmpty('fBairro',          formatarBairro(d.bairro));
       setIfEmpty('fIdade',           d.idade != null ? String(d.idade) + ' anos' : '');
