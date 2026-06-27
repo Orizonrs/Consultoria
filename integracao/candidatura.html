@@ -1608,6 +1608,16 @@ async function sbPost(table, body) {
   return res.json();
 }
 
+async function sbRpc(fn, args) {
+  const res = await fetch(`${SB}/rest/v1/rpc/${fn}`, {
+    method: 'POST',
+    headers: sbHeaders(),
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 async function sbPatch(table, filter, body) {
   const res = await fetch(`${SB}/rest/v1/${table}?${filter}`, {
     method: 'PATCH',
@@ -2033,7 +2043,8 @@ async function salvarEtapa1() {
           }
         }
       } else {
-        const criado = await sbPost('disc_historico', { ...payload, status: 'identificado', criado_em: agora, no_banco: false });
+        const rpcResult = await sbRpc('inserir_candidatura', { dados: { ...payload, idade: String(payload.idade ?? '') } });
+        const criado = rpcResult && rpcResult.id ? [{ id: rpcResult.id }] : null;
         if (criado && criado[0]) {
           candidaturaId = criado[0].id;
           localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
