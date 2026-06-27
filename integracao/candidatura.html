@@ -1105,10 +1105,10 @@
       </div>
 
       <div class="field" id="f-mae">
-        <label for="inMae">Nome da mãe <span style="color:var(--red)">*</span></label>
-        <input type="text" id="inMae" placeholder="Ex: Maria da Silva" autocomplete="off"/>
+        <label for="inMae">Ano de nascimento <span style="color:var(--red)">*</span></label>
+        <input type="text" id="inMae" placeholder="Ex: 1990" type="number" min="1940" max="2010" autocomplete="off"/>
         <div class="field-hint">Usado para identificar sua candidatura com segurança.</div>
-        <div class="field-error" id="err-mae">Informe o nome completo da sua mãe.</div>
+        <div class="field-error" id="err-mae">Informe seu ano de nascimento (ex: 1990).</div>
       </div>
 
       <div class="field" id="f-cidade">
@@ -1952,6 +1952,7 @@ async function salvarEtapa1() {
       email_externo: email || null,
       tel_externo: tel || null,
       nome_mae: mae || null,
+      idade: mae || null,
       cidade: cidade || null,
       bairro: bairro || null,
       idade: idadeNum || null,
@@ -1965,13 +1966,13 @@ async function salvarEtapa1() {
     const telDigitsClean = tel.replace(/\D/g, '');
 
     try {
-      const SELECT = 'id,nome,email_externo,tel_externo,nome_mae,disc_perfil,pct_d,disc_atualizado_em,criado_em';
+      const SELECT = 'id,nome,email_externo,tel_externo,nome_mae,idade,disc_perfil,pct_d,disc_atualizado_em,criado_em';
       const buscas = await Promise.allSettled([
         email
           ? fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(email.toLowerCase().trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
           : Promise.resolve([]),
         mae
-          ? fetch(`${SB}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(mae.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
+          ? fetch(`${SB}/rest/v1/disc_historico?idade=eq.${encodeURIComponent(mae.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
           : Promise.resolve([]),
         telDigitsClean
           ? fetch(`${SB}/rest/v1/disc_historico?tel_externo=eq.${encodeURIComponent(tel.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
@@ -1991,7 +1992,8 @@ async function salvarEtapa1() {
       function pontuar(c) {
         let pts = 0;
         if (email && (c.email_externo||'').toLowerCase().trim() === email.toLowerCase().trim()) pts += 4;
-        if (mae   && (c.nome_mae    ||'').toLowerCase().trim() === mae.toLowerCase().trim())   pts += 3;
+        if (mae   && (c.idade||'').trim() === mae.trim())   pts += 3;
+        if (mae   && (c.nome_mae||'').trim() === mae.trim())   pts += 2;
         if (telDigitsClean && (c.tel_externo||'').replace(/\D/g,'') === telDigitsClean)        pts += 2;
         if (nome  && (c.nome        ||'').toLowerCase().trim() === nome.toLowerCase().trim())   pts += 1;
         return pts;
