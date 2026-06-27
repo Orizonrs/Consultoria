@@ -1105,10 +1105,10 @@
       </div>
 
       <div class="field" id="f-mae">
-        <label for="inMae">Nome da mãe <span style="color:var(--red)">*</span></label>
-        <input type="text" id="inMae" placeholder="Ex: Maria da Silva" autocomplete="off"/>
+        <label for="inMae">Ano de nascimento <span style="color:var(--red)">*</span></label>
+        <input type="text" id="inMae" placeholder="Ex: 1990" autocomplete="off"/>
         <div class="field-hint">Usado para identificar sua candidatura com segurança.</div>
-        <div class="field-error" id="err-mae">Informe o nome completo da sua mãe.</div>
+        <div class="field-error" id="err-mae">Informe seu ano de nascimento (ex: 1990).</div>
       </div>
 
       <div class="field" id="f-cidade">
@@ -1951,7 +1951,7 @@ async function salvarEtapa1() {
       nome,
       email_externo: email || null,
       tel_externo: tel || null,
-      nome_mae: mae || null,
+      ano_nascimento: mae || null, /* ano de nascimento */
       cidade: cidade || null,
       bairro: bairro || null,
       idade: idadeNum || null,
@@ -1965,13 +1965,13 @@ async function salvarEtapa1() {
     const telDigitsClean = tel.replace(/\D/g, '');
 
     try {
-      const SELECT = 'id,nome,email_externo,tel_externo,nome_mae,disc_perfil,pct_d,disc_atualizado_em,criado_em';
+      const SELECT = 'id,nome,email_externo,tel_externo,ano_nascimento,idade,disc_perfil,pct_d,disc_atualizado_em,criado_em';
       const buscas = await Promise.allSettled([
         email
           ? fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(email.toLowerCase().trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
           : Promise.resolve([]),
         mae
-          ? fetch(`${SB}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(mae.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
+          ? fetch(`${SB}/rest/v1/disc_historico?ano_nascimento=eq.${encodeURIComponent(mae.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
           : Promise.resolve([]),
         telDigitsClean
           ? fetch(`${SB}/rest/v1/disc_historico?tel_externo=eq.${encodeURIComponent(tel.trim())}&select=${SELECT}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : [])
@@ -1991,7 +1991,8 @@ async function salvarEtapa1() {
       function pontuar(c) {
         let pts = 0;
         if (email && (c.email_externo||'').toLowerCase().trim() === email.toLowerCase().trim()) pts += 4;
-        if (mae   && (c.nome_mae    ||'').toLowerCase().trim() === mae.toLowerCase().trim())   pts += 3;
+        if (mae   && (c.ano_nascimento||'').trim() === mae.trim())   pts += 2;
+        if (mae   && (c.idade||'').trim() === mae.trim())                pts += 2;
         if (telDigitsClean && (c.tel_externo||'').replace(/\D/g,'') === telDigitsClean)        pts += 2;
         if (nome  && (c.nome        ||'').toLowerCase().trim() === nome.toLowerCase().trim())   pts += 1;
         return pts;
@@ -2011,7 +2012,7 @@ async function salvarEtapa1() {
       if (melhor) {
         candidaturaId = melhor.id;
         localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
-        await sbPatch('disc_historico', `id=eq.${candidaturaId}`, { ...payload, nome_mae: mae || null, no_banco: false });
+        await sbPatch('disc_historico', `id=eq.${candidaturaId}`, { ...payload, ano_nascimento: mae || null, /* ano de nascimento */ no_banco: false });
 
         const discAt = melhor.disc_atualizado_em ? new Date(melhor.disc_atualizado_em).getTime() : 0;
         const temDiscValido = melhor.disc_perfil && parseFloat(melhor.pct_d || 0) > 0 && (Date.now() - discAt) < TTL_3_SEMANAS;
@@ -2149,11 +2150,11 @@ async function handleDiscReturn() {
       }
 
       if (!registro && (_email || _mae || _tel || _nome)) {
-        const SELECT_DISC = 'id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em';
+        const SELECT_DISC = 'id,nome,email_externo,tel_externo,ano_nascimento,idade,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em';
         const _telDigits = (_tel || '').replace(/\D/g, '');
         const buscasDisc = await Promise.allSettled([
           _email ? fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email.toLowerCase().trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
-          _mae   ? fetch(`${SB}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(_mae.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
+          _mae   ? fetch(`${SB}/rest/v1/disc_historico?ano_nascimento=eq.${encodeURIComponent(_mae.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
           _tel   ? fetch(`${SB}/rest/v1/disc_historico?tel_externo=eq.${encodeURIComponent(_tel.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
           _nome  ? fetch(`${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(_nome.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
         ]);
@@ -2166,7 +2167,8 @@ async function handleDiscReturn() {
         function pontuarDisc(c) {
           let pts = 0;
           if (_email && (c.email_externo||'').toLowerCase().trim() === _email.toLowerCase().trim()) pts += 4;
-          if (_mae   && (c.nome_mae    ||'').toLowerCase().trim() === _mae.toLowerCase().trim())   pts += 3;
+          if (_mae   && (c.ano_nascimento||'').trim() === _mae.trim())   pts += 2;
+          if (_mae   && (c.idade||'').trim() === _mae.trim())              pts += 2;
           if (_telDigits && (c.tel_externo||'').replace(/\D/g,'') === _telDigits)                  pts += 2;
           if (_nome  && (c.nome        ||'').toLowerCase().trim() === _nome.toLowerCase().trim())   pts += 1;
           return pts;
@@ -2349,7 +2351,7 @@ function handleEntrevistaReturn() {
         const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
         const _email = dados.email || '', _mae = dados.mae || '';
         if (_email && _mae) {
-          const chk = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email)}&nome_mae=eq.${encodeURIComponent(_mae)}&select=id&order=criado_em.desc&limit=1`, { headers: sbHeaders() });
+          const chk = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email)}&ano_nascimento=eq.${encodeURIComponent(_mae)}&select=id&order=criado_em.desc&limit=1`, { headers: sbHeaders() });
           const ex = await chk.json();
           if (ex && ex.length > 0) {
             _id = ex[0].id; candidaturaId = _id;
@@ -2506,7 +2508,7 @@ async function executarCanal(c) {
       const dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
       const _email = dados.email || '', _mae = dados.mae || '';
       if (_email && _mae) {
-        const chk = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email)}&nome_mae=eq.${encodeURIComponent(_mae)}&select=id&order=criado_em.desc&limit=1`, { headers: sbHeaders() });
+        const chk = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email)}&ano_nascimento=eq.${encodeURIComponent(_mae)}&select=id&order=criado_em.desc&limit=1`, { headers: sbHeaders() });
         const ex = await chk.json();
         if (ex && ex.length > 0) {
           _id = ex[0].id; candidaturaId = _id;
