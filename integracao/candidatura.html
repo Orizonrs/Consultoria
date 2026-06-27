@@ -1951,7 +1951,7 @@ async function salvarEtapa1() {
       nome,
       email_externo: email || null,
       tel_externo: tel || null,
-      nome_mae: mae || null,
+      ano_nascimento: mae || null,
       cidade: cidade || null,
       bairro: bairro || null,
       idade: idadeNum || null,
@@ -2011,7 +2011,7 @@ async function salvarEtapa1() {
       if (melhor) {
         candidaturaId = melhor.id;
         localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
-        await sbPatch('disc_historico', `id=eq.${candidaturaId}`, { ...payload, nome_mae: mae || null, no_banco: false });
+        await sbPatch('disc_historico', `id=eq.${candidaturaId}`, { ...payload, ano_nascimento: mae || null, no_banco: false });
 
         const discAt = melhor.disc_atualizado_em ? new Date(melhor.disc_atualizado_em).getTime() : 0;
         const temDiscValido = melhor.disc_perfil && parseFloat(melhor.pct_d || 0) > 0 && (Date.now() - discAt) < TTL_3_SEMANAS;
@@ -2033,7 +2033,13 @@ async function salvarEtapa1() {
           }
         }
       } else {
-        const criado = await sbPost('disc_historico', { ...payload, status: 'identificado', criado_em: agora, no_banco: false });
+        const rpcRes = await fetch(`${SB}/rest/v1/rpc/inserir_candidatura`, {
+          method: 'POST',
+          headers: sbHeaders({ 'Prefer': 'return=representation' }),
+          body: JSON.stringify({ dados: { ...payload, status: 'identificado', criado_em: agora } }),
+        });
+        if (!rpcRes.ok) throw new Error(await rpcRes.text());
+        const criado = await rpcRes.json();
         if (criado && criado[0]) {
           candidaturaId = criado[0].id;
           localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
