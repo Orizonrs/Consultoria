@@ -1810,7 +1810,7 @@ async function navigateTo(step) {
   if (inMae) {
     inMae.addEventListener('input', function() {
       const pos = this.selectionStart;
-      const val = this.value.replace(/(\w)/g, c => c.toUpperCase());
+      const val = this.value.replace(/\D/g, '').slice(0, 4);
       if (val !== this.value) { this.value = val; try { this.setSelectionRange(pos, pos); } catch(e){} }
       document.getElementById('f-mae').classList.remove('has-error');
     });
@@ -1908,9 +1908,11 @@ async function salvarEtapa1() {
     valido = false;
   }
 
-  const maePartes = mae.split(/\s+/).filter(Boolean);
-  document.getElementById('f-mae').classList.toggle('has-error', maePartes.length < 2);
-  if (maePartes.length < 2) valido = false;
+  const anoAtual = new Date().getFullYear();
+  const maeNum = parseInt(mae, 10);
+  const maeOk = /^\d{4}$/.test(mae) && maeNum >= 1940 && maeNum <= (anoAtual - 14);
+  document.getElementById('f-mae').classList.toggle('has-error', !maeOk);
+  if (!maeOk) valido = false;
 
   const cidadeOk = cidadeSel !== '';
   document.getElementById('f-cidade').classList.toggle('has-error', !cidadeOk);
