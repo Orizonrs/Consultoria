@@ -2323,6 +2323,7 @@ function exportarExcelCands(){
     ws['!cols']=[{wch:28},{wch:22},{wch:8},{wch:10},{wch:14},{wch:12},{wch:14},{wch:8},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidatos');
+    _addAbaComoUsar(wb);
     _xlsxDownload(wb, `candidatos-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${_all.length} candidatos exportados para Excel!`);
   });
@@ -2354,6 +2355,7 @@ function exportarExcelIndividual(){
     ws['!cols']=Object.keys(dados[0]).map(k=>({wch:Math.max(k.length+4,18)}));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidato');
+    _addAbaComoUsar(wb);
     const nome=(h.nome||'candidato').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-').toLowerCase();
     _xlsxDownload(wb, `candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${h.nome} exportado para Excel!`);
@@ -2362,6 +2364,63 @@ function exportarExcelIndividual(){
 
 
 function exportarCSV(){ exportarExcelCands(); }
+
+// ── ABA "COMO USAR" — adicionada a todos os workbooks ──
+function _addAbaComoUsar(wb){
+  const instrucoes = [
+    ['Campo','Obrigatório?','Valores aceitos / Exemplos','Observação'],
+    ['Nome','SIM','João Silva','Identificador principal do candidato'],
+    ['Vaga','Recomendado','Auxiliar de Produção','Usado junto com Nome para detectar duplicatas'],
+    ['DISC','Não','D, I, S ou C','Perfil dominante do candidato'],
+    ['Fit Score','Não','0 a 100','Score de compatibilidade cultural'],
+    ['Aderência Manual','Não','0 a 100','% de aderência à vaga'],
+    ['Recrutador','Não','0 a 100','Avaliação do recrutador'],
+    ['Etapa Atual','Não','banco / triagem / entrevista / aprovado / reprovado','Etapa no pipeline'],
+    ['Docs','Não','Sim / Não','Documentação completa entregue'],
+    ['E-mail','Não','joao@email.com','E-mail de contato externo'],
+    ['Telefone','Não','51999999999','Somente números recomendado'],
+    ['Cidade','Não','Porto Alegre','Cidade do candidato'],
+    ['Escolaridade','Não','Ensino Médio / Superior Completo','Grau de instrução'],
+    ['Disponibilidade','Não','Imediata / 30 dias','Disponibilidade para início'],
+    ['Data','Não','2024-06-27','Data de cadastro (AAAA-MM-DD)'],
+    ['','','',''],
+    ['COMO IMPORTAR','','',''],
+    ['1.','Preencha os dados nas linhas abaixo do cabeçalho','',''],
+    ['2.','Salve o arquivo como .xlsx','',''],
+    ['3.','No sistema, clique em "Importar CSV/Excel"','',''],
+    ['4.','Arraste ou selecione este arquivo','',''],
+    ['5.','Confira a prévia e as alterações detectadas','',''],
+    ['6.','Clique em "Importar" para salvar no sistema','',''],
+    ['','','',''],
+    ['REGRAS','','',''],
+    ['•','Nome + Vaga identificam o candidato (detecta duplicatas)','',''],
+    ['•','Se o candidato já existe: os campos preenchidos ATUALIZAM','',''],
+    ['•','Se não existe: um novo registro é CRIADO','',''],
+    ['•','Campos em branco são ignorados (não apagam dados existentes)','',''],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(instrucoes);
+  ws2['!cols'] = [{wch:20},{wch:14},{wch:45},{wch:40}];
+  // Cabeçalho em destaque
+  ['A1','B1','C1','D1'].forEach(cell=>{
+    if(ws2[cell]) ws2[cell].s = {font:{bold:true},fill:{fgColor:{rgb:'1E3A6B'}}};
+  });
+  XLSX.utils.book_append_sheet(wb, ws2, 'Como Usar');
+}
+
+function exportarModeloVazio(){
+  _carregarXLSX(()=>{
+    const colunas = [['Nome','Vaga','DISC','Fit Score','Aderência Manual','Recrutador','Etapa Atual','Docs','E-mail','Telefone','Cidade','Escolaridade','Disponibilidade','Data']];
+    // 10 linhas vazias para preenchimento
+    for(let i=0;i<10;i++) colunas.push(['','','','','','','','','','','','','','']);
+    const ws = XLSX.utils.aoa_to_sheet(colunas);
+    ws['!cols'] = [{wch:28},{wch:22},{wch:8},{wch:10},{wch:16},{wch:12},{wch:16},{wch:8},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Candidatos');
+    _addAbaComoUsar(wb);
+    _xlsxDownload(wb, `modelo-candidatos-orizon.xlsx`);
+    toast('✅ Modelo baixado! Preencha e reimporte.');
+  });
+}
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
@@ -3221,7 +3280,10 @@ function _atualizarBadgeParecerFinal(h){
         <div style="font-size:0.58rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#3b82f6;margin-bottom:0.3rem;">Banco Geral · ATS Pro</div>
         <div style="font-size:1.2rem;font-weight:900;">📥 Importar <span style="color:#3b82f6;">CSV / Excel</span></div>
       </div>
-      <button onclick="fecharImportCSV()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#777;font-size:1.1rem;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button onclick="exportarModeloVazio()" title="Baixar modelo em branco para preenchimento" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:8px;color:#a78bfa;font-size:0.7rem;font-weight:700;padding:0.35rem 0.7rem;cursor:pointer;font-family:inherit;white-space:nowrap;">📋 Modelo Vazio</button>
+        <button onclick="fecharImportCSV()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#777;font-size:1.1rem;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
     </div>
 
     <div id="impDropZone" onclick="document.getElementById('impFileInput').click()"
@@ -3251,6 +3313,8 @@ function _atualizarBadgeParecerFinal(h){
       <div style="margin-top:0.5rem;color:#555;">* Único campo obrigatório. Duplicatas detectadas por Nome + Vaga.</div>
     </div>
 
+    <!-- DIFF: campos que vão mudar -->
+    <div id="impDiffWrap" style="display:none;margin-bottom:1rem;max-height:220px;overflow-y:auto;"></div>
     <div id="impPreviewWrap" style="display:none;margin-bottom:1.2rem;">
       <div style="font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#555;margin-bottom:0.5rem;">Prévia — <span id="impPreviewCount"></span></div>
       <div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
@@ -3380,23 +3444,82 @@ function impSplit(line,sep){
   res.push(cur);return res;
 }
 
+// Mapeamento legível de nomes de campo
+const _impFieldLabel = {
+  nome:'Nome', vaga:'Vaga', dom:'DISC', fit_score:'Fit Score',
+  aderencia_manual:'Aderência', score_recrutador:'Recrutador',
+  etapa_atual:'Etapa', doc_completa:'Docs', email_externo:'E-mail',
+  tel_externo:'Telefone', data:'Data'
+};
+const _impExtraLabel = {cidade:'Cidade', escolaridade:'Escolaridade', disponibilidade:'Disponibilidade', pretensao:'Pretensão'};
+
 function impMostrarPreview(rows,campos){
   const preview=rows.slice(0,5);
   const colsShow=['nome','vaga','dom','fit_score','email_externo','etapa_atual'].filter(c=>campos.includes(c));
-  document.getElementById('impPreviewHead').innerHTML='<tr>'+colsShow.map(c=>`<th style="padding:0.4rem 0.6rem;text-align:left;font-size:0.63rem;font-weight:800;color:#555;text-transform:uppercase;white-space:nowrap;">${c}</th>`).join('')+'</tr>';
+  document.getElementById('impPreviewHead').innerHTML='<tr>'+colsShow.map(c=>`<th style="padding:0.4rem 0.6rem;text-align:left;font-size:0.63rem;font-weight:800;color:#555;text-transform:uppercase;white-space:nowrap;">${_impFieldLabel[c]||c}</th>`).join('')+'</tr>';
   document.getElementById('impPreviewBody').innerHTML=preview.map((r,i)=>
     '<tr style="border-top:1px solid rgba(255,255,255,0.04);">'+
     colsShow.map(c=>`<td style="padding:0.38rem 0.6rem;font-size:0.72rem;color:${i===0?'#f0f0f0':'#aaa'}">${r[c]||'—'}</td>`).join('')+
     '</tr>'
   ).join('');
-  const existMap=new Set(_all.map(x=>(x.nome||'').toLowerCase().trim()+'||'+(x.vaga||'').toLowerCase().trim()));
-  const novos=rows.filter(r=>!existMap.has((r.nome||'').toLowerCase().trim()+'||'+(r.vaga||'').toLowerCase().trim()));
-  const atualizar=rows.filter(r=>existMap.has((r.nome||'').toLowerCase().trim()+'||'+(r.vaga||'').toLowerCase().trim()));
+
+  // Monta mapa dos existentes
+  const existObjMap = {};
+  _all.forEach(x=>{ existObjMap[(x.nome||'').toLowerCase().trim()+'||'+(x.vaga||'').toLowerCase().trim()]=x; });
+  const novos=rows.filter(r=>!existObjMap[(r.nome||'').toLowerCase().trim()+'||'+(r.vaga||'').toLowerCase().trim()]);
+  const atualizar=rows.filter(r=>!!existObjMap[(r.nome||'').toLowerCase().trim()+'||'+(r.vaga||'').toLowerCase().trim()]);
+
   document.getElementById('impPreviewCount').innerHTML=
     `<strong style="color:#f0f0f0;">${rows.length}</strong> linhas — `+
-    `<span style="color:#3b82f6;">${novos.length} novos</span> · `+
-    `<span style="color:#3498db;">${atualizar.length} atualizações</span>`+
+    `<span style="color:#2ecc71;">${novos.length} novos</span> · `+
+    `<span style="color:#3b82f6;">${atualizar.length} atualizações</span>`+
     (rows.length>5?` <span style="color:#555;">(mostrando 5)</span>`:'');
+
+  // ── DIFF: mostra o que vai mudar para cada candidato existente ──
+  const diffWrap = document.getElementById('impDiffWrap');
+  if(atualizar.length > 0){
+    let diffHtml = `<div style="font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#3b82f6;margin-bottom:0.5rem;">🔍 O que vai mudar (${atualizar.length} candidato${atualizar.length>1?'s':''})</div>`;
+    atualizar.forEach(row => {
+      const chave=(row.nome||'').toLowerCase().trim()+'||'+(row.vaga||'').toLowerCase().trim();
+      const atual = existObjMap[chave];
+      const extraAtual = atual.extra_dados?(typeof atual.extra_dados==='string'?JSON.parse(atual.extra_dados):atual.extra_dados):{};
+      const extraNovo = row._extra||{};
+      const mudancas = [];
+      // Campos diretos
+      ['dom','fit_score','aderencia_manual','score_recrutador','etapa_atual','doc_completa','email_externo','tel_externo','data'].forEach(f=>{
+        if(row[f]!==undefined && String(row[f]||'')!==String(atual[f]||'')){
+          mudancas.push({label:_impFieldLabel[f]||f, de:atual[f]||'—', para:row[f]||'—'});
+        }
+      });
+      // Campos extra
+      Object.keys(extraNovo).forEach(k=>{
+        if(String(extraNovo[k]||'')!==String(extraAtual[k]||'')){
+          mudancas.push({label:_impExtraLabel[k]||k, de:extraAtual[k]||'—', para:extraNovo[k]||'—'});
+        }
+      });
+      if(!mudancas.length){
+        diffHtml+=`<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:0.5rem 0.8rem;margin-bottom:0.4rem;font-size:0.7rem;color:#555;">
+          <strong style="color:#888;">${row.nome}</strong> <span style="color:#444;">— nenhuma alteração detectada</span></div>`;
+      } else {
+        diffHtml+=`<div style="background:rgba(59,130,246,0.04);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:0.6rem 0.8rem;margin-bottom:0.4rem;">
+          <div style="font-size:0.72rem;font-weight:800;color:#f0f0f0;margin-bottom:0.35rem;">${row.nome} <span style="font-size:0.6rem;color:#555;font-weight:400;">· ${row.vaga||'sem vaga'}</span></div>
+          <div style="display:flex;flex-direction:column;gap:0.2rem;">
+          ${mudancas.map(m=>`<div style="display:flex;align-items:center;gap:0.4rem;font-size:0.68rem;">
+            <span style="color:#555;width:90px;flex-shrink:0;">${m.label}</span>
+            <span style="color:#e74c3c;text-decoration:line-through;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.de}</span>
+            <span style="color:#555;">→</span>
+            <span style="color:#2ecc71;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.para}</span>
+          </div>`).join('')}
+          </div></div>`;
+      }
+    });
+    diffWrap.innerHTML = diffHtml;
+    diffWrap.style.display = 'block';
+  } else {
+    diffWrap.style.display = 'none';
+    diffWrap.innerHTML = '';
+  }
+
   document.getElementById('impPreviewWrap').style.display='block';
   document.getElementById('impDropZone').style.display='none';
   document.getElementById('impAcoes').style.display='flex';

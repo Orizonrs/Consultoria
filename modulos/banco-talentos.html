@@ -345,6 +345,7 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
     </div>
     <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="exportarExcelCands()">📊 Exportar Excel</button>
+      <button class="btn btn-ghost" onclick="exportarModeloVazio()" style="color:#a78bfa;border-color:rgba(167,139,250,0.3);">📋 Modelo Vazio</button>
       <button class="btn btn-blue" id="btnAtualizar" onclick="atualizarBanco()">↺ Atualizar</button>
       <button class="btn" onclick="ativarModoMassa('vaga')" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.35);font-weight:700;" title="Selecionar candidatos e mover para vaga">☑️ Vaga</button>
       <button class="btn" onclick="ativarModoMassa('areacargo')" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.35);font-weight:700;" title="Selecionar candidatos e atribuir a área ou cargo">🗂️ Área/Cargo</button>
@@ -4378,6 +4379,7 @@ function exportarExcelCands(){
     ws['!cols']=[{wch:28},{wch:22},{wch:8},{wch:10},{wch:14},{wch:12},{wch:14},{wch:8},{wch:28},{wch:18},{wch:16}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidatos');
+    _addAbaComoUsar(wb);
     _xlsxDownload(wb, `candidatos-orizon-${new Date().toISOString().slice(0,10)}.xlsx`);
     mostrarToast(`✅ ${lista.length} candidatos exportados para Excel!`);
   });
@@ -4408,6 +4410,7 @@ function exportarExcelIndividual(){
     ws['!cols']=Object.keys(dados[0]).map(k=>({wch:Math.max(k.length+4,18)}));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidato');
+    _addAbaComoUsar(wb);
     const nome=(h.nome||'candidato').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-').toLowerCase();
     _xlsxDownload(wb, `candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
     mostrarToast(`✅ ${h.nome} exportado para Excel!`);
@@ -4415,6 +4418,58 @@ function exportarExcelIndividual(){
 }
 
 function exportarCSVCands(){ exportarExcelCands(); }
+
+// ── ABA "COMO USAR" ──
+function _addAbaComoUsar(wb){
+  const instrucoes = [
+    ['Campo','Obrigatório?','Valores aceitos / Exemplos','Observação'],
+    ['Nome','SIM','João Silva','Identificador principal do candidato'],
+    ['Vaga','Recomendado','Auxiliar de Produção','Usado junto com Nome para detectar duplicatas'],
+    ['DISC','Não','D, I, S ou C','Perfil dominante do candidato'],
+    ['Fit Score','Não','0 a 100','Score de compatibilidade cultural'],
+    ['Aderência Manual','Não','0 a 100','% de aderência à vaga'],
+    ['Recrutador','Não','0 a 100','Avaliação do recrutador'],
+    ['Etapa Atual','Não','banco / triagem / entrevista / aprovado / reprovado','Etapa no pipeline'],
+    ['Docs','Não','Sim / Não','Documentação completa entregue'],
+    ['E-mail','Não','joao@email.com','E-mail de contato externo'],
+    ['Telefone','Não','51999999999','Somente números recomendado'],
+    ['Cidade','Não','Porto Alegre','Cidade do candidato'],
+    ['Escolaridade','Não','Ensino Médio / Superior Completo','Grau de instrução'],
+    ['Disponibilidade','Não','Imediata / 30 dias','Disponibilidade para início'],
+    ['Data','Não','2024-06-27','Data de cadastro (AAAA-MM-DD)'],
+    ['','','',''],
+    ['COMO IMPORTAR','','',''],
+    ['1.','Preencha os dados nas linhas abaixo do cabeçalho','',''],
+    ['2.','Salve o arquivo como .xlsx','',''],
+    ['3.','No sistema, clique em "Importar CSV/Excel"','',''],
+    ['4.','Arraste ou selecione este arquivo','',''],
+    ['5.','Confira a prévia e as alterações detectadas','',''],
+    ['6.','Clique em "Importar" para salvar no sistema','',''],
+    ['','','',''],
+    ['REGRAS','','',''],
+    ['•','Nome + Vaga identificam o candidato (detecta duplicatas)','',''],
+    ['•','Se o candidato já existe: os campos preenchidos ATUALIZAM','',''],
+    ['•','Se não existe: um novo registro é CRIADO','',''],
+    ['•','Campos em branco são ignorados (não apagam dados existentes)','',''],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(instrucoes);
+  ws2['!cols'] = [{wch:20},{wch:14},{wch:45},{wch:40}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Como Usar');
+}
+
+function exportarModeloVazio(){
+  _carregarXLSX(()=>{
+    const colunas = [['Nome','Vaga','DISC','Fit Score','Aderência Manual','Recrutador','Etapa Atual','Docs','E-mail','Telefone','Cidade','Escolaridade','Disponibilidade','Data']];
+    for(let i=0;i<10;i++) colunas.push(['','','','','','','','','','','','','','']);
+    const ws = XLSX.utils.aoa_to_sheet(colunas);
+    ws['!cols'] = [{wch:28},{wch:22},{wch:8},{wch:10},{wch:16},{wch:12},{wch:16},{wch:8},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Candidatos');
+    _addAbaComoUsar(wb);
+    _xlsxDownload(wb, 'modelo-candidatos-orizon.xlsx');
+    mostrarToast('✅ Modelo baixado! Preencha e reimporte.');
+  });
+}
 // ═══ CONTATOS ═══
 function abrirEmail(email,nome){
   window.top.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent('Orizon — Oportunidade')}&body=${encodeURIComponent('Prezado(a) '+nome+',\n\n')}`,'_blank');
