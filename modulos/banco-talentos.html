@@ -344,7 +344,7 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
       <div class="sub">Candidatos ordenados por fit score — do maior para o menor. Clique para ver perfil completo.</div>
     </div>
     <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;">
-      <button class="btn btn-ghost" onclick="exportarCSVCands()">📊 Exportar CSV</button>
+      <button class="btn btn-ghost" onclick="exportarExcelCands()">📊 Exportar Excel</button>
       <button class="btn btn-blue" id="btnAtualizar" onclick="atualizarBanco()">↺ Atualizar</button>
       <button class="btn" onclick="ativarModoMassa('vaga')" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.35);font-weight:700;" title="Selecionar candidatos e mover para vaga">☑️ Vaga</button>
       <button class="btn" onclick="ativarModoMassa('areacargo')" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.35);font-weight:700;" title="Selecionar candidatos e atribuir a área ou cargo">🗂️ Área/Cargo</button>
@@ -364,7 +364,7 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
     <div><span style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;">I</span><strong id="csI" style="color:#f39c12;font-size:1.1rem;font-weight:900;">—</strong></div>
     <div><span style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;">S</span><strong id="csS" style="color:#2ecc71;font-size:1.1rem;font-weight:900;">—</strong></div>
     <div><span style="font-size:0.58rem;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;">C</span><strong id="csC" style="color:#3498db;font-size:1.1rem;font-weight:900;">—</strong></div>
-    <div style="margin-left:auto;"><button onclick="exportarCSVCands()" style="background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0.38rem 0.85rem;font-family:inherit;font-size:0.73rem;font-weight:700;cursor:pointer;">📊 CSV</button></div>
+    <div style="margin-left:auto;"><button onclick="exportarExcelCands()" style="background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0.38rem 0.85rem;font-family:inherit;font-size:0.73rem;font-weight:700;cursor:pointer;">📊 Excel</button></div>
   </div>
 
   <!-- ALERTA DUPLICATAS -->
@@ -693,6 +693,7 @@ Equipe Orizon</textarea>
         <div id="pNome" style="font-size:1rem;font-weight:900;padding-right:2rem;"></div>
         <div id="pMeta" style="font-size:0.7rem;color:#777;margin-top:0.1rem;"></div>
       </div>
+      <button onclick="exportarExcelIndividual()" title="Exportar este candidato para Excel" style="background:rgba(46,204,113,0.1);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:0.35rem 0.75rem;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-right:2.2rem;">📥 Excel</button>
     </div>
     <div class="perfil-body">
       <!-- BOTÃO PARECER FINAL — destaque no topo do scroll -->
@@ -4333,19 +4334,97 @@ async function executarDelCand(){
   }catch(e){ mostrarToast('Erro ao excluir: '+e.message,true); }
 }
 
-// ═══ CSV — igual ao disc-admin ═══
-function exportarCSVCands(){
-  const lista=_allCands;
-  if(!lista.length){ mostrarToast('Nenhum candidato',true); return; }
-  const cab=['Nome','Vaga','Perfil','Combinação','%D','%I','%S','%C','Fit Score','Fit Nível','Aderência Manual','Link DISC','Link Fit','E-mail Externo','Telefone','Currículo','Data','Revisão IA'];
-  const e=v=>{ v=String(v||''); if(/[;"'\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"'; return v; };
-  const linhas=lista.map(h=>[e(h.nome),e(h.vaga),h.dom||'',h.sec||'',e(h.combo_nome||''),h.pct_d||'',h.pct_i||'',h.pct_s||'',h.pct_c||'',h.fit_score||h.fit_manual||'',e(h.fit_nivel||''),h.aderencia_manual!=null?h.aderencia_manual:'',h.url||'',h.url_resultado_fit||'',e(h.email_externo||''),e(h.tel_externo||''),e(h.curriculo_url||''),e(h.data||''),h.revisao_ia_flag?'Sim':''].join(';'));
-  const blob=new Blob(['\uFEFF'+cab.join(';')+'\n'+linhas.join('\n')],{type:'text/csv;charset=utf-8;'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download=`candidatos-orizon-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-  mostrarToast(`✅ ${lista.length} candidatos exportados!`);
+// ═══ EXCEL — exportação geral e individual ═══
+function _carregarXLSX(cb){
+  if(window.XLSX){ cb(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=cb; document.head.appendChild(s);
 }
 
+function exportarExcelCands(){
+  const lista=_allCands;
+  if(!lista.length){ mostrarToast('Nenhum candidato',true); return; }
+  _carregarXLSX(()=>{
+    const dados=lista.map(h=>({
+      'Nome': h.nome||'',
+      'Vaga': h.vaga||'',
+      'Perfil DISC': h.dom||'',
+      'Secundário': h.sec||'',
+      'Combinação': h.combo_nome||'',
+      '%D': h.pct_d||'', '%I': h.pct_i||'', '%S': h.pct_s||'', '%C': h.pct_c||'',
+      'Fit Score': h.fit_score||h.fit_manual||'',
+      'Fit Nível': h.fit_nivel||'',
+      'Aderência (%)': h.aderencia_manual!=null?h.aderencia_manual:'',
+      'Score Currículo': h.score_curriculo||'',
+      'Nível Currículo': h.nivel_curriculo||'',
+      'Status Contato': h.status_contato||'',
+      'E-mail': h.email_externo||'',
+      'Telefone': h.tel_externo||'',
+      'Currículo URL': h.curriculo_url||'',
+      'Link DISC': h.url||'',
+      'Link Fit': h.url_resultado_fit||'',
+      'Revisão IA': h.revisao_ia_flag?'Sim':'Não',
+      'Data Cadastro': h.data||''
+    }));
+    const ws=XLSX.utils.json_to_sheet(dados);
+    ws['!cols']=[{wch:28},{wch:22},{wch:10},{wch:10},{wch:20},{wch:5},{wch:5},{wch:5},{wch:5},{wch:10},{wch:12},{wch:12},{wch:14},{wch:14},{wch:16},{wch:28},{wch:18},{wch:35},{wch:35},{wch:35},{wch:10},{wch:16}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Candidatos');
+    XLSX.writeFile(wb,`candidatos-orizon-${new Date().toISOString().slice(0,10)}.xlsx`);
+    mostrarToast(`✅ ${lista.length} candidatos exportados para Excel!`);
+  });
+}
+
+function exportarExcelIndividual(){
+  const h=_perfilAtual;
+  if(!h){ mostrarToast('Nenhum candidato selecionado',true); return; }
+  _carregarXLSX(()=>{
+    const ex=h.extra_dados?(typeof h.extra_dados==='string'?JSON.parse(h.extra_dados):h.extra_dados):{};
+    const dados=[{
+      'Nome': h.nome||'',
+      'Vaga': h.vaga||'',
+      'Perfil DISC': h.dom||'',
+      'Secundário': h.sec||'',
+      'Combinação': h.combo_nome||'',
+      '%D': h.pct_d||'', '%I': h.pct_i||'', '%S': h.pct_s||'', '%C': h.pct_c||'',
+      'Fit Score': h.fit_score||h.fit_manual||'',
+      'Fit Nível': h.fit_nivel||'',
+      'Aderência (%)': h.aderencia_manual!=null?h.aderencia_manual:'',
+      'Score Currículo': h.score_curriculo||'',
+      'Nível Currículo': h.nivel_curriculo||'',
+      'Exp. Currículo': h.nota_exp_curriculo||'',
+      'Form. Currículo': h.nota_form_curriculo||'',
+      'Téc. Currículo': h.nota_tec_curriculo||'',
+      'Resumo Currículo': h.resumo_curriculo||'',
+      'Score Recrutador': h.score_recrutador||'',
+      'Status Contato': h.status_contato||'',
+      'E-mail': h.email_externo||'',
+      'Telefone': h.tel_externo||'',
+      'Cidade': ex.cidade||'',
+      'Escolaridade': ex.escolaridade||'',
+      'Disponibilidade': ex.disponibilidade||'',
+      'Pretensão': ex.pretensao||'',
+      'Currículo URL': h.curriculo_url||'',
+      'Link DISC': h.url||'',
+      'Link Fit': h.url_resultado_fit||'',
+      'Parecer Final': h.parecer_final_link||'',
+      'Revisão IA': h.revisao_ia_flag?'Sim':'Não',
+      'Etapa Atual': h.etapa_atual||'banco',
+      'Doc Completa': h.doc_completa?'Sim':'Não',
+      'Data Cadastro': h.data||''
+    }];
+    const ws=XLSX.utils.json_to_sheet(dados);
+    ws['!cols']=Object.keys(dados[0]).map(k=>({wch:Math.max(k.length+2,18)}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Candidato');
+    const nome=(h.nome||'candidato').replace(/[^a-zA-ZÀ-ú0-9 ]/g,'').trim().replace(/ /g,'-').toLowerCase();
+    XLSX.writeFile(wb,`candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
+    mostrarToast(`✅ ${h.nome} exportado para Excel!`);
+  });
+}
+
+function exportarCSVCands(){ exportarExcelCands(); }
 // ═══ CONTATOS ═══
 function abrirEmail(email,nome){
   window.top.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${encodeURIComponent('Orizon — Oportunidade')}&body=${encodeURIComponent('Prezado(a) '+nome+',\n\n')}`,'_blank');
