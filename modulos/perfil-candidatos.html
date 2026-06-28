@@ -2272,6 +2272,31 @@ function _carregarXLSX(cb){
   s.onload=cb; document.head.appendChild(s);
 }
 
+function _xlsxDownload(wb, filename){
+  // Funciona dentro de iframe: usa data URI em vez de createObjectURL
+  try{
+    const wout = XLSX.write(wb, {bookType:'xlsx', type:'base64'});
+    const dataUri = 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,' + wout;
+    const a = document.createElement('a');
+    a.href = dataUri;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch(e){
+    // fallback
+    XLSX.writeFile(wb, filename);
+  }
+}
+
+function _carregarXLSX(cb){
+  if(window.XLSX){ cb(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.onload=cb; document.head.appendChild(s);
+}
+
 function exportarExcelCands(){
   if(!_all.length){ toast('Nenhum candidato para exportar',true); return; }
   _carregarXLSX(()=>{
@@ -2282,10 +2307,10 @@ function exportarExcelCands(){
         'Vaga': h.vaga||'',
         'DISC': h.dom||'',
         'Fit Score': h.fit_score||h.fit_manual||'',
-        'Aderência (%)': h.aderencia_manual||h.aderencia_calculada||'',
-        'Score Recrutador': h.score_recrutador||'',
-        'Etapa': h.etapa_atual||'banco',
-        'Docs Completa': h.doc_completa?'Sim':'Não',
+        'Aderência Manual': h.aderencia_manual||'',
+        'Recrutador': h.score_recrutador||'',
+        'Etapa Atual': h.etapa_atual||'banco',
+        'Docs': h.doc_completa?'Sim':'Não',
         'E-mail': h.email_externo||'',
         'Telefone': h.tel_externo||'',
         'Cidade': ex.cidade||'',
@@ -2295,21 +2320,10 @@ function exportarExcelCands(){
       };
     });
     const ws=XLSX.utils.json_to_sheet(dados);
-    ws['!cols']=[{wch:28},{wch:22},{wch:8},{wch:10},{wch:12},{wch:14},{wch:14},{wch:12},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
+    ws['!cols']=[{wch:28},{wch:22},{wch:8},{wch:10},{wch:14},{wch:12},{wch:14},{wch:8},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidatos');
-    (function(wb,fn){
-      try{
-        const wout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
-        const blob=new Blob([wout],{type:'application/octet-stream'});
-        const url=URL.createObjectURL(blob);
-        const topDoc=(window.top||window).document;
-        const a=topDoc.createElement('a');
-        a.href=url; a.download=fn; a.style.display='none';
-        topDoc.body.appendChild(a); a.click(); topDoc.body.removeChild(a);
-        setTimeout(()=>URL.revokeObjectURL(url),5000);
-      }catch(e){ XLSX.writeFile(wb,fn); }
-    })(wb,`candidatos-${new Date().toISOString().slice(0,10)}.xlsx`);
+    _xlsxDownload(wb, `candidatos-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${_all.length} candidatos exportados para Excel!`);
   });
 }
@@ -2319,59 +2333,33 @@ function exportarExcelIndividual(){
   if(!h){ toast('Nenhum candidato selecionado',true); return; }
   _carregarXLSX(()=>{
     const ex=h.extra_dados?(typeof h.extra_dados==='string'?JSON.parse(h.extra_dados):h.extra_dados):{};
+    // Colunas compatíveis com a importação (_impColMap)
     const dados=[{
       'Nome': h.nome||'',
       'Vaga': h.vaga||'',
       'DISC': h.dom||'',
-      'Secundário': h.sec||'',
-      'Combinação': h.combo_nome||'',
-      '%D': h.pct_d||'', '%I': h.pct_i||'', '%S': h.pct_s||'', '%C': h.pct_c||'',
       'Fit Score': h.fit_score||h.fit_manual||'',
-      'Fit Nível': h.fit_nivel||'',
-      'Aderência (%)': h.aderencia_manual||h.aderencia_calculada||'',
-      'Score Currículo': h.score_curriculo||'',
-      'Nível Currículo': h.nivel_curriculo||'',
-      'Exp. Currículo': h.nota_exp_curriculo||'',
-      'Form. Currículo': h.nota_form_curriculo||'',
-      'Téc. Currículo': h.nota_tec_curriculo||'',
-      'Resumo Currículo': h.resumo_curriculo||'',
-      'Score Recrutador': h.score_recrutador||'',
-      'Status Contato': h.status_contato||'',
+      'Aderência Manual': h.aderencia_manual||'',
+      'Recrutador': h.score_recrutador||'',
+      'Etapa Atual': h.etapa_atual||'banco',
+      'Docs': h.doc_completa?'Sim':'Não',
       'E-mail': h.email_externo||'',
       'Telefone': h.tel_externo||'',
       'Cidade': ex.cidade||'',
       'Escolaridade': ex.escolaridade||'',
       'Disponibilidade': ex.disponibilidade||'',
-      'Pretensão': ex.pretensao||'',
-      'Currículo URL': h.curriculo_url||'',
-      'Link DISC': h.url||'',
-      'Link Fit': h.url_resultado_fit||'',
-      'Parecer Final': h.parecer_final_link||'',
-      'Revisão IA': h.revisao_ia_flag?'Sim':'Não',
-      'Etapa Atual': h.etapa_atual||'banco',
-      'Doc Completa': h.doc_completa?'Sim':'Não',
-      'Data Cadastro': h.data||''
+      'Data': h.data||''
     }];
     const ws=XLSX.utils.json_to_sheet(dados);
-    ws['!cols']=Object.keys(dados[0]).map(k=>({wch:Math.max(k.length+2,18)}));
+    ws['!cols']=Object.keys(dados[0]).map(k=>({wch:Math.max(k.length+4,18)}));
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidato');
-    const nome=(h.nome||'candidato').replace(/[^a-zA-ZÀ-ú0-9 ]/g,'').trim().replace(/ /g,'-').toLowerCase();
-    (function(wb,fn){
-      try{
-        const wout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
-        const blob=new Blob([wout],{type:'application/octet-stream'});
-        const url=URL.createObjectURL(blob);
-        const topDoc=(window.top||window).document;
-        const a=topDoc.createElement('a');
-        a.href=url; a.download=fn; a.style.display='none';
-        topDoc.body.appendChild(a); a.click(); topDoc.body.removeChild(a);
-        setTimeout(()=>URL.revokeObjectURL(url),5000);
-      }catch(e){ XLSX.writeFile(wb,fn); }
-    })(wb,`candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
+    const nome=(h.nome||'candidato').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9 ]/g,'').trim().replace(/ +/g,'-').toLowerCase();
+    _xlsxDownload(wb, `candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${h.nome} exportado para Excel!`);
   });
 }
+
 
 function exportarCSV(){ exportarExcelCands(); }
 // ══════════════════════════════════════════════
