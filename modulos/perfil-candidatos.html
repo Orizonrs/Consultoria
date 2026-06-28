@@ -531,8 +531,8 @@ select.pi option{background:#1a1a1a;}
           <span style="font-size:0.75rem;opacity:0.6;">🔐 →</span>
         </button>
         <div class="perfil-actions" id="pActions"></div>
+        <button onclick="exportarExcelIndividual()" style="background:rgba(46,204,113,0.1);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:0.4rem 1rem;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;width:100%;margin-top:0.5rem;">📥 Exportar este candidato (Excel)</button>
       </div>
-      <button onclick="exportarExcelIndividual()" title="Exportar este candidato para Excel" style="background:rgba(46,204,113,0.1);color:#2ecc71;border:1px solid rgba(46,204,113,0.3);border-radius:8px;padding:0.35rem 0.75rem;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:0.2rem;margin-right:2.2rem;">📥 Excel</button>
     </div>
 
     <!-- ABAS -->
@@ -2298,7 +2298,18 @@ function exportarExcelCands(){
     ws['!cols']=[{wch:28},{wch:22},{wch:8},{wch:10},{wch:12},{wch:14},{wch:14},{wch:12},{wch:28},{wch:18},{wch:18},{wch:18},{wch:18},{wch:16}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidatos');
-    XLSX.writeFile(wb,`candidatos-${new Date().toISOString().slice(0,10)}.xlsx`);
+    (function(wb,fn){
+      try{
+        const wout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+        const blob=new Blob([wout],{type:'application/octet-stream'});
+        const url=URL.createObjectURL(blob);
+        const topDoc=(window.top||window).document;
+        const a=topDoc.createElement('a');
+        a.href=url; a.download=fn; a.style.display='none';
+        topDoc.body.appendChild(a); a.click(); topDoc.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+      }catch(e){ XLSX.writeFile(wb,fn); }
+    })(wb,`candidatos-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${_all.length} candidatos exportados para Excel!`);
   });
 }
@@ -2346,7 +2357,18 @@ function exportarExcelIndividual(){
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Candidato');
     const nome=(h.nome||'candidato').replace(/[^a-zA-ZÀ-ú0-9 ]/g,'').trim().replace(/ /g,'-').toLowerCase();
-    XLSX.writeFile(wb,`candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
+    (function(wb,fn){
+      try{
+        const wout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+        const blob=new Blob([wout],{type:'application/octet-stream'});
+        const url=URL.createObjectURL(blob);
+        const topDoc=(window.top||window).document;
+        const a=topDoc.createElement('a');
+        a.href=url; a.download=fn; a.style.display='none';
+        topDoc.body.appendChild(a); a.click(); topDoc.body.removeChild(a);
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
+      }catch(e){ XLSX.writeFile(wb,fn); }
+    })(wb,`candidato-${nome}-${new Date().toISOString().slice(0,10)}.xlsx`);
     toast(`✅ ${h.nome} exportado para Excel!`);
   });
 }
