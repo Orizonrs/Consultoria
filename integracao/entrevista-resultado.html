@@ -614,9 +614,9 @@ function renderizarTudo() {
 
     let motNota = motivacaoW >= 50 ? 8 : motivacaoW >= 30 ? 6 : motivacaoW >= 20 ? 5 : motivacaoW >= 10 ? 3 : 0;
 
-    // Scores ponderados por dimensão
-    const scoreExp  = Math.round(expNota  * 5.5);
-    const scoreComp = Math.round(compNota * 1.5);
+    // Scores ponderados por dimensão (sincronizado com os pesos reais do analisar-candidato: 35/32/20/13)
+    const scoreExp  = Math.round(expNota  * 3.5);
+    const scoreComp = Math.round(compNota * 3.2);
     const scoreMot  = Math.round(motNota  * 2.0);
     const scoreDisc = fitScore - scoreExp - scoreComp - scoreMot;
 
@@ -639,10 +639,10 @@ function renderizarTudo() {
 
     // Breakdown visual por dimensão
     const dims = [
-      { label: 'Experiência', peso: '55%', val: scoreExp,  max: 55, cor: scoreExp  >= 40 ? '#2ecc71' : scoreExp  >= 20 ? '#f39c12' : '#e74c3c' },
-      { label: 'Competências', peso: '15%', val: scoreComp, max: 15, cor: scoreComp >= 10 ? '#2ecc71' : scoreComp >= 5  ? '#f39c12' : '#e74c3c' },
+      { label: 'Experiência', peso: '35%', val: scoreExp,  max: 35, cor: scoreExp  >= 25 ? '#2ecc71' : scoreExp  >= 13 ? '#f39c12' : '#e74c3c' },
+      { label: 'Competências', peso: '32%', val: scoreComp, max: 32, cor: scoreComp >= 22 ? '#2ecc71' : scoreComp >= 11 ? '#f39c12' : '#e74c3c' },
       { label: 'Motivação',   peso: '20%', val: scoreMot,  max: 20, cor: scoreMot  >= 15 ? '#2ecc71' : scoreMot  >= 8  ? '#f39c12' : '#e74c3c' },
-      { label: 'DISC',        peso: '5%',  val: Math.max(0, scoreDisc), max: 5, cor: '#3b82f6' },
+      { label: 'DISC',        peso: '13%', val: Math.max(0, scoreDisc), max: 13, cor: '#3b82f6' },
     ];
     document.getElementById('diagBreakdown').innerHTML = dims.map(d =>
       `<div class="score-dim">
@@ -657,7 +657,7 @@ function renderizarTudo() {
 
     // — EXPERIÊNCIA —
     if (historiaW === 0) {
-      items.push({ tipo:'bad', icon:'📖', label:'Trajetória profissional — não preenchida', desc:'O campo "Me fale sobre você / História Profissional" estava vazio. É o campo mais importante — representa 55% do score.' });
+      items.push({ tipo:'bad', icon:'📖', label:'Trajetória profissional — não preenchida', desc:'O campo "Me fale sobre você / História Profissional" estava vazio. É o campo mais importante — representa 35% do score.' });
     } else if (historiaW < 30) {
       items.push({ tipo:'warn', icon:'📖', label:'Trajetória muito curta', desc:`Apenas ${historiaW} palavras. Para uma avaliação completa, o ideal é 60+ palavras descrevendo cargos, empresas e responsabilidades.` });
     } else if (historiaW >= 100) {
