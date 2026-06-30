@@ -5626,16 +5626,30 @@ async function salvar(dados, ia) {
 
     if (_existingId) {
       // Registro encontrado → atualiza com dados da entrevista (incluindo nova vaga)
-      await fetch(
+      console.log('[SALVAR] Atualizando registro existente, id:', _existingId, 'entrevista_json len:', payload.entrevista_json?.length);
+      const _patchResp = await fetch(
         `${SB}/rest/v1/disc_historico?id=eq.${_existingId}`,
         { method: 'PATCH', headers: { ..._hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify(payload) }
       );
+      if (!_patchResp.ok) {
+        const _errTxt = await _patchResp.text();
+        console.error('[SALVAR] PATCH falhou:', _patchResp.status, _errTxt);
+      } else {
+        console.log('[SALVAR] PATCH OK no id', _existingId);
+      }
     } else {
       // Registro NÃO existe → cria candidato novo
-      await fetch(
+      console.log('[SALVAR] Criando novo registro, entrevista_json len:', payloadInsert.entrevista_json?.length);
+      const _postResp = await fetch(
         `${SB}/rest/v1/disc_historico`,
         { method: 'POST', headers: { ..._hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }, body: JSON.stringify(payloadInsert) }
       );
+      if (!_postResp.ok) {
+        const _errTxt = await _postResp.text();
+        console.error('[SALVAR] POST falhou:', _postResp.status, _errTxt);
+      } else {
+        console.log('[SALVAR] POST OK');
+      }
     }
   } catch(e) { console.warn('Supabase entrevista erro:', e); }
   try { localStorage.setItem(`entrevista_${NOME}_${VAGA}`, JSON.stringify({ ...dados, analise: ia, ts: Date.now() })); } catch(e) {}
