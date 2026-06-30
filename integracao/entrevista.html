@@ -5636,6 +5636,7 @@ async function salvar(dados, ia) {
         console.error('[SALVAR] PATCH falhou:', _patchResp.status, _errTxt);
       } else {
         console.log('[SALVAR] PATCH OK no id', _existingId);
+        window._savedRecordId = _existingId; // guarda o id real do registro salvo
       }
     } else {
       // Registro NÃO existe → cria candidato novo
@@ -5649,7 +5650,22 @@ async function salvar(dados, ia) {
         console.error('[SALVAR] POST falhou:', _postResp.status, _errTxt);
       } else {
         console.log('[SALVAR] POST OK');
+        try {
+          const _novo = await _postResp.json();
+          if (Array.isArray(_novo) && _novo[0]?.id) window._savedRecordId = _novo[0].id; // guarda o id do registro novo
+        } catch(e) { console.warn('[SALVAR] não conseguiu ler id do POST:', e); }
       }
+    }
+    // Agora que sabemos o id REAL do registro, regrava url_resultado_fit com &id= anexado
+    // (na 1ª vez que salvamos não tínhamos esse id ainda, por isso o PATCH extra aqui)
+    if (window._savedRecordId) {
+      const _urlComId = _fitUrlCurta + '&id=' + encodeURIComponent(window._savedRecordId);
+      try {
+        await fetch(
+          `${SB}/rest/v1/disc_historico?id=eq.${encodeURIComponent(window._savedRecordId)}`,
+          { method: 'PATCH', headers: { ..._hdrs, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, body: JSON.stringify({ url_resultado_fit: _urlComId }) }
+        );
+      } catch(e) { console.warn('[SALVAR] não conseguiu gravar url_resultado_fit com id:', e); }
     }
   } catch(e) { console.warn('Supabase entrevista erro:', e); }
   try { localStorage.setItem(`entrevista_${NOME}_${VAGA}`, JSON.stringify({ ...dados, analise: ia, ts: Date.now() })); } catch(e) {}
@@ -5783,6 +5799,17 @@ function mostrarResultado(dados, ia) {
     const btnFit  = document.getElementById('btnFitCultural');
     const wrapFit = document.getElementById('fitBtnWrap');
     if (btnFit && wrapFit) { btnFit.href = fitResultUrl; wrapFit.style.display = 'flex'; }
+    // Quando o salvar() terminar, sabemos o id REAL do registro no banco —
+    // anexa &id= na URL pra eliminar ambiguidade de qual registro abrir
+    if (window._entrevistaSalvarPromise) {
+      window._entrevistaSalvarPromise.then(() => {
+        if (window._savedRecordId) {
+          const _urlComId = fitResultUrl + '&id=' + encodeURIComponent(window._savedRecordId);
+          window._fitResultUrl = _urlComId;
+          if (btnFit) btnFit.href = _urlComId;
+        }
+      }).catch(()=>{});
+    }
   } catch(e) { console.warn('fitBtnWrap erro:', e); }
 }
 

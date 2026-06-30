@@ -443,6 +443,7 @@
 const p = new URLSearchParams(window.location.search);
 const nome     = p.get('nome')     || 'Candidato';
 const vaga     = p.get('vaga')     || 'Não informada';
+const recordId = p.get('id')       || '';
 const tel      = p.get('tel')      || '';
 const email    = p.get('email')    || '';
 const fitScore = parseInt(p.get('fit')   || '0');
@@ -989,28 +990,43 @@ function salvarObs() {
     }
   } catch(e) {}
 
-  // 2. Busca no Supabase pelo nome+vaga (link do email, outro dispositivo, etc.)
+  // 2. Busca no Supabase — por ID (preciso, sem ambiguidade) ou por nome+vaga (fallback)
   if (!nome || nome === 'Candidato') { renderizarTudo(); return; }
   try {
     document.getElementById('entrevistaWrap').innerHTML =
       '<span style="color:var(--muted);font-size:0.83rem;">⏳ Carregando dados...</span>';
 
     const _sel = 'entrevista_json,curriculo_json,resumo_ia,resumo_admin,recomendacao_admin,pontos_fortes,pontos_atencao,requisitos_atendidos,requisitos_ausentes,red_flags_json,progressao_carreira,rotatividade_alerta,coerencia_nota,revisao_ia_flag,revisao_ia_campos,exp_especifica,exp_especifica_aval';
-    // Busca exata — só registros com entrevista_json preenchido
-    let res = await fetch(
-      `${SB}/rest/v1/disc_historico?nome=eq.${encodeURIComponent(nome)}&vaga=eq.${encodeURIComponent(vaga)}&select=${_sel}&order=atualizado_em.desc&limit=1`,
-      { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} }
-    );
-    let arr = await res.json();
 
-    // Busca flexível se não achou exato
+    let arr = [];
+
+    // 2a. Se a URL trouxe o id do registro exato, busca direto por ele — sem ambiguidade
+    if (recordId) {
+      const resId = await fetch(
+        `${SB}/rest/v1/disc_historico?id=eq.${encodeURIComponent(recordId)}&select=${_sel}`,
+        { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} }
+      );
+      arr = await resId.json();
+    }
+
+    // 2b. Sem id na URL (link antigo) ou id não encontrado → busca por nome+vaga,
+    //     mas só considera registros com entrevista_json de fato preenchido
     if (!Array.isArray(arr) || !arr.length) {
-      const nomeInicio = nome.split(' ')[0];
-      res = await fetch(
-        `${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(nomeInicio+'*')}&vaga=ilike.${encodeURIComponent('*'+vaga.split(' ')[0]+'*')}&select=${_sel}&order=atualizado_em.desc&limit=1`,
+      let res = await fetch(
+        `${SB}/rest/v1/disc_historico?nome=eq.${encodeURIComponent(nome)}&vaga=eq.${encodeURIComponent(vaga)}&entrevista_json=not.is.null&select=${_sel}&order=atualizado_em.desc&limit=1`,
         { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} }
       );
       arr = await res.json();
+
+      // Busca flexível se não achou exato (ainda exigindo entrevista_json preenchido)
+      if (!Array.isArray(arr) || !arr.length) {
+        const nomeInicio = nome.split(' ')[0];
+        res = await fetch(
+          `${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(nomeInicio+'*')}&vaga=ilike.${encodeURIComponent('*'+vaga.split(' ')[0]+'*')}&entrevista_json=not.is.null&select=${_sel}&order=atualizado_em.desc&limit=1`,
+          { headers:{'apikey':KEY,'Authorization':'Bearer '+KEY} }
+        );
+        arr = await res.json();
+      }
     }
 
     if (Array.isArray(arr) && arr.length > 0) {
