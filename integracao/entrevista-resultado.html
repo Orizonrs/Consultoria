@@ -890,15 +890,13 @@ function renderizarTudo() {
 
   // — COMPETÊNCIAS STAR —
   entHTML += `<div style="font-size:0.63rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;margin:1rem 0 0.6rem;">🧠 Competências Comportamentais (Método STAR)</div>`;
-  if (comp.me_fale) {
-    entHTML += `<div class="resp-block"><span class="resp-label">🗣️ Me fale sobre você</span><div class="resp-text">${String(comp.me_fale).replace(/\n/g,'<br>')}</div></div>`;
-  }
-  entHTML += starBlock('🗣️ Comunicação', comp.comunicacao_acao, comp.comunicacao_res);
-  entHTML += starBlock('💪 Resiliência', comp.resiliencia_acao, comp.resiliencia_res);
-  entHTML += starBlock('🤝 Trabalho em Equipe', comp.equipe_acao, comp.equipe_res);
-  entHTML += starBlock('🎯 Foco em Resultados', comp.resultados_acao, comp.resultados_res);
-  entHTML += starBlock('⚡ Proatividade', comp.proatividade_acao, comp.proatividade_res);
-  entHTML += starBlock('🔄 Adaptabilidade', comp.adaptabilidade_acao, comp.adaptabilidade_res);
+  entHTML += respBlock('🗣️ Me fale sobre você', comp.sobre, false);
+  entHTML += respBlock('🗣️ Comunicação', comp.comunicacao, true);
+  entHTML += respBlock('💪 Resiliência', comp.resiliencia, true);
+  entHTML += respBlock('🤝 Trabalho em Equipe', comp.equipe, true);
+  entHTML += respBlock('🎯 Foco em Resultados', comp.resultados, true);
+  entHTML += respBlock('⚡ Proatividade', comp.proatividade, true);
+  entHTML += respBlock('🔄 Adaptabilidade', comp.adaptabilidade, true);
 
   // — MOTIVAÇÃO & EXTRAS —
   entHTML += `<div style="font-size:0.63rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;margin:1rem 0 0.6rem;">💭 Motivação & Informações Finais</div>`;
@@ -1032,7 +1030,14 @@ function salvarObs() {
     if (Array.isArray(arr) && arr.length > 0) {
       const row = arr[0];
       // Monta entData
-      try { entData = JSON.parse(row.entrevista_json || '{}'); } catch(e) { entData = {}; }
+      // entrevista_json pode vir como STRING (coluna text/json antigo) ou já como
+      // OBJETO (coluna jsonb — é o que o Supabase normalmente devolve). JSON.parse
+      // em um objeto quebra e cai no catch, zerando os dados — por isso checamos o tipo.
+      if (row.entrevista_json && typeof row.entrevista_json === 'object') {
+        entData = row.entrevista_json;
+      } else {
+        try { entData = JSON.parse(row.entrevista_json || '{}'); } catch(e) { entData = {}; }
+      }
       // Monta curriculo a partir de curriculo_json (se existir) ou do entrevista_json legado
       if (row.curriculo_json) {
         try { entData._curriculo = JSON.parse(row.curriculo_json); } catch(e) {}
