@@ -353,7 +353,19 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
       <button class="btn" onclick="ativarModoMassa('excluir')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);font-weight:700;" title="Selecionar candidatos e excluir">🗑️ Excluir</button>
       <button class="btn btn-accent" onclick="abrirModalNovoCand()">+ Adicionar Candidato</button>
       <button class="btn" style="background:rgba(167,139,250,0.12);color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="abrirModalPesos()" title="Configurar pesos de aderência por vaga">⚖️ Pesos</button>
-      <button class="btn" id="btnDiscFixoRapido" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);font-weight:700;" onclick="toggleDiscFixoRapido()" title="Liga/desliga bônus fixo de +10% por concluir o teste DISC">🧠 DISC +10% · Desligado</button>
+      <button class="btn" id="btnDiscFixoRapido" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);font-weight:700;" onclick="toggleDiscFixoRapido()" title="Liga/desliga bônus fixo por concluir o teste DISC">🧠 DISC +10pts · Desligado</button>
+      <select id="selDiscFixoPts" onchange="mudarPontosDiscFixo(this.value)" title="Quantos pontos extras o bônus DISC dá" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);border-radius:8px;padding:0 0.4rem;font-family:inherit;font-size:0.78rem;font-weight:700;height:34px;cursor:pointer;">
+        <option value="1">1 pt</option>
+        <option value="2">2 pts</option>
+        <option value="3">3 pts</option>
+        <option value="4">4 pts</option>
+        <option value="5">5 pts</option>
+        <option value="6">6 pts</option>
+        <option value="7">7 pts</option>
+        <option value="8">8 pts</option>
+        <option value="9">9 pts</option>
+        <option value="10" selected>10 pts</option>
+      </select>
       <button class="btn btn-ghost" onclick="window.parent.postMessage({tipo:'orizon_navegar',mod:'pipeline-triagem'},'*')">⊞ Triagem</button>
     </div>
   </div>
@@ -3777,12 +3789,36 @@ function renderFormulaModoCards(modoAtivo){
   }).join('');
 }
 
+async function mudarPontosDiscFixo(valor){
+  const pesos = {..._pesosCache['_global']} || {};
+  PILARES_DEF.forEach(p=>{ if(pesos[p.key]==null) pesos[p.key] = PESOS_DEFAULT[p.key]||0; });
+  pesos.bonus_disc_fixo_pts = parseInt(valor)||10;
+  if(pesos.bonus_disc_fixo==null) pesos.bonus_disc_fixo = false;
+  if(pesos.formula_modo==null) pesos.formula_modo = getFormulaModo(pesos);
+
+  _pesosCache['_global'] = {...pesos, configurado:true};
+  atualizarBotaoDiscFixoRapido();
+
+  const ok = await setPesosSupabase('_global', pesos);
+  try{
+    const local = JSON.parse(localStorage.getItem(PESOS_KEY)||'{}');
+    local['_global'] = pesos;
+    localStorage.setItem(PESOS_KEY, JSON.stringify(local));
+  }catch(e){}
+
+  mostrarToast(`🧠 Bônus DISC ajustado para +${pesos.bonus_disc_fixo_pts}pts${pesos.bonus_disc_fixo?'':' (lembre de ligar o botão pra valer)'}${ok?'':' — salvo localmente, verifique conexão'}`);
+  filtrarCands();
+}
+
 async function toggleDiscFixoRapido(){
   const pesos = {..._pesosCache['_global']} || {};
   // Garante que os pesos atuais dos pilares (se nunca configurados) usem o padrão
   PILARES_DEF.forEach(p=>{ if(pesos[p.key]==null) pesos[p.key] = PESOS_DEFAULT[p.key]||0; });
   pesos.bonus_disc_fixo = !pesos.bonus_disc_fixo;
-  if(pesos.bonus_disc_fixo_pts==null) pesos.bonus_disc_fixo_pts = 10;
+  if(pesos.bonus_disc_fixo_pts==null){
+    const selVal = document.getElementById('selDiscFixoPts')?.value;
+    pesos.bonus_disc_fixo_pts = parseInt(selVal)||10;
+  }
   if(pesos.formula_modo==null) pesos.formula_modo = getFormulaModo(pesos);
 
   _pesosCache['_global'] = {...pesos, configurado:true};
@@ -3803,11 +3839,13 @@ async function toggleDiscFixoRapido(){
 
 function atualizarBotaoDiscFixoRapido(){
   const btn = document.getElementById('btnDiscFixoRapido');
-  if(!btn) return;
+  const sel = document.getElementById('selDiscFixoPts');
   const pesos = _pesosCache['_global'] || {};
   const ativo = !!pesos.bonus_disc_fixo;
   const pts = pesos.bonus_disc_fixo_pts!=null ? pesos.bonus_disc_fixo_pts : 10;
-  btn.textContent = ativo ? `🧠 DISC +${pts}% · Ligado` : `🧠 DISC +${pts}% · Desligado`;
+  if(sel) sel.value = String(pts);
+  if(!btn) return;
+  btn.textContent = ativo ? `🧠 DISC +${pts}pts · Ligado` : `🧠 DISC +${pts}pts · Desligado`;
   btn.style.background = ativo ? 'rgba(52,152,219,0.25)' : 'rgba(52,152,219,0.08)';
   btn.style.color = ativo ? '#fff' : '#5dade2';
   btn.style.borderColor = ativo ? 'rgba(52,152,219,0.6)' : 'rgba(52,152,219,0.25)';
