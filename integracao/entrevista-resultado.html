@@ -969,24 +969,29 @@ function salvarObs() {
 
 // ── CARREGAR DADOS: Supabase primeiro, sessionStorage como fallback ───────────
 (async function carregarDados() {
-  // 1. Tenta sessionStorage (mesma sessão, candidato acabou de fazer)
-  try {
-    const ss_ent = sessionStorage.getItem('entrevista_dados');
-    const ss_ia  = sessionStorage.getItem('entrevista_ia');
-    if (ss_ent && ss_ia) {
-      const dadosCompletos = JSON.parse(ss_ent);
-      // entrevista_dados pode ser { entrevista:{...}, curriculo:{...} } ou diretamente o objeto entrevista
-      if (dadosCompletos.entrevista) {
-        entData = dadosCompletos.entrevista;
-        entData._curriculo = dadosCompletos.curriculo || {};
-      } else {
-        entData = dadosCompletos;
+  // 1. Tenta sessionStorage — só quando NÃO temos id na URL.
+  //    Se a URL já diz qual registro é (id=...), confiamos nele sempre:
+  //    sessionStorage pode ter sobrado de um teste anterior no mesmo navegador
+  //    e mascarar os dados certos que vieram do Supabase.
+  if (!recordId) {
+    try {
+      const ss_ent = sessionStorage.getItem('entrevista_dados');
+      const ss_ia  = sessionStorage.getItem('entrevista_ia');
+      if (ss_ent && ss_ia) {
+        const dadosCompletos = JSON.parse(ss_ent);
+        // entrevista_dados pode ser { entrevista:{...}, curriculo:{...} } ou diretamente o objeto entrevista
+        if (dadosCompletos.entrevista) {
+          entData = dadosCompletos.entrevista;
+          entData._curriculo = dadosCompletos.curriculo || {};
+        } else {
+          entData = dadosCompletos;
+        }
+        iaData  = JSON.parse(ss_ia);
+        renderizarTudo();
+        return;
       }
-      iaData  = JSON.parse(ss_ia);
-      renderizarTudo();
-      return;
-    }
-  } catch(e) {}
+    } catch(e) {}
+  }
 
   // 2. Busca no Supabase — por ID (preciso, sem ambiguidade) ou por nome+vaga (fallback)
   if (!nome || nome === 'Candidato') { renderizarTudo(); return; }
