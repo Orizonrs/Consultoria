@@ -2071,11 +2071,47 @@ function calcularAderencia(h){
   // Aplica o modo de fórmula configurado
   const modo = getFormulaModo(pesosConfig);
   const modoDef = FORMULA_MODOS[modo] || FORMULA_MODOS.ponderada;
-  const valor = modoDef.calc(pilares, somaPesos);
+  let valor = modoDef.calc(pilares, somaPesos);
+
+  // Bônus de sinergia: Fit + Currículo altos ao mesmo tempo somam pontos extras
+  const bonus = calcularBonusSinergia(fit, curr);
+  if(bonus.pontos > 0) valor += bonus.pontos;
+
+  // Bônus fixo por ter feito o teste DISC (liga/desliga por vaga, independente do resultado)
+  const discFixoAtivo = !!(pesosConfig && pesosConfig.bonus_disc_fixo);
+  const discFixoPontos = discFixoAtivo ? (parseFloat(pesosConfig.bonus_disc_fixo_pts)||10) : 0;
+  const discFeito = temDiscFeito(h);
+  if(discFixoAtivo && discFeito) valor += discFixoPontos;
 
   const fonteLabel = { ponderada:'pond.', faixas:'fxs.', melhor_pilar:'dyn.', harmonica:'hrm.' };
   const fonte = fonteLabel[modo] || 'pond.';
-  return { valor: Math.min(100, Math.max(0, valor)), fonte, detalhes: pilares, modo };
+  return {
+    valor: Math.min(100, Math.max(0, Math.round(valor))),
+    fonte, detalhes: pilares, modo,
+    bonusSinergia: bonus,
+    bonusDisc: { ativo: discFixoAtivo, feito: discFeito, pontos: (discFixoAtivo && discFeito) ? discFixoPontos : 0 }
+  };
+}
+
+// Verifica se o candidato de fato concluiu o teste DISC (qualquer resultado)
+function temDiscFeito(h){
+  return !!(h.dom || h.disc_perfil || h.url || (h.pct_d && parseFloat(h.pct_d) > 0));
+}
+
+// ─── BÔNUS DE SINERGIA: Fit + Currículo altos ao mesmo tempo ────────────────
+// Premia candidatos consistentemente bons nos dois pilares mais confiáveis
+// (em vez de só fazer média, soma pontos extras quando os dois batem juntos).
+const FAIXAS_SINERGIA = [
+  { nivel:'Ouro',   fitMin:85, curMin:75, pontos:12 },
+  { nivel:'Prata',  fitMin:75, curMin:65, pontos:8  },
+  { nivel:'Bronze', fitMin:65, curMin:55, pontos:4  },
+];
+function calcularBonusSinergia(fit, curr){
+  if(fit==null || curr==null) return { nivel:null, pontos:0 };
+  for(const f of FAIXAS_SINERGIA){
+    if(fit>=f.fitMin && curr>=f.curMin) return { nivel:f.nivel, pontos:f.pontos };
+  }
+  return { nivel:null, pontos:0 };
 }
 
 // Salva aderencia_calculada de volta no Supabase (fire-and-forget)
@@ -2840,7 +2876,7 @@ function candCard(h){
   if(_manOk){ const fm=_manRaw,c='#3498db'; bars+=`<div class="fit-bar-row" title="Fit manual — sobrescreve o automático"><span class="fit-bar-lbl" style="color:${c};">✏️ Man.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fm}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fm}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.score_curriculo!=null){ const sc=parseInt(h.score_curriculo),cc=sc>=65?'#3b82f6':sc>=40?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row" title="Score do Currículo — Experiência / Formação / Técnico"><span class="fit-bar-lbl" style="color:${cc};">📄 Curric.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sc}%;background:${cc};"></div></div><span class="fit-bar-pct" style="color:${cc};">${sc}%</span><span class="fit-bar-src">curr.</span></div>`; }
   if(h.kw_score!=null){ const kw=parseInt(h.kw_score),ck=kw>=65?'#3498db':kw>=40?'#5dade2':'#85c1e9'; const kwFnd=(h.keywords_encontradas||'').split(' | ').filter(Boolean); const kwAus=(h.keywords_ausentes||'').split(' | ').filter(Boolean); const kwTip=`Keywords encontradas: ${kwFnd.slice(0,5).join(', ')||'—'}${kwAus.length?` | Ausentes: ${kwAus.slice(0,3).join(', ')}`:''}` ; bars+=`<div class="fit-bar-row" title="${kwTip}"><span class="fit-bar-lbl" style="color:${ck};">🔑 KW</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${kw}%;background:linear-gradient(90deg,#1a5276,${ck});"></div></div><span class="fit-bar-pct" style="color:${ck};">${kw}%</span><span class="fit-bar-src">kw</span></div>`; }
-  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const _aderModo=isAderManual?'man.':(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada'); const _aderIco=isAderManual?'✏️':getModoIcon(_aderModo); const _aderLbl=isAderManual?'Manual':getModoLabelCurto(_aderModo); const tooltip=isAderManual?'Definida manualmente':`Método: ${(FORMULA_MODOS[_aderModo]||FORMULA_MODOS.ponderada).label}` + (aderCalc&&aderCalc.detalhes?' · '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):''); bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:#a78bfa;">${_aderIco} Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${ader}%</span><span class="fit-bar-src">${_aderLbl}</span></div>`; }
+  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const _aderModo=isAderManual?'man.':(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada'); const _aderIco=isAderManual?'✏️':getModoIcon(_aderModo); const _aderLbl=isAderManual?'Manual':getModoLabelCurto(_aderModo); const _bonus=aderCalc&&aderCalc.bonusSinergia?aderCalc.bonusSinergia:null; const _bonusTxt=(_bonus&&_bonus.pontos>0)?` · 🏅 Bônus ${_bonus.nivel} (Fit+CV altos) +${_bonus.pontos}pts`:''; const _bd=aderCalc&&aderCalc.bonusDisc?aderCalc.bonusDisc:null; const _bdTxt=(_bd&&_bd.pontos>0)?` · 🧠 Bônus DISC concluído +${_bd.pontos}pts`:''; const tooltip=(isAderManual?'Definida manualmente':`Método: ${(FORMULA_MODOS[_aderModo]||FORMULA_MODOS.ponderada).label}` + (aderCalc&&aderCalc.detalhes?' · '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):'')) + _bonusTxt + _bdTxt; const _bonusBadge=(_bonus&&_bonus.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#f59e0b;">🏅${_bonus.nivel}</span>`:''; const _bdBadge=(_bd&&_bd.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(52,152,219,0.15);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#3498db;">🧠+${_bd.pontos}</span>`:''; bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:#a78bfa;">${_aderIco} Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${ader}%</span><span class="fit-bar-src">${_aderLbl}${_bonusBadge}${_bdBadge}</span></div>`; }
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${sc};">🧑‍💼 Rec.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sr}%;background:linear-gradient(90deg,#e67e22,#f39c12);"></div></div><span class="fit-bar-pct" style="color:${sc};">${sr}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.pilar_livre_valor!=null){ const pl=parseInt(h.pilar_livre_valor),plc=pl>=80?'#2ecc71':pl>=65?'#3b82f6':pl>=45?'#f39c12':'#e74c3c',plnome=h.pilar_livre_nome||'Livre'; bars+=`<div class="fit-bar-row" title="${esc(plnome)}"><span class="fit-bar-lbl" style="color:${plc};overflow:hidden;text-overflow:ellipsis;">🔧 ${esc(plnome.substring(0,6))}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${pl}%;background:linear-gradient(90deg,#1abc9c,#16a085);"></div></div><span class="fit-bar-pct" style="color:${plc};">${pl}%</span><span class="fit-bar-src">livre</span></div>`; }
 
@@ -3741,6 +3777,11 @@ function renderFormulaModoCards(modoAtivo){
 function abrirModalPesos(){
   const pesos = _pesosCache['_global'] || {};
   renderPilaresConfig(pesos);
+  // Restaura estado do bônus fixo DISC
+  const toggle = document.getElementById('discFixoToggle');
+  const ptsInp = document.getElementById('discFixoPts');
+  if(toggle){ toggle.checked = !!pesos.bonus_disc_fixo; toggle.dispatchEvent(new Event('change')); }
+  if(ptsInp) ptsInp.value = pesos.bonus_disc_fixo_pts!=null ? pesos.bonus_disc_fixo_pts : 10;
   // Restaura modo salvo e renderiza os cards
   const modoSalvo = getFormulaModo(pesos);
   const inp = document.getElementById('formulaModoSel');
@@ -3756,6 +3797,10 @@ function carregarPesosVaga(){
   const vagaKey = sel ? sel.value : '_global';
   const pesos = _pesosCache[vagaKey] || _pesosCache['_global'] || {};
   renderPilaresConfig(pesos);
+  const toggle = document.getElementById('discFixoToggle');
+  const ptsInp = document.getElementById('discFixoPts');
+  if(toggle){ toggle.checked = !!pesos.bonus_disc_fixo; toggle.dispatchEvent(new Event('change')); }
+  if(ptsInp) ptsInp.value = pesos.bonus_disc_fixo_pts!=null ? pesos.bonus_disc_fixo_pts : 10;
 }
 
 function renderPilaresConfig(pesos){
@@ -3827,6 +3872,11 @@ async function salvarPesosVaga(){
   const vagaKey = '_global';
   const pesos = {};
   PILARES_DEF.forEach(p=>{ pesos[p.key] = parseFloat(document.getElementById('peso_'+p.key)?.value)||0; });
+  // Bônus fixo por concluir o teste DISC (liga/desliga, independente do resultado)
+  const discToggle = document.getElementById('discFixoToggle');
+  const discPtsInp  = document.getElementById('discFixoPts');
+  pesos.bonus_disc_fixo = !!(discToggle && discToggle.checked);
+  pesos.bonus_disc_fixo_pts = parseFloat(discPtsInp?.value) || 10;
   // Persiste o modo de fórmula selecionado
   const modoSel = document.getElementById('formulaModoSel');
   if(modoSel){ pesos.formula_modo = modoSel.value; try{ localStorage.setItem('orizon_formula_modo', modoSel.value); }catch(e){} }
@@ -3863,6 +3913,10 @@ function resetarPesosVaga(){
     if(el) el.value = v;
     if(sl) sl.value = v;
   });
+  const toggle = document.getElementById('discFixoToggle');
+  const ptsInp = document.getElementById('discFixoPts');
+  if(toggle){ toggle.checked = false; toggle.dispatchEvent(new Event('change')); }
+  if(ptsInp) ptsInp.value = 10;
   renderFormulaModoCards('ponderada');
   const inp = document.getElementById('formulaModoSel');
   if(inp) inp.value = 'ponderada';
@@ -5524,6 +5578,36 @@ function navegar(mod){ window.parent.postMessage({tipo:'orizon_navegar',mod},'*'
     <p style="font-size:0.72rem;color:#666;margin-bottom:1.4rem;line-height:1.6;">Defina a <strong style="color:#a78bfa;">importância de cada critério</strong> de 0 a 100. Critérios com 0 ou sem dado no candidato são ignorados. O sistema normaliza automaticamente — não precisa somar 100%.</p>
 
     <div id="pesosConfigWrap"><!-- pilares gerados por JS --></div>
+
+    <!-- BÔNUS FIXO POR TER FEITO O TESTE DISC (liga/desliga) -->
+    <div style="background:rgba(52,152,219,0.07);border:1px solid rgba(52,152,219,0.25);border-radius:14px;padding:0.9rem 1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:0.8rem;">
+      <div>
+        <div style="font-size:0.82rem;font-weight:800;color:#3498db;">🧠 Bônus fixo por fazer o teste DISC</div>
+        <div style="font-size:0.65rem;color:#888;margin-top:0.15rem;line-height:1.5;">Some pontos extras na aderência só por ter <strong>concluído</strong> o teste — não importa o resultado (D, I, S ou C).</div>
+        <div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.5rem;">
+          <input type="number" min="0" max="30" step="1" id="discFixoPts" value="10"
+            style="width:54px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:7px;padding:0.25rem 0.4rem;color:#f0f0f0;font-family:inherit;font-size:0.8rem;font-weight:800;text-align:center;outline:none;"/>
+          <span style="font-size:0.68rem;color:#666;font-weight:700;">pontos extras quando ativado</span>
+        </div>
+      </div>
+      <label style="position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0;cursor:pointer;">
+        <input type="checkbox" id="discFixoToggle" style="opacity:0;width:0;height:0;" onchange="atualizarSomaPesos()"/>
+        <span id="discFixoSlider" style="position:absolute;inset:0;background:rgba(255,255,255,0.12);border-radius:26px;transition:0.2s;"></span>
+        <span id="discFixoKnob" style="position:absolute;height:20px;width:20px;left:3px;top:3px;background:#888;border-radius:50%;transition:0.2s;"></span>
+      </label>
+    </div>
+    <script>
+      // Liga/desliga visual do toggle (inline pra não depender de CSS externo)
+      document.addEventListener('change', function(e){
+        if(e.target && e.target.id==='discFixoToggle'){
+          const on = e.target.checked;
+          const sl = document.getElementById('discFixoSlider');
+          const kn = document.getElementById('discFixoKnob');
+          if(sl) sl.style.background = on ? 'rgba(52,152,219,0.55)' : 'rgba(255,255,255,0.12)';
+          if(kn){ kn.style.left = on ? '23px' : '3px'; kn.style.background = on ? '#3498db' : '#888'; }
+        }
+      });
+    </script>
 
     <!-- SELETOR DE FÓRMULA — dropdown customizado (sem select nativo) -->
     <div style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1.2rem;">
