@@ -353,6 +353,7 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
       <button class="btn" onclick="ativarModoMassa('excluir')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);font-weight:700;" title="Selecionar candidatos e excluir">🗑️ Excluir</button>
       <button class="btn btn-accent" onclick="abrirModalNovoCand()">+ Adicionar Candidato</button>
       <button class="btn" style="background:rgba(167,139,250,0.12);color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="abrirModalPesos()" title="Configurar pesos de aderência por vaga">⚖️ Pesos</button>
+      <button class="btn" id="btnDiscFixoRapido" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);font-weight:700;" onclick="toggleDiscFixoRapido()" title="Liga/desliga bônus fixo de +10% por concluir o teste DISC">🧠 DISC +10% · Desligado</button>
       <button class="btn btn-ghost" onclick="window.parent.postMessage({tipo:'orizon_navegar',mod:'pipeline-triagem'},'*')">⊞ Triagem</button>
     </div>
   </div>
@@ -1892,6 +1893,7 @@ async function carregarTodosPesos(){
           localStorage.setItem(PESOS_KEY, JSON.stringify(local));
         }catch(e){}
         _pesosCarregados = true;
+        atualizarBotaoDiscFixoRapido();
         return;
       }
     }
@@ -1904,6 +1906,7 @@ async function carregarTodosPesos(){
     Object.keys(local).forEach(k=>{ _pesosCache[k] = {...local[k], configurado:true}; });
   }catch(e){}
   _pesosCarregados = true;
+  atualizarBotaoDiscFixoRapido();
 }
 
 function getPesosVaga(vagaKey){
@@ -3772,6 +3775,42 @@ function renderFormulaModoCards(modoAtivo){
       </div>
     </div>`;
   }).join('');
+}
+
+async function toggleDiscFixoRapido(){
+  const pesos = {..._pesosCache['_global']} || {};
+  // Garante que os pesos atuais dos pilares (se nunca configurados) usem o padrão
+  PILARES_DEF.forEach(p=>{ if(pesos[p.key]==null) pesos[p.key] = PESOS_DEFAULT[p.key]||0; });
+  pesos.bonus_disc_fixo = !pesos.bonus_disc_fixo;
+  if(pesos.bonus_disc_fixo_pts==null) pesos.bonus_disc_fixo_pts = 10;
+  if(pesos.formula_modo==null) pesos.formula_modo = getFormulaModo(pesos);
+
+  _pesosCache['_global'] = {...pesos, configurado:true};
+  atualizarBotaoDiscFixoRapido();
+
+  const ok = await setPesosSupabase('_global', pesos);
+  try{
+    const local = JSON.parse(localStorage.getItem(PESOS_KEY)||'{}');
+    local['_global'] = pesos;
+    localStorage.setItem(PESOS_KEY, JSON.stringify(local));
+  }catch(e){}
+
+  mostrarToast(pesos.bonus_disc_fixo
+    ? `🧠 Bônus DISC ativado! +${pesos.bonus_disc_fixo_pts}pts pra quem concluiu o teste${ok?'':' (salvo localmente — verifique conexão)'}`
+    : `🧠 Bônus DISC desativado${ok?'':' (salvo localmente — verifique conexão)'}`);
+  filtrarCands(); // recalcula aderências com o novo bônus
+}
+
+function atualizarBotaoDiscFixoRapido(){
+  const btn = document.getElementById('btnDiscFixoRapido');
+  if(!btn) return;
+  const pesos = _pesosCache['_global'] || {};
+  const ativo = !!pesos.bonus_disc_fixo;
+  const pts = pesos.bonus_disc_fixo_pts!=null ? pesos.bonus_disc_fixo_pts : 10;
+  btn.textContent = ativo ? `🧠 DISC +${pts}% · Ligado` : `🧠 DISC +${pts}% · Desligado`;
+  btn.style.background = ativo ? 'rgba(52,152,219,0.25)' : 'rgba(52,152,219,0.08)';
+  btn.style.color = ativo ? '#fff' : '#5dade2';
+  btn.style.borderColor = ativo ? 'rgba(52,152,219,0.6)' : 'rgba(52,152,219,0.25)';
 }
 
 function abrirModalPesos(){
