@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Resultado · Perfil Comportamental 5 Eixos | Orizon</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --cyan:#00e5ff; --blue:#2979ff; --purple:#7c4dff;
+  --bg:#060610; --card:rgba(255,255,255,0.032); --border:rgba(0,229,255,0.13);
+  --text:#e8eaf6; --text2:#9fa8da; --muted:#5c6bc0; --amber:#ffab00; --green:#00e676; --red:#ff1744;
+  --E:#ff1744; --S:#ffab00; --P:#00e676; --C:#2979ff; --A:#7c4dff;
+  --radius-sm:10px; --radius:16px; --radius-lg:22px;
+  --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.5;pointer-events:none;}
+.wrapper{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+.header{text-align:center;margin-bottom:2rem;}
+.header .eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.5rem;}
+.header h1{font-size:1.7rem;font-weight:700;}
+.header h1 span{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header p{color:var(--text2);font-size:.85rem;margin-top:.5rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(12px);}
+.card h2{font-size:1rem;color:var(--cyan);margin-bottom:1rem;font-weight:700;}
+.card p{font-size:.85rem;color:var(--text2);line-height:1.65;margin-bottom:.8rem;}
+.btn{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:var(--radius);padding:.85rem 2rem;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:.2s;}
+.btn:hover{opacity:.88;transform:translateY(-2px);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:.7rem 1.4rem;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;}
+.ia-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--purple);background:rgba(124,77,255,.1);border:1px solid rgba(124,77,255,.3);padding:.3rem .8rem;border-radius:99px;margin-bottom:1rem;}
+.ia-list{padding-left:1.1rem;font-size:.83rem;color:var(--text2);line-height:1.6;}
+.ia-list li{margin-bottom:.5rem;}
+@keyframes iaPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.ia-loading{color:var(--text2);font-size:.85rem;animation:iaPulse 1.4s ease-in-out infinite;}
+.profile-badge{display:inline-flex;align-items:center;justify-content:center;width:86px;height:86px;border-radius:50%;font-size:2.2rem;font-weight:900;margin:0 auto 1rem;}
+.dim-row{display:flex;align-items:center;gap:12px;margin-bottom:.9rem;}
+.dim-label{width:150px;font-size:.8rem;font-weight:700;flex-shrink:0;}
+.dim-track{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;}
+.dim-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+.dim-pct{width:42px;font-size:.78rem;font-weight:700;text-align:right;}
+.chart-wrap{max-width:340px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+.stat-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:1rem 1.2rem;text-align:center;}
+.stat-box .num{font-size:1.6rem;font-weight:900;color:var(--cyan);}
+.stat-box .lbl{font-size:.75rem;color:var(--text2);margin-top:.2rem;}
+.fit-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;margin-top:.6rem;}
+.state-box{text-align:center;padding:3rem 1rem;}
+.state-box p{font-size:.9rem;color:var(--text2);margin-bottom:1.2rem;}
+#resultWrap{display:none;}
+@media print{
+  .header,body::before,.no-print{display:none!important;}
+  body{background:#fff;color:#000;}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <div class="eyebrow">Orizon · Resultado salvo</div>
+    <h1>Perfil <span>Comportamental 5 Eixos</span></h1>
+    <p id="subNome"></p>
+  </div>
+
+  <div id="loadingBox" class="card state-box">
+    <p class="ia-loading">Carregando resultado...</p>
+  </div>
+
+  <div id="errorBox" class="card state-box" style="display:none">
+    <p>⚠️ Não encontramos um resultado salvo pra esse candidato ainda.</p>
+    <a class="btn" id="linkFazerTeste" href="#">Fazer o teste agora</a>
+  </div>
+
+  <div id="resultWrap">
+    <div class="card" style="text-align:center">
+      <h2>🎯 Perfil Natural</h2>
+      <div id="cardPerfilNatural"></div>
+      <div id="fitVagaBox"></div>
+    </div>
+    <div class="card">
+      <span class="ia-badge">🤖 Parecer gerado por IA · Llama 3.3</span>
+      <div id="parecerIABox"><button class="btn-ghost" onclick="gerarParecerIA()">Gerar parecer com IA</button></div>
+    </div>
+    <div class="card">
+      <h2>📊 Comparativo dos 5 Eixos</h2>
+      <div class="two-col">
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como se vê</p>
+          <div id="barsNatural"></div>
+        </div>
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como acha que é visto</p>
+          <div id="barsPercebido"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card no-print">
+      <h2>🕸️ Radar Comparativo</h2>
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>⚡ Energia & Consistência</h2>
+      <div class="two-col">
+        <div class="stat-box"><div class="num" id="statEnergia">-</div><div class="lbl">Quantum de energia</div></div>
+        <div class="stat-box"><div class="num" id="statConsistencia">-</div><div class="lbl">Consistência do perfil</div></div>
+      </div>
+    </div>
+    <div class="card no-print" style="text-align:center">
+      <button class="btn" onclick="window.print()">🖨️ Baixar / Imprimir PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — mesmo projeto Supabase do teste
+// ═══════════════════════════════════════════════════════════
+const SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
+const EDGE_LER_URL = `${SB_URL}/functions/v1/perfil-5eixos-ler`;
+const EDGE_PARECER_URL = `${SB_URL}/functions/v1/perfil-5eixos`;
+
+const params = new URLSearchParams(location.search);
+const candidatoId = params.get('candidato_id') || params.get('id') || '';
+const emailParam = params.get('email') || '';
+const nomeParam = params.get('nome') || '';
+const vagaParam = params.get('vaga') || '';
+
+const EIXOS = {
+  E:{nome:'Ênfase',cor:'var(--E)'},
+  S:{nome:'Sociabilidade',cor:'var(--S)'},
+  P:{nome:'Paciência',cor:'var(--P)'},
+  C:{nome:'Conformidade',cor:'var(--C)'},
+  A:{nome:'Autocontrole',cor:'var(--A)'},
+};
+
+const COMBOS = {
+  ES:{nome:'Comunicador Estratégico',desc:'lidera com assertividade e sabe engajar as pessoas ao redor pra tirar planos do papel.'},
+  EP:{nome:'Executor Constante',desc:'busca resultado com firmeza, mas mantém constância — não larga o osso mesmo quando a rotina pesa.'},
+  EC:{nome:'Analista Decisivo',desc:'decide rápido, mas ainda assim exige rigor técnico nas informações antes de agir.'},
+  EA:{nome:'Líder Sereno',desc:'assertivo na ação, mas raramente perde o controle emocional mesmo sob pressão.'},
+  SE:{nome:'Motivador de Resultados',desc:'usa entusiasmo e comunicação como ferramenta pra puxar o time rumo à meta.'},
+  SP:{nome:'Facilitador',desc:'combina comunicação com paciência — ótimo em mediar conflitos e manter o clima leve.'},
+  SC:{nome:'Comunicador Técnico',desc:'fala bem e conecta pessoas, mas gosta de embasar tudo com dado e critério.'},
+  SA:{nome:'Influenciador Equilibrado',desc:'carismático, mas não se deixa levar pela emoção do momento — mantém a régua.'},
+  PE:{nome:'Apoiador Determinado',desc:'constante e leal, mas capaz de tomar iniciativa quando a situação pede.'},
+  PS:{nome:'Parceiro de Equipe',desc:'paciente e sociável — o tipo de pessoa que segura o time unido no dia a dia.'},
+  PC:{nome:'Guardião de Processos',desc:'leal e detalhista, preserva padrões e não abre mão da qualidade combinada.'},
+  PA:{nome:'Pilar de Estabilidade',desc:'constante e emocionalmente estável — referência de segurança pro time.'},
+  CE:{nome:'Especialista Assertivo',desc:'rigor técnico com disposição pra decidir rápido quando os dados apontam o caminho.'},
+  CS:{nome:'Consultor Comunicativo',desc:'técnico por natureza, mas sabe traduzir isso de forma clara pra qualquer público.'},
+  CP:{nome:'Revisor Meticuloso',desc:'detalhista e paciente — não entrega nada sem revisar, sem pressa e sem erro.'},
+  CA:{nome:'Auditor Racional',desc:'lógico e emocionalmente estável, ideal pra decisões que exigem frieza e precisão.'},
+  AE:{nome:'Estrategista Decisivo',desc:'equilíbrio emocional com disposição pra agir — raramente se abala, mas também não trava.'},
+  AS:{nome:'Mediador Carismático',desc:'controle emocional aliado à comunicação — ótimo em situações tensas com pessoas.'},
+  AP:{nome:'Base Sólida',desc:'equilíbrio e constância — o tipo de perfil que não balança fácil, em nenhuma direção.'},
+  AC:{nome:'Analista Ponderado',desc:'racional e criterioso, ideal pra funções que exigem precisão sob pressão controlada.'},
+};
+
+let ultimoResultado = null;
+
+async function carregar(){
+  const linkFazer = 'perfil-5eixos-adjetivos.html?nome='+encodeURIComponent(nomeParam)+'&email='+encodeURIComponent(emailParam)+'&vaga='+encodeURIComponent(vagaParam)+(candidatoId?'&candidato_id='+encodeURIComponent(candidatoId):'');
+  document.getElementById('linkFazerTeste').href = linkFazer;
+
+  try{
+    const resp = await fetch(EDGE_LER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY,'apikey':SB_KEY},
+      body: JSON.stringify({ id:candidatoId, email:emailParam, nome:nomeParam }),
+    });
+    const data = await resp.json().catch(()=>({}));
+    if(!resp.ok || !data.ok || !data.resultado) throw new Error(data.error||'não encontrado');
+    ultimoResultado = data.resultado;
+    renderResultado(ultimoResultado);
+  }catch(e){
+    console.warn('Erro ao carregar resultado PDA:', e);
+    document.getElementById('loadingBox').style.display='none';
+    document.getElementById('errorBox').style.display='block';
+  }
+}
+
+function renderResultado(r){
+  document.getElementById('loadingBox').style.display='none';
+  document.getElementById('resultWrap').style.display='block';
+  document.getElementById('subNome').textContent = r.nome ? `Resultado de ${r.nome}` : 'Resultado salvo';
+
+  const pct1 = {E:r.pct_natural_e||0,S:r.pct_natural_s||0,P:r.pct_natural_p||0,C:r.pct_natural_c||0,A:r.pct_natural_a||0};
+  const pct2 = {E:r.pct_percebido_e||0,S:r.pct_percebido_s||0,P:r.pct_percebido_p||0,C:r.pct_percebido_c||0,A:r.pct_percebido_a||0};
+  const dom1 = r.eixo_natural || Object.entries(pct1).sort((a,b)=>b[1]-a[1])[0][0];
+  const sec1 = r.eixo_secundario || Object.entries(pct1).sort((a,b)=>b[1]-a[1])[1][0];
+
+  const combo = COMBOS[dom1+sec1];
+  document.getElementById('cardPerfilNatural').innerHTML = `
+    <div class="profile-badge" style="background:${EIXOS[dom1].cor}22;color:${EIXOS[dom1].cor};border:3px solid ${EIXOS[dom1].cor}44;">${dom1}</div>
+    <h3 style="font-size:1.3rem;font-weight:800;color:${EIXOS[dom1].cor};margin-bottom:.3rem;">${EIXOS[dom1].nome} + ${EIXOS[sec1].nome}</h3>
+    <p style="color:var(--text2);font-size:.85rem;margin-bottom:.6rem;"><strong style="color:var(--text)">${combo?combo.nome:''}</strong></p>
+    <p style="font-size:.85rem;color:var(--text);max-width:520px;margin:0 auto;line-height:1.6;">${combo?combo.desc:''}</p>`;
+
+  const fitVaga = r.fit_vaga;
+  document.getElementById('fitVagaBox').innerHTML = (fitVaga!==null && fitVaga!==undefined) ? `
+    <div class="fit-badge" style="background:${fitVaga>=75?'rgba(0,230,118,.12)':fitVaga>=55?'rgba(255,171,0,.12)':'rgba(255,23,68,.12)'};color:${fitVaga>=75?'var(--green)':fitVaga>=55?'var(--amber)':'var(--red)'};border:1px solid currentColor;">
+      Compatibilidade com a vaga${r.vaga?' "'+r.vaga+'"':''}: ${fitVaga}%
+    </div>` : '';
+
+  const barsHtml=(pct,prefix)=>Object.keys(EIXOS).map(f=>`
+    <div class="dim-row">
+      <div class="dim-label" style="color:${EIXOS[f].cor}">${EIXOS[f].nome}</div>
+      <div class="dim-track"><div class="dim-fill" id="${prefix}${f}" style="width:${pct[f]}%;background:${EIXOS[f].cor};"></div></div>
+      <div class="dim-pct" style="color:${EIXOS[f].cor}">${pct[f]}%</div>
+    </div>`).join('');
+  document.getElementById('barsNatural').innerHTML=barsHtml(pct1,'bar1');
+  document.getElementById('barsPercebido').innerHTML=barsHtml(pct2,'bar2');
+
+  new Chart(document.getElementById('radarChart').getContext('2d'),{
+    type:'radar',
+    data:{labels:Object.keys(EIXOS).map(f=>EIXOS[f].nome),datasets:[
+      {label:'Como se vê',data:Object.keys(EIXOS).map(f=>pct1[f]),backgroundColor:'rgba(0,229,255,0.15)',borderColor:'#00e5ff',pointBackgroundColor:'#00e5ff'},
+      {label:'Como acha que é visto',data:Object.keys(EIXOS).map(f=>pct2[f]),backgroundColor:'rgba(124,77,255,0.12)',borderColor:'#7c4dff',pointBackgroundColor:'#7c4dff'}
+    ]},
+    options:{responsive:true,scales:{r:{angleLines:{color:'rgba(255,255,255,.1)'},grid:{color:'rgba(255,255,255,.1)'},pointLabels:{color:'#e8eaf6',font:{size:10}},ticks:{display:false}}},plugins:{legend:{labels:{color:'#e8eaf6'}}}}
+  });
+
+  document.getElementById('statEnergia').textContent = (r.energia_pct!=null?r.energia_pct+'%':'-');
+  document.getElementById('statConsistencia').textContent = (r.consistencia_pct!=null?r.consistencia_pct+'%':'-');
+
+  window._pctParaIA = {pct1,pct2,dom1,sec1,dom2:r.eixo_percebido||dom1,fitVaga,comboNome:combo?combo.nome:null};
+}
+
+async function gerarParecerIA(){
+  if(!ultimoResultado || !window._pctParaIA) return;
+  const box = document.getElementById('parecerIABox');
+  box.innerHTML = `<p class="ia-loading">Gerando parecer com IA...</p>`;
+  const p = window._pctParaIA;
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 20000);
+    const resp = await fetch(EDGE_PARECER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY,'apikey':SB_KEY},
+      body: JSON.stringify({
+        nome: ultimoResultado.nome, vaga: ultimoResultado.vaga,
+        dom1:p.dom1, sec1:p.sec1, dom2:p.dom2, pct1:p.pct1, pct2:p.pct2,
+        fitVaga:p.fitVaga, comboNome:p.comboNome,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await resp.json().catch(()=>({}));
+    if(!resp.ok || data.error || !data.parecer) throw new Error(data.error||'Falha ao gerar parecer');
+    const li = arr => (Array.isArray(arr)?arr:[]).map(x=>`<li>${x}</li>`).join('');
+    box.innerHTML = `
+      <p style="font-size:.88rem;color:var(--text);line-height:1.6;margin-bottom:1.2rem;text-align:left;">${data.parecer.resumo_executivo||''}</p>
+      <div class="two-col" style="text-align:left;margin-bottom:1rem;">
+        <div>
+          <p style="font-size:.72rem;color:var(--green);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">✓ Pontos fortes</p>
+          <ul class="ia-list">${li(data.parecer.pontos_fortes)}</ul>
+        </div>
+        <div>
+          <p style="font-size:.72rem;color:var(--amber);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">⚠ Pontos de atenção</p>
+          <ul class="ia-list">${li(data.parecer.pontos_atencao)}</ul>
+        </div>
+      </div>
+      <p style="font-size:.72rem;color:var(--cyan);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;text-align:left;">Perguntas sugeridas para entrevista</p>
+      <ul class="ia-list" style="text-align:left;">${li(data.parecer.perguntas_entrevista)}</ul>`;
+  }catch(e){
+    console.warn('Erro ao gerar parecer IA:', e);
+    box.innerHTML = `<p style="color:var(--amber);font-size:.82rem;">⚠️ Não foi possível gerar o parecer agora. <button class="btn-ghost" style="padding:.4rem .9rem;font-size:.72rem" onclick="gerarParecerIA()">Tentar novamente</button></p>`;
+  }
+}
+
+carregar();
+</script>
+</body>
+</html>

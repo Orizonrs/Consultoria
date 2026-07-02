@@ -1150,6 +1150,34 @@ const COMBOS = {'DI':'Realizador Influente','DS':'Executor Consistente','DC':'Es
 const PESOS_DEFAULT = { disc:20, fit:40, curriculo:30, recrutador:0, entrevista:0, livre:0 };
 
 let _allCands = [];
+// ═══ PDA (Perfil 5 Eixos) — projeto Supabase separado do CRM ═══
+const PDA_SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
+const PDA_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
+const PDA_BASE = 'https://orizonrs.github.io/Consultoria/modulos/'; // ajuste se o PDA morar em outra pasta
+let _pdaPorEmail = new Map(); // email (lowercase) -> registro resumido do PDA
+let _pdaPorTel = new Map();   // telefone (só dígitos) -> registro resumido do PDA
+
+async function carregarListaPDA(){
+  try{
+    const resp = await fetch(`${PDA_SB_URL}/functions/v1/perfil-5eixos-listar`, {
+      headers:{'apikey':PDA_SB_KEY,'Authorization':'Bearer '+PDA_SB_KEY}
+    });
+    const data = await resp.json().catch(()=>({}));
+    if(!resp.ok || !data.ok) return;
+    _pdaPorEmail = new Map(); _pdaPorTel = new Map();
+    (data.lista||[]).forEach(r=>{
+      if(r.email_externo) _pdaPorEmail.set(r.email_externo.toLowerCase(), r);
+      if(r.tel_externo){ const d=r.tel_externo.replace(/\D/g,''); if(d) _pdaPorTel.set(d, r); }
+    });
+  }catch(e){ console.warn('Não foi possível carregar lista do PDA:', e); }
+}
+function encontrarPDA(h){
+  const email=(h.email_externo||'').toLowerCase();
+  if(email && _pdaPorEmail.has(email)) return _pdaPorEmail.get(email);
+  const tel=(h.tel_externo||'').replace(/\D/g,'');
+  if(tel && _pdaPorTel.has(tel)) return _pdaPorTel.get(tel);
+  return null;
+}
 let _vagasList = [];
 let _perfilAtual = null;
 let _delCandId = null, _delCandNome = null;
@@ -1254,6 +1282,9 @@ let _massaModoAtivo = false;         // Se o modo seleção em massa está ativo
 
 async function carregarDados(){
   try{
+    // Carrega em paralelo a lista de quem já fez o PDA (não bloqueia o resto)
+    carregarListaPDA();
+
     // Carrega pesos antes de renderizar (para cálculos corretos)
     if(!_pesosCarregados) await carregarTodosPesos();
 
@@ -2925,6 +2956,17 @@ function candCard(h){
     ? 'background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.2);'
     : 'background:rgba(52,152,219,0.05);color:#5dade2;border-color:rgba(52,152,219,0.15);';
   footBtns += `<a class="btn-sm" href="${esc(_discUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="${_discStyle}">${_discLabel}</a>`;
+  // Botão PDA (Perfil 5 Eixos): mesmo padrão do DISC — se já tem resultado, abre o
+  // visualizador somente-leitura; se não, manda pro teste com nome/tel/email pré-preenchidos.
+  const _pdaReg = encontrarPDA(h);
+  const _pdaUrl = _pdaReg
+    ? (PDA_BASE+'perfil-5eixos-resultado.html?candidato_id='+encodeURIComponent(_pdaReg.id)+'&nome='+encodeURIComponent(h.nome||''))
+    : (PDA_BASE+'perfil-5eixos-adjetivos.html?nome='+encodeURIComponent(h.nome||'')+'&tel='+encodeURIComponent(h.tel_externo||'')+'&email='+encodeURIComponent(h.email_externo||'')+'&vaga='+encodeURIComponent(h.vaga||''));
+  const _pdaLabel = _pdaReg ? `🧭 PDA${_pdaReg.eixo_natural?(' · '+esc(_pdaReg.eixo_natural)):''}` : '🧭 Fazer PDA';
+  const _pdaStyle = _pdaReg
+    ? 'background:rgba(124,77,255,0.1);color:#a78bfa;border-color:rgba(124,77,255,0.25);'
+    : 'background:rgba(124,77,255,0.05);color:#b39ddb;border-color:rgba(124,77,255,0.15);';
+  footBtns += `<a class="btn-sm" href="${esc(_pdaUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="${_pdaStyle}">${_pdaLabel}</a>`;
   if(h.url_resultado_fit) footBtns += `<a class="btn-sm" href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.2);"><img src="imagens/fitcultural2.png" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;" alt=""> Fit Cultural</a>`;
   else footBtns += `<button class="btn-sm" onclick="abrirPerfil('${esc(h.id)}')" style="background:rgba(243,156,18,0.08);color:#f39c12;border-color:rgba(243,156,18,0.2);">➕ Adicionar Fit</button>`;
   if(h.entrevista_json||h.resumo_ia||h.url_resultado_fit) footBtns += `<a class="btn-sm" href="${esc(entResultUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.1);color:#f39c12;border-color:rgba(243,156,18,0.2);"><img src="imagens/entrevistados2.png" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;" alt=""> Entrevista</a>`;
@@ -2962,6 +3004,7 @@ footBtns += h.recomendacao_doc_url
   _g1.push(`<button class="btn-sm" onclick="abrirPerfil('${esc(h.id)}')" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.25);"><img src="imagens/perfil2.png" style="${_IS}" alt=""> Perfil</button>`);
   _g1.push(`<a class="btn-sm" href="${parecerUrl}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(59,130,246,0.07);color:#3b82f6;border-color:rgba(59,130,246,0.2);"><img src="imagens/parecer2.png" style="${_IS}" alt=""> Parecer</a>`);
   _g1.push(`<a class="btn-sm" href="${esc(_discUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="${_discStyle}">${_discLabel}</a>`);
+  _g1.push(`<a class="btn-sm" href="${esc(_pdaUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="${_pdaStyle}">${_pdaLabel}</a>`);
   if(h.url_resultado_fit) _g1.push(`<a class="btn-sm" href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.2);"><img src="imagens/fitcultural2.png" style="${_IS}" alt=""> Fit Cultural</a>`);
   else _g1.push(`<button class="btn-sm" onclick="abrirPerfil('${esc(h.id)}')" style="background:rgba(243,156,18,0.08);color:#f39c12;border-color:rgba(243,156,18,0.2);">➕ Fit</button>`);
   if(h.entrevista_json||h.resumo_ia||h.url_resultado_fit) _g1.push(`<a class="btn-sm" href="${esc(entResultUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.1);color:#f39c12;border-color:rgba(243,156,18,0.2);"><img src="imagens/entrevistados2.png" style="${_IS}" alt=""> Entrevista</a>`);
@@ -3361,6 +3404,14 @@ function abrirPerfil(id){
   const _discBgPerfil  = _temDiscPerfil ? 'rgba(52,152,219,0.12)' : 'rgba(52,152,219,0.05)';
   const _discBordPerfil= _temDiscPerfil ? 'rgba(52,152,219,0.3)'  : 'rgba(52,152,219,0.15)';
   acoes += _btn('🧠', _discLblPerfil, esc(_discUrlPerfil), _discBgPerfil, '#3498db', _discBordPerfil, '_blank');
+  const _pdaRegPerfil = encontrarPDA(h);
+  const _pdaUrlPerfil = _pdaRegPerfil
+    ? (_baseP+'perfil-5eixos-resultado.html?candidato_id='+encodeURIComponent(_pdaRegPerfil.id)+'&nome='+encodeURIComponent(h.nome||''))
+    : (_baseP+'perfil-5eixos-adjetivos.html?nome='+encodeURIComponent(h.nome||'')+'&tel='+encodeURIComponent(h.tel_externo||'')+'&email='+encodeURIComponent(h.email_externo||'')+'&vaga='+encodeURIComponent(h.vaga||''));
+  const _pdaLblPerfil = _pdaRegPerfil ? 'PDA' : 'Fazer PDA';
+  const _pdaBgPerfil   = _pdaRegPerfil ? 'rgba(124,77,255,0.12)' : 'rgba(124,77,255,0.05)';
+  const _pdaBordPerfil = _pdaRegPerfil ? 'rgba(124,77,255,0.3)'  : 'rgba(124,77,255,0.15)';
+  acoes += _btn('🧭', _pdaLblPerfil, esc(_pdaUrlPerfil), _pdaBgPerfil, '#a78bfa', _pdaBordPerfil, '_blank');
   if(h.url_resultado_fit) acoes += _btn('🎯','Fit Cultural',   esc(h.url_resultado_fit), 'rgba(59,130,246,0.12)', '#3b82f6', 'rgba(59,130,246,0.3)',   '_blank');
   if(h.entrevista_json||h.resumo_ia||h.url_resultado_fit)
     acoes += _btn('🎤','Entrevista', esc(h.url_resultado_fit||entUrl), 'rgba(243,156,18,0.12)', '#f39c12', 'rgba(243,156,18,0.3)', '_blank');
