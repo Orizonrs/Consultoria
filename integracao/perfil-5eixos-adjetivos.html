@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Perfil Comportamental 5 Eixos | Orizon</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --cyan:#00e5ff; --blue:#2979ff; --purple:#7c4dff;
+  --bg:#060610; --card:rgba(255,255,255,0.032); --border:rgba(0,229,255,0.13);
+  --text:#e8eaf6; --text2:#9fa8da; --muted:#5c6bc0; --amber:#ffab00; --green:#00e676; --red:#ff1744;
+  --E:#ff1744; --S:#ffab00; --P:#00e676; --C:#2979ff; --A:#7c4dff;
+  --radius-sm:10px; --radius:16px; --radius-lg:22px;
+  --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.5;pointer-events:none;}
+.wrapper{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+.header{text-align:center;margin-bottom:2rem;}
+.header .eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.5rem;}
+.header h1{font-size:1.7rem;font-weight:700;}
+.header h1 span{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.header p{color:var(--text2);font-size:.85rem;margin-top:.5rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(12px);}
+.card h2{font-size:1rem;color:var(--cyan);margin-bottom:1rem;font-weight:700;}
+.card p{font-size:.85rem;color:var(--text2);line-height:1.65;margin-bottom:.8rem;}
+label{display:block;font-size:.82rem;font-weight:600;color:var(--cyan);margin-bottom:.4rem;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+@media(max-width:600px){.grid2{grid-template-columns:1fr;}}
+input[type=text],input[type=email],input[type=tel]{width:100%;padding:.85rem 1.1rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:inherit;font-size:.9rem;outline:none;margin-bottom:1rem;}
+input:focus{border-color:var(--cyan);}
+.consent{display:flex;gap:.6rem;align-items:flex-start;font-size:.78rem;color:var(--text2);margin-bottom:1.2rem;}
+.btn{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:var(--radius);padding:.85rem 2rem;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:.2s;}
+.btn:hover{opacity:.88;transform:translateY(-2px);}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:.7rem 1.4rem;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;}
+.col-headers{display:grid;grid-template-columns:1fr 90px 90px;gap:.6rem;padding:0 .2rem .6rem;position:sticky;top:0;background:var(--bg);z-index:5;}
+.col-headers div{font-size:.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:center;}
+.col-headers div:first-child{text-align:left;}
+.word-row{display:grid;grid-template-columns:1fr 90px 90px;gap:.6rem;align-items:center;padding:.55rem .2rem;border-bottom:1px solid rgba(255,255,255,.05);font-size:.87rem;}
+.chk-cell{display:flex;justify-content:center;align-items:center;min-height:44px;}
+@media(max-width:600px){.word-row{grid-template-columns:1fr 60px 60px;gap:.3rem;}}
+input.chk{appearance:none;-webkit-appearance:none;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.03);cursor:pointer;transition:.15s;margin:0;position:relative;flex-shrink:0;}
+input.chk:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+input.chk.c1:checked{background:rgba(0,229,255,.18);border-color:var(--cyan);}
+input.chk.c1:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:.9rem;font-weight:700;}
+input.chk.c2:checked{background:rgba(124,77,255,.18);border-color:var(--purple);}
+input.chk.c2:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:.9rem;font-weight:700;}
+.hp{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;pointer-events:none;}
+.field-error{font-size:.75rem;color:var(--red);margin:-.7rem 0 .8rem;display:none;}
+.field-error.show{display:block;}
+input.invalid{border-color:var(--red)!important;}
+.progress-wrap{margin-bottom:1rem;}
+.progress-label{display:flex;justify-content:space-between;font-size:.72rem;font-family:var(--mono);color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:1px;}
+.progress-track{height:8px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0%;transition:width .3s ease;}
+.save-status{font-size:.78rem;padding:.7rem 1rem;border-radius:var(--radius);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.save-status.ok{color:var(--green);background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);}
+.save-status.err{color:var(--amber);background:rgba(255,171,0,.08);border:1px solid rgba(255,171,0,.25);}
+.save-status.saving{color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border);}
+.ia-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--purple);background:rgba(124,77,255,.1);border:1px solid rgba(124,77,255,.3);padding:.3rem .8rem;border-radius:99px;margin-bottom:1rem;}
+.ia-list{padding-left:1.1rem;font-size:.83rem;color:var(--text2);line-height:1.6;}
+.ia-list li{margin-bottom:.5rem;}
+@keyframes iaPulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.ia-loading{color:var(--text2);font-size:.85rem;animation:iaPulse 1.4s ease-in-out infinite;}
+.counters{display:flex;gap:1rem;justify-content:center;margin:1rem 0 1.4rem;flex-wrap:wrap;}
+.counter-box{font-family:var(--mono);font-size:.78rem;padding:.4rem 1rem;border-radius:99px;border:1px solid var(--border);}
+.counter-box.ok{color:var(--green);border-color:rgba(0,230,118,.4);}
+.counter-box.low{color:var(--amber);border-color:rgba(255,171,0,.4);}
+.warn-banner{font-size:.78rem;color:var(--amber);background:rgba(255,171,0,.08);border:1px solid rgba(255,171,0,.25);border-radius:var(--radius);padding:.7rem 1rem;margin-bottom:1rem;display:none;}
+.nav-row{display:flex;justify-content:space-between;gap:1rem;margin-top:1rem;}
+#resultSection{display:none;}
+.profile-badge{display:inline-flex;align-items:center;justify-content:center;width:86px;height:86px;border-radius:50%;font-size:2.2rem;font-weight:900;margin:0 auto 1rem;}
+.dim-row{display:flex;align-items:center;gap:12px;margin-bottom:.9rem;}
+.dim-label{width:150px;font-size:.8rem;font-weight:700;flex-shrink:0;}
+.dim-track{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;}
+.dim-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+.dim-pct{width:42px;font-size:.78rem;font-weight:700;text-align:right;}
+.chart-wrap{max-width:340px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+.stat-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:1rem 1.2rem;text-align:center;}
+.stat-box .num{font-size:1.6rem;font-weight:900;color:var(--cyan);}
+.stat-box .lbl{font-size:.75rem;color:var(--text2);margin-top:.2rem;}
+.word-tag{display:inline-block;font-size:.76rem;padding:.28rem .7rem;border-radius:99px;margin:0 .3rem .3rem 0;}
+.fit-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;margin-top:.6rem;}
+@media print{
+  .header,.card:not(#printArea),body::before{display:none!important;}
+  #resultSection{display:block!important;}
+  .no-print{display:none!important;}
+  body{background:#fff;color:#000;}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="eyebrow">ORIZON · AVALIAÇÃO COMPORTAMENTAL</div>
+    <h1>Perfil Comportamental <span>5 Eixos</span></h1>
+    <p>Ênfase · Sociabilidade · Paciência · Conformidade · Autocontrole</p>
+  </div>
+
+  <!-- INTRO -->
+  <div class="card" id="introSection">
+    <h2>Como funciona</h2>
+    <p>Você vai ver uma lista de 90 palavras em duas colunas. Marque, em cada palavra, se ela representa <strong style="color:var(--text)">como você se vê</strong> e/ou <strong style="color:var(--text)">como acha que os outros te veem</strong> — pode marcar uma coluna, a outra, as duas, ou nenhuma. Sem limite de quantidade.</p>
+    <div class="grid2">
+      <div><label>Nome completo</label><input type="text" id="inpNome" placeholder="Seu nome" required/></div>
+      <div><label>E-mail</label><input type="email" id="inpEmail" placeholder="seu@email.com" required/></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Telefone</label>
+        <input type="tel" id="inpTel" placeholder="(51) 99999-9999" required/>
+        <div class="field-error" id="errTel">Informe um telefone válido com DDD (mínimo 10 dígitos).</div>
+      </div>
+      <div>
+        <label>Ano de nascimento</label>
+        <input type="text" id="inpNascimento" placeholder="Ex: 1995" maxlength="4" inputmode="numeric" required/>
+        <div class="field-error" id="errNascimento">Informe um ano válido entre 1945 e 2015.</div>
+      </div>
+    </div>
+    <input type="text" id="hpWebsite" name="website" class="hp" tabindex="-1" autocomplete="off"/>
+    <div class="consent">
+      <input type="checkbox" id="lgpd" style="margin-top:.2rem"/>
+      <label for="lgpd" style="margin:0;font-weight:400;color:var(--text2)">Li e concordo com o uso dos meus dados para fins de recrutamento e seleção, conforme a LGPD (Lei 13.709/18).</label>
+    </div>
+    <button class="btn" id="btnIniciar" disabled onclick="iniciarTeste()">Começar avaliação →</button>
+    <button class="btn-ghost" style="margin-left:.6rem" onclick="limparProgresso()">Limpar progresso salvo</button>
+  </div>
+
+  <!-- TESTE -->
+  <div class="card" id="testSection" style="display:none">
+    <h2 style="margin-bottom:.3rem">Marque as palavras que combinam com você</h2>
+    <p style="margin-bottom:1rem">Coluna <strong style="color:var(--cyan)">EU</strong> = como você se vê. Coluna <strong style="color:var(--purple)">OUTROS</strong> = como acha que é percebido.</p>
+    <div class="counters">
+      <div class="counter-box" id="cnt1">EU: 0 marcadas</div>
+      <div class="counter-box" id="cnt2">OUTROS: 0 marcadas</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Progresso</span><span id="progressText">0 / 90 palavras avaliadas</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="warn-banner" id="warnBanner">⚠️ Recomendamos marcar pelo menos 15 palavras em cada coluna pra um resultado mais confiável.</div>
+    <div class="col-headers"><div>Palavra</div><div>EU</div><div>OUTROS</div></div>
+    <div id="wordList"></div>
+    <div class="nav-row">
+      <button class="btn-ghost" onclick="voltarIntro()">← Voltar</button>
+      <button class="btn" id="btnNext" onclick="mostrarResultado()">Ver resultado →</button>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="resultSection">
+    <div class="save-status saving no-print" id="saveStatus" style="display:none" aria-live="polite"></div>
+    <div id="printArea">
+    <div class="card" style="text-align:center">
+      <h2>🎯 Perfil Natural</h2>
+      <div id="cardPerfilNatural"></div>
+      <div id="fitVagaBox"></div>
+    </div>
+    <div class="card" id="cardParecerIA">
+      <span class="ia-badge">🤖 Parecer gerado por IA · Llama 3.3</span>
+      <div id="parecerIABox"><p class="ia-loading">Gerando parecer com IA...</p></div>
+    </div>
+    <div class="card">
+      <h2>📊 Comparativo dos 5 Eixos</h2>
+      <div class="two-col">
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como você se vê</p>
+          <div id="barsNatural"></div>
+        </div>
+        <div>
+          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como acha que te veem</p>
+          <div id="barsPercebido"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card no-print">
+      <h2>🕸️ Radar Comparativo</h2>
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>⚡ Energia & Consistência</h2>
+      <div class="two-col" style="margin-bottom:1rem;">
+        <div class="stat-box"><div class="num" id="statEnergia">-</div><div class="lbl">Quantum de energia</div></div>
+        <div class="stat-box"><div class="num" id="statConsistencia">-</div><div class="lbl">Consistência do perfil</div></div>
+      </div>
+      <p id="analiseTexto"></p>
+    </div>
+    <div class="card">
+      <h2>📝 Palavras marcadas</h2>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem;font-family:var(--mono);text-transform:uppercase;">Como você se vê</p>
+      <div id="wordsR1" style="margin-bottom:1rem"></div>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:.4rem;font-family:var(--mono);text-transform:uppercase;">Como acha que te veem</p>
+      <div id="wordsR2"></div>
+    </div>
+    </div>
+    <div class="card no-print" style="text-align:center">
+      <button class="btn" onclick="window.print()">🖨️ Baixar / Imprimir PDF</button>
+      <button class="btn-ghost" style="margin-left:.6rem" onclick="refazerTeste()">↻ Refazer avaliação</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG — troque pelas credenciais do seu Supabase
+// ═══════════════════════════════════════════════════════════
+const SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
+function sbHeaders(){return {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};}
+const TTL_MS = 60*24*60*60*1000; // 60 dias, mesmo padrão do disc.html
+const EDGE_PARECER_URL = `${SB_URL}/functions/v1/perfil-5eixos`;
+const EDGE_SALVAR_URL = `${SB_URL}/functions/v1/perfil-5eixos-salvar`;
+// Pasta onde o perfil-5eixos-resultado.html vai ficar hospedado no repositório
+// (igual o disc-resultado.html, que fica em "módulos" enquanto este teste
+// fica em "integração"). Se a pasta real tiver outro nome, ajuste só aqui.
+const RESULTADO_BASE = '../modulos/';
+let ultimoIdSalvo = null;
+
+// vaga vinda da URL (?vaga=Analista+de+PCP), igual ao vagaRetorno do disc.html
+const params = new URLSearchParams(location.search);
+const vagaRetorno = params.get('vaga') || '';
+const candidatoIdFromUrl = params.get('candidato_id') || null;
+
+// suporte a retorno para a candidatura.html — mesmo padrão do disc.html
+// (?retorno=...&nome=...&email=...&tel=...&mae=... — "mae" é usado pela
+// candidatura.html como o ano de nascimento, então mapeia pra nascimento aqui)
+const retornoUrl   = params.get('retorno') || null;
+const nomeFromUrl   = params.get('nome')  || '';
+const emailFromUrl  = params.get('email') || '';
+const telFromUrl    = params.get('tel')   || '';
+const nascFromUrl   = params.get('mae')   || params.get('nascimento') || '';
+
+// ═══════════════════════════════════════════════════════════
+// BANCO DE 90 ADJETIVOS — 18 por eixo (E/S/P/C/A)
+// ═══════════════════════════════════════════════════════════
+const ADJETIVOS = [
+ {t:'Decidido',f:'E'},{t:'Assertivo',f:'E'},{t:'Competitivo',f:'E'},{t:'Direto',f:'E'},{t:'Determinado',f:'E'},
+ {t:'Audacioso',f:'E'},{t:'Enérgico',f:'E'},{t:'Independente',f:'E'},{t:'Dominante',f:'E'},{t:'Ousado',f:'E'},
+ {t:'Impaciente',f:'E'},{t:'Exigente',f:'E'},{t:'Ambicioso',f:'E'},{t:'Confiante',f:'E'},{t:'Firme',f:'E'},
+ {t:'Objetivo',f:'E'},{t:'Persistente',f:'E'},{t:'Corajoso',f:'E'},
+ {t:'Comunicativo',f:'S'},{t:'Entusiasta',f:'S'},{t:'Sociável',f:'S'},{t:'Extrovertido',f:'S'},{t:'Persuasivo',f:'S'},
+ {t:'Otimista',f:'S'},{t:'Espontâneo',f:'S'},{t:'Caloroso',f:'S'},{t:'Expressivo',f:'S'},{t:'Popular',f:'S'},
+ {t:'Divertido',f:'S'},{t:'Inspirador',f:'S'},{t:'Falante',f:'S'},{t:'Amigável',f:'S'},{t:'Carismático',f:'S'},
+ {t:'Acolhedor',f:'S'},{t:'Animado',f:'S'},{t:'Envolvente',f:'S'},
+ {t:'Paciente',f:'P'},{t:'Leal',f:'P'},{t:'Calmo',f:'P'},{t:'Estável',f:'P'},{t:'Consistente',f:'P'},
+ {t:'Tranquilo',f:'P'},{t:'Compreensivo',f:'P'},{t:'Confiável',f:'P'},{t:'Solidário',f:'P'},{t:'Amigo',f:'P'},
+ {t:'Cooperativo',f:'P'},{t:'Constante',f:'P'},{t:'Gentil',f:'P'},{t:'Prestativo',f:'P'},{t:'Modesto',f:'P'},
+ {t:'Discreto',f:'P'},{t:'Sereno',f:'P'},{t:'Dedicado',f:'P'},
+ {t:'Detalhista',f:'C'},{t:'Organizado',f:'C'},{t:'Analítico',f:'C'},{t:'Criterioso',f:'C'},{t:'Preciso',f:'C'},
+ {t:'Cuidadoso',f:'C'},{t:'Metódico',f:'C'},{t:'Cético',f:'C'},{t:'Formal',f:'C'},{t:'Sistemático',f:'C'},
+ {t:'Rigoroso',f:'C'},{t:'Prudente',f:'C'},{t:'Perfeccionista',f:'C'},{t:'Reservado',f:'C'},{t:'Lógico',f:'C'},
+ {t:'Disciplinado',f:'C'},{t:'Minucioso',f:'C'},{t:'Investigativo',f:'C'},
+ {t:'Equilibrado',f:'A'},{t:'Resiliente',f:'A'},{t:'Racional',f:'A'},{t:'Imperturbável',f:'A'},{t:'Autoconfiante',f:'A'},
+ {t:'Centrado',f:'A'},{t:'Maduro',f:'A'},{t:'Estratégico',f:'A'},{t:'Controlado',f:'A'},{t:'Realista',f:'A'},
+ {t:'Pragmático',f:'A'},{t:'Neutro',f:'A'},{t:'Reflexivo',f:'A'},{t:'Sensato',f:'A'},{t:'Equânime',f:'A'},
+ {t:'Comedido',f:'A'},{t:'Ponderado',f:'A'},{t:'Íntegro',f:'A'},
+];
+
+const EIXOS = {
+  E:{nome:'Ênfase',cor:'var(--E)',desc:'foco em resultado, assertividade e ação rápida'},
+  S:{nome:'Sociabilidade',cor:'var(--S)',desc:'comunicação, relacionamento e entusiasmo'},
+  P:{nome:'Paciência',cor:'var(--P)',desc:'constância, ritmo estável e lealdade'},
+  C:{nome:'Conformidade',cor:'var(--C)',desc:'precisão, processo e atenção a critérios'},
+  A:{nome:'Autocontrole',cor:'var(--A)',desc:'estabilidade emocional e lógica sob pressão'},
+};
+
+// 20 combinações dominante+secundário
+const COMBOS = {
+  ES:{nome:'Comunicador Estratégico',desc:'lidera com assertividade e sabe engajar as pessoas ao redor pra tirar planos do papel.'},
+  EP:{nome:'Executor Constante',desc:'busca resultado com firmeza, mas mantém constância — não larga o osso mesmo quando a rotina pesa.'},
+  EC:{nome:'Analista Decisivo',desc:'decide rápido, mas ainda assim exige rigor técnico nas informações antes de agir.'},
+  EA:{nome:'Líder Sereno',desc:'assertivo na ação, mas raramente perde o controle emocional mesmo sob pressão.'},
+  SE:{nome:'Motivador de Resultados',desc:'usa entusiasmo e comunicação como ferramenta pra puxar o time rumo à meta.'},
+  SP:{nome:'Facilitador',desc:'combina comunicação com paciência — ótimo em mediar conflitos e manter o clima leve.'},
+  SC:{nome:'Comunicador Técnico',desc:'fala bem e conecta pessoas, mas gosta de embasar tudo com dado e critério.'},
+  SA:{nome:'Influenciador Equilibrado',desc:'carismático, mas não se deixa levar pela emoção do momento — mantém a régua.'},
+  PE:{nome:'Apoiador Determinado',desc:'constante e leal, mas capaz de tomar iniciativa quando a situação pede.'},
+  PS:{nome:'Parceiro de Equipe',desc:'paciente e sociável — o tipo de pessoa que segura o time unido no dia a dia.'},
+  PC:{nome:'Guardião de Processos',desc:'leal e detalhista, preserva padrões e não abre mão da qualidade combinada.'},
+  PA:{nome:'Pilar de Estabilidade',desc:'constante e emocionalmente estável — referência de segurança pro time.'},
+  CE:{nome:'Especialista Assertivo',desc:'rigor técnico com disposição pra decidir rápido quando os dados apontam o caminho.'},
+  CS:{nome:'Consultor Comunicativo',desc:'técnico por natureza, mas sabe traduzir isso de forma clara pra qualquer público.'},
+  CP:{nome:'Revisor Meticuloso',desc:'detalhista e paciente — não entrega nada sem revisar, sem pressa e sem erro.'},
+  CA:{nome:'Auditor Racional',desc:'lógico e emocionalmente estável, ideal pra decisões que exigem frieza e precisão.'},
+  AE:{nome:'Estrategista Decisivo',desc:'equilíbrio emocional com disposição pra agir — raramente se abala, mas também não trava.'},
+  AS:{nome:'Mediador Carismático',desc:'controle emocional aliado à comunicação — ótimo em situações tensas com pessoas.'},
+  AP:{nome:'Base Sólida',desc:'equilíbrio e constância — o tipo de perfil que não balança fácil, em nenhuma direção.'},
+  AC:{nome:'Analista Ponderado',desc:'racional e criterioso, ideal pra funções que exigem precisão sob pressão controlada.'},
+};
+
+// Compatibilidade por categoria de vaga (mesma lógica do disc.html, adaptada pra 5 eixos)
+const PERFIL_IDEAL_CATEGORIA = {
+  lideranca:    {E:45,S:20,P:10,C:10,A:15},
+  comercial:    {E:24,S:38,P:14,C:10,A:14},
+  operacional:  {E:16,S:12,P:40,C:18,A:14},
+  tecnico:      {E:10,S:8, P:18,C:50,A:14},
+  rh_pessoas:   {E:8, S:28,P:36,C:14,A:14},
+  adm_financ:   {E:10,S:12,P:30,C:34,A:14},
+  atendimento:  {E:12,S:36,P:30,C:8, A:14},
+  criativo:     {E:15,S:44,P:14,C:13,A:14},
+};
+function detectarCategoria(vaga){
+  const v=(vaga||'').toLowerCase();
+  if(/gerente|diretor|coordenador|supervisor|lider|líder|head|ceo|coo/.test(v)) return 'lideranca';
+  if(/vend|comercial|account|sdr|closer|hunter|corretor|consultor comercial/.test(v)) return 'comercial';
+  if(/operador|auxiliar de produção|auxiliar de logística|motorista|montador|soldador|técnico de campo/.test(v)) return 'operacional';
+  if(/tecnico|técnico|engenheiro|analista de sistema|ti|developer|desenvolvedor|dados|bi |qualidade|pcp/.test(v)) return 'tecnico';
+  if(/rh|recursos humanos|recrutamento|pessoas|cultura|t&d|treinamento|hrbp/.test(v)) return 'rh_pessoas';
+  if(/financeiro|contabil|contábil|fiscal|auditoria|controladoria|tesour|caixa/.test(v)) return 'adm_financ';
+  if(/atendimento|recepcionista|sac|call center|customer|suporte/.test(v)) return 'atendimento';
+  if(/marketing|comunicação|design|social media|conteúdo|mídia/.test(v)) return 'criativo';
+  return null;
+}
+
+function embaralhar(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+const PROG_KEY = 'perfil5eixos_prog';
+let ordemLista = embaralhar(ADJETIVOS);
+let marcadosR1 = new Set(); // EU
+let marcadosR2 = new Set(); // OUTROS
+
+function salvarProgresso(){
+  try{
+    localStorage.setItem(PROG_KEY, JSON.stringify({
+      nome:document.getElementById('inpNome').value,
+      email:document.getElementById('inpEmail').value,
+      tel:document.getElementById('inpTel').value,
+      nascimento:document.getElementById('inpNascimento').value,
+      ordem:ordemLista.map(a=>a.t),
+      r1:[...marcadosR1], r2:[...marcadosR2],
+    }));
+  }catch(e){}
+}
+function carregarProgresso(){
+  try{
+    const raw = localStorage.getItem(PROG_KEY);
+    if(!raw) return false;
+    const p = JSON.parse(raw);
+    document.getElementById('inpNome').value = p.nome||'';
+    document.getElementById('inpEmail').value = p.email||'';
+    document.getElementById('inpTel').value = p.tel||'';
+    document.getElementById('inpNascimento').value = p.nascimento||'';
+    if(p.ordem && p.ordem.length===ADJETIVOS.length){
+      ordemLista = p.ordem.map(t=>ADJETIVOS.find(a=>a.t===t)).filter(Boolean);
+    }
+    marcadosR1 = new Set(p.r1||[]);
+    marcadosR2 = new Set(p.r2||[]);
+    return true;
+  }catch(e){ return false; }
+}
+function limparProgresso(){
+  localStorage.removeItem(PROG_KEY);
+  marcadosR1=new Set(); marcadosR2=new Set();
+  ordemLista=embaralhar(ADJETIVOS);
+  ['inpNome','inpEmail','inpTel','inpNascimento'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('lgpd').checked=false;
+  document.getElementById('errTel').classList.remove('show');
+  document.getElementById('errNascimento').classList.remove('show');
+  document.getElementById('inpTel').classList.remove('invalid');
+  document.getElementById('inpNascimento').classList.remove('invalid');
+  validarIntro();
+  alert('Progresso salvo foi limpo.');
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  carregarProgresso();
+  // pré-preenche com dados vindos da candidatura (só se o campo ainda estiver vazio)
+  const elNome=document.getElementById('inpNome'), elEmail=document.getElementById('inpEmail'),
+        elTel=document.getElementById('inpTel'), elNasc=document.getElementById('inpNascimento');
+  if (nomeFromUrl  && elNome  && !elNome.value)  elNome.value  = nomeFromUrl;
+  if (emailFromUrl && elEmail && !elEmail.value) elEmail.value = emailFromUrl;
+  if (telFromUrl   && elTel   && !elTel.value)   elTel.value   = telFromUrl;
+  if (nascFromUrl  && elNasc  && !elNasc.value)  elNasc.value  = nascFromUrl;
+  validarIntro();
+});
+
+function iniciarTeste(){
+  document.getElementById('introSection').style.display='none';
+  document.getElementById('testSection').style.display='block';
+  renderLista();
+}
+function voltarIntro(){
+  salvarProgresso();
+  document.getElementById('testSection').style.display='none';
+  document.getElementById('introSection').style.display='block';
+}
+['inpNome','inpEmail','inpTel','inpNascimento','lgpd'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{validarIntro();salvarProgresso();});
+  document.getElementById(id).addEventListener('change', ()=>{validarIntro();salvarProgresso();});
+});
+function validarIntro(){
+  const nome = document.getElementById('inpNome').value.trim();
+  const email = document.getElementById('inpEmail').value.trim();
+  const tel = document.getElementById('inpTel').value.trim();
+  const nascimento = document.getElementById('inpNascimento').value.trim();
+  const lgpd = document.getElementById('lgpd').checked;
+
+  const telDigits = tel.replace(/\D/g,'');
+  const telOk = telDigits.length>=10 && telDigits.length<=11;
+  const anoNum = Number(nascimento);
+  const anoAtual = new Date().getFullYear();
+  const anoOk = /^\d{4}$/.test(nascimento) && anoNum>=1945 && anoNum<=(anoAtual-14);
+
+  const inpTel=document.getElementById('inpTel'), inpNasc=document.getElementById('inpNascimento');
+  const errTel=document.getElementById('errTel'), errNasc=document.getElementById('errNascimento');
+
+  errTel.classList.toggle('show', tel.length>0 && !telOk);
+  inpTel.classList.toggle('invalid', tel.length>0 && !telOk);
+  errNasc.classList.toggle('show', nascimento.length>0 && !anoOk);
+  inpNasc.classList.toggle('invalid', nascimento.length>0 && !anoOk);
+
+  document.getElementById('btnIniciar').disabled = !(lgpd && nome && email && telOk && anoOk);
+}
+
+function renderLista(){
+  document.getElementById('wordList').innerHTML = ordemLista.map((adj,i)=>`
+    <div class="word-row">
+      <div>${adj.t}</div>
+      <div class="chk-cell"><input type="checkbox" class="chk c1" id="chk1_${i}" aria-label="${adj.t} — como você se vê" ${marcadosR1.has(adj.t)?'checked':''} onchange="toggle(1,${i})"/></div>
+      <div class="chk-cell"><input type="checkbox" class="chk c2" id="chk2_${i}" aria-label="${adj.t} — como acha que te veem" ${marcadosR2.has(adj.t)?'checked':''} onchange="toggle(2,${i})"/></div>
+    </div>`).join('');
+  atualizarContadores();
+}
+function toggle(coluna,i){
+  const palavra = ordemLista[i].t;
+  const set = coluna===1?marcadosR1:marcadosR2;
+  if(set.has(palavra)) set.delete(palavra); else set.add(palavra);
+  atualizarContadores();
+  salvarProgresso();
+}
+function atualizarContadores(){
+  const c1=document.getElementById('cnt1'), c2=document.getElementById('cnt2');
+  c1.textContent = `EU: ${marcadosR1.size} marcadas`;
+  c2.textContent = `OUTROS: ${marcadosR2.size} marcadas`;
+  c1.className = 'counter-box '+(marcadosR1.size>=15?'ok':'low');
+  c2.className = 'counter-box '+(marcadosR2.size>=15?'ok':'low');
+  document.getElementById('warnBanner').style.display = (marcadosR1.size<15||marcadosR2.size<15)?'block':'none';
+  document.getElementById('btnNext').disabled = !(marcadosR1.size>=8 && marcadosR2.size>=8);
+
+  const tocadas = new Set([...marcadosR1,...marcadosR2]).size;
+  const pct = Math.round((tocadas/ADJETIVOS.length)*100);
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = `${tocadas} / ${ADJETIVOS.length} palavras avaliadas`;
+}
+
+let ultimoPayloadResultado = null;
+let ultimoPayloadParecer = null;
+
+async function gerarParecerIA(payload){
+  const box = document.getElementById('parecerIABox');
+  box.innerHTML = `<p class="ia-loading">Gerando parecer com IA...</p>`;
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 20000);
+    const resp = await fetch(EDGE_PARECER_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY,'apikey':SB_KEY},
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    const data = await resp.json().catch(()=>({}));
+    if(!resp.ok || data.error || !data.parecer){
+      throw new Error(data.error || 'Falha ao gerar parecer');
+    }
+    renderParecerIA(data.parecer);
+  }catch(e){
+    console.warn('Erro ao gerar parecer IA:', e);
+    box.innerHTML = `<p style="color:var(--amber);font-size:.82rem;">⚠️ Não foi possível gerar o parecer por IA agora. O restante do seu resultado abaixo é válido normalmente. <button class="btn-ghost" style="padding:.4rem .9rem;font-size:.72rem" onclick="tentarGerarParecerNovamente()">Tentar novamente</button></p>`;
+  }
+}
+function tentarGerarParecerNovamente(){
+  if(ultimoPayloadParecer) gerarParecerIA(ultimoPayloadParecer);
+}
+function renderParecerIA(p){
+  const box = document.getElementById('parecerIABox');
+  const li = arr => (Array.isArray(arr)?arr:[]).map(x=>`<li>${x}</li>`).join('');
+  box.innerHTML = `
+    <p style="font-size:.88rem;color:var(--text);line-height:1.6;margin-bottom:1.2rem;text-align:left;">${p.resumo_executivo||''}</p>
+    <div class="two-col" style="text-align:left;margin-bottom:1rem;">
+      <div>
+        <p style="font-size:.72rem;color:var(--green);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">✓ Pontos fortes</p>
+        <ul class="ia-list">${li(p.pontos_fortes)}</ul>
+      </div>
+      <div>
+        <p style="font-size:.72rem;color:var(--amber);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">⚠ Pontos de atenção</p>
+        <ul class="ia-list">${li(p.pontos_atencao)}</ul>
+      </div>
+    </div>
+    <p style="font-size:.72rem;color:var(--cyan);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;text-align:left;">Perguntas sugeridas para entrevista</p>
+    <ul class="ia-list" style="text-align:left;">${li(p.perguntas_entrevista)}</ul>
+    <p style="font-size:.68rem;color:var(--muted);margin-top:1.2rem;text-align:left;">Gerado automaticamente por IA — use como apoio à decisão, não como critério único.</p>`;
+}
+
+function contarPorEixo(marcados){
+  const c={E:0,S:0,P:0,C:0,A:0};
+  ADJETIVOS.forEach(a=>{ if(marcados.has(a.t)) c[a.f]++; });
+  return c;
+}
+function normalizar(c){
+  const total=Object.values(c).reduce((a,b)=>a+b,0);
+  const pct={};
+  Object.keys(c).forEach(f=> pct[f]= total>0?Math.round((c[f]/total)*100):0);
+  const soma=Object.values(pct).reduce((a,b)=>a+b,0);
+  if(total>0 && soma!==100){ const maior=Object.entries(pct).sort((a,b)=>b[1]-a[1])[0][0]; pct[maior]+=100-soma; }
+  return pct;
+}
+
+function mostrarStatusSalvo(saveStatusEl){
+  saveStatusEl.className='save-status ok no-print';
+  const linkResultado = ultimoIdSalvo ? `${RESULTADO_BASE}perfil-5eixos-resultado.html?candidato_id=${encodeURIComponent(ultimoIdSalvo)}` : null;
+  saveStatusEl.innerHTML = '✅ Resultado salvo com sucesso.' + (linkResultado ? ` <a href="${linkResultado}" target="_blank" style="color:var(--cyan);">Ver link permanente deste resultado</a>` : '');
+  localStorage.removeItem(PROG_KEY);
+  if (retornoUrl) mostrarBotaoContinuar();
+}
+
+// Quando o teste foi aberto a partir da candidatura.html (tem ?retorno=...),
+// mostra um botão pra voltar pro fluxo com o resultado já anexado na URL —
+// mesmo padrão do disc.html, só que os eixos vêm direto na querystring
+// porque o PDA ainda não tem uma Edge Function de leitura por candidato_id
+// consumida pela candidatura.html.
+function mostrarBotaoContinuar(){
+  if (document.getElementById('btnContinuarCandidatura')) return;
+  const box = document.createElement('div');
+  box.className = 'card no-print';
+  box.style.textAlign = 'center';
+  box.innerHTML = `<button class="btn" id="btnContinuarCandidatura" onclick="continuarCandidatura()">Continuar candidatura →</button>`;
+  document.getElementById('saveStatus').insertAdjacentElement('afterend', box);
+}
+
+function continuarCandidatura(){
+  if (!retornoUrl || !ultimoPayloadResultado) { if (retornoUrl) window.location.href = retornoUrl; return; }
+  const d = ultimoPayloadResultado;
+  const qs = new URLSearchParams();
+  qs.set('pda_ok', '1');
+  if (ultimoIdSalvo) qs.set('candidato_id', ultimoIdSalvo);
+  qs.set('pda_dom', d.dom1 || '');
+  qs.set('pda_sec', d.sec1 || '');
+  qs.set('pda_e', String((d.pct1 && d.pct1.E) ?? ''));
+  qs.set('pda_s', String((d.pct1 && d.pct1.S) ?? ''));
+  qs.set('pda_p', String((d.pct1 && d.pct1.P) ?? ''));
+  qs.set('pda_c', String((d.pct1 && d.pct1.C) ?? ''));
+  qs.set('pda_a', String((d.pct1 && d.pct1.A) ?? ''));
+  if (d.fitVaga != null) qs.set('pda_fit', String(d.fitVaga));
+  const sep = retornoUrl.includes('?') ? '&' : '?';
+  window.location.href = retornoUrl + sep + qs.toString();
+}
+
+function mostrarResultado(){
+  // honeypot anti-bot: se o campo invisível foi preenchido, é bot — não processa nem salva
+  const hp = document.getElementById('hpWebsite');
+  if(hp && hp.value.trim()){ return; }
+
+  const c1=contarPorEixo(marcadosR1), c2=contarPorEixo(marcadosR2);
+  const pct1=normalizar(c1), pct2=normalizar(c2);
+  const ord1=Object.entries(pct1).sort((a,b)=>b[1]-a[1]);
+  const dom1=ord1[0][0], sec1=ord1[1][0];
+  const empateDom1 = ord1[0][1]===ord1[1][1];
+  const dom2=Object.entries(pct2).sort((a,b)=>b[1]-a[1])[0][0];
+
+  const energiaPct=Math.round((marcadosR1.size/ADJETIVOS.length)*100);
+  const energiaLabel=energiaPct>=45?'Alto':energiaPct>=28?'Médio':'Baixo';
+  const uniao=new Set([...marcadosR1,...marcadosR2]);
+  const intersec=[...marcadosR1].filter(x=>marcadosR2.has(x));
+  const consistPct=uniao.size>0?Math.round((intersec.length/uniao.size)*100):0;
+
+  // fit com vaga
+  const catVaga=detectarCategoria(vagaRetorno);
+  const idealCat=catVaga?PERFIL_IDEAL_CATEGORIA[catVaga]:null;
+  let fitVaga=null;
+  if(idealCat){
+    let sim=0;
+    Object.keys(EIXOS).forEach(f=>{ sim+=Math.max(0,100-Math.abs(pct1[f]-idealCat[f])*2.5); });
+    fitVaga=Math.round(sim/5);
+  }
+
+  document.getElementById('testSection').style.display='none';
+  document.getElementById('resultSection').style.display='block';
+
+  const combo = COMBOS[dom1+sec1];
+  document.getElementById('cardPerfilNatural').innerHTML = `
+    <div class="profile-badge" style="background:${EIXOS[dom1].cor}22;color:${EIXOS[dom1].cor};border:3px solid ${EIXOS[dom1].cor}44;">${dom1}</div>
+    <h3 style="font-size:1.3rem;font-weight:800;color:${EIXOS[dom1].cor};margin-bottom:.3rem;">${EIXOS[dom1].nome} + ${EIXOS[sec1].nome}</h3>
+    <p style="color:var(--text2);font-size:.85rem;margin-bottom:.6rem;"><strong style="color:var(--text)">${combo?combo.nome:''}</strong></p>
+    <p style="font-size:.85rem;color:var(--text);max-width:520px;margin:0 auto;line-height:1.6;">${combo?combo.desc:''}</p>
+    ${empateDom1?`<p style="font-size:.76rem;color:var(--amber);margin-top:.8rem;">⚠️ Houve empate percentual entre ${EIXOS[dom1].nome} e ${EIXOS[sec1].nome} — o eixo principal foi definido pela ordem de contagem. Considere isso como dois traços igualmente fortes no seu perfil.</p>`:''}`;
+
+  document.getElementById('fitVagaBox').innerHTML = fitVaga!==null ? `
+    <div class="fit-badge" style="background:${fitVaga>=75?'rgba(0,230,118,.12)':fitVaga>=55?'rgba(255,171,0,.12)':'rgba(255,23,68,.12)'};color:${fitVaga>=75?'var(--green)':fitVaga>=55?'var(--amber)':'var(--red)'};border:1px solid currentColor;">
+      Compatibilidade com a vaga${vagaRetorno?' "'+vagaRetorno+'"':''}: ${fitVaga}%
+    </div>` : '';
+
+  ultimoPayloadParecer = {
+    nome: document.getElementById('inpNome').value.trim(),
+    vaga: vagaRetorno, dom1, sec1, dom2, pct1, pct2, fitVaga,
+    comboNome: combo ? combo.nome : null,
+  };
+  gerarParecerIA(ultimoPayloadParecer);
+
+  const barsHtml=(pct,prefix)=>Object.keys(EIXOS).map(f=>`
+    <div class="dim-row">
+      <div class="dim-label" style="color:${EIXOS[f].cor}">${EIXOS[f].nome}</div>
+      <div class="dim-track"><div class="dim-fill" id="${prefix}${f}" style="width:0%;background:${EIXOS[f].cor};"></div></div>
+      <div class="dim-pct" style="color:${EIXOS[f].cor}">${pct[f]}%</div>
+    </div>`).join('');
+  document.getElementById('barsNatural').innerHTML=barsHtml(pct1,'bar1');
+  document.getElementById('barsPercebido').innerHTML=barsHtml(pct2,'bar2');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    Object.keys(EIXOS).forEach(f=>{
+      const e1=document.getElementById('bar1'+f); if(e1) e1.style.width=pct1[f]+'%';
+      const e2=document.getElementById('bar2'+f); if(e2) e2.style.width=pct2[f]+'%';
+    });
+  }));
+
+  new Chart(document.getElementById('radarChart').getContext('2d'),{
+    type:'radar',
+    data:{labels:Object.keys(EIXOS).map(f=>EIXOS[f].nome),datasets:[
+      {label:'Como você se vê',data:Object.keys(EIXOS).map(f=>pct1[f]),backgroundColor:'rgba(0,229,255,0.15)',borderColor:'#00e5ff',pointBackgroundColor:'#00e5ff'},
+      {label:'Como acha que te veem',data:Object.keys(EIXOS).map(f=>pct2[f]),backgroundColor:'rgba(124,77,255,0.12)',borderColor:'#7c4dff',pointBackgroundColor:'#7c4dff'}
+    ]},
+    options:{responsive:true,scales:{r:{angleLines:{color:'rgba(255,255,255,.1)'},grid:{color:'rgba(255,255,255,.1)'},pointLabels:{color:'#e8eaf6',font:{size:10}},ticks:{display:false}}},plugins:{legend:{labels:{color:'#e8eaf6'}}}}
+  });
+
+  document.getElementById('statEnergia').textContent=energiaLabel;
+  document.getElementById('statConsistencia').textContent=consistPct+'%';
+  document.getElementById('analiseTexto').textContent = dom1===dom2
+    ? `Alta coerência: o eixo ${EIXOS[dom1].nome} predomina tanto na sua autopercepção quanto em como você acha que é visto — isso indica um comportamento autêntico, sem grande diferença entre o "eu real" e o "eu social".`
+    : `Existe uma diferença entre como você se vê (${EIXOS[dom1].nome}) e como acha que é percebido (${EIXOS[dom2].nome}). Isso pode indicar adaptação consciente ao ambiente, uma "máscara" social, ou que sua autoimagem difere da imagem que você acredita projetar.`;
+
+  const listaPalavras=(marcados)=>Object.keys(EIXOS).map(f=>{
+    const palavras=ADJETIVOS.filter(a=>a.f===f && marcados.has(a.t)).map(a=>a.t);
+    if(!palavras.length) return '';
+    return palavras.map(p=>`<span class="word-tag" style="background:${EIXOS[f].cor}22;color:${EIXOS[f].cor};border:1px solid ${EIXOS[f].cor}44;">${p}</span>`).join('');
+  }).join('');
+  document.getElementById('wordsR1').innerHTML = listaPalavras(marcadosR1) || '<span style="color:var(--muted);font-size:.82rem">Nenhuma palavra marcada.</span>';
+  document.getElementById('wordsR2').innerHTML = listaPalavras(marcadosR2) || '<span style="color:var(--muted);font-size:.82rem">Nenhuma palavra marcada.</span>';
+
+  const saveStatusEl = document.getElementById('saveStatus');
+  saveStatusEl.style.display='flex';
+  saveStatusEl.className='save-status saving no-print';
+  saveStatusEl.innerHTML = '⏳ Salvando seu resultado...';
+
+  ultimoPayloadResultado = {
+    nome:document.getElementById('inpNome').value.trim(),
+    email:document.getElementById('inpEmail').value.trim(),
+    tel:document.getElementById('inpTel').value.trim(),
+    nascimento:document.getElementById('inpNascimento').value.trim(),
+    pct1, pct2, dom1, dom2, sec1, energiaPct, consistPct, fitVaga, catVaga,
+  };
+
+  salvarNoSupabase(ultimoPayloadResultado).then(ok=>{
+    if(ok){
+      mostrarStatusSalvo(saveStatusEl);
+    } else {
+      saveStatusEl.className='save-status err no-print';
+      saveStatusEl.innerHTML = '⚠️ Não foi possível salvar seu resultado no servidor. Seu resultado abaixo é válido — tire um print ou baixe o PDF. <button class="btn-ghost" style="padding:.4rem .9rem;font-size:.72rem" onclick="tentarSalvarNovamente()">Tentar novamente</button>';
+    }
+  });
+}
+
+function tentarSalvarNovamente(){
+  if(!ultimoPayloadResultado) return;
+  const saveStatusEl = document.getElementById('saveStatus');
+  saveStatusEl.className='save-status saving no-print';
+  saveStatusEl.innerHTML = '⏳ Tentando salvar novamente...';
+  salvarNoSupabase(ultimoPayloadResultado).then(ok=>{
+    if(ok){
+      mostrarStatusSalvo(saveStatusEl);
+    } else {
+      saveStatusEl.className='save-status err no-print';
+      saveStatusEl.innerHTML = '⚠️ Ainda não foi possível salvar. Seu resultado abaixo continua válido. <button class="btn-ghost" style="padding:.4rem .9rem;font-size:.72rem" onclick="tentarSalvarNovamente()">Tentar novamente</button>';
+    }
+  });
+}
+
+function refazerTeste(){
+  if(!confirm('Isso vai apagar as marcações atuais e reiniciar a avaliação. Deseja continuar?')) return;
+  marcadosR1=new Set(); marcadosR2=new Set();
+  ordemLista=embaralhar(ADJETIVOS);
+  localStorage.removeItem(PROG_KEY);
+  document.getElementById('resultSection').style.display='none';
+  document.getElementById('saveStatus').style.display='none';
+  document.getElementById('testSection').style.display='block';
+  renderLista();
+}
+
+// ── Salvar via Edge Function (a tabela fica travada pro navegador; só o ──
+// ── servidor, com service_role, consegue ler/gravar em perfil5eixos_historico) ──
+async function salvarNoSupabase(d){
+  try{
+    const resp = await fetch(EDGE_SALVAR_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SB_KEY,'apikey':SB_KEY},
+      body: JSON.stringify({
+        nome:d.nome, email:d.email, tel:d.tel, nascimento:d.nascimento,
+        pct1:d.pct1, pct2:d.pct2, dom1:d.dom1, dom2:d.dom2, sec1:d.sec1,
+        energiaPct:d.energiaPct, consistPct:d.consistPct,
+        fitVaga:d.fitVaga, catVaga:d.catVaga, vaga:vagaRetorno||null,
+        candidatoId:candidatoIdFromUrl,
+      }),
+    });
+    if(!resp.ok) return false;
+    const json = await resp.json().catch(()=>null);
+    if(json && json.id) ultimoIdSalvo = json.id;
+    return !!(json && json.ok);
+  }catch(e){
+    console.warn('Erro ao salvar via Edge Function:', e);
+    return false;
+  }
+}
+</script>
+</body>
+</html>
