@@ -1,123 +1,187 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="../guard.js"></script>
+<script src="../supabase-config.js"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Resultado · Perfil Comportamental 5 Eixos | Orizon</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<title>Resultado PDA · Perfil 5 Eixos | Orizon</title>
+<link rel="icon" type="image/png" href="icone.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --cyan:#00e5ff; --blue:#2979ff; --purple:#7c4dff;
-  --bg:#060610; --card:rgba(255,255,255,0.032); --border:rgba(0,229,255,0.13);
-  --text:#e8eaf6; --text2:#9fa8da; --muted:#5c6bc0; --amber:#ffab00; --green:#00e676; --red:#ff1744;
-  --E:#ff1744; --S:#ffab00; --P:#00e676; --C:#2979ff; --A:#7c4dff;
-  --radius-sm:10px; --radius:16px; --radius-lg:22px;
-  --font:'Space Grotesk',sans-serif; --mono:'JetBrains Mono',monospace;
+  --primary:#1e40af;--accent:#3b82f6;--bg:#0d0d0d;--card:#161616;--border:rgba(59,130,246,0.18);
+  --text:#f0f0f0;--muted:#888;
+  --E:#e74c3c;--S:#f39c12;--P:#2ecc71;--C:#3498db;--A:#9b59b6;
+  --green:#2ecc71;--amber:#f39c12;--red:#e74c3c;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);}
-body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.5;pointer-events:none;}
-.wrapper{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
-.header{text-align:center;margin-bottom:2rem;}
-.header .eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.5rem;}
-.header h1{font-size:1.7rem;font-weight:700;}
-.header h1 span{background:linear-gradient(135deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.header p{color:var(--text2);font-size:.85rem;margin-top:.5rem;}
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.8rem;margin-bottom:1.2rem;backdrop-filter:blur(12px);}
-.card h2{font-size:1rem;color:var(--cyan);margin-bottom:1rem;font-weight:700;}
-.card p{font-size:.85rem;color:var(--text2);line-height:1.65;margin-bottom:.8rem;}
-.btn{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;border:none;border-radius:var(--radius);padding:.85rem 2rem;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:.2s;}
-.btn:hover{opacity:.88;transform:translateY(-2px);}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:.7rem 1.4rem;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;}
-.ia-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--purple);background:rgba(124,77,255,.1);border:1px solid rgba(124,77,255,.3);padding:.3rem .8rem;border-radius:99px;margin-bottom:1rem;}
-.ia-list{padding-left:1.1rem;font-size:.83rem;color:var(--text2);line-height:1.6;}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+.wrapper{position:relative;z-index:1;max-width:820px;margin:0 auto;padding:2rem 1.2rem 4rem;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:2rem;flex-wrap:wrap;}
+.logo-area{display:flex;align-items:center;gap:0.8rem;}
+.logo-area img{width:64px;height:64px;object-fit:contain;}
+.logo-area span{font-size:1rem;color:var(--muted);}
+.btn-pdf{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:12px;padding:0.75rem 1.8rem;font-family:inherit;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;}
+.btn-pdf:hover{opacity:0.88;transform:translateY(-2px);}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:0.7rem 1.4rem;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-ghost:hover{background:rgba(255,255,255,0.12);}
+.page-title{font-size:1.8rem;font-weight:800;margin-bottom:0.3rem;}
+.page-title span{color:var(--accent);}
+.page-sub{color:var(--muted);font-size:0.88rem;margin-bottom:2rem;}
+.cand-bar{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem 1.4rem;display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:2rem;}
+.cand-field label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:0.2rem;}
+.cand-field strong{font-size:0.95rem;font-weight:700;color:var(--accent);}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.8rem;margin-bottom:1.2rem;}
+.result-card h4{font-size:0.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:1.2rem;}
+.profile-badge{display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;font-size:2.2rem;font-weight:900;margin:0 auto 0.8rem;}
+.fit-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem 1.1rem;border-radius:99px;font-size:.82rem;font-weight:700;margin-top:.8rem;}
+.dim-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:0.9rem;}
+.dim-bar-label{width:140px;font-size:0.82rem;font-weight:700;flex-shrink:0;}
+.dim-bar-track{flex:1;height:10px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;}
+.dim-bar-fill{height:100%;border-radius:99px;transition:width 1s ease;}
+.dim-bar-pct{width:38px;font-size:0.8rem;font-weight:700;text-align:right;flex-shrink:0;}
+.chart-wrap{max-width:260px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;}
+@media(max-width:560px){.two-col{grid-template-columns:1fr;}}
+.col-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.6rem;font-weight:700;}
+.inner-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem 1rem;text-align:center;}
+.stat-num{font-size:1.7rem;font-weight:900;color:var(--accent);line-height:1;}
+.stat-lbl{font-size:0.78rem;color:var(--muted);margin-top:0.3rem;}
+.ia-badge{display:inline-flex;align-items:center;gap:.4rem;font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:#9b59b6;background:rgba(155,89,182,.1);border:1px solid rgba(155,89,182,.3);padding:.3rem .8rem;border-radius:99px;margin-bottom:1rem;}
+.ia-list{padding-left:1.1rem;font-size:.83rem;color:var(--muted);line-height:1.6;}
 .ia-list li{margin-bottom:.5rem;}
 @keyframes iaPulse{0%,100%{opacity:.4}50%{opacity:.9}}
-.ia-loading{color:var(--text2);font-size:.85rem;animation:iaPulse 1.4s ease-in-out infinite;}
-.profile-badge{display:inline-flex;align-items:center;justify-content:center;width:86px;height:86px;border-radius:50%;font-size:2.2rem;font-weight:900;margin:0 auto 1rem;}
-.dim-row{display:flex;align-items:center;gap:12px;margin-bottom:.9rem;}
-.dim-label{width:150px;font-size:.8rem;font-weight:700;flex-shrink:0;}
-.dim-track{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;}
-.dim-fill{height:100%;border-radius:99px;transition:width 1s ease;}
-.dim-pct{width:42px;font-size:.78rem;font-weight:700;text-align:right;}
-.chart-wrap{max-width:340px;margin:0 auto;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
-@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
-.stat-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:1rem 1.2rem;text-align:center;}
-.stat-box .num{font-size:1.6rem;font-weight:900;color:var(--cyan);}
-.stat-box .lbl{font-size:.75rem;color:var(--text2);margin-top:.2rem;}
-.fit-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;margin-top:.6rem;}
+.ia-loading{color:var(--muted);font-size:.85rem;animation:iaPulse 1.4s ease-in-out infinite;}
 .state-box{text-align:center;padding:3rem 1rem;}
-.state-box p{font-size:.9rem;color:var(--text2);margin-bottom:1.2rem;}
+.state-box p{font-size:.9rem;color:var(--muted);margin-bottom:1.2rem;}
+.aviso{background:rgba(224,128,0,0.08);border:1px solid rgba(224,128,0,0.25);border-radius:12px;padding:1rem 1.2rem;margin-top:1.2rem;margin-bottom:1.2rem;}
+.aviso p{font-size:0.82rem;color:#c8a060;line-height:1.6;}
+.footer{text-align:center;padding-top:1rem;font-size:0.72rem;color:#444;}
+.legenda-eixos{display:flex;flex-direction:column;gap:.5rem;margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid rgba(255,255,255,0.07);}
+.legenda-item{font-size:.78rem;color:var(--muted);line-height:1.5;}
+.legenda-item strong{font-weight:700;}
+.percebido-line{font-size:.82rem;color:var(--muted);margin-top:.7rem;}
+.percebido-line strong{color:var(--text);}
+.empate-alerta{font-size:.78rem;color:var(--amber);margin-top:.8rem;background:rgba(243,156,18,.08);border:1px solid rgba(243,156,18,.25);border-radius:10px;padding:.6rem .9rem;}
+.stat-sub{font-size:.7rem;color:var(--muted);margin-top:.3rem;line-height:1.4;}
+.cat-vaga-tag{display:inline-block;font-size:.74rem;color:var(--muted);margin-top:.5rem;}
+.coerencia-box{margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid rgba(255,255,255,0.07);}
+.coerencia-box p{font-size:.85rem;color:var(--text);line-height:1.65;}
 #resultWrap{display:none;}
+body.modo-impressao{background:#f4f4f4!important;color:#111111!important;}
 @media print{
-  .header,body::before,.no-print{display:none!important;}
-  body{background:#fff;color:#000;}
+  body{background:#ffffff!important;color:#111111!important;}
+  body::before{display:none;}
+  .top-bar,.no-print{display:none!important;}
+  .wrapper{padding:1rem;max-width:100%;}
+  .result-card{background:#ffffff!important;border:1px solid #dddddd!important;break-inside:avoid;page-break-inside:avoid;color:#111111!important;}
+  .dim-bar-track{background:#eeeeee!important;}
+  .inner-box{background:#f9f9f9!important;border:1px solid #dddddd!important;}
+  .cand-bar{background:#f0f0f0!important;border:1px solid #cccccc!important;}
+  p,span,li,strong{color:#333333!important;}
+  h4{color:#1e40af!important;}
+  .aviso{background:#fff8e7!important;border:1px solid #e08000!important;}
+  .aviso p{color:#8a6d3b!important;}
+  .footer{color:#888888!important;}
+  .empate-alerta{background:#fff8e7!important;border:1px solid #e08000!important;color:#8a6d3b!important;}
+  .legenda-eixos,.coerencia-box{border-color:#dddddd!important;}
 }
 </style>
 </head>
 <body>
 <div class="wrapper">
-  <div class="header">
-    <div class="eyebrow">Orizon · Resultado salvo</div>
-    <h1>Perfil <span>Comportamental 5 Eixos</span></h1>
-    <p id="subNome"></p>
+
+  <div class="top-bar">
+    <div class="logo-area">
+      <img src="imagens/fundo.png" alt="Orizon"/>
+      <span>Uso interno — Orizon</span>
+    </div>
+    <button class="btn-pdf" onclick="gerarPDF()" id="btnPDF">🖨️ Salvar PDA em PDF</button>
+    <a class="btn-ghost" id="linkFazerTeste" href="#" style="display:none;text-decoration:none;">🔁 Refazer teste</a>
   </div>
 
-  <div id="loadingBox" class="card state-box">
+  <h1 class="page-title">Resultado <span>PDA · 5 Eixos</span></h1>
+  <p class="page-sub">Perfil comportamental por adjetivos — uso restrito ao recrutador</p>
+
+  <div class="cand-bar">
+    <div class="cand-field"><label>Candidato</label><strong id="cNome">—</strong></div>
+    <div class="cand-field"><label>Vaga</label><strong id="cVaga">—</strong></div>
+    <div class="cand-field"><label>Perfil</label><strong id="cPerfil">—</strong></div>
+    <div class="cand-field"><label>E-mail</label><strong id="cEmail">—</strong></div>
+    <div class="cand-field"><label>Data</label><strong id="cData">—</strong></div>
+  </div>
+
+  <div id="loadingBox" class="result-card state-box">
     <p class="ia-loading">Carregando resultado...</p>
   </div>
 
-  <div id="errorBox" class="card state-box" style="display:none">
+  <div id="errorBox" class="result-card state-box" style="display:none">
     <p>⚠️ Não encontramos um resultado salvo pra esse candidato ainda.</p>
-    <a class="btn" id="linkFazerTeste" href="#">Fazer o teste agora</a>
+    <a class="btn-pdf" style="display:inline-flex" id="linkFazerTesteErro" href="#">Fazer o teste agora</a>
   </div>
 
   <div id="resultWrap">
-    <div class="card" style="text-align:center">
-      <h2>🎯 Perfil Natural</h2>
+    <div class="result-card" style="text-align:center">
+      <h4>🎯 Perfil Natural</h4>
       <div id="cardPerfilNatural"></div>
       <div id="fitVagaBox"></div>
+      <div id="catVagaBox"></div>
     </div>
-    <div class="card">
+
+    <div class="result-card">
       <span class="ia-badge">🤖 Parecer gerado por IA · Llama 3.3</span>
       <div id="parecerIABox"><button class="btn-ghost" onclick="gerarParecerIA()">Gerar parecer com IA</button></div>
     </div>
-    <div class="card">
-      <h2>📊 Comparativo dos 5 Eixos</h2>
+
+    <div class="result-card">
+      <h4>📊 Comparativo dos 5 Eixos</h4>
       <div class="two-col">
         <div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como se vê</p>
+          <p class="col-label">Como se vê</p>
           <div id="barsNatural"></div>
         </div>
         <div>
-          <p style="font-size:.78rem;color:var(--muted);margin-bottom:.6rem;font-family:var(--mono);text-transform:uppercase;">Como acha que é visto</p>
+          <p class="col-label">Como acha que é visto</p>
           <div id="barsPercebido"></div>
         </div>
       </div>
+      <div class="legenda-eixos" id="legendaEixos"></div>
     </div>
-    <div class="card no-print">
-      <h2>🕸️ Radar Comparativo</h2>
+
+    <div class="result-card no-print">
+      <h4>🕸️ Radar Comparativo</h4>
       <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
     </div>
-    <div class="card">
-      <h2>⚡ Energia & Consistência</h2>
+
+    <div class="result-card">
+      <h4>⚡ Energia & Consistência</h4>
       <div class="two-col">
-        <div class="stat-box"><div class="num" id="statEnergia">-</div><div class="lbl">Quantum de energia</div></div>
-        <div class="stat-box"><div class="num" id="statConsistencia">-</div><div class="lbl">Consistência do perfil</div></div>
+        <div class="inner-box">
+          <div class="stat-num" id="statEnergia">-</div><div class="stat-lbl">Quantum de energia</div>
+          <div class="stat-sub">Quantas palavras marcou no total — indica intensidade de resposta, não é bom nem ruim.</div>
+        </div>
+        <div class="inner-box">
+          <div class="stat-num" id="statConsistencia">-</div><div class="stat-lbl">Consistência do perfil</div>
+          <div class="stat-sub">Quanto a autoimagem coincide com a forma como acha que é visto.</div>
+        </div>
+      </div>
+      <div class="coerencia-box">
+        <p id="analiseTexto"></p>
       </div>
     </div>
-    <div class="card no-print" style="text-align:center">
-      <button class="btn" onclick="window.print()">🖨️ Baixar / Imprimir PDF</button>
+
+    <div class="aviso">
+      <p>⚠️ O PDA (Perfil Comportamental 5 Eixos) é uma ferramenta de apoio ao processo seletivo. Este resultado traça tendências comportamentais com base nas respostas do candidato, mas não deve ser utilizado como critério único — nem determinante — para aprovação ou eliminação em qualquer etapa da seleção. O comportamento humano é dinâmico e multifacetado.</p>
     </div>
+
+    <p class="footer">Orizon - Guaíba / RS | Relatório gerado automaticamente pelo sistema</p>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// CONFIG — mesmo projeto Supabase do teste
-// ═══════════════════════════════════════════════════════════
 const SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
 const EDGE_LER_URL = `${SB_URL}/functions/v1/perfil-5eixos-ler`;
@@ -130,12 +194,32 @@ const nomeParam = params.get('nome') || '';
 const vagaParam = params.get('vaga') || '';
 
 const EIXOS = {
-  E:{nome:'Ênfase',cor:'var(--E)'},
-  S:{nome:'Sociabilidade',cor:'var(--S)'},
-  P:{nome:'Paciência',cor:'var(--P)'},
-  C:{nome:'Conformidade',cor:'var(--C)'},
-  A:{nome:'Autocontrole',cor:'var(--A)'},
+  E:{nome:'Ênfase',cor:'var(--E)',desc:'foco em resultado, assertividade e ação rápida'},
+  S:{nome:'Sociabilidade',cor:'var(--S)',desc:'comunicação, relacionamento e entusiasmo'},
+  P:{nome:'Paciência',cor:'var(--P)',desc:'constância, ritmo estável e lealdade'},
+  C:{nome:'Conformidade',cor:'var(--C)',desc:'precisão, processo e atenção a critérios'},
+  A:{nome:'Autocontrole',cor:'var(--A)',desc:'estabilidade emocional e lógica sob pressão'},
 };
+
+// Mesma detecção de categoria de vaga usada no teste (perfil-5eixos-adjetivos.html),
+// só pra exibir um rótulo amigável ao lado do fit — não recalcula o percentual.
+const CATEGORIA_LABELS = {
+  lideranca:'Liderança / Gestão', comercial:'Comercial / Vendas', operacional:'Operacional',
+  tecnico:'Técnico / Analítico', rh_pessoas:'RH / Pessoas', adm_financ:'Administrativo / Financeiro',
+  atendimento:'Atendimento / Relacionamento', criativo:'Criativo / Comunicação',
+};
+function detectarCategoria(vaga){
+  const v=(vaga||'').toLowerCase();
+  if(/gerente|diretor|coordenador|supervisor|lider|líder|head|ceo|coo/.test(v)) return 'lideranca';
+  if(/vend|comercial|account|sdr|closer|hunter|corretor|consultor comercial/.test(v)) return 'comercial';
+  if(/operador|auxiliar de produção|auxiliar de logística|motorista|montador|soldador|técnico de campo/.test(v)) return 'operacional';
+  if(/tecnico|técnico|engenheiro|analista de sistema|ti|developer|desenvolvedor|dados|bi |qualidade|pcp/.test(v)) return 'tecnico';
+  if(/rh|recursos humanos|recrutamento|pessoas|cultura|t&d|treinamento|hrbp/.test(v)) return 'rh_pessoas';
+  if(/financeiro|contabil|contábil|fiscal|auditoria|controladoria|tesour|caixa/.test(v)) return 'adm_financ';
+  if(/atendimento|recepcionista|sac|call center|customer|suporte/.test(v)) return 'atendimento';
+  if(/marketing|comunicação|design|social media|conteúdo|mídia/.test(v)) return 'criativo';
+  return null;
+}
 
 const COMBOS = {
   ES:{nome:'Comunicador Estratégico',desc:'lidera com assertividade e sabe engajar as pessoas ao redor pra tirar planos do papel.'},
@@ -164,7 +248,7 @@ let ultimoResultado = null;
 
 async function carregar(){
   const linkFazer = 'perfil-5eixos-adjetivos.html?nome='+encodeURIComponent(nomeParam)+'&email='+encodeURIComponent(emailParam)+'&vaga='+encodeURIComponent(vagaParam)+(candidatoId?'&candidato_id='+encodeURIComponent(candidatoId):'');
-  document.getElementById('linkFazerTeste').href = linkFazer;
+  document.getElementById('linkFazerTesteErro').href = linkFazer;
 
   try{
     const resp = await fetch(EDGE_LER_URL, {
@@ -186,48 +270,72 @@ async function carregar(){
 function renderResultado(r){
   document.getElementById('loadingBox').style.display='none';
   document.getElementById('resultWrap').style.display='block';
-  document.getElementById('subNome').textContent = r.nome ? `Resultado de ${r.nome}` : 'Resultado salvo';
 
   const pct1 = {E:r.pct_natural_e||0,S:r.pct_natural_s||0,P:r.pct_natural_p||0,C:r.pct_natural_c||0,A:r.pct_natural_a||0};
   const pct2 = {E:r.pct_percebido_e||0,S:r.pct_percebido_s||0,P:r.pct_percebido_p||0,C:r.pct_percebido_c||0,A:r.pct_percebido_a||0};
   const dom1 = r.eixo_natural || Object.entries(pct1).sort((a,b)=>b[1]-a[1])[0][0];
   const sec1 = r.eixo_secundario || Object.entries(pct1).sort((a,b)=>b[1]-a[1])[1][0];
 
+  document.getElementById('cNome').textContent = r.nome || nomeParam || '—';
+  document.getElementById('cVaga').textContent = r.vaga || vagaParam || '—';
+  document.getElementById('cPerfil').textContent = `${EIXOS[dom1].nome} + ${EIXOS[sec1].nome}`;
+  document.getElementById('cEmail').textContent = r.email || emailParam || '—';
+  const dataRef = r.created_at || r.data || r.data_criacao || null;
+  document.getElementById('cData').textContent = dataRef ? new Date(dataRef).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+
+  const dom2 = r.eixo_percebido || Object.entries(pct2).sort((a,b)=>b[1]-a[1])[0][0];
+  const empate = pct1[dom1]===pct1[sec1];
+
   const combo = COMBOS[dom1+sec1];
   document.getElementById('cardPerfilNatural').innerHTML = `
     <div class="profile-badge" style="background:${EIXOS[dom1].cor}22;color:${EIXOS[dom1].cor};border:3px solid ${EIXOS[dom1].cor}44;">${dom1}</div>
     <h3 style="font-size:1.3rem;font-weight:800;color:${EIXOS[dom1].cor};margin-bottom:.3rem;">${EIXOS[dom1].nome} + ${EIXOS[sec1].nome}</h3>
-    <p style="color:var(--text2);font-size:.85rem;margin-bottom:.6rem;"><strong style="color:var(--text)">${combo?combo.nome:''}</strong></p>
-    <p style="font-size:.85rem;color:var(--text);max-width:520px;margin:0 auto;line-height:1.6;">${combo?combo.desc:''}</p>`;
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:.6rem;"><strong style="color:var(--text)">${combo?combo.nome:''}</strong></p>
+    <p style="font-size:.85rem;color:var(--text);max-width:520px;margin:0 auto;line-height:1.6;">${combo?combo.desc:''}</p>
+    ${empate?`<div class="empate-alerta">⚠️ Houve empate percentual entre ${EIXOS[dom1].nome} e ${EIXOS[sec1].nome} — considere os dois como traços igualmente fortes no perfil.</div>`:''}
+    <p class="percebido-line">Como acha que os outros o(a) veem: <strong style="color:${EIXOS[dom2].cor}">${EIXOS[dom2].nome}</strong></p>`;
 
   const fitVaga = r.fit_vaga;
   document.getElementById('fitVagaBox').innerHTML = (fitVaga!==null && fitVaga!==undefined) ? `
-    <div class="fit-badge" style="background:${fitVaga>=75?'rgba(0,230,118,.12)':fitVaga>=55?'rgba(255,171,0,.12)':'rgba(255,23,68,.12)'};color:${fitVaga>=75?'var(--green)':fitVaga>=55?'var(--amber)':'var(--red)'};border:1px solid currentColor;">
+    <div class="fit-badge" style="background:${fitVaga>=75?'rgba(46,204,113,.12)':fitVaga>=55?'rgba(243,156,18,.12)':'rgba(231,76,60,.12)'};color:${fitVaga>=75?'var(--green)':fitVaga>=55?'var(--amber)':'var(--red)'};border:1px solid currentColor;">
       Compatibilidade com a vaga${r.vaga?' "'+r.vaga+'"':''}: ${fitVaga}%
     </div>` : '';
 
+  const catVaga = detectarCategoria(r.vaga||vagaParam);
+  document.getElementById('catVagaBox').innerHTML = catVaga ? `
+    <div class="cat-vaga-tag">Categoria identificada: <strong style="color:var(--text)">${CATEGORIA_LABELS[catVaga]}</strong></div>` : '';
+
   const barsHtml=(pct,prefix)=>Object.keys(EIXOS).map(f=>`
-    <div class="dim-row">
-      <div class="dim-label" style="color:${EIXOS[f].cor}">${EIXOS[f].nome}</div>
-      <div class="dim-track"><div class="dim-fill" id="${prefix}${f}" style="width:${pct[f]}%;background:${EIXOS[f].cor};"></div></div>
-      <div class="dim-pct" style="color:${EIXOS[f].cor}">${pct[f]}%</div>
+    <div class="dim-bar-row">
+      <div class="dim-bar-label" style="color:${EIXOS[f].cor}">${EIXOS[f].nome}</div>
+      <div class="dim-bar-track"><div class="dim-bar-fill" id="${prefix}${f}" style="width:${pct[f]}%;background:${EIXOS[f].cor};"></div></div>
+      <div class="dim-bar-pct" style="color:${EIXOS[f].cor}">${pct[f]}%</div>
     </div>`).join('');
   document.getElementById('barsNatural').innerHTML=barsHtml(pct1,'bar1');
   document.getElementById('barsPercebido').innerHTML=barsHtml(pct2,'bar2');
 
+  document.getElementById('legendaEixos').innerHTML = Object.keys(EIXOS).map(f=>`
+    <div class="legenda-item"><strong style="color:${EIXOS[f].cor}">${EIXOS[f].nome}</strong> — ${EIXOS[f].desc}</div>`).join('');
+
   new Chart(document.getElementById('radarChart').getContext('2d'),{
     type:'radar',
     data:{labels:Object.keys(EIXOS).map(f=>EIXOS[f].nome),datasets:[
-      {label:'Como se vê',data:Object.keys(EIXOS).map(f=>pct1[f]),backgroundColor:'rgba(0,229,255,0.15)',borderColor:'#00e5ff',pointBackgroundColor:'#00e5ff'},
-      {label:'Como acha que é visto',data:Object.keys(EIXOS).map(f=>pct2[f]),backgroundColor:'rgba(124,77,255,0.12)',borderColor:'#7c4dff',pointBackgroundColor:'#7c4dff'}
+      {label:'Como se vê',data:Object.keys(EIXOS).map(f=>pct1[f]),backgroundColor:'rgba(59,130,246,0.15)',borderColor:'#3b82f6',pointBackgroundColor:'#3b82f6'},
+      {label:'Como acha que é visto',data:Object.keys(EIXOS).map(f=>pct2[f]),backgroundColor:'rgba(155,89,182,0.12)',borderColor:'#9b59b6',pointBackgroundColor:'#9b59b6'}
     ]},
-    options:{responsive:true,scales:{r:{angleLines:{color:'rgba(255,255,255,.1)'},grid:{color:'rgba(255,255,255,.1)'},pointLabels:{color:'#e8eaf6',font:{size:10}},ticks:{display:false}}},plugins:{legend:{labels:{color:'#e8eaf6'}}}}
+    options:{responsive:true,scales:{r:{angleLines:{color:'rgba(255,255,255,.1)'},grid:{color:'rgba(255,255,255,.1)'},pointLabels:{color:'#f0f0f0',font:{size:10}},ticks:{display:false}}},plugins:{legend:{labels:{color:'#f0f0f0'}}}}
   });
 
-  document.getElementById('statEnergia').textContent = (r.energia_pct!=null?r.energia_pct+'%':'-');
+  const energiaPct = r.energia_pct;
+  const energiaLabel = energiaPct!=null ? (energiaPct>=45?'Alto':energiaPct>=28?'Médio':'Baixo') : null;
+  document.getElementById('statEnergia').textContent = energiaLabel ? `${energiaLabel} (${energiaPct}%)` : '-';
   document.getElementById('statConsistencia').textContent = (r.consistencia_pct!=null?r.consistencia_pct+'%':'-');
 
-  window._pctParaIA = {pct1,pct2,dom1,sec1,dom2:r.eixo_percebido||dom1,fitVaga,comboNome:combo?combo.nome:null};
+  document.getElementById('analiseTexto').textContent = dom1===dom2
+    ? `Alta coerência: o eixo ${EIXOS[dom1].nome} predomina tanto na autopercepção quanto em como o(a) candidato(a) acha que é visto — isso indica um comportamento autêntico, sem grande diferença entre o "eu real" e o "eu social".`
+    : `Existe uma diferença entre como se vê (${EIXOS[dom1].nome}) e como acha que é percebido(a) (${EIXOS[dom2].nome}). Isso pode indicar adaptação consciente ao ambiente, uma "máscara" social, ou que a autoimagem difere da imagem que acredita projetar. Vale explorar isso na entrevista.`;
+
+  window._pctParaIA = {pct1,pct2,dom1,sec1,dom2,fitVaga,comboNome:combo?combo.nome:null};
 }
 
 async function gerarParecerIA(){
@@ -251,25 +359,261 @@ async function gerarParecerIA(){
     clearTimeout(timeout);
     const data = await resp.json().catch(()=>({}));
     if(!resp.ok || data.error || !data.parecer) throw new Error(data.error||'Falha ao gerar parecer');
+    window._parecerIA = data.parecer;
     const li = arr => (Array.isArray(arr)?arr:[]).map(x=>`<li>${x}</li>`).join('');
     box.innerHTML = `
       <p style="font-size:.88rem;color:var(--text);line-height:1.6;margin-bottom:1.2rem;text-align:left;">${data.parecer.resumo_executivo||''}</p>
       <div class="two-col" style="text-align:left;margin-bottom:1rem;">
         <div>
-          <p style="font-size:.72rem;color:var(--green);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">✓ Pontos fortes</p>
+          <p style="font-size:.72rem;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;font-weight:700;">✓ Pontos fortes</p>
           <ul class="ia-list">${li(data.parecer.pontos_fortes)}</ul>
         </div>
         <div>
-          <p style="font-size:.72rem;color:var(--amber);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;">⚠ Pontos de atenção</p>
+          <p style="font-size:.72rem;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;font-weight:700;">⚠ Pontos de atenção</p>
           <ul class="ia-list">${li(data.parecer.pontos_atencao)}</ul>
         </div>
       </div>
-      <p style="font-size:.72rem;color:var(--cyan);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;text-align:left;">Perguntas sugeridas para entrevista</p>
+      <p style="font-size:.72rem;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem;text-align:left;font-weight:700;">Perguntas sugeridas para entrevista</p>
       <ul class="ia-list" style="text-align:left;">${li(data.parecer.perguntas_entrevista)}</ul>`;
   }catch(e){
     console.warn('Erro ao gerar parecer IA:', e);
     box.innerHTML = `<p style="color:var(--amber);font-size:.82rem;">⚠️ Não foi possível gerar o parecer agora. <button class="btn-ghost" style="padding:.4rem .9rem;font-size:.72rem" onclick="gerarParecerIA()">Tentar novamente</button></p>`;
   }
+}
+
+function gerarPDF(){
+  if(!ultimoResultado || !window._pctParaIA){
+    alert('Aguarde o resultado carregar antes de gerar o PDF.');
+    return;
+  }
+  const btn = document.getElementById('btnPDF');
+  btn.textContent = 'Abrindo...';
+  btn.disabled = true;
+
+  const r = ultimoResultado;
+  const p = window._pctParaIA;
+  const pct1 = p.pct1, pct2 = p.pct2, dom1 = p.dom1, sec1 = p.sec1, dom2 = p.dom2;
+  const nome = (r.nome || nomeParam || '—');
+  const vagaAtual = (r.vaga || vagaParam || '—');
+  const emailAtual = (r.email || emailParam || '—');
+  const dataRef = r.created_at || r.data || r.data_criacao || null;
+  const dataHoje = dataRef ? new Date(dataRef).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR');
+  const resultURL = window.location.href;
+  const combo = COMBOS[dom1+sec1];
+  const comboNome = combo ? combo.nome : '';
+  const comboDesc = combo ? combo.desc : '';
+  const empate = pct1[dom1]===pct1[sec1];
+  const corDom = EIXOS[dom1].cor.startsWith('var(')
+    ? getComputedStyle(document.documentElement).getPropertyValue(EIXOS[dom1].cor.slice(4,-1)).trim()
+    : EIXOS[dom1].cor;
+  const coresHex = {};
+  Object.keys(EIXOS).forEach(f=>{
+    const c = EIXOS[f].cor;
+    coresHex[f] = c.startsWith('var(') ? getComputedStyle(document.documentElement).getPropertyValue(c.slice(4,-1)).trim() : c;
+  });
+
+  const fitVaga = p.fitVaga;
+  const catVaga = detectarCategoria(vagaAtual);
+  const energiaPct = r.energia_pct;
+  const energiaLabel = energiaPct!=null ? (energiaPct>=45?'Alto':energiaPct>=28?'Médio':'Baixo') : null;
+  const consistPct = r.consistencia_pct;
+
+  const analiseTexto = dom1===dom2
+    ? `Alta coerência: o eixo ${EIXOS[dom1].nome} predomina tanto na autopercepção quanto em como o(a) candidato(a) acha que é visto — isso indica um comportamento autêntico, sem grande diferença entre o "eu real" e o "eu social".`
+    : `Existe uma diferença entre como se vê (${EIXOS[dom1].nome}) e como acha que é percebido(a) (${EIXOS[dom2].nome}). Isso pode indicar adaptação consciente ao ambiente, uma "máscara" social, ou que a autoimagem difere da imagem que acredita projetar. Vale explorar isso na entrevista.`;
+
+  const parecer = window._parecerIA || null;
+
+  // Radar SVG (5 eixos)
+  function radarSVG(){
+    const cx=130, cy=125, R=95;
+    const keys = Object.keys(EIXOS);
+    const angleStep = (2*Math.PI)/keys.length;
+    const angles = keys.map((_,i)=> -Math.PI/2 + i*angleStep);
+    let g='';
+    [0.25,0.5,0.75,1].forEach(f=>{
+      const pts = angles.map(a=>`${(cx+R*f*Math.cos(a)).toFixed(1)},${(cy+R*f*Math.sin(a)).toFixed(1)}`);
+      g+=`<polygon points="${pts.join(' ')}" fill="none" stroke="#ddd" stroke-width="0.8"/>`;
+    });
+    angles.forEach(a=>{ g+=`<line x1="${cx}" y1="${cy}" x2="${(cx+R*Math.cos(a)).toFixed(1)}" y2="${(cy+R*Math.sin(a)).toFixed(1)}" stroke="#ccc" stroke-width="0.8"/>`; });
+    const pts1 = keys.map((f,i)=>{const d=R*(pct1[f]/100);const a=angles[i];return `${(cx+d*Math.cos(a)).toFixed(1)},${(cy+d*Math.sin(a)).toFixed(1)}`;});
+    const pts2 = keys.map((f,i)=>{const d=R*(pct2[f]/100);const a=angles[i];return `${(cx+d*Math.cos(a)).toFixed(1)},${(cy+d*Math.sin(a)).toFixed(1)}`;});
+    g+=`<polygon points="${pts1.join(' ')}" fill="#3b82f625" stroke="#3b82f6" stroke-width="1.8"/>`;
+    g+=`<polygon points="${pts2.join(' ')}" fill="#9b59b618" stroke="#9b59b6" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    keys.forEach((f,i)=>{
+      const a=angles[i];
+      const d1=R*(pct1[f]/100), d2=R*(pct2[f]/100);
+      g+=`<circle cx="${(cx+d1*Math.cos(a)).toFixed(1)}" cy="${(cy+d1*Math.sin(a)).toFixed(1)}" r="3" fill="#3b82f6" stroke="#fff" stroke-width="1"/>`;
+      g+=`<circle cx="${(cx+d2*Math.cos(a)).toFixed(1)}" cy="${(cy+d2*Math.sin(a)).toFixed(1)}" r="3" fill="#9b59b6" stroke="#fff" stroke-width="1"/>`;
+      const lx=cx+(R+16)*Math.cos(a), ly=cy+(R+16)*Math.sin(a);
+      const anchor = Math.cos(a)>0.3?'start':Math.cos(a)<-0.3?'end':'middle';
+      g+=`<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="${anchor}" font-size="10" font-weight="700" fill="${coresHex[f]}">${f}</text>`;
+    });
+    return `<svg width="270" height="250" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+  }
+
+  const barsHtmlPDF=(pct)=>Object.keys(EIXOS).map(f=>`
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;">
+      <div style="width:95px;font-size:10.5px;font-weight:700;color:${coresHex[f]};flex-shrink:0;">${EIXOS[f].nome}</div>
+      <div style="flex:1;height:7px;background:#e5e5e5;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct[f]}%;background:${coresHex[f]};border-radius:3px;"></div></div>
+      <div style="width:26px;font-size:10.5px;font-weight:700;color:${coresHex[f]};text-align:right;">${pct[f]}</div>
+    </div>`).join('');
+
+  const li = arr => (Array.isArray(arr)?arr:[]).map(x=>`<li style="margin-bottom:.4rem;">${x}</li>`).join('');
+  const parecerHtml = parecer ? `
+    <div class="mb12">
+      <div class="st" style="color:#9b59b6;border-color:#9b59b6;">🤖 Parecer Gerado por IA</div>
+      <p style="font-size:11.5px;color:#333;line-height:1.6;margin-bottom:9px;">${parecer.resumo_executivo||''}</p>
+      <div class="r2">
+        <div class="col">
+          <div style="font-size:9px;font-weight:700;color:#1e8449;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">✓ Pontos Fortes</div>
+          <ul style="font-size:11px;color:#333;line-height:1.5;padding-left:16px;">${li(parecer.pontos_fortes)}</ul>
+        </div>
+        <div class="col">
+          <div style="font-size:9px;font-weight:700;color:#d68910;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">⚠ Pontos de Atenção</div>
+          <ul style="font-size:11px;color:#333;line-height:1.5;padding-left:16px;">${li(parecer.pontos_atencao)}</ul>
+        </div>
+      </div>
+    </div>
+    <div class="mb12">
+      <div class="st" style="color:#1e40af;border-color:#1e40af;">💬 Perguntas Sugeridas para a Entrevista</div>
+      <ul style="font-size:11.5px;color:#333;line-height:1.6;padding-left:18px;">${li(parecer.perguntas_entrevista)}</ul>
+    </div>` : `
+    <div class="mb12" style="background:#f9f9f9;border-left:4px solid #ccc;border-radius:0 6px 6px 0;padding:10px 14px;">
+      <div class="st" style="color:#999;border-color:#ccc;">🤖 Parecer Gerado por IA</div>
+      <p style="font-size:10.5px;color:#bbb;font-style:italic;margin-top:4px;">Parecer não foi gerado antes de exportar o PDF. Volte à tela de resultado, clique em "Gerar parecer com IA" e gere o PDF novamente pra incluí-lo.</p>
+    </div>`;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PDA 5 Eixos ${nome}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-height:1.4;}
+.pg{width:210mm;margin:0 auto;}
+.pad{padding:11px 22px;}
+.r2{display:flex;gap:14px;}
+.col{flex:1;min-width:0;}
+.col+.col{border-left:1px solid #ebebeb;padding-left:14px;}
+.st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid;padding-bottom:2px;margin-bottom:6px;}
+.mb12{margin-bottom:12px;}
+.pg2{page-break-before:always;}
+@media print{
+  @page{margin:0;size:A4;}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .nopr{display:none!important;}
+  .pg{width:100%;}
+}
+</style></head><body>
+
+<div class="nopr" style="background:#1e3a5f;padding:8px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:99;">
+<span style="color:#fff;font-size:13px;font-weight:700;">Relatório PDA · 5 Eixos — ${nome}</span>
+<button onclick="window.print()" style="margin-left:auto;background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;">🖨️ Salvar como PDF</button>
+<button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕ Fechar</button>
+</div>
+
+<!-- PÁGINA 1 — PERFIL DO CANDIDATO -->
+<div class="pg">
+<div style="background:#1e3a5f;padding:12px 22px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;">
+  <div><div style="font-size:16px;font-weight:900;letter-spacing:1.2px;">ORIZON</div>
+  <div style="font-size:9px;opacity:.7;margin-top:1px;">RELATÓRIO DE PERFIL COMPORTAMENTAL · PDA 5 EIXOS</div></div>
+  <div style="font-size:9px;opacity:.7;text-align:right;line-height:1.7;"><div>${dataHoje}</div><div>Uso interno — Recrutamento</div></div>
+</div>
+<div style="background:${corDom};padding:8px 22px;color:#fff;">
+  <div style="font-size:13.5px;font-weight:900;">${EIXOS[dom1].nome} + ${EIXOS[sec1].nome} — ${comboNome}</div>
+  <div style="font-size:9.5px;opacity:.88;margin-top:1px;">Como acha que os outros o(a) veem: ${EIXOS[dom2].nome}</div>
+</div>
+<div style="background:#f4f4f4;padding:7px 22px;border-bottom:2px solid #ddd;display:flex;gap:0;">
+${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:'E-mail',v:emailAtual},{l:'Data',v:dataHoje}]
+.map(x=>`<div style="flex:1;padding-right:10px;"><div style="font-size:8.5px;color:#999;text-transform:uppercase;letter-spacing:.6px;">${x.l}</div><div style="font-weight:700;font-size:11.5px;color:#111;margin-top:1px;">${x.v}</div></div>`).join('')}
+</div>
+
+<div class="pad">
+
+<div style="margin-bottom:10px;">
+  <div style="border-left:4px solid ${corDom};background:#f6fbee;padding:7px 11px;border-radius:0 5px 5px 0;font-size:11.5px;color:#333;line-height:1.55;">${comboDesc}</div>
+  ${empate?`<div style="margin-top:6px;background:#fff8e7;border:1px solid #e0a000;border-radius:5px;padding:6px 11px;font-size:11px;color:#7a4e00;">⚠️ Houve empate percentual entre ${EIXOS[dom1].nome} e ${EIXOS[sec1].nome} — considere os dois como traços igualmente fortes no perfil.</div>`:''}
+  ${(fitVaga!==null && fitVaga!==undefined)?`<div style="margin-top:6px;font-size:11px;color:#333;"><strong>Compatibilidade com a vaga${vagaAtual!=='—'?' "'+vagaAtual+'"':''}:</strong> ${fitVaga}%${catVaga?' · Categoria: '+CATEGORIA_LABELS[catVaga]:''}</div>`:''}
+</div>
+
+<div class="r2 mb12" style="align-items:flex-start;">
+  <div style="flex:0 0 270px;text-align:center;">
+    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;text-align:left;">Radar Comparativo — Como se vê × Como acha que é visto</div>
+    ${radarSVG()}
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:2px;">
+      <span style="font-size:9.5px;color:#3b82f6;font-weight:700;">● Como se vê</span>
+      <span style="font-size:9.5px;color:#9b59b6;font-weight:700;">- - Como acha que é visto</span>
+    </div>
+  </div>
+  <div style="flex:1;border-left:1px solid #ebebeb;padding-left:14px;">
+    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Como se vê</div>
+    ${barsHtmlPDF(pct1)}
+    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;margin-top:10px;">Como acha que é visto</div>
+    ${barsHtmlPDF(pct2)}
+  </div>
+</div>
+
+<div class="r2 mb12">
+  <div class="col" style="text-align:center;">
+    <div class="st" style="color:#555;border-color:#555;text-align:left;">Quantum de Energia</div>
+    <div style="font-size:20px;font-weight:900;color:#3b82f6;">${energiaLabel ? energiaLabel+' ('+energiaPct+'%)' : '-'}</div>
+    <div style="font-size:9.5px;color:#888;margin-top:2px;">Intensidade de resposta — não é bom nem ruim.</div>
+  </div>
+  <div class="col" style="text-align:center;">
+    <div class="st" style="color:#555;border-color:#555;text-align:left;">Consistência do Perfil</div>
+    <div style="font-size:20px;font-weight:900;color:#3b82f6;">${consistPct!=null?consistPct+'%':'-'}</div>
+    <div style="font-size:9.5px;color:#888;margin-top:2px;">Quanto a autoimagem coincide com a forma como acha que é visto.</div>
+  </div>
+</div>
+
+<div class="mb12">
+  <div class="st" style="color:#1a5276;border-color:#1a5276;">🔎 Análise de Coerência</div>
+  <div style="background:#eef5fb;border-left:4px solid #1a5276;padding:7px 11px;border-radius:0 5px 5px 0;font-size:11.5px;color:#333;line-height:1.55;">${analiseTexto}</div>
+</div>
+
+<div class="mb12">
+  <div class="st" style="color:#555;border-color:#555;">Legenda dos Eixos</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+    ${Object.keys(EIXOS).map(f=>`<div style="border-left:3px solid ${coresHex[f]};padding:4px 9px;font-size:10.5px;color:#333;"><strong style="color:${coresHex[f]};">${EIXOS[f].nome}</strong> — ${EIXOS[f].desc}</div>`).join('')}
+  </div>
+</div>
+
+</div><!-- fim pad pg1 -->
+</div><!-- fim pg1 -->
+
+<!-- PÁGINA 2 — PARECER IA + AVISOS -->
+<div class="pg pg2">
+<div style="background:#1e3a5f;padding:8px 22px;color:#fff;display:flex;justify-content:space-between;align-items:center;">
+  <div style="font-size:14px;font-weight:900;letter-spacing:1px;">ORIZON</div>
+  <div style="font-size:9px;opacity:.75;">${EIXOS[dom1].nome} + ${EIXOS[sec1].nome} — ${nome.toUpperCase()}</div>
+</div>
+<div style="background:${corDom};padding:4px 22px;color:#fff;font-size:9px;">Relatório PDA 5 Eixos · ${dataHoje} · Parecer &amp; Ferramentas de Seleção · Uso interno</div>
+<div class="pad">
+
+${parecerHtml}
+
+<div style="display:flex;gap:12px;align-items:flex-start;margin-top:6px;">
+  <div style="flex:1;">
+    <div style="background:#fff8e7;border:1px solid #e0a000;border-radius:5px;padding:9px 12px;margin-bottom:6px;">
+      <p style="font-size:11px;color:#7a4e00;line-height:1.55;"><strong>⚠️ Aviso importante:</strong> O PDA (Perfil Comportamental 5 Eixos) é uma ferramenta de apoio ao processo seletivo. Este resultado traça tendências comportamentais com base nas respostas do candidato e <strong>não deve ser utilizado como critério único</strong> para aprovação ou eliminação em qualquer etapa da seleção.</p>
+    </div>
+    <div style="background:#f0f4ff;border:1px solid #c0ccee;border-radius:5px;padding:8px 12px;">
+      <p style="font-size:10.5px;color:#2c3e7a;line-height:1.5;"><strong>ℹ️ Sobre o instrumento:</strong> O comportamento humano é dinâmico e multifacetado. Contexto, experiência, maturidade e motivação influenciam diretamente como cada pessoa age. Recomenda-se combinar este resultado com entrevista por competências e análise curricular.</p>
+    </div>
+  </div>
+  <div style="flex:0 0 90px;text-align:center;">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(resultURL)}" width="90" height="90" style="border-radius:6px;border:1px solid #ddd;" onerror="this.style.display='none'"/>
+    <div style="font-size:8px;color:#999;margin-top:3px;line-height:1.4;">Abrir resultado<br/>online</div>
+  </div>
+</div>
+
+</div><!-- fim pad pg2 -->
+</div><!-- fim pg2 -->
+</body></html>`;
+
+  const W = window.open('', '_blank');
+  W.document.write(html);
+  W.document.close();
+  btn.textContent = '🖨️ Salvar PDA em PDF';
+  btn.disabled = false;
 }
 
 carregar();

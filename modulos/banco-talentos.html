@@ -353,8 +353,8 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
       <button class="btn" onclick="ativarModoMassa('excluir')" style="background:rgba(231,76,60,0.12);color:#e74c3c;border:1px solid rgba(231,76,60,0.35);font-weight:700;" title="Selecionar candidatos e excluir">🗑️ Excluir</button>
       <button class="btn btn-accent" onclick="abrirModalNovoCand()">+ Adicionar Candidato</button>
       <button class="btn" style="background:rgba(167,139,250,0.12);color:#a78bfa;border-color:rgba(167,139,250,0.35);" onclick="abrirModalPesos()" title="Configurar pesos de aderência por vaga">⚖️ Pesos</button>
-      <button class="btn" id="btnDiscFixoRapido" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);font-weight:700;" onclick="toggleDiscFixoRapido()" title="Liga/desliga bônus fixo por concluir o teste DISC">🧠 DISC +10pts · Desligado</button>
-      <select id="selDiscFixoPts" onchange="mudarPontosDiscFixo(this.value)" title="Quantos pontos extras o bônus DISC dá" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);border-radius:8px;padding:0 0.4rem;font-family:inherit;font-size:0.78rem;font-weight:700;height:34px;cursor:pointer;">
+      <button class="btn" id="btnDiscFixoRapido" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);font-weight:700;" onclick="toggleDiscFixoRapido()" title="Liga/desliga bônus fixo por concluir o teste DISC ou o PDA (vale para os dois, mesma pontuação)">🧠 DISC/PDA +10pts · Desligado</button>
+      <select id="selDiscFixoPts" onchange="mudarPontosDiscFixo(this.value)" title="Quantos pontos extras o bônus DISC/PDA dá" style="background:rgba(52,152,219,0.08);color:#5dade2;border:1px solid rgba(52,152,219,0.25);border-radius:8px;padding:0 0.4rem;font-family:inherit;font-size:0.78rem;font-weight:700;height:34px;cursor:pointer;">
         <option value="1">1 pt</option>
         <option value="2">2 pts</option>
         <option value="3">3 pts</option>
@@ -2142,9 +2142,9 @@ function calcularAderencia(h){
   };
 }
 
-// Verifica se o candidato de fato concluiu o teste DISC (qualquer resultado)
+// Verifica se o candidato de fato concluiu um teste comportamental (DISC OU PDA — mesmo bônus pros dois)
 function temDiscFeito(h){
-  return !!(h.dom || h.disc_perfil || h.url || (h.pct_d && parseFloat(h.pct_d) > 0));
+  return !!(h.dom || h.disc_perfil || h.url || (h.pct_d && parseFloat(h.pct_d) > 0) || encontrarPDA(h));
 }
 
 // ─── BÔNUS DE SINERGIA: Fit + Currículo altos ao mesmo tempo ────────────────
@@ -2252,16 +2252,20 @@ function candCardInbox(h){
   const fit   = h.fit_manual != null ? parseInt(h.fit_manual) : (h.fit_score != null ? parseInt(h.fit_score) : null);
   const fitCor= fit!=null ? (fit>=80?'#2ecc71':fit>=65?'#3b82f6':fit>=45?'#f39c12':'#e74c3c') : '#777';
   const temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const _pdaRegInbox = encontrarPDA(h);
+  const temPdaReal = !temDiscReal && !!_pdaRegInbox;
+  const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegInbox.eixo_natural]||'#888') : cor);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegInbox.eixo_natural]||'🧭') : emoji);
   // Mesma estrutura do candCard principal — herda tudo
   const aderencia = calcularAderencia(h);
   const aderStr = aderencia ? `<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.3);color:#a78bfa;">Ader. ${aderencia.valor}%</span>` : '';
   const fitChip = fit!=null ? `<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%</span>` : '';
-  const discChip = temDiscReal ? `<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>` : '';
+  const discChip = temDiscReal ? `<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>` : (temPdaReal ? `<span class="chip chip-disc" style="background:${corAv}15;border-color:${corAv}40;color:${corAv};">${esc(_pdaRegInbox.eixo_natural||'?')} · PDA</span>` : '');
   // Select de vagas para mover direto da inbox
   const vagasOpts = _vagasList.map(v=>`<option value="${esc(v.slug)}">${esc(v.titulo||v.slug)}</option>`).join('');
   return `<div class="cand-card" style="border-color:rgba(79,168,232,0.3);">
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDiscReal?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDiscReal?cor+'40':'rgba(255,255,255,0.12)'};color:${temDiscReal?cor:'#555'};">${temDiscReal?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome" onclick="abrirPerfil('${esc(h.id)}')" style="cursor:pointer;">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')} &nbsp;·&nbsp; 📅 ${esc(_fmtCadastro(h))}</div>
@@ -2751,15 +2755,19 @@ function candCardEntrevistado(h){
   const fit   = h.fit_manual != null ? parseInt(h.fit_manual) : (h.fit_score != null ? parseInt(h.fit_score) : null);
   const fitCor= fit!=null ? (fit>=80?'#2ecc71':fit>=65?'#3b82f6':fit>=45?'#f39c12':'#e74c3c') : '#777';
   const temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const _pdaRegEnt = encontrarPDA(h);
+  const temPdaReal = !temDiscReal && !!_pdaRegEnt;
+  const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegEnt.eixo_natural]||'#888') : cor);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegEnt.eixo_natural]||'🧭') : emoji);
   return `<div class="cand-card" style="border-color:rgba(245,158,11,0.25);opacity:0.85;">
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDiscReal?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDiscReal?cor+'40':'rgba(255,255,255,0.12)'};color:${temDiscReal?cor:'#555'};">${temDiscReal?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')} &nbsp;·&nbsp; 📅 ${esc(_fmtCadastro(h))}</div>
         <div class="cand-chips">
           <span class="chip" style="background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.35);color:#f59e0b;">🎤 Em Entrevistados</span>
-          ${temDiscReal?`<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`:''}
+          ${temDiscReal?`<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`:(temPdaReal?`<span class="chip chip-disc" style="background:${corAv}15;border-color:${corAv}40;color:${corAv};">${esc(_pdaRegEnt.eixo_natural||'?')} · PDA</span>`:'')}
           ${fit!=null?`<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%</span>`:''}
         </div>
       </div>
@@ -2779,6 +2787,10 @@ function candCardPendencia(h){
   const fit   = h.fit_manual != null ? parseInt(h.fit_manual) : (h.fit_score != null ? parseInt(h.fit_score) : null);
   const fitCor= fit!=null ? (fit>=80?'#2ecc71':fit>=65?'#3b82f6':fit>=45?'#f39c12':'#e74c3c') : '#777';
   const temDiscReal   = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const _pdaRegPend   = encontrarPDA(h);
+  const temPdaReal    = !temDiscReal && !!_pdaRegPend;
+  const corAv    = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegPend.eixo_natural]||'#888') : cor);
+  const emojiAv  = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegPend.eixo_natural]||'🧭') : emoji);
   const temEntrevista = !!(h.entrevista_json||h.resumo_ia||h.url_resultado_fit||h.fit_score||h.fit_manual);
   const temCurriculo  = !!(h.curriculo_url||h.curriculo_nome);
   const temParecer    = !!(h.parecer_url||h.parecer_emitido);
@@ -2788,7 +2800,7 @@ function candCardPendencia(h){
   const scLabel = _SC_LABELS[sc]||'⏳ Pendência';
 
   const faltando = [];
-  if(!temDiscReal)    faltando.push('🔵 DISC');
+  if(!temDiscReal && !temPdaReal) faltando.push('🔵 DISC/PDA');
   if(!temEntrevista)  faltando.push('🟠 Entrevista');
   if(!temCurriculo)   faltando.push('🟢 Currículo');
   if(!temParecer)     faltando.push('🟣 Parecer');
@@ -2807,7 +2819,7 @@ function candCardPendencia(h){
     </div>
     <button class="cand-del-btn" onclick="confirmarDelCand('${esc(h.id)}','${esc(h.nome||'este candidato')}')" title="Excluir candidato">✕</button>
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDiscReal?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDiscReal?cor+'40':'rgba(255,255,255,0.12)'};color:${temDiscReal?cor:'#555'};">${temDiscReal?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome" onclick="abrirPerfil('${esc(h.id)}')" style="cursor:pointer;">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')} &nbsp;·&nbsp; 📅 ${esc(_fmtCadastro(h))}${h.email_externo?' &nbsp;·&nbsp; ✉️ '+esc(h.email_externo):''}</div>
@@ -2929,7 +2941,7 @@ function candCard(h){
   if(_manOk){ const fm=_manRaw,c='#3498db'; bars+=`<div class="fit-bar-row" title="Fit manual — sobrescreve o automático"><span class="fit-bar-lbl" style="color:${c};">✏️ Man.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fm}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fm}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.score_curriculo!=null){ const sc=parseInt(h.score_curriculo),cc=sc>=65?'#3b82f6':sc>=40?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row" title="Score do Currículo — Experiência / Formação / Técnico"><span class="fit-bar-lbl" style="color:${cc};">📄 Curric.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sc}%;background:${cc};"></div></div><span class="fit-bar-pct" style="color:${cc};">${sc}%</span><span class="fit-bar-src">curr.</span></div>`; }
   if(h.kw_score!=null){ const kw=parseInt(h.kw_score),ck=kw>=65?'#3498db':kw>=40?'#5dade2':'#85c1e9'; const kwFnd=(h.keywords_encontradas||'').split(' | ').filter(Boolean); const kwAus=(h.keywords_ausentes||'').split(' | ').filter(Boolean); const kwTip=`Keywords encontradas: ${kwFnd.slice(0,5).join(', ')||'—'}${kwAus.length?` | Ausentes: ${kwAus.slice(0,3).join(', ')}`:''}` ; bars+=`<div class="fit-bar-row" title="${kwTip}"><span class="fit-bar-lbl" style="color:${ck};">🔑 KW</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${kw}%;background:linear-gradient(90deg,#1a5276,${ck});"></div></div><span class="fit-bar-pct" style="color:${ck};">${kw}%</span><span class="fit-bar-src">kw</span></div>`; }
-  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const _aderModo=isAderManual?'man.':(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada'); const _aderIco=isAderManual?'✏️':getModoIcon(_aderModo); const _aderLbl=isAderManual?'Manual':getModoLabelCurto(_aderModo); const _bonus=aderCalc&&aderCalc.bonusSinergia?aderCalc.bonusSinergia:null; const _bonusTxt=(_bonus&&_bonus.pontos>0)?` · 🏅 Bônus ${_bonus.nivel} (Fit+CV altos) +${_bonus.pontos}pts`:''; const _bd=aderCalc&&aderCalc.bonusDisc?aderCalc.bonusDisc:null; const _bdTxt=(_bd&&_bd.pontos>0)?` · 🧠 Bônus DISC concluído +${_bd.pontos}pts`:''; const tooltip=(isAderManual?'Definida manualmente':`Método: ${(FORMULA_MODOS[_aderModo]||FORMULA_MODOS.ponderada).label}` + (aderCalc&&aderCalc.detalhes?' · '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):'')) + _bonusTxt + _bdTxt; const _bonusBadge=(_bonus&&_bonus.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#f59e0b;">🏅${_bonus.nivel}</span>`:''; const _bdBadge=(_bd&&_bd.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(52,152,219,0.15);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#3498db;">🧠+${_bd.pontos}</span>`:''; bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:#a78bfa;">${_aderIco} Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${ader}%</span><span class="fit-bar-src">${_aderLbl}${_bonusBadge}${_bdBadge}</span></div>`; }
+  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const _aderModo=isAderManual?'man.':(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada'); const _aderIco=isAderManual?'✏️':getModoIcon(_aderModo); const _aderLbl=isAderManual?'Manual':getModoLabelCurto(_aderModo); const _bonus=aderCalc&&aderCalc.bonusSinergia?aderCalc.bonusSinergia:null; const _bonusTxt=(_bonus&&_bonus.pontos>0)?` · 🏅 Bônus ${_bonus.nivel} (Fit+CV altos) +${_bonus.pontos}pts`:''; const _bd=aderCalc&&aderCalc.bonusDisc?aderCalc.bonusDisc:null; const _bdTxt=(_bd&&_bd.pontos>0)?` · 🧠 Bônus DISC/PDA concluído +${_bd.pontos}pts`:''; const tooltip=(isAderManual?'Definida manualmente':`Método: ${(FORMULA_MODOS[_aderModo]||FORMULA_MODOS.ponderada).label}` + (aderCalc&&aderCalc.detalhes?' · '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):'')) + _bonusTxt + _bdTxt; const _bonusBadge=(_bonus&&_bonus.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#f59e0b;">🏅${_bonus.nivel}</span>`:''; const _bdBadge=(_bd&&_bd.pontos>0)?`<span style="margin-left:0.3rem;font-size:0.58rem;font-weight:800;background:rgba(52,152,219,0.15);border:1px solid rgba(52,152,219,0.35);border-radius:5px;padding:0.05rem 0.3rem;color:#3498db;">🧠+${_bd.pontos}</span>`:''; bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:#a78bfa;">${_aderIco} Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${ader}%</span><span class="fit-bar-src">${_aderLbl}${_bonusBadge}${_bdBadge}</span></div>`; }
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${sc};">🧑‍💼 Rec.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sr}%;background:linear-gradient(90deg,#e67e22,#f39c12);"></div></div><span class="fit-bar-pct" style="color:${sc};">${sr}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.pilar_livre_valor!=null){ const pl=parseInt(h.pilar_livre_valor),plc=pl>=80?'#2ecc71':pl>=65?'#3b82f6':pl>=45?'#f39c12':'#e74c3c',plnome=h.pilar_livre_nome||'Livre'; bars+=`<div class="fit-bar-row" title="${esc(plnome)}"><span class="fit-bar-lbl" style="color:${plc};overflow:hidden;text-overflow:ellipsis;">🔧 ${esc(plnome.substring(0,6))}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${pl}%;background:linear-gradient(90deg,#1abc9c,#16a085);"></div></div><span class="fit-bar-pct" style="color:${plc};">${pl}%</span><span class="fit-bar-src">livre</span></div>`; }
 
@@ -3105,19 +3117,26 @@ footBtns += h.recomendacao_doc_url
   const rec = _recTxt ? `<div style="font-size:0.7rem;color:${_recColor};margin-top:0.5rem;line-height:1.5;background:${_recBg};border-radius:9px;padding:0.5rem 0.75rem;border:1px solid ${_recBorder};display:flex;align-items:flex-start;gap:0.4rem;"><span style="flex-shrink:0;font-size:0.85rem;">${_recIcon}</span><span>${esc(_recTxt.substring(0,160))}${_recTxt.length>160?'…':''}</span></div>` : '';
 
   // ── Bolinhas de status hierárquico ──
-  const _temDisc = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  // Considera DISC OU PDA como "teste comportamental" feito (usa os mesmos _temDiscReal/_temPdaReal já calculados acima)
+  const _temDisc = _temDiscReal || _temPdaReal;
+  const _corDotTeste = _temDiscReal ? null : (_temPdaReal ? cor : null); // null = mantém o azul padrão do CSS (.status-dot.disc)
+  const _tituloDotTeste = _temDiscReal
+    ? '✅ DISC realizado'
+    : _temPdaReal
+      ? `✅ PDA realizado (${esc(_pdaReg.eixo_natural||'?')})`
+      : '⬜ Nenhum teste comportamental (DISC ou PDA) ainda';
   const _temEntrevista = !!(h.entrevista_json || h.resumo_ia || h.url_resultado_fit || h.fit_score || h.fit_manual);
   const _temCurriculo  = !!h.curriculo_url;
   const _temParecer    = !!h.parecer_final_link;
   const _temRecomend   = !!h.recomendacao_doc_url;
-  const _dot = (tipo, ativo, titulo) => `<span class="status-dot ${tipo}${ativo?'':' off'}" title="${titulo}"></span>`;
+  const _dot = (tipo, ativo, titulo, corInline) => `<span class="status-dot ${tipo}${ativo?'':' off'}"${(ativo&&corInline)?` style="background:${corInline};box-shadow:0 0 7px ${corInline}99;border-color:${corInline}66;"`:''} title="${titulo}"></span>`;
   const _totalDocs = [_temDisc,_temEntrevista,_temCurriculo,_temParecer].filter(Boolean).length;
   const _tresOk    = _temDisc && _temEntrevista && _temCurriculo;
   const _completo  = _tresOk && _temParecer;
   const _pendDocs  = [_temDisc,_temEntrevista,_temCurriculo].filter(b=>!b).length; // só conta os 3 principais
   const statusDots = `<div class="status-dots-card" title="Pendências de documentos do candidato">
     <div class="status-dots-row">
-      ${_dot('disc',       _temDisc,       _temDisc       ? '✅ DISC realizado'        : '⬜ DISC pendente')}
+      ${_dot('disc',       _temDisc,       _tituloDotTeste, _corDotTeste)}
       ${_dot('entrevista', _temEntrevista, _temEntrevista ? '✅ Entrevista / Fit feito' : '⬜ Entrevista pendente')}
       ${_dot('curriculo',  _temCurriculo,  _temCurriculo  ? '✅ Currículo anexado'      : '⬜ Currículo pendente')}
       ${_dot('parecer',    _temParecer,    _temParecer    ? '✅ Parecer emitido'        : '⬜ Parecer pendente')}
@@ -3865,7 +3884,7 @@ async function mudarPontosDiscFixo(valor){
     localStorage.setItem(PESOS_KEY, JSON.stringify(local));
   }catch(e){}
 
-  mostrarToast(`🧠 Bônus DISC ajustado para +${pesos.bonus_disc_fixo_pts}pts${pesos.bonus_disc_fixo?'':' (lembre de ligar o botão pra valer)'}${ok?'':' — salvo localmente, verifique conexão'}`);
+  mostrarToast(`🧠 Bônus DISC/PDA ajustado para +${pesos.bonus_disc_fixo_pts}pts${pesos.bonus_disc_fixo?'':' (lembre de ligar o botão pra valer)'}${ok?'':' — salvo localmente, verifique conexão'}`);
   filtrarCands();
 }
 
@@ -3891,8 +3910,8 @@ async function toggleDiscFixoRapido(){
   }catch(e){}
 
   mostrarToast(pesos.bonus_disc_fixo
-    ? `🧠 Bônus DISC ativado! +${pesos.bonus_disc_fixo_pts}pts pra quem concluiu o teste${ok?'':' (salvo localmente — verifique conexão)'}`
-    : `🧠 Bônus DISC desativado${ok?'':' (salvo localmente — verifique conexão)'}`);
+    ? `🧠 Bônus DISC/PDA ativado! +${pesos.bonus_disc_fixo_pts}pts pra quem concluiu o DISC ou o PDA${ok?'':' (salvo localmente — verifique conexão)'}`
+    : `🧠 Bônus DISC/PDA desativado${ok?'':' (salvo localmente — verifique conexão)'}`);
   filtrarCands(); // recalcula aderências com o novo bônus
 }
 
@@ -3904,7 +3923,7 @@ function atualizarBotaoDiscFixoRapido(){
   const pts = pesos.bonus_disc_fixo_pts!=null ? pesos.bonus_disc_fixo_pts : 10;
   if(sel) sel.value = String(pts);
   if(!btn) return;
-  btn.textContent = ativo ? `🧠 DISC +${pts}pts · Ligado` : `🧠 DISC +${pts}pts · Desligado`;
+  btn.textContent = ativo ? `🧠 DISC/PDA +${pts}pts · Ligado` : `🧠 DISC/PDA +${pts}pts · Desligado`;
   btn.style.background = ativo ? 'rgba(52,152,219,0.25)' : 'rgba(52,152,219,0.08)';
   btn.style.color = ativo ? '#fff' : '#5dade2';
   btn.style.borderColor = ativo ? 'rgba(52,152,219,0.6)' : 'rgba(52,152,219,0.25)';
@@ -5072,15 +5091,19 @@ function candCardArea(h){
   const fit   = h.fit_score ? parseInt(h.fit_score) : (h.fit_manual ? parseInt(h.fit_manual) : null);
   const fitCor= fit!=null ? (fit>=80?'#2ecc71':fit>=65?'#3b82f6':fit>=45?'#f39c12':'#e74c3c') : '#777';
   const temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const _pdaRegArea = encontrarPDA(h);
+  const temPdaReal = !temDiscReal && !!_pdaRegArea;
+  const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegArea.eixo_natural]||'#888') : cor);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegArea.eixo_natural]||'🧭') : emoji);
   return `<div class="cand-card" style="border-color:rgba(46,204,113,0.25);opacity:0.85;">
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDiscReal?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDiscReal?cor+'40':'rgba(255,255,255,0.12)'};color:${temDiscReal?cor:'#555'};">${temDiscReal?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')} &nbsp;·&nbsp; 📅 ${esc(_fmtCadastro(h))}</div>
         <div class="cand-chips">
           <span class="chip" style="background:rgba(46,204,113,0.12);border-color:rgba(46,204,113,0.35);color:#2ecc71;">🗂️ Em Banco de Áreas</span>
-          ${temDiscReal?`<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`:''}
+          ${temDiscReal?`<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`:(temPdaReal?`<span class="chip chip-disc" style="background:${corAv}15;border-color:${corAv}40;color:${corAv};">${esc(_pdaRegArea.eixo_natural||'?')} · PDA</span>`:'')}
           ${fit!=null?`<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%</span>`:''}
         </div>
       </div>
