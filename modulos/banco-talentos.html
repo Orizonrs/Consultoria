@@ -2092,9 +2092,10 @@ function calcularAderencia(h){
     return (fs===0) ? null : fs; // zero automático = candidato sem entrevista ainda → ignora
   }
 
-  // Sem config explícita → comportamento LEGADO (DISC + Fit, como antes)
+  // Sem config explícita → comportamento LEGADO (DISC/PDA + Fit, como antes)
   if(!pesosConfig){
-    const disc = estimarFitDisc(h);
+    const discTeste = estimarFitTeste(h); // aceita DISC real ou PDA 50%
+    const disc = discTeste ? discTeste.valor : null;
     const fit  = extrairFit(h);
     const curr = h.score_curriculo != null ? parseInt(h.score_curriculo) : null;
     if(fit!=null && disc!=null && curr!=null) return { valor: Math.round(disc*0.30+fit*0.40+curr*0.30), fonte:'pond.', detalhes:null };
