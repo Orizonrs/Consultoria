@@ -2959,7 +2959,8 @@ function candCard(h){
   const isAderManual = h.aderencia_manual != null;
 
   let bars = '';
-  const _fitEstTeste = estimarFitTeste(h);
+  // Barra DISC/PDA — usa _pdaReg já calculado acima para evitar cache miss
+  const _fitEstTeste = _temDiscReal ? estimarFitTeste(h) : (_temPdaReal ? { valor:50, label:'PDA' } : estimarFitTeste(h));
   const fitEst = _fitEstTeste ? _fitEstTeste.valor : null;
   if(fitEst!=null){ const c=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🧠 ${_fitEstTeste.label}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fitEst}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fitEst}%</span><span class="fit-bar-src">est.</span></div>`; }
   if(_fitOk){ const fs=_fitRaw,c=fs>=80?'#2ecc71':fs>=65?'#3b82f6':fs>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🤖 Fit</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fs}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fs}%</span><span class="fit-bar-src">real</span></div>`; }
@@ -2995,7 +2996,7 @@ function candCard(h){
   const _discUrl = _temResultadoDisc
     ? (h.url ? h.url.replace(/https?:\/\/[^/]+\/[^/]+\/[^/]+\/disc-resultado/, 'https://orizonrs.github.io/Consultoria/modulos/disc-resultado') : (_base+'disc-resultado.html?nome='+encodeURIComponent(h.nome||'')+'&tel='+encodeURIComponent(h.tel_externo||'')+'&email='+encodeURIComponent(h.email_externo||'')+'&perfil='+(h.dom||'D')+'&sec='+(h.sec||'I')+'&d='+(h.pct_d||0)+'&i='+(h.pct_i||0)+'&s='+(h.pct_s||0)+'&c='+(h.pct_c||0)+'&vaga='+encodeURIComponent(h.vaga||'')+'&canal='+encodeURIComponent(h.canal||'')))
     : (_base+'disc.html?nome='+encodeURIComponent(h.nome||'')+'&tel='+encodeURIComponent(h.tel_externo||'')+'&email='+encodeURIComponent(h.email_externo||'')+'&vaga='+encodeURIComponent(h.vaga||'')+'&canal='+encodeURIComponent(h.canal||'')+'&retorno='+encodeURIComponent(_base+'vagas.html'));
-  const _discLabel = _temResultadoDisc ? '<img src=\"disc2.png\" style=\"width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;\" alt=\"\"> DISC' : '<img src=\"disc2.png\" style=\"width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;\" alt=\"\"> Fazer DISC';
+  const _discLabel = _temResultadoDisc ? '🧠 DISC' : '🧠 Fazer DISC';
   const _discStyle = _temResultadoDisc
     ? 'background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.2);'
     : 'background:rgba(52,152,219,0.05);color:#5dade2;border-color:rgba(52,152,219,0.15);';
