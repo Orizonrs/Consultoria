@@ -2106,7 +2106,9 @@ function calcularAderencia(h){
   }
 
   // Com config → coleta pilares disponíveis
-  const disc       = estimarFitDisc(h);
+  const discTeste  = estimarFitTeste(h); // DISC real ou PDA (50% fixo)
+  const disc       = discTeste ? discTeste.valor : null;
+  const discLabel  = discTeste ? discTeste.label : 'DISC';
   const fit        = extrairFit(h);
   const curr       = h.score_curriculo != null ? parseInt(h.score_curriculo) : null;
   const recrutador = h.score_recrutador!=null ? parseInt(h.score_recrutador) : null;
@@ -2114,7 +2116,7 @@ function calcularAderencia(h){
   const livre      = h.pilar_livre_valor!=null ? parseInt(h.pilar_livre_valor) : null;
 
   const pilares = [
-    { key:'disc',       val:disc,       peso:parseFloat(pesosConfig.disc)||0,       label:'DISC' },
+    { key:'disc',       val:disc,       peso:parseFloat(pesosConfig.disc)||0,       label:discLabel },
     { key:'fit',        val:fit,        peso:parseFloat(pesosConfig.fit)||0,         label:'Fit' },
     { key:'curriculo',  val:curr,       peso:parseFloat(pesosConfig.curriculo)||0,   label:'Curríc.' },
     { key:'recrutador', val:recrutador, peso:parseFloat(pesosConfig.recrutador)||0,  label:'Rec.' },
