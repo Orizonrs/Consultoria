@@ -1145,8 +1145,13 @@ const PESOS_KEY = 'orizon_pesos_aderencia_v1';
 const COR  = {D:'#e74c3c',I:'#f39c12',S:'#2ecc71',C:'#3498db'};
 const EMO  = {D:'🔴',I:'🟡',S:'🟢',C:'🔵'};
 // PDA (Perfil 5 Eixos) — mesmas cores usadas em perfil-5eixos-adjetivos.html
-const PDA_COR = {E:'#c2569b',S:'#5c5a94',P:'#2fa383',C:'#9b9b8f',A:'#d98a5f'};
-const PDA_EMO = {E:'⚡',S:'💬',P:'🌿',C:'📐',A:'🎯'};
+const PDA_COR = {E:'#e67e22',S:'#8e44ad',P:'#7d5a3c',C:'#e91e8c',A:'#00bcd4'};
+const PDA_EMO = {E:'🟠',S:'🟣',P:'🟤',C:null,A:null};
+function pdaEmoji(eixo){
+  if(PDA_EMO[eixo]) return PDA_EMO[eixo];
+  const cor = PDA_COR[eixo]||'#888';
+  return '<span style="display:inline-block;width:1em;height:1em;border-radius:50%;background:'+cor+';vertical-align:-0.15em;"></span>';
+}
 // Clareia a cor do eixo PDA (mistura com branco) — mantém as 5 cores por eixo reconhecíveis,
 // mas com contraste mais claro/pastel pra diferenciar visualmente do tom sólido usado no DISC.
 function pdaTom(hex){
@@ -1927,6 +1932,15 @@ function estimarFitDisc(h){
   return score;
 }
 // ═══ SISTEMA DE PESOS — Supabase + localStorage cache ═══
+// Estima o "pilar teste comportamental" pra quem só fez PDA (sem % de DISC pra calcular de verdade).
+// Usa média fixa de 50% — neutra, não favorece nem prejudica quem fez PDA em vez de DISC — só troca o rótulo.
+function estimarFitTeste(h){
+  const discVal = estimarFitDisc(h);
+  if(discVal!=null) return { valor: discVal, label: 'DISC' };
+  const pdaReg = encontrarPDA(h);
+  if(pdaReg) return { valor: 50, label: 'PDA' };
+  return null;
+}
 let _pesosCache = {}; // { vagaKey: { disc, fit, recrutador, entrevista, livre, configurado:true } }
 let _pesosCarregados = false;
 
@@ -2263,7 +2277,7 @@ function candCardInbox(h){
   const _pdaRegInbox = encontrarPDA(h);
   const temPdaReal = !temDiscReal && !!_pdaRegInbox;
   const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegInbox.eixo_natural]||'#888') : cor);
-  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegInbox.eixo_natural]||'🧭') : emoji);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (pdaEmoji(_pdaRegInbox.eixo_natural)||'🧭') : emoji);
   // Mesma estrutura do candCard principal — herda tudo
   const aderencia = calcularAderencia(h);
   const aderStr = aderencia ? `<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.3);color:#a78bfa;">Ader. ${aderencia.valor}%</span>` : '';
@@ -2766,7 +2780,7 @@ function candCardEntrevistado(h){
   const _pdaRegEnt = encontrarPDA(h);
   const temPdaReal = !temDiscReal && !!_pdaRegEnt;
   const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegEnt.eixo_natural]||'#888') : cor);
-  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegEnt.eixo_natural]||'🧭') : emoji);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (pdaEmoji(_pdaRegEnt.eixo_natural)||'🧭') : emoji);
   return `<div class="cand-card" style="border-color:rgba(245,158,11,0.25);opacity:0.85;">
     <div class="cand-card-inner">
       <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
@@ -2798,7 +2812,7 @@ function candCardPendencia(h){
   const _pdaRegPend   = encontrarPDA(h);
   const temPdaReal    = !temDiscReal && !!_pdaRegPend;
   const corAv    = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegPend.eixo_natural]||'#888') : cor);
-  const emojiAv  = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegPend.eixo_natural]||'🧭') : emoji);
+  const emojiAv  = temDiscReal ? emoji : (temPdaReal ? (pdaEmoji(_pdaRegPend.eixo_natural)||'🧭') : emoji);
   const temEntrevista = !!(h.entrevista_json||h.resumo_ia||h.url_resultado_fit||h.fit_score||h.fit_manual);
   const temCurriculo  = !!(h.curriculo_url||h.curriculo_nome);
   const temParecer    = !!(h.parecer_url||h.parecer_emitido);
@@ -2930,7 +2944,7 @@ function candCard(h){
   const _temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
   const _temPdaReal  = !_temDiscReal && !!_pdaReg;
   const cor   = _temDiscReal ? (COR[h.dom]||'#888') : (_temPdaReal ? (PDA_COR[_pdaReg.eixo_natural]||'#888') : '#888');
-  const emoji = _temDiscReal ? (EMO[h.dom]||'⬜') : (_temPdaReal ? (PDA_EMO[_pdaReg.eixo_natural]||'🧭') : '⬜');
+  const emoji = _temDiscReal ? (EMO[h.dom]||'⬜') : (_temPdaReal ? (pdaEmoji(_pdaReg.eixo_natural)||'🧭') : '⬜');
   const combo = h.combo_nome||(COMBOS[(h.dom||'')+(h.sec||'')])||`${h.dom||'?'}+${h.sec||'?'}`;
   const _fitRaw = parseInt(h.fit_score); const _fitOk = h.fit_score != null && !isNaN(_fitRaw);
   const _manRaw = parseInt(h.fit_manual); const _manOk = h.fit_manual != null && !isNaN(_manRaw);
@@ -2943,8 +2957,9 @@ function candCard(h){
   const isAderManual = h.aderencia_manual != null;
 
   let bars = '';
-  const fitEst = estimarFitDisc(h);
-  if(fitEst!=null){ const c=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🧠 DISC</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fitEst}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fitEst}%</span><span class="fit-bar-src">est.</span></div>`; }
+  const _fitEstTeste = estimarFitTeste(h);
+  const fitEst = _fitEstTeste ? _fitEstTeste.valor : null;
+  if(fitEst!=null){ const c=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🧠 ${_fitEstTeste.label}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fitEst}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fitEst}%</span><span class="fit-bar-src">est.</span></div>`; }
   if(_fitOk){ const fs=_fitRaw,c=fs>=80?'#2ecc71':fs>=65?'#3b82f6':fs>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🤖 Fit</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fs}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fs}%</span><span class="fit-bar-src">real</span></div>`; }
   if(_manOk){ const fm=_manRaw,c='#3498db'; bars+=`<div class="fit-bar-row" title="Fit manual — sobrescreve o automático"><span class="fit-bar-lbl" style="color:${c};">✏️ Man.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fm}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fm}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.score_curriculo!=null){ const sc=parseInt(h.score_curriculo),cc=sc>=65?'#3b82f6':sc>=40?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row" title="Score do Currículo — Experiência / Formação / Técnico"><span class="fit-bar-lbl" style="color:${cc};">📄 Curric.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sc}%;background:${cc};"></div></div><span class="fit-bar-pct" style="color:${cc};">${sc}%</span><span class="fit-bar-src">curr.</span></div>`; }
@@ -3098,7 +3113,7 @@ footBtns += h.recomendacao_doc_url
   else chips += `<span class="chip" style="background:rgba(167,139,250,0.04);border-color:rgba(167,139,250,0.12);color:#666;cursor:pointer;" onclick="abrirPerfil('${esc(h.id)}')">📊 Aderência</span>`;
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; chips += `<span class="chip" style="background:${sc}15;border-color:${sc}33;color:${sc};" title="Score do recrutador">🧑‍💼 ${sr}%</span>`; }
   if(h.score_curriculo!=null){ const sc2=parseInt(h.score_curriculo),cc2=sc2>=65?'#3b82f6':sc2>=40?'#f39c12':'#e74c3c'; chips += `<span class="chip" style="background:${cc2}15;border-color:${cc2}33;color:${cc2};" title="Score do Currículo (${h.nivel_curriculo||'?'})">📄 CV ${sc2}%</span>`; }
-  if(fitEst!=null){ const cfe=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; chips += `<span class="chip" style="background:${cfe}15;border-color:${cfe}33;color:${cfe};" title="DISC estimado pelo perfil comportamental">🧠 DISC ${fitEst}%</span>`; }
+  if(fitEst!=null){ const cfe=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; chips += `<span class="chip" style="background:${cfe}15;border-color:${cfe}33;color:${cfe};" title="${_fitEstTeste.label} estimado pelo perfil comportamental">🧠 ${_fitEstTeste.label} ${fitEst}%</span>`; }
   if(h.doc_completa) chips += `<span class="chip chip-docs" title="Documentação completa">📁 Docs OK</span>`;
   // ── Flag de revisão IA ──
   if(h.revisao_ia_flag){
@@ -3227,7 +3242,7 @@ function abrirPerfil(id){
   const _pdaRegModal  = encontrarPDA(h);
   const _mTemPdaReal  = !_mTemDiscReal && !!_pdaRegModal;
   const cor   = _mTemDiscReal ? (COR[h.dom]||'#888') : (_mTemPdaReal ? (PDA_COR[_pdaRegModal.eixo_natural]||'#888') : (COR[h.dom]||'#888'));
-  const emoji = _mTemDiscReal ? (EMO[h.dom]||'⬜') : (_mTemPdaReal ? (PDA_EMO[_pdaRegModal.eixo_natural]||'🧭') : (EMO[h.dom]||'⬜'));
+  const emoji = _mTemDiscReal ? (EMO[h.dom]||'⬜') : (_mTemPdaReal ? (pdaEmoji(_pdaRegModal.eixo_natural)||'🧭') : (EMO[h.dom]||'⬜'));
   const combo = h.combo_nome||(COMBOS[(h.dom||'')+(h.sec||'')])||`${h.dom||'?'}+${h.sec||'?'}`;
   document.getElementById('pAvatar').textContent = emoji;
   document.getElementById('pAvatar').style.borderColor = cor;
@@ -3273,12 +3288,13 @@ function abrirPerfil(id){
 
   const fitScore  = h.fit_score  ? parseInt(h.fit_score)  : null;
   const fitManual = h.fit_manual ? parseInt(h.fit_manual) : null;
-  const fitEst    = estimarFitDisc(h);
+  const _fitEstTesteModal = estimarFitTeste(h);
+  const fitEst    = _fitEstTesteModal ? _fitEstTesteModal.valor : null;
   const aderCalc2 = calcularAderencia(h);
   const ader      = aderCalc2 ? aderCalc2.valor : null;
   const aderFonte = aderCalc2 ? aderCalc2.fonte : null;
   let scoresHtml = '';
-  [[fitEst,'🧠 DISC (estimado)','est.'],[fitScore,'<img src="imagens/fitcultural2.png" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;" alt=""> Fit Cultural','real'],[fitManual,'✏️ Manual','rec.']]
+  [[fitEst,`🧠 ${_fitEstTesteModal?_fitEstTesteModal.label:'DISC'} (estimado)`,'est.'],[fitScore,'<img src="imagens/fitcultural2.png" style="width:14px;height:14px;object-fit:contain;vertical-align:middle;mix-blend-mode:screen;" alt=""> Fit Cultural','real'],[fitManual,'✏️ Manual','rec.']]
     .forEach(([v,label,src])=>{
       if(v==null) return;
       const c=v>=80?'#2ecc71':v>=65?'#3b82f6':v>=45?'#f39c12':'#e74c3c';
@@ -5115,7 +5131,7 @@ function candCardArea(h){
   const _pdaRegArea = encontrarPDA(h);
   const temPdaReal = !temDiscReal && !!_pdaRegArea;
   const corAv   = temDiscReal ? cor   : (temPdaReal ? (PDA_COR[_pdaRegArea.eixo_natural]||'#888') : cor);
-  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (PDA_EMO[_pdaRegArea.eixo_natural]||'🧭') : emoji);
+  const emojiAv = temDiscReal ? emoji : (temPdaReal ? (pdaEmoji(_pdaRegArea.eixo_natural)||'🧭') : emoji);
   return `<div class="cand-card" style="border-color:rgba(46,204,113,0.25);opacity:0.85;">
     <div class="cand-card-inner">
       <div class="cand-avatar" style="background:${(temDiscReal||temPdaReal)?corAv+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||temPdaReal)?corAv+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||temPdaReal)?corAv:'#555'};">${(temDiscReal||temPdaReal)?emojiAv:'?'}</div>
