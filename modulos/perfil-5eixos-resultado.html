@@ -262,6 +262,15 @@ async function carregar(){
     renderResultado(ultimoResultado);
   }catch(e){
     console.warn('Erro ao carregar resultado PDA:', e);
+    // Garante que um sucesso anterior (ou parcial) não fique "colado" na tela
+    // junto com o estado de erro — os dois nunca podem aparecer juntos.
+    ultimoResultado = null;
+    document.getElementById('resultWrap').style.display='none';
+    document.getElementById('cNome').textContent = nomeParam || '—';
+    document.getElementById('cVaga').textContent = vagaParam || '—';
+    document.getElementById('cPerfil').textContent = '—';
+    document.getElementById('cEmail').textContent = emailParam || '—';
+    document.getElementById('cData').textContent = '—';
     document.getElementById('loadingBox').style.display='none';
     document.getElementById('errorBox').style.display='block';
   }
@@ -269,6 +278,7 @@ async function carregar(){
 
 function renderResultado(r){
   document.getElementById('loadingBox').style.display='none';
+  document.getElementById('errorBox').style.display='none';
   document.getElementById('resultWrap').style.display='block';
 
   const pct1 = {E:r.pct_natural_e||0,S:r.pct_natural_s||0,P:r.pct_natural_p||0,C:r.pct_natural_c||0,A:r.pct_natural_a||0};
