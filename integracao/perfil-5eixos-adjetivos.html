@@ -18,7 +18,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);}
 body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.5;pointer-events:none;}
-.wrapper{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
+.wrapper{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
 .header{text-align:center;margin-bottom:2rem;}
 .header .eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:.85;margin-bottom:.5rem;}
 .header h1{font-size:1.7rem;font-weight:700;}
@@ -37,18 +37,25 @@ input:focus{border-color:var(--cyan);}
 .btn:hover{opacity:.88;transform:translateY(-2px);}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:.7rem 1.4rem;font-family:inherit;font-size:.82rem;font-weight:600;cursor:pointer;}
-.col-headers{display:grid;grid-template-columns:1fr 90px 90px;gap:.6rem;padding:0 .2rem .6rem;position:sticky;top:0;background:var(--bg);z-index:5;}
-.col-headers div{font-size:.7rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:center;}
-.col-headers div:first-child{text-align:left;}
-.word-row{display:grid;grid-template-columns:1fr 90px 90px;gap:.6rem;align-items:center;padding:.55rem .2rem;border-bottom:1px solid rgba(255,255,255,.05);font-size:.87rem;}
-.chk-cell{display:flex;justify-content:center;align-items:center;min-height:44px;}
-@media(max-width:600px){.word-row{grid-template-columns:1fr 60px 60px;gap:.3rem;}}
-input.chk{appearance:none;-webkit-appearance:none;width:32px;height:32px;border-radius:8px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.03);cursor:pointer;transition:.15s;margin:0;position:relative;flex-shrink:0;}
+.legend-bar{display:flex;align-items:center;justify-content:center;gap:1.6rem;padding:.7rem 1rem;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;position:sticky;top:.6rem;z-index:5;backdrop-filter:blur(10px);flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--text2);font-weight:600;}
+.legend-dot{width:14px;height:14px;border-radius:5px;flex-shrink:0;}
+.legend-dot.eu{background:rgba(0,229,255,.18);border:2px solid var(--cyan);}
+.legend-dot.out{background:rgba(124,77,255,.18);border:2px solid var(--purple);}
+.word-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem .9rem;}
+@media(max-width:820px){.word-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:520px){.word-grid{grid-template-columns:1fr;}}
+.word-card{background:rgba(255,255,255,.028);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:.6rem .55rem .6rem .9rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;transition:border-color .15s,background .15s;}
+.word-card:has(.chk:checked){background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);}
+.word-card .word-text{font-size:.85rem;font-weight:600;flex:1;min-width:0;overflow-wrap:break-word;}
+.word-toggles{display:flex;gap:.4rem;flex-shrink:0;}
+.chk-cell{display:flex;justify-content:center;align-items:center;}
+input.chk{appearance:none;-webkit-appearance:none;width:28px;height:28px;border-radius:7px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.03);cursor:pointer;transition:.15s;margin:0;position:relative;flex-shrink:0;}
 input.chk:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
 input.chk.c1:checked{background:rgba(0,229,255,.18);border-color:var(--cyan);}
-input.chk.c1:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:.9rem;font-weight:700;}
+input.chk.c1:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:.8rem;font-weight:700;}
 input.chk.c2:checked{background:rgba(124,77,255,.18);border-color:var(--purple);}
-input.chk.c2:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:.9rem;font-weight:700;}
+input.chk.c2:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:.8rem;font-weight:700;}
 .hp{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;pointer-events:none;}
 .field-error{font-size:.75rem;color:var(--red);margin:-.7rem 0 .8rem;display:none;}
 .field-error.show{display:block;}
@@ -87,11 +94,74 @@ input.invalid{border-color:var(--red)!important;}
 .stat-box .lbl{font-size:.75rem;color:var(--text2);margin-top:.2rem;}
 .word-tag{display:inline-block;font-size:.76rem;padding:.28rem .7rem;border-radius:99px;margin:0 .3rem .3rem 0;}
 .fit-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem 1rem;border-radius:99px;font-size:.78rem;font-weight:700;margin-top:.6rem;}
+
+/* ── Como funciona: passos + exemplo ── */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin-bottom:1.2rem;}
+@media(max-width:760px){.steps{grid-template-columns:1fr;}}
+.step{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;font-size:.78rem;font-weight:800;font-family:var(--mono);margin-bottom:.5rem;}
+.step h3{font-size:.85rem;margin-bottom:.35rem;}
+.step p{font-size:.78rem;color:var(--text2);line-height:1.55;margin:0;}
+.example-box{background:rgba(255,255,255,.02);border:1px dashed var(--border);border-radius:var(--radius);padding:.9rem 1.1rem;margin-bottom:1.2rem;}
+.example-box .ex-label{font-size:.68rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.6rem;}
+.example-word{display:flex;align-items:center;justify-content:space-between;gap:.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.55rem .6rem .55rem .85rem;max-width:320px;}
+.example-word .word-text{font-size:.85rem;font-weight:600;}
+.example-word .word-toggles{display:flex;gap:.4rem;}
+.ex-chk{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;}
+.ex-chk.eu{background:rgba(0,229,255,.18);border:2px solid var(--cyan);color:var(--cyan);}
+.ex-chk.out{background:rgba(255,255,255,.03);border:2px solid rgba(255,255,255,.16);color:transparent;}
+.example-box .ex-note{font-size:.76rem;color:var(--text2);margin-top:.7rem;line-height:1.55;}
+.help-toggle-row{display:flex;justify-content:flex-end;margin-bottom:.6rem;}
+.help-panel{display:none;margin-bottom:1.2rem;}
+.help-panel.open{display:block;}
+
+/* ── Forced-choice: blocos MAIS/MENOS ── */
+.fase-badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.72rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--cyan);background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);padding:.4rem 1rem;border-radius:99px;margin-bottom:1rem;}
+.fc-instructions{font-size:.82rem;color:var(--text2);line-height:1.6;margin-bottom:1.2rem;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:var(--radius);padding:.8rem 1rem;}
+.fc-list{display:flex;flex-direction:column;gap:.9rem;}
+.fc-block{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;transition:border-color .15s;}
+.fc-block.done{border-color:rgba(0,230,118,.35);}
+.fc-block-head{display:flex;justify-content:space-between;align-items:center;font-size:.72rem;font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:.7rem;}
+.fc-check{color:var(--green);}
+.fc-row{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.4rem 0;border-top:1px solid rgba(255,255,255,.05);}
+.fc-row:first-of-type{border-top:none;}
+.fc-word{font-size:.86rem;font-weight:600;flex:1;min-width:0;}
+.fc-opts{display:flex;gap:.5rem;flex-shrink:0;}
+.fc-opt{position:relative;display:flex;align-items:center;gap:.3rem;font-size:.72rem;font-weight:700;padding:.4rem .7rem;border-radius:99px;border:1px solid rgba(255,255,255,.14);color:var(--text2);cursor:pointer;transition:.15s;user-select:none;}
+.fc-opt input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
+.fc-opt.mais.active{background:rgba(0,229,255,.16);border-color:var(--cyan);color:var(--cyan);}
+.fc-opt.menos.active{background:rgba(124,77,255,.16);border-color:var(--purple);color:var(--purple);}
 @media print{
   .header,.card:not(#printArea),body::before{display:none!important;}
   #resultSection{display:block!important;}
   .no-print{display:none!important;}
   body{background:#fff;color:#000;}
+}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  .wrapper{padding:1.4rem .9rem 4rem;}
+  .header h1{font-size:1.35rem;}
+  .header p{font-size:.78rem;}
+  .card{padding:1.2rem 1rem;border-radius:var(--radius);}
+  .btn{width:100%;padding:.9rem 1.2rem;font-size:.88rem;}
+  .btn-ghost{width:100%;margin-left:0!important;margin-top:.6rem;padding:.8rem 1.2rem;}
+  .nav-row{flex-direction:column-reverse;gap:.6rem;}
+  .nav-row .btn,.nav-row .btn-ghost{width:100%;}
+  .counters{gap:.6rem;}
+  .counter-box{font-size:.72rem;padding:.35rem .8rem;}
+  .legend-bar{gap:1rem;padding:.6rem .8rem;font-size:.72rem;}
+  .word-card{padding:.55rem .5rem .55rem .75rem;}
+  .word-card .word-text{font-size:.82rem;}
+  input.chk{width:32px;height:32px;}
+  .dim-label{width:110px;font-size:.72rem;}
+  .steps{gap:.7rem;}
+  .step{padding:.85rem .9rem;}
+  .help-toggle-row{justify-content:center;}
+  .fc-row{flex-direction:column;align-items:flex-start;gap:.5rem;}
+  .fc-opts{width:100%;}
+  .fc-opt{flex:1;justify-content:center;padding:.55rem .5rem;}
+  .fc-block{padding:.9rem .9rem;}
 }
 </style>
 </head>
@@ -107,7 +177,48 @@ input.invalid{border-color:var(--red)!important;}
   <!-- INTRO -->
   <div class="card" id="introSection">
     <h2>Como funciona</h2>
-    <p>Você vai ver uma lista de 90 palavras em duas colunas. Marque, em cada palavra, se ela representa <strong style="color:var(--text)">como você se vê</strong> e/ou <strong style="color:var(--text)">como acha que os outros te veem</strong> — pode marcar uma coluna, a outra, as duas, ou nenhuma. Sem limite de quantidade.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Veja blocos de 5 palavras</h3>
+        <p>As 90 palavras são organizadas em 18 blocos de 5, cada bloco com uma palavra de cada eixo de comportamento.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Escolha Mais e Menos</h3>
+        <p>Em cada bloco, marque qual palavra <strong style="color:var(--cyan)">MAIS</strong> combina com você e qual <strong style="color:var(--purple)">MENOS</strong> combina. Só uma de cada por bloco — é assim que o teste evita respostas "morna", sem discriminação.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Duas rodadas, depois o resultado</h3>
+        <p>Você faz os 18 blocos pensando em <strong style="color:var(--text)">como você se vê</strong>, depois repete pensando em <strong style="color:var(--text)">como acha que os outros te veem</strong>. No final, recebe seu perfil nos 5 eixos com gráfico e parecer por IA.</p>
+      </div>
+    </div>
+    <div class="example-box">
+      <div class="ex-label">Exemplo de um bloco</div>
+      <div class="fc-row" style="border-top:none;">
+        <div class="fc-word">Comunicativo</div>
+        <div class="fc-opts">
+          <div class="fc-opt mais active">+ Mais</div>
+          <div class="fc-opt menos">– Menos</div>
+        </div>
+      </div>
+      <div class="fc-row">
+        <div class="fc-word">Detalhista</div>
+        <div class="fc-opts">
+          <div class="fc-opt mais">+ Mais</div>
+          <div class="fc-opt menos active">– Menos</div>
+        </div>
+      </div>
+      <div class="fc-row">
+        <div class="fc-word">Paciente</div>
+        <div class="fc-opts">
+          <div class="fc-opt mais">+ Mais</div>
+          <div class="fc-opt menos">– Menos</div>
+        </div>
+      </div>
+      <p class="ex-note">Nesse bloco de exemplo (mostrando só 3 das 5 palavras), a pessoa escolheu "Comunicativo" como a que <strong style="color:var(--cyan)">mais</strong> combina com ela e "Detalhista" como a que <strong style="color:var(--purple)">menos</strong> combina. As demais ficam neutras. Isso se repete nos 18 blocos.</p>
+    </div>
     <div class="grid2">
       <div><label>Nome completo</label><input type="text" id="inpNome" placeholder="Seu nome" required/></div>
       <div><label>E-mail</label><input type="email" id="inpEmail" placeholder="seu@email.com" required/></div>
@@ -135,22 +246,37 @@ input.invalid{border-color:var(--red)!important;}
 
   <!-- TESTE -->
   <div class="card" id="testSection" style="display:none">
-    <h2 style="margin-bottom:.3rem">Marque as palavras que combinam com você</h2>
-    <p style="margin-bottom:1rem">Coluna <strong style="color:var(--cyan)">EU</strong> = como você se vê. Coluna <strong style="color:var(--purple)">OUTROS</strong> = como acha que é percebido.</p>
+    <h2 style="margin-bottom:.3rem">Escolha o que mais e o que menos combina com você</h2>
+    <div class="fase-badge" id="faseLabel">Rodada 1 de 2 — Como você se vê</div>
+    <div class="help-toggle-row no-print">
+      <button type="button" class="btn-ghost" onclick="toggleComoFunciona()" id="btnAjuda">❔ Como funciona</button>
+    </div>
+    <div class="help-panel" id="painelAjuda">
+      <div class="example-box">
+        <div class="ex-label">Exemplo de um bloco</div>
+        <div class="fc-row" style="border-top:none;">
+          <div class="fc-word">Comunicativo</div>
+          <div class="fc-opts"><div class="fc-opt mais active">+ Mais</div><div class="fc-opt menos">– Menos</div></div>
+        </div>
+        <div class="fc-row">
+          <div class="fc-word">Detalhista</div>
+          <div class="fc-opts"><div class="fc-opt mais">+ Mais</div><div class="fc-opt menos active">– Menos</div></div>
+        </div>
+        <p class="ex-note">Em cada bloco de 5 palavras, escolha 1 que <strong style="color:var(--cyan)">mais</strong> combina com você e 1 que <strong style="color:var(--purple)">menos</strong> combina. As outras 3 ficam neutras. Não dá pra escolher a mesma palavra pras duas coisas.</p>
+      </div>
+    </div>
     <div class="counters">
-      <div class="counter-box" id="cnt1">EU: 0 marcadas</div>
-      <div class="counter-box" id="cnt2">OUTROS: 0 marcadas</div>
+      <div class="counter-box" id="cnt1">Blocos completos: 0/18</div>
     </div>
     <div class="progress-wrap">
-      <div class="progress-label"><span>Progresso</span><span id="progressText">0 / 90 palavras avaliadas</span></div>
+      <div class="progress-label"><span>Progresso</span><span id="progressText">0 / 18 blocos completos</span></div>
       <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     </div>
-    <div class="warn-banner" id="warnBanner">⚠️ Recomendamos marcar pelo menos 15 palavras em cada coluna pra um resultado mais confiável.</div>
-    <div class="col-headers"><div>Palavra</div><div>EU</div><div>OUTROS</div></div>
-    <div id="wordList"></div>
+    <div class="fc-instructions">Em cada bloco abaixo, marque qual palavra <strong style="color:var(--cyan)">MAIS</strong> combina com você e qual <strong style="color:var(--purple)">MENOS</strong> combina — só uma de cada por bloco.</div>
+    <div id="wordList" class="fc-list"></div>
     <div class="nav-row">
       <button class="btn-ghost" onclick="voltarIntro()">← Voltar</button>
-      <button class="btn" id="btnNext" onclick="mostrarResultado()">Ver resultado →</button>
+      <button class="btn" id="btnNext" disabled>Ver resultado →</button>
     </div>
   </div>
 
@@ -323,10 +449,22 @@ function embaralhar(arr){
   return a;
 }
 
-const PROG_KEY = 'perfil5eixos_prog';
-let ordemLista = embaralhar(ADJETIVOS);
-let marcadosR1 = new Set(); // EU
-let marcadosR2 = new Set(); // OUTROS
+const PROG_KEY = 'perfil5eixos_prog_fc';
+
+function gerarBlocos(){
+  const EIXO_ORDER=['E','S','P','C','A'];
+  const porEixo={}; EIXO_ORDER.forEach(k=> porEixo[k]=embaralhar(ADJETIVOS.filter(a=>a.f===k)));
+  const blocos=[];
+  for(let i=0;i<18;i++){ blocos.push(embaralhar(EIXO_ORDER.map(k=>porEixo[k][i]))); }
+  return embaralhar(blocos);
+}
+function selecoesVazias(){
+  return { EU:Array.from({length:18},()=>({mais:null,menos:null})), OUTROS:Array.from({length:18},()=>({mais:null,menos:null})) };
+}
+
+let blocosFC = gerarBlocos();
+let selecoesFC = selecoesVazias();
+let faseAtual = 'EU';
 
 function salvarProgresso(){
   try{
@@ -335,8 +473,9 @@ function salvarProgresso(){
       email:document.getElementById('inpEmail').value,
       tel:document.getElementById('inpTel').value,
       nascimento:document.getElementById('inpNascimento').value,
-      ordem:ordemLista.map(a=>a.t),
-      r1:[...marcadosR1], r2:[...marcadosR2],
+      blocos:blocosFC.map(b=>b.map(w=>w.t)),
+      sel:selecoesFC,
+      fase:faseAtual,
     }));
   }catch(e){}
 }
@@ -349,18 +488,20 @@ function carregarProgresso(){
     document.getElementById('inpEmail').value = p.email||'';
     document.getElementById('inpTel').value = p.tel||'';
     document.getElementById('inpNascimento').value = p.nascimento||'';
-    if(p.ordem && p.ordem.length===ADJETIVOS.length){
-      ordemLista = p.ordem.map(t=>ADJETIVOS.find(a=>a.t===t)).filter(Boolean);
+    if(p.blocos && p.blocos.length===18 && p.blocos.every(b=>b.length===5)){
+      blocosFC = p.blocos.map(b=>b.map(t=>ADJETIVOS.find(a=>a.t===t)).filter(Boolean));
+      if(blocosFC.some(b=>b.length!==5)) blocosFC = gerarBlocos();
     }
-    marcadosR1 = new Set(p.r1||[]);
-    marcadosR2 = new Set(p.r2||[]);
+    if(p.sel) selecoesFC = p.sel;
+    if(p.fase) faseAtual = p.fase;
     return true;
   }catch(e){ return false; }
 }
 function limparProgresso(){
   localStorage.removeItem(PROG_KEY);
-  marcadosR1=new Set(); marcadosR2=new Set();
-  ordemLista=embaralhar(ADJETIVOS);
+  blocosFC = gerarBlocos();
+  selecoesFC = selecoesVazias();
+  faseAtual = 'EU';
   ['inpNome','inpEmail','inpTel','inpNascimento'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('lgpd').checked=false;
   document.getElementById('errTel').classList.remove('show');
@@ -386,12 +527,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
 function iniciarTeste(){
   document.getElementById('introSection').style.display='none';
   document.getElementById('testSection').style.display='block';
-  renderLista();
+  renderFC();
 }
 function voltarIntro(){
   salvarProgresso();
   document.getElementById('testSection').style.display='none';
   document.getElementById('introSection').style.display='block';
+}
+function toggleComoFunciona(){
+  const painel = document.getElementById('painelAjuda');
+  const btn = document.getElementById('btnAjuda');
+  const aberto = painel.classList.toggle('open');
+  btn.textContent = aberto ? '✕ Fechar ajuda' : '❔ Como funciona';
 }
 ['inpNome','inpEmail','inpTel','inpNascimento','lgpd'].forEach(id=>{
   document.getElementById(id).addEventListener('input', ()=>{validarIntro();salvarProgresso();});
@@ -421,35 +568,64 @@ function validarIntro(){
   document.getElementById('btnIniciar').disabled = !(lgpd && nome && email && telOk && anoOk);
 }
 
-function renderLista(){
-  document.getElementById('wordList').innerHTML = ordemLista.map((adj,i)=>`
-    <div class="word-row">
-      <div>${adj.t}</div>
-      <div class="chk-cell"><input type="checkbox" class="chk c1" id="chk1_${i}" aria-label="${adj.t} — como você se vê" ${marcadosR1.has(adj.t)?'checked':''} onchange="toggle(1,${i})"/></div>
-      <div class="chk-cell"><input type="checkbox" class="chk c2" id="chk2_${i}" aria-label="${adj.t} — como acha que te veem" ${marcadosR2.has(adj.t)?'checked':''} onchange="toggle(2,${i})"/></div>
-    </div>`).join('');
-  atualizarContadores();
+function contarCompletosFase(fase){
+  return selecoesFC[fase].filter(s=>s.mais!=null && s.menos!=null).length;
 }
-function toggle(coluna,i){
-  const palavra = ordemLista[i].t;
-  const set = coluna===1?marcadosR1:marcadosR2;
-  if(set.has(palavra)) set.delete(palavra); else set.add(palavra);
-  atualizarContadores();
+function blocoHtml(bloco,bIdx){
+  const sel = selecoesFC[faseAtual][bIdx];
+  const completo = sel.mais!=null && sel.menos!=null;
+  return `<div class="fc-block ${completo?'done':''}">
+    <div class="fc-block-head"><span>Bloco ${bIdx+1}/18</span>${completo?'<span class="fc-check">✓ completo</span>':''}</div>
+    ${bloco.map((w,wIdx)=>`
+      <div class="fc-row">
+        <div class="fc-word">${w.t}</div>
+        <div class="fc-opts">
+          <label class="fc-opt mais ${sel.mais===wIdx?'active':''}">
+            <input type="radio" name="mais_${bIdx}" ${sel.mais===wIdx?'checked':''} onchange="selecionarFC(${bIdx},'mais',${wIdx})"/>+ Mais
+          </label>
+          <label class="fc-opt menos ${sel.menos===wIdx?'active':''}">
+            <input type="radio" name="menos_${bIdx}" ${sel.menos===wIdx?'checked':''} onchange="selecionarFC(${bIdx},'menos',${wIdx})"/>– Menos
+          </label>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+function renderFC(){
+  document.getElementById('faseLabel').textContent = faseAtual==='EU'
+    ? 'Rodada 1 de 2 — Como você se vê'
+    : 'Rodada 2 de 2 — Como acha que os outros te veem';
+  document.getElementById('wordList').innerHTML = blocosFC.map((b,i)=>blocoHtml(b,i)).join('');
+  atualizarContadoresFC();
+}
+function selecionarFC(bIdx,tipo,wIdx){
+  const sel = selecoesFC[faseAtual][bIdx];
+  if(tipo==='mais'){ sel.mais=wIdx; if(sel.menos===wIdx) sel.menos=null; }
+  else { sel.menos=wIdx; if(sel.mais===wIdx) sel.mais=null; }
+  const scrollY=window.scrollY;
+  renderFC();
+  window.scrollTo(0,scrollY);
   salvarProgresso();
 }
-function atualizarContadores(){
-  const c1=document.getElementById('cnt1'), c2=document.getElementById('cnt2');
-  c1.textContent = `EU: ${marcadosR1.size} marcadas`;
-  c2.textContent = `OUTROS: ${marcadosR2.size} marcadas`;
-  c1.className = 'counter-box '+(marcadosR1.size>=15?'ok':'low');
-  c2.className = 'counter-box '+(marcadosR2.size>=15?'ok':'low');
-  document.getElementById('warnBanner').style.display = (marcadosR1.size<15||marcadosR2.size<15)?'block':'none';
-  document.getElementById('btnNext').disabled = !(marcadosR1.size>=8 && marcadosR2.size>=8);
-
-  const tocadas = new Set([...marcadosR1,...marcadosR2]).size;
-  const pct = Math.round((tocadas/ADJETIVOS.length)*100);
-  document.getElementById('progressFill').style.width = pct+'%';
-  document.getElementById('progressText').textContent = `${tocadas} / ${ADJETIVOS.length} palavras avaliadas`;
+function atualizarContadoresFC(){
+  const completos = contarCompletosFase(faseAtual);
+  document.getElementById('cnt1').textContent = `Blocos completos: ${completos}/18`;
+  document.getElementById('progressFill').style.width = Math.round((completos/18)*100)+'%';
+  document.getElementById('progressText').textContent = `${completos} / 18 blocos completos`;
+  const btn = document.getElementById('btnNext');
+  btn.disabled = completos<18;
+  if(faseAtual==='EU'){
+    btn.textContent = 'Ir para rodada 2 →';
+    btn.onclick = avancarFaseFC;
+  } else {
+    btn.textContent = 'Ver resultado →';
+    btn.onclick = mostrarResultado;
+  }
+}
+function avancarFaseFC(){
+  faseAtual='OUTROS';
+  window.scrollTo(0,0);
+  renderFC();
+  salvarProgresso();
 }
 
 let ultimoPayloadResultado = null;
@@ -501,18 +677,28 @@ function renderParecerIA(p){
     <p style="font-size:.68rem;color:var(--muted);margin-top:1.2rem;text-align:left;">Gerado automaticamente por IA — use como apoio à decisão, não como critério único.</p>`;
 }
 
-function contarPorEixo(marcados){
-  const c={E:0,S:0,P:0,C:0,A:0};
-  ADJETIVOS.forEach(a=>{ if(marcados.has(a.t)) c[a.f]++; });
-  return c;
+function pontuarFase(fase){
+  const score={E:0,S:0,P:0,C:0,A:0};
+  blocosFC.forEach((bloco,bIdx)=>{
+    const sel=selecoesFC[fase][bIdx];
+    if(sel.mais!=null) score[bloco[sel.mais].f]++;
+    if(sel.menos!=null) score[bloco[sel.menos].f]--;
+  });
+  return score;
 }
-function normalizar(c){
-  const total=Object.values(c).reduce((a,b)=>a+b,0);
+function normalizarScore(score){
+  const shifted={}; Object.keys(score).forEach(f=> shifted[f]=score[f]+18); // range 0..36
+  const total=Object.values(shifted).reduce((a,b)=>a+b,0);
   const pct={};
-  Object.keys(c).forEach(f=> pct[f]= total>0?Math.round((c[f]/total)*100):0);
+  Object.keys(shifted).forEach(f=> pct[f]= total>0?Math.round((shifted[f]/total)*100):20);
   const soma=Object.values(pct).reduce((a,b)=>a+b,0);
-  if(total>0 && soma!==100){ const maior=Object.entries(pct).sort((a,b)=>b[1]-a[1])[0][0]; pct[maior]+=100-soma; }
+  if(soma!==100){ const maior=Object.entries(pct).sort((a,b)=>b[1]-a[1])[0][0]; pct[maior]+=100-soma; }
   return pct;
+}
+function palavrasMais(fase){
+  const set=new Set();
+  blocosFC.forEach((bloco,bIdx)=>{ const s=selecoesFC[fase][bIdx]; if(s.mais!=null) set.add(bloco[s.mais].t); });
+  return set;
 }
 
 function mostrarStatusSalvo(saveStatusEl){
@@ -560,18 +746,27 @@ function mostrarResultado(){
   const hp = document.getElementById('hpWebsite');
   if(hp && hp.value.trim()){ return; }
 
-  const c1=contarPorEixo(marcadosR1), c2=contarPorEixo(marcadosR2);
-  const pct1=normalizar(c1), pct2=normalizar(c2);
+  const scoreEU=pontuarFase('EU'), scoreOUT=pontuarFase('OUTROS');
+  const pct1=normalizarScore(scoreEU), pct2=normalizarScore(scoreOUT);
   const ord1=Object.entries(pct1).sort((a,b)=>b[1]-a[1]);
   const dom1=ord1[0][0], sec1=ord1[1][0];
   const empateDom1 = ord1[0][1]===ord1[1][1];
   const dom2=Object.entries(pct2).sort((a,b)=>b[1]-a[1])[0][0];
 
-  const energiaPct=Math.round((marcadosR1.size/ADJETIVOS.length)*100);
-  const energiaLabel=energiaPct>=45?'Alto':energiaPct>=28?'Médio':'Baixo';
-  const uniao=new Set([...marcadosR1,...marcadosR2]);
-  const intersec=[...marcadosR1].filter(x=>marcadosR2.has(x));
-  const consistPct=uniao.size>0?Math.round((intersec.length/uniao.size)*100):0;
+  // Energia: o quanto o perfil é polarizado/decisivo (diferença entre o eixo mais forte e o mais fraco)
+  const scoresEU = Object.values(scoreEU);
+  const energiaPct = Math.round(((Math.max(...scoresEU) - Math.min(...scoresEU)) / 36) * 100);
+  const energiaLabel = energiaPct>=45?'Alto':energiaPct>=28?'Médio':'Baixo';
+
+  // Consistência: em quantos dos 18 blocos o eixo escolhido como "mais" foi o mesmo em EU e OUTROS
+  let concordancias = 0;
+  blocosFC.forEach((bloco,bIdx)=>{
+    const mEU = selecoesFC.EU[bIdx].mais, mOUT = selecoesFC.OUTROS[bIdx].mais;
+    if(mEU!=null && mOUT!=null && bloco[mEU].f===bloco[mOUT].f) concordancias++;
+  });
+  const consistPct = Math.round((concordancias/18)*100);
+
+  const marcadosR1 = palavrasMais('EU'), marcadosR2 = palavrasMais('OUTROS');
 
   // fit com vaga
   const catVaga=detectarCategoria(vagaRetorno);
@@ -684,13 +879,14 @@ function tentarSalvarNovamente(){
 
 function refazerTeste(){
   if(!confirm('Isso vai apagar as marcações atuais e reiniciar a avaliação. Deseja continuar?')) return;
-  marcadosR1=new Set(); marcadosR2=new Set();
-  ordemLista=embaralhar(ADJETIVOS);
+  blocosFC = gerarBlocos();
+  selecoesFC = selecoesVazias();
+  faseAtual = 'EU';
   localStorage.removeItem(PROG_KEY);
   document.getElementById('resultSection').style.display='none';
   document.getElementById('saveStatus').style.display='none';
   document.getElementById('testSection').style.display='block';
-  renderLista();
+  renderFC();
 }
 
 // ── Salvar via Edge Function (a tabela fica travada pro navegador; só o ──
