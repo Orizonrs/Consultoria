@@ -2956,9 +2956,10 @@ function candCard(h){
   const fit   = _manOk ? _manRaw : (_fitOk ? _fitRaw : null);  // fit_manual sobrescreve fit_score
   const fitCor= fit!=null ? (fit>=80?'#2ecc71':fit>=65?'#3b82f6':fit>=45?'#f39c12':'#e74c3c') : '#777';
   const fitSrc= _manOk ? ' ✎' : (_fitOk ? '' : '');
-  // Injeta _pdaReg temporariamente para calcularAderencia poder encontrar o PDA
+  // Calcula aderência — para PDA usa 50% fixo se calcularAderencia retornar null
   const _hComPda = _pdaReg ? Object.assign({}, h, {_pdaRegInjetado: _pdaReg}) : h;
-  const aderCalc = calcularAderencia(_hComPda);
+  let aderCalc = calcularAderencia(_hComPda);
+  if(!aderCalc && _temPdaReal) aderCalc = { valor:50, fonte:'est.', modo:'ponderada', detalhes:null, bonusSinergia:null, bonusDisc:null };
   const ader     = aderCalc ? aderCalc.valor : null;
   const aderSrc  = aderCalc ? aderCalc.fonte : null;
   const isAderManual = h.aderencia_manual != null;
