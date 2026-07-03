@@ -1144,6 +1144,9 @@ const PESOS_KEY = 'orizon_pesos_aderencia_v1';
 
 const COR  = {D:'#e74c3c',I:'#f39c12',S:'#2ecc71',C:'#3498db'};
 const EMO  = {D:'🔴',I:'🟡',S:'🟢',C:'🔵'};
+// PDA (Perfil 5 Eixos) — mesmas cores usadas em perfil-5eixos-adjetivos.html
+const PDA_COR = {E:'#ff1744',S:'#ffab00',P:'#00e676',C:'#2979ff',A:'#7c4dff'};
+const PDA_EMO = {E:'🔴',S:'🟡',P:'🟢',C:'🔵',A:'🟣'};
 const COMBOS = {'DI':'Realizador Influente','DS':'Executor Consistente','DC':'Estrategista Analítico','ID':'Influenciador Decisivo','IS':'Comunicador Acolhedor','IC':'Comunicador Criterioso','SD':'Apoiador Assertivo','SI':'Facilitador Inspirador','SC':'Colaborador Meticuloso','CD':'Analítico Decisivo','CI':'Analítico Relacional','CS':'Especialista Confiável'};
 
 // Pilares padrão (global) — pesos em %
@@ -2902,8 +2905,12 @@ function candCard(h){
     : isMulti
       ? `<span class="chip" style="background:rgba(52,152,219,0.1);border-color:rgba(52,152,219,0.3);color:#3498db;cursor:pointer;" onclick="abrirModalMulti('${h.id}')" title="Candidato em múltiplas vagas">🔄 +${multiOut.length} vaga${multiOut.length>1?'s':''}</span>`
       : '';
-  const cor   = COR[h.dom]||'#888';
-  const emoji = EMO[h.dom]||'⬜';
+  // ── PDA (Perfil 5 Eixos) — buscado uma vez, usado no avatar, chip e botão de rodapé ──
+  const _pdaReg    = encontrarPDA(h);
+  const _temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const _temPdaReal  = !_temDiscReal && !!_pdaReg;
+  const cor   = _temDiscReal ? (COR[h.dom]||'#888') : (_temPdaReal ? (PDA_COR[_pdaReg.eixo_natural]||'#888') : '#888');
+  const emoji = _temDiscReal ? (EMO[h.dom]||'⬜') : (_temPdaReal ? (PDA_EMO[_pdaReg.eixo_natural]||'🧭') : '⬜');
   const combo = h.combo_nome||(COMBOS[(h.dom||'')+(h.sec||'')])||`${h.dom||'?'}+${h.sec||'?'}`;
   const _fitRaw = parseInt(h.fit_score); const _fitOk = h.fit_score != null && !isNaN(_fitRaw);
   const _manRaw = parseInt(h.fit_manual); const _manOk = h.fit_manual != null && !isNaN(_manRaw);
@@ -2958,7 +2965,6 @@ function candCard(h){
   footBtns += `<a class="btn-sm" href="${esc(_discUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="${_discStyle}">${_discLabel}</a>`;
   // Botão PDA (Perfil 5 Eixos): mesmo padrão do DISC — se já tem resultado, abre o
   // visualizador somente-leitura; se não, manda pro teste com nome/tel/email pré-preenchidos.
-  const _pdaReg = encontrarPDA(h);
   const _pdaUrl = _pdaReg
     ? (PDA_BASE+'perfil-5eixos-resultado.html?candidato_id='+encodeURIComponent(_pdaReg.id)+'&nome='+encodeURIComponent(h.nome||''))
     : (PDA_BASE+'perfil-5eixos-adjetivos.html?nome='+encodeURIComponent(h.nome||'')+'&tel='+encodeURIComponent(h.tel_externo||'')+'&email='+encodeURIComponent(h.email_externo||'')+'&vaga='+encodeURIComponent(h.vaga||''));
@@ -3059,10 +3065,12 @@ footBtns += h.recomendacao_doc_url
     ${_g3.length ? `<div class="cand-foot-label">💬 Comunicação</div><div class="cand-foot-group">${_g3.join('')}</div>` : ''}
   `;
 
-  const temDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
+  const temDiscReal = _temDiscReal;
   let chips = temDiscReal
     ? `<span class="chip chip-disc">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`
-    : `<span class="chip" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.15);color:#666;" title="Candidato ainda não realizou o teste DISC">Sem DISC</span>`;
+    : _temPdaReal
+      ? `<span class="chip chip-disc" style="background:${cor}15;border-color:${cor}40;color:${cor};" title="Perfil PDA (5 Eixos)">${esc(_pdaReg.eixo_natural||'?')} · PDA</span>`
+      : `<span class="chip" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.15);color:#666;" title="Candidato ainda não realizou nenhum teste comportamental">Sem teste</span>`;
   if(dupBadge) chips += dupBadge;
   if(fit!=null) chips += `<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%${fitSrc}</span>`;
   else chips += `<span class="chip" style="background:rgba(243,156,18,0.1);border-color:rgba(243,156,18,0.3);color:#f39c12;">⏳ Aguardando entrevista</span>`;
@@ -3155,7 +3163,7 @@ footBtns += h.recomendacao_doc_url
       <span class="doc-check-lbl">Docs</span>
     </label>
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDiscReal?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDiscReal?cor+'40':'rgba(255,255,255,0.12)'};color:${temDiscReal?cor:'#555'};" onclick="abrirPerfil('${esc(h.id)}')">${temDiscReal?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||_temPdaReal)?cor+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||_temPdaReal)?cor+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||_temPdaReal)?cor:'#555'};" onclick="abrirPerfil('${esc(h.id)}')">${(temDiscReal||_temPdaReal)?emoji:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome" onclick="abrirPerfil('${esc(h.id)}')">${esc(h.nome||'—')}</div>
         <div class="cand-meta">
