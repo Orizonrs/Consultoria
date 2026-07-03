@@ -2130,7 +2130,11 @@ function calcularAderencia(h){
   if(!pilares.length){
     // Sem dados disponíveis → legado
     const fit2  = extrairFit(h);
-    const disc2 = estimarFitDisc(h);
+    // BUGFIX: estimarFitDisc só enxerga %DISC (pct_d/i/s/c) — quem só fez PDA
+    // (sem essas colunas) sempre caía em null aqui e perdia a Aderência inteira.
+    // estimarFitTeste cobre DISC real OU PDA (50% fixo).
+    const _teste2 = estimarFitTeste(h);
+    const disc2 = _teste2 ? _teste2.valor : null;
     const curr2 = h.score_curriculo != null ? parseInt(h.score_curriculo) : null;
     if(fit2!=null && disc2!=null && curr2!=null) return { valor: Math.round(disc2*0.30+fit2*0.40+curr2*0.30), fonte:'pond.', detalhes:null };
     if(fit2!=null && curr2!=null) return { valor: Math.round(fit2*0.55+curr2*0.45), fonte:'calc', detalhes:null };
@@ -2959,7 +2963,13 @@ function candCard(h){
   // Calcula aderência — para PDA usa 50% fixo se calcularAderencia retornar null
   const _hComPda = _pdaReg ? Object.assign({}, h, {_pdaRegInjetado: _pdaReg}) : h;
   let aderCalc = calcularAderencia(_hComPda);
-  if(!aderCalc && _temPdaReal) aderCalc = { valor:50, fonte:'est.', modo:'ponderada', detalhes:null, bonusSinergia:null, bonusDisc:null };
+  // Rede de segurança: se por qualquer motivo (peso 0, config incomum etc.) a
+  // aderência vier nula pra quem JÁ fez um teste comportamental (DISC ou PDA),
+  // usa a estimativa do teste em vez de esconder a barra inteira.
+  if(!aderCalc && (_temDiscReal||_temPdaReal)){
+    const _fb = estimarFitTeste(_hComPda);
+    if(_fb) aderCalc = { valor:_fb.valor, fonte:'est.', modo:'ponderada', detalhes:null, bonusSinergia:null, bonusDisc:null };
+  }
   const ader     = aderCalc ? aderCalc.valor : null;
   const aderSrc  = aderCalc ? aderCalc.fonte : null;
   const isAderManual = h.aderencia_manual != null;
@@ -2969,12 +2979,6 @@ function candCard(h){
   const _fitEstTeste = _temDiscReal ? estimarFitTeste(h) : (_temPdaReal ? { valor:50, label:'PDA' } : estimarFitTeste(h));
   const fitEst = _fitEstTeste ? _fitEstTeste.valor : null;
   if(fitEst!=null){ const c=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🧠 ${_fitEstTeste.label}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fitEst}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fitEst}%</span><span class="fit-bar-src">est.</span></div>`; }
-  // Barra Aderência para PDA — calcula forçando o 50% do PDA no pilar disc
-  if(_temPdaReal && !_temDiscReal){
-    const _aderPda = calcularAderencia(_hComPda);
-    const _aderPdaVal = _aderPda ? _aderPda.valor : null;
-    if(_aderPdaVal!=null){ const aderGrad='linear-gradient(90deg,#5b21b6,#a78bfa)'; const _modo=_aderPda.modo||'ponderada'; const _ico=getModoIcon(_modo); const _lbl=getModoLabelCurto(_modo); bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:#a78bfa;">${_ico} Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${_aderPdaVal}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${_aderPdaVal}%</span><span class="fit-bar-src">${_lbl}</span></div>`; }
-  }
   if(_fitOk){ const fs=_fitRaw,c=fs>=80?'#2ecc71':fs>=65?'#3b82f6':fs>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🤖 Fit</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fs}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fs}%</span><span class="fit-bar-src">real</span></div>`; }
   if(_manOk){ const fm=_manRaw,c='#3498db'; bars+=`<div class="fit-bar-row" title="Fit manual — sobrescreve o automático"><span class="fit-bar-lbl" style="color:${c};">✏️ Man.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fm}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fm}%</span><span class="fit-bar-src">rec.</span></div>`; }
   if(h.score_curriculo!=null){ const sc=parseInt(h.score_curriculo),cc=sc>=65?'#3b82f6':sc>=40?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row" title="Score do Currículo — Experiência / Formação / Técnico"><span class="fit-bar-lbl" style="color:${cc};">📄 Curric.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sc}%;background:${cc};"></div></div><span class="fit-bar-pct" style="color:${cc};">${sc}%</span><span class="fit-bar-src">curr.</span></div>`; }
