@@ -692,6 +692,67 @@
       font-family: var(--mono);
     }
 
+    .disc-type-status-done {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      background: rgba(0,230,118,0.12);
+      color: var(--green);
+      border: 1px solid rgba(0,230,118,0.35);
+      border-radius: 99px;
+      font-size: 0.58rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      margin-top: 0.4rem;
+      letter-spacing: 0.5px;
+      font-family: var(--mono);
+    }
+
+    .aviso-resultado-salvo {
+      display: none;
+      text-align: left;
+      background: rgba(0,230,118,0.06);
+      border: 1px solid rgba(0,230,118,0.28);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      margin: 0 auto 1.2rem;
+      max-width: 640px;
+    }
+    .aviso-resultado-salvo-texto {
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.5;
+      margin-bottom: 0.8rem;
+    }
+    .aviso-resultado-salvo-acoes {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .btn-usar-salvo {
+      background: var(--green);
+      color: #06210f;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 1rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .btn-refazer-inline {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 1rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .btn-refazer-inline:hover { border-color: var(--cyan); color: var(--text); }
+
     @media(max-width:640px){ .disc-type-grid{ grid-template-columns:1fr !important; } }
 
     /* ══════════════════════════════════════════
@@ -1247,19 +1308,30 @@
             <div class="disc-type-name">DISC Ipsativo</div>
             <div class="disc-type-desc">Ordene as opções por preferência — resultado mais preciso</div>
             <div class="disc-type-badge">Recomendado</div>
+            <div class="disc-type-status-done" id="statusFeito_ipsativo" style="display:none;">✓ Já feito</div>
           </button>
           <button class="disc-type-btn" id="btnTypeClassico" onclick="selecionarTipoDisc('classico')">
             <div class="disc-type-icon">✅</div>
             <div class="disc-type-name">DISC Clássico</div>
             <div class="disc-type-desc">Escolha uma opção por pergunta — mais simples e rápido</div>
+            <div class="disc-type-status-done" id="statusFeito_classico" style="display:none;">✓ Já feito</div>
           </button>
           <button class="disc-type-btn" id="btnTypePda" onclick="selecionarTipoDisc('pda')">
             <div class="disc-type-icon">🧭</div>
             <div class="disc-type-name">PDA</div>
             <div class="disc-type-desc">Marque adjetivos que combinam com você — perfil por 5 eixos</div>
+            <div class="disc-type-status-done" id="statusFeito_pda" style="display:none;">✓ Já feito</div>
           </button>
         </div>
         <div style="font-size:0.68rem;color:var(--muted);margin-top:0.7rem;">Todos avaliam seu comportamento, cada um com uma metodologia diferente. Na dúvida, use o recomendado.</div>
+      </div>
+
+      <div class="aviso-resultado-salvo" id="avisoResultadoSalvo">
+        <div class="aviso-resultado-salvo-texto" id="avisoResultadoSalvoTexto"></div>
+        <div class="aviso-resultado-salvo-acoes">
+          <button class="btn-usar-salvo" onclick="usarResultadoSalvo()">✓ Usar resultado salvo</button>
+          <button class="btn-refazer-inline" onclick="esconderAvisoResultadoSalvo()">Refazer este teste</button>
+        </div>
       </div>
 
       <button class="btn-primary" id="btnIniciarDisc" onclick="iniciarDisc()" style="max-width:360px;margin:0 auto;">
@@ -1713,6 +1785,7 @@ async function init() {
         dominante: _dom, dom: _dom, secundario: _sec, sec: _sec,
         nome: _dom + (_sec ? '+'+_sec : ''),
         pct: { D: parseFloat(up.get('d')||'0'), I: parseFloat(up.get('i')||'0'), S: parseFloat(up.get('s')||'0'), C: parseFloat(up.get('c')||'0') },
+        tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
         ts: Date.now(),
       };
       localStorage.setItem('disc_resultado', JSON.stringify(discResultado));
@@ -2113,59 +2186,133 @@ async function renderStep2() {
   if (!discResultado && DISC_OK) await handleDiscReturn();
   if (!pdaResultado && PDA_OK) handlePdaReturn();
   const concluido = testeConcluido();
-  if (concluido) {
-    renderTesteSummary(concluido.tipo, concluido.r);
-    document.getElementById('discGateway').style.display   = 'none';
-    document.getElementById('discConcluido').style.display = 'block';
-    document.getElementById('discSummary').classList.add('visible');
-    atualizarTTLDisplay();
-    const tituloEl = document.getElementById('discConcluidoTitulo');
-    const subEl    = document.getElementById('discConcluidoSub');
-    const nomeTeste = concluido.tipo === 'pda' ? 'PDA' : 'DISC';
-    if (tituloEl) tituloEl.textContent = `Teste ${nomeTeste} já realizado ✅`;
-    if (subEl)    subEl.textContent    = `Seu perfil ${nomeTeste} está válido e foi confirmado com seus dados. Prossiga para a Entrevista.`;
-    // Busca o registro mais recente no Supabase pelo email para garantir ID correto
-    // (esse cache/patch em disc_historico é específico do fluxo DISC — o PDA já
-    // é persistido pela Edge Function perfil-5eixos-salvar no momento do save)
-    if (concluido.tipo === 'disc' && discResultado) {
-      try {
-        const dadosLS = JSON.parse(localStorage.getItem('candidatura_dados') || '');
-        const emailBusca = dadosLS.email || '';
-        const nomeBusca  = dadosLS.nome  || '';
-        let idAlvo = candidaturaId;
-        if (emailBusca) {
-          const r = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailBusca.toLowerCase().trim())}&order=criado_em.desc&limit=1&select=id`, { headers: sbHeaders() });
-          if (r.ok) { const arr = await r.json(); if (arr && arr[0]) { idAlvo = arr[0].id; candidaturaId = idAlvo; } }
-        }
-        if (!idAlvo && nomeBusca) {
-          const r = await fetch(`${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(nomeBusca.trim())}&order=criado_em.desc&limit=1&select=id`, { headers: sbHeaders() });
-          if (r.ok) { const arr = await r.json(); if (arr && arr[0]) { idAlvo = arr[0].id; candidaturaId = idAlvo; } }
-        }
-        if (idAlvo) {
-          const dimDisc = discResultado.dominante || discResultado.dom || null;
-          const secDisc = discResultado.secundario || discResultado.sec || null;
-          const pct = discResultado.pct || {};
-          const patchPayload = {
-            status: 'disc_ok', disc_perfil: dimDisc, dom: dimDisc, sec: secDisc,
-            pct_d: pct.D != null ? String(pct.D) : undefined,
-            pct_i: pct.I != null ? String(pct.I) : undefined,
-            pct_s: pct.S != null ? String(pct.S) : undefined,
-            pct_c: pct.C != null ? String(pct.C) : undefined,
-            disc_atualizado_em: new Date().toISOString(),
-          };
-          Object.keys(patchPayload).forEach(k => patchPayload[k] === undefined && delete patchPayload[k]);
-          await sbPatch('disc_historico', `id=eq.${idAlvo}`, patchPayload);
-        }
-      } catch(e) { console.warn('PATCH disc cache:', e); }
-    }
-    if (ENTREVISTA_OK || localStorage.getItem('entrevista_ok') === '1') {
-      setTimeout(() => navigateTo(3), candidaturaId ? 300 : 800);
-    }
+  // Só pula direto para a tela de "concluído" quando a pessoa acabou de
+  // voltar do próprio teste (fluxo natural de quem terminou agora). Se ela
+  // simplesmente chegou nessa etapa (ex.: já tinha um resultado válido de
+  // uma candidatura anterior), mostramos o seletor dos 3 testes e deixamos
+  // ela escolher — com um aviso de que já existe um resultado salvo.
+  const acabouDeVoltarDoTeste = DISC_OK || PDA_OK;
+  if (concluido && acabouDeVoltarDoTeste) {
+    await mostrarConcluido(concluido);
   } else {
-    document.getElementById('discGateway').style.display   = '';
-    document.getElementById('discConcluido').style.display = 'none';
-    document.getElementById('discSummary').classList.remove('visible');
+    mostrarGateway();
   }
+}
+
+// Exibe a tela de resultado já concluído (usada tanto ao voltar do teste
+// quanto quando a pessoa opta por reaproveitar um resultado salvo).
+async function mostrarConcluido(concluido) {
+  renderTesteSummary(concluido.tipo, concluido.r);
+  document.getElementById('discGateway').style.display   = 'none';
+  document.getElementById('discConcluido').style.display = 'block';
+  document.getElementById('discSummary').classList.add('visible');
+  esconderAvisoResultadoSalvo();
+  atualizarTTLDisplay();
+  const tituloEl = document.getElementById('discConcluidoTitulo');
+  const subEl    = document.getElementById('discConcluidoSub');
+  const nomeTeste = concluido.tipo === 'pda' ? 'PDA' : 'DISC';
+  if (tituloEl) tituloEl.textContent = `Teste ${nomeTeste} já realizado ✅`;
+  if (subEl)    subEl.textContent    = `Seu perfil ${nomeTeste} está válido e foi confirmado com seus dados. Prossiga para a Entrevista.`;
+  // Busca o registro mais recente no Supabase pelo email para garantir ID correto
+  // (esse cache/patch em disc_historico é específico do fluxo DISC — o PDA já
+  // é persistido pela Edge Function perfil-5eixos-salvar no momento do save)
+  if (concluido.tipo === 'disc' && discResultado) {
+    try {
+      const dadosLS = JSON.parse(localStorage.getItem('candidatura_dados') || '');
+      const emailBusca = dadosLS.email || '';
+      const nomeBusca  = dadosLS.nome  || '';
+      let idAlvo = candidaturaId;
+      if (emailBusca) {
+        const r = await fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(emailBusca.toLowerCase().trim())}&order=criado_em.desc&limit=1&select=id`, { headers: sbHeaders() });
+        if (r.ok) { const arr = await r.json(); if (arr && arr[0]) { idAlvo = arr[0].id; candidaturaId = idAlvo; } }
+      }
+      if (!idAlvo && nomeBusca) {
+        const r = await fetch(`${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(nomeBusca.trim())}&order=criado_em.desc&limit=1&select=id`, { headers: sbHeaders() });
+        if (r.ok) { const arr = await r.json(); if (arr && arr[0]) { idAlvo = arr[0].id; candidaturaId = idAlvo; } }
+      }
+      if (idAlvo) {
+        const dimDisc = discResultado.dominante || discResultado.dom || null;
+        const secDisc = discResultado.secundario || discResultado.sec || null;
+        const pct = discResultado.pct || {};
+        const patchPayload = {
+          status: 'disc_ok', disc_perfil: dimDisc, dom: dimDisc, sec: secDisc,
+          pct_d: pct.D != null ? String(pct.D) : undefined,
+          pct_i: pct.I != null ? String(pct.I) : undefined,
+          pct_s: pct.S != null ? String(pct.S) : undefined,
+          pct_c: pct.C != null ? String(pct.C) : undefined,
+          disc_atualizado_em: new Date().toISOString(),
+        };
+        Object.keys(patchPayload).forEach(k => patchPayload[k] === undefined && delete patchPayload[k]);
+        await sbPatch('disc_historico', `id=eq.${idAlvo}`, patchPayload);
+      }
+    } catch(e) { console.warn('PATCH disc cache:', e); }
+  }
+  if (ENTREVISTA_OK || localStorage.getItem('entrevista_ok') === '1') {
+    setTimeout(() => navigateTo(3), candidaturaId ? 300 : 800);
+  }
+}
+
+// Exibe o seletor dos 3 testes (gateway) e sinaliza quais já foram feitos.
+function mostrarGateway() {
+  document.getElementById('discGateway').style.display   = '';
+  document.getElementById('discConcluido').style.display = 'none';
+  document.getElementById('discSummary').classList.remove('visible');
+  atualizarBadgesResultadosSalvos();
+}
+
+// Retorna o resultado salvo (se houver e ainda válido) que corresponde ao
+// tipo de teste informado. DISC Ipsativo e Clássico usam a mesma "gaveta"
+// de armazenamento (disc_resultado); por isso, resultados antigos que não
+// guardam o campo "tipo" (salvos antes dessa mudança) são considerados
+// compatíveis com qualquer um dos dois formatos DISC.
+function resultadoSalvoParaTipo(tipo) {
+  if (tipo === 'pda') return pdaResultado || null;
+  if (discResultado && (!discResultado.tipo || discResultado.tipo === tipo)) return discResultado;
+  return null;
+}
+
+function nomeAmigavelTipo(tipo) {
+  if (tipo === 'pda') return 'PDA';
+  if (tipo === 'classico') return 'DISC Clássico';
+  return 'DISC Ipsativo';
+}
+
+function atualizarBadgesResultadosSalvos() {
+  ['ipsativo', 'classico', 'pda'].forEach(t => {
+    const el = document.getElementById('statusFeito_' + t);
+    if (el) el.style.display = resultadoSalvoParaTipo(t) ? '' : 'none';
+  });
+  atualizarAvisoResultadoSalvo(discTipoSelecionado);
+}
+
+function atualizarAvisoResultadoSalvo(tipo) {
+  const aviso = document.getElementById('avisoResultadoSalvo');
+  if (!aviso) return;
+  const r = resultadoSalvoParaTipo(tipo);
+  if (r) {
+    const dataTxt = r.ts ? new Date(r.ts).toLocaleDateString('pt-BR') : '';
+    const texto = document.getElementById('avisoResultadoSalvoTexto');
+    if (texto) {
+      texto.textContent = `Você já fez o teste ${nomeAmigavelTipo(tipo)}${dataTxt ? ' em ' + dataTxt : ''}. Quer reaproveitar esse resultado ou prefere refazer o teste?`;
+    }
+    aviso.style.display = '';
+  } else {
+    aviso.style.display = 'none';
+  }
+}
+
+function esconderAvisoResultadoSalvo() {
+  const aviso = document.getElementById('avisoResultadoSalvo');
+  if (aviso) aviso.style.display = 'none';
+}
+
+// Chamado quando a pessoa opta por reaproveitar um resultado já salvo em
+// vez de refazer o teste selecionado no gateway.
+async function usarResultadoSalvo() {
+  const r = resultadoSalvoParaTipo(discTipoSelecionado);
+  if (!r) return;
+  const tipoConcluido = discTipoSelecionado === 'pda' ? 'pda' : 'disc';
+  await mostrarConcluido({ tipo: tipoConcluido, r });
 }
 
 // Renderiza o card de resumo do teste concluído — funciona tanto pro
@@ -2275,6 +2422,7 @@ async function handleDiscReturn() {
             dominante: dom, dom, secundario: sec, sec,
             nome: dom + (sec ? '+' + sec : ''),
             pct: { D: parseFloat(registro.pct_d||0), I: parseFloat(registro.pct_i||0), S: parseFloat(registro.pct_s||0), C: parseFloat(registro.pct_c||0) },
+            tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
             ts: Date.now(),
           };
           if (!candidaturaId && registro.id) {
@@ -2317,6 +2465,7 @@ function confirmarRefazerDisc() {
     document.getElementById('discConcluido').style.display = 'none';
     document.getElementById('discSummary').classList.remove('visible');
     document.getElementById('discGateway').style.display = '';
+    atualizarBadgesResultadosSalvos();
     document.querySelectorAll('.step-item').forEach((el,i) => {
       el.classList.remove('active','done');
       if (i+1 < currentStep) el.classList.add('done');
@@ -2369,6 +2518,7 @@ function selecionarTipoDisc(tipo) {
   document.getElementById('btnTypeIpsativo').classList.toggle('active', tipo === 'ipsativo');
   document.getElementById('btnTypeClassico').classList.toggle('active', tipo === 'classico');
   document.getElementById('btnTypePda').classList.toggle('active', tipo === 'pda');
+  atualizarAvisoResultadoSalvo(tipo);
 }
 
 function iniciarDisc() {
@@ -2379,6 +2529,7 @@ function iniciarDisc() {
   const mae   = dados.mae   || document.getElementById('inMae')?.value   || '';
   localStorage.removeItem(LS_DISC_RES);
   localStorage.removeItem(LS_PDA_RES);
+  try { localStorage.setItem('disc_tipo_iniciado', discTipoSelecionado); } catch(e){}
   const base = window.location.href.replace(/candidatura\.html.*$/, '');
   const canaisParam = CANAIS_URL ? '&canais=' + encodeURIComponent(JSON.stringify(CANAIS_URL)) : '';
   const okParam = discTipoSelecionado === 'pda' ? '&pda_ok=1' : '&disc_ok=1';
