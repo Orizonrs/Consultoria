@@ -637,7 +637,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
       <div class="sec-label">Texto</div>
       <label class="fl">Tamanho da Fonte (Atividades / Requisitos / Benefícios)</label>
       <div class="slider-row">
-        <input type="range" id="i-secfonte" min="8" max="24" value="12" oninput="updSecFonte(this.value)">
+        <input type="range" id="i-secfonte" min="8" max="24" value="12" step="0.1" oninput="updSecFonte(this.value)">
         <span id="secfonte-size-lbl">12px</span>
       </div>
       <div class="tog-row" style="margin-top:10px;">
@@ -742,6 +742,16 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
         <div class="pos-btns">
           <button class="pos-btn on" onclick="setPos('qr','bottom-right',this)">↘ Inf. Dir</button>
           <button class="pos-btn" onclick="setPos('qr','bottom-left',this)">↙ Inf. Esq</button>
+        </div>
+        <label class="fl" style="margin-top:10px;">Ajuste Vertical (mais pra baixo / cima)</label>
+        <div class="slider-row">
+          <input type="range" id="i-qr-offset" min="-80" max="80" value="20" step="1" oninput="updQROffset(this.value)">
+          <span id="qr-offset-lbl">0px</span>
+        </div>
+        <label class="fl" style="margin-top:10px;">Ajuste Horizontal (direita / esquerda)</label>
+        <div class="slider-row">
+          <input type="range" id="i-qr-hoffset" min="-80" max="80" value="0" step="1" oninput="updQRHOffset(this.value)">
+          <span id="qr-hoffset-lbl">0px</span>
         </div>
       </div>
     </div>
@@ -865,9 +875,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
         </div>
 
         <!-- QR Code -->
-        <div id="c-qr" style="display:none; position:absolute; bottom:28px; right:28px; z-index:10;">
+        <div id="c-qr" style="display:none; position:absolute; bottom:28px; right:70px; z-index:20;">
           <div id="qr-box"></div>
-          <div class="card-qr-lbl" style="color:#fff; margin-top:4px;">Candidatar-se</div>
+          <div class="card-qr-lbl" style="color:#fff; margin-top:4px;"></div>
         </div>
 
         <!-- Contato -->
@@ -953,8 +963,9 @@ function updFonte(v) {
 }
 
 function updSecFonte(v) {
-  document.getElementById('card').style.setProperty('--sec-size', v + 'px');
-  document.getElementById('secfonte-size-lbl').textContent = v + 'px';
+  var val = parseFloat(v).toFixed(1);
+  document.getElementById('card').style.setProperty('--sec-size', val + 'px');
+  document.getElementById('secfonte-size-lbl').textContent = val.replace('.', ',') + 'px';
 }
 
 function updLogo(v) {
@@ -967,6 +978,8 @@ function updLogo(v) {
 }
 
 var posMap = { cont: 'bottom-left', qr: 'bottom-right', details: 'bottom-left' };
+var qrOffset = 0;
+var qrHOffset = 0;
 
 function applyPos(id, pos) {
   var el = document.getElementById('c-' + id);
@@ -974,10 +987,30 @@ function applyPos(id, pos) {
   el.style.top = ''; el.style.bottom = ''; el.style.left = ''; el.style.right = '';
   el.style.position = 'absolute';
   var pad = 28;
-  if (pos === 'bottom-left')  { el.style.bottom = pad+'px'; el.style.left = pad+'px'; }
-  if (pos === 'bottom-right') { el.style.bottom = pad+'px'; el.style.right = pad+'px'; }
-  if (pos === 'top-right')    { el.style.top = pad+'px'; el.style.right = pad+'px'; }
-  if (pos === 'top-left')     { el.style.top = pad+'px'; el.style.left = pad+'px'; }
+  var vpad = pad;
+  var hpad = pad;
+  if (id === 'qr') {
+    // offset positivo = "mais pra baixo": aproxima do fundo (ou afasta do topo)
+    vpad = (pos.indexOf('bottom') === 0) ? (pad - qrOffset) : (pad + qrOffset);
+    // offset positivo = "mais pra direita": aproxima da direita (ou afasta da esquerda)
+    hpad = (pos.indexOf('right') !== -1) ? (pad - qrHOffset) : (pad + qrHOffset);
+  }
+  if (pos === 'bottom-left')  { el.style.bottom = vpad+'px'; el.style.left = hpad+'px'; }
+  if (pos === 'bottom-right') { el.style.bottom = vpad+'px'; el.style.right = hpad+'px'; }
+  if (pos === 'top-right')    { el.style.top = vpad+'px'; el.style.right = hpad+'px'; }
+  if (pos === 'top-left')     { el.style.top = vpad+'px'; el.style.left = hpad+'px'; }
+}
+
+function updQROffset(v) {
+  qrOffset = parseFloat(v);
+  document.getElementById('qr-offset-lbl').textContent = v + 'px';
+  applyPos('qr', posMap['qr']);
+}
+
+function updQRHOffset(v) {
+  qrHOffset = parseFloat(v);
+  document.getElementById('qr-hoffset-lbl').textContent = v + 'px';
+  applyPos('qr', posMap['qr']);
 }
 
 function applyPosDetails(pos) {
@@ -1132,9 +1165,35 @@ function updQR() {
 
 function dl() {
   var card = document.getElementById('card');
+  var wrapper = document.querySelector('.card-wrapper');
   var btn = document.querySelector('.btn-dl');
-  btn.textContent = 'Gerando…';
-  domtoimage.toPng(card, {}).then(function(dataUrl) {
+  btn.textContent = 'Gerando em alta resolução…';
+
+  // No celular/telas pequenas o preview fica reduzido (scaleCard()); precisamos
+  // exportar sempre no tamanho real do card, senão o texto sai borrado.
+  var prevTransform = wrapper.style.transform;
+  var prevWidth = wrapper.style.width;
+  var prevHeight = wrapper.style.height;
+  wrapper.style.transform = '';
+  wrapper.style.width = '';
+  wrapper.style.height = '';
+
+  var scale = 3; // fator de nitidez: exporta em 3x o tamanho visual (retina/alta-res)
+  var w = card.offsetWidth;
+  var h = card.offsetHeight;
+
+  var options = {
+    width: w * scale,
+    height: h * scale,
+    style: {
+      transform: 'scale(' + scale + ')',
+      transformOrigin: 'top left',
+      width: w + 'px',
+      height: h + 'px'
+    }
+  };
+
+  domtoimage.toPng(card, options).then(function(dataUrl) {
     var nome = (document.getElementById('i-vaga').value.trim() || 'card').replace(/\s+/g,'-').toLowerCase();
     var a = document.createElement('a');
     a.href = dataUrl;
@@ -1146,6 +1205,11 @@ function dl() {
   }).catch(function(e) {
     alert('Erro: ' + e.message);
     btn.textContent = '↓  Baixar Card';
+  }).finally(function() {
+    wrapper.style.transform = prevTransform;
+    wrapper.style.width = prevWidth;
+    wrapper.style.height = prevHeight;
+    scaleCard();
   });
 }
 
@@ -1185,7 +1249,7 @@ function scaleCard() {
 }
 
 window.addEventListener('resize', scaleCard);
-window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); updSecFonte(12); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); setLblColor('auto', document.querySelector('#lbl-colors .color-swatch')); });
+window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); updSecFonte(12); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); setLblColor('auto', document.querySelector('#lbl-colors .color-swatch')); updQROffset(20); updQRHOffset(0); });
 </script>
 </body>
 </html>
