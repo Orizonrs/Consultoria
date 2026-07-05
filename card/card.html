@@ -419,7 +419,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
   font-size: 8px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  opacity: 0.75;
+  color: var(--lbl-color, #00c8ff);
+  opacity: 1;
+  font-weight: 700;
 }
 .card-info-val {
   font-family: 'DM Sans', sans-serif;
@@ -481,7 +483,9 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
   font-size: 8px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  opacity: 0.75;
+  color: var(--lbl-color, #00c8ff);
+  opacity: 1;
+  font-weight: 700;
   margin-bottom: 4px;
   text-align: left;
 }
@@ -556,6 +560,21 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px;
         <div class="color-swatch"        data-theme="sunset"  title="Sunset"     style="background:linear-gradient(135deg,#0d0600,#ff6b35);" onclick="setTheme('sunset',this)"></div>
         <div class="color-swatch"        data-theme="emerald" title="Esmeralda"  style="background:linear-gradient(135deg,#020e06,#00b86e);" onclick="setTheme('emerald',this)"></div>
         <div class="color-swatch"        data-theme="slate"   title="Ardósia"    style="background:linear-gradient(135deg,#090f1a,#5580aa);" onclick="setTheme('slate',this)"></div>
+      </div>
+    </div>
+
+    <!-- COR DOS TÍTULOS DE SEÇÃO -->
+    <div class="sec">
+      <div class="sec-label">Cor dos Títulos (Atividades / Requisitos / Benefícios)</div>
+      <div class="color-row" id="lbl-colors">
+        <div class="color-swatch active" data-lbl="#00c8ff" title="Acompanhar tema" style="background:linear-gradient(135deg,#00c8ff,#0080ff);" onclick="setLblColor('auto',this)"></div>
+        <div class="color-swatch" data-lbl="#ffffff" title="Branco" style="background:#ffffff;" onclick="setLblColor('#ffffff',this)"></div>
+        <div class="color-swatch" data-lbl="#ffd700" title="Dourado" style="background:#ffd700;" onclick="setLblColor('#ffd700',this)"></div>
+        <div class="color-swatch" data-lbl="#ff5c5c" title="Vermelho" style="background:#ff5c5c;" onclick="setLblColor('#ff5c5c',this)"></div>
+        <div class="color-swatch" data-lbl="#4ade80" title="Verde" style="background:#4ade80;" onclick="setLblColor('#4ade80',this)"></div>
+        <div class="color-swatch" data-lbl="#ff9d3c" title="Laranja" style="background:#ff9d3c;" onclick="setLblColor('#ff9d3c',this)"></div>
+        <div class="color-swatch" data-lbl="#c084fc" title="Lilás" style="background:#c084fc;" onclick="setLblColor('#c084fc',this)"></div>
+        <input type="color" id="i-lbl-custom" value="#00c8ff" title="Cor personalizada" style="width:28px;height:28px;padding:0;border:2px solid rgba(0,200,255,0.2);border-radius:2px;cursor:pointer;background:none;" oninput="setLblColor(this.value,null)">
       </div>
     </div>
 
@@ -874,9 +893,11 @@ var themes = {
   slate:   { accent: '#5580aa', bg: '#090f1a', dotColor: 'rgba(85,128,170,0.12)',   bracketColor: 'rgba(85,128,170,0.45)' },
 };
 
+var lblColorMode = 'auto'; // 'auto' segue o tema, ou um hex fixo
+
 function setTheme(name, el) {
   currentTheme = name;
-  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('#theme-colors .color-swatch').forEach(s => s.classList.remove('active'));
   el.classList.add('active');
   var t = themes[name];
 
@@ -900,6 +921,29 @@ function setTheme(name, el) {
   });
   // Update logo accent color
   document.getElementById('c-logo-svg').style.setProperty('--lg-accent', t.accent);
+
+  // Se o modo de cor dos títulos estiver em "auto", acompanha o novo tema
+  if (lblColorMode === 'auto') {
+    document.getElementById('card').style.setProperty('--lbl-color', t.accent);
+  }
+}
+
+function setLblColor(color, el) {
+  var card = document.getElementById('card');
+  if (color === 'auto') {
+    lblColorMode = 'auto';
+    card.style.setProperty('--lbl-color', themes[currentTheme].accent);
+  } else {
+    lblColorMode = color;
+    card.style.setProperty('--lbl-color', color);
+    document.getElementById('i-lbl-custom').value = color;
+  }
+  if (el) {
+    document.querySelectorAll('#lbl-colors .color-swatch').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    document.querySelectorAll('#lbl-colors .color-swatch').forEach(s => s.classList.remove('active'));
+  }
 }
 
 function updFonte(v) {
@@ -1141,7 +1185,7 @@ function scaleCard() {
 }
 
 window.addEventListener('resize', scaleCard);
-window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); updSecFonte(12); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); });
+window.addEventListener('load', function() { scaleCard(); upd(); updFonte(35); updSecFonte(12); applyPos('cont', posMap['cont']); applyPosDetails(posMap['details']); setLblColor('auto', document.querySelector('#lbl-colors .color-swatch')); });
 </script>
 </body>
 </html>
