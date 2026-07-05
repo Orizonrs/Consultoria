@@ -1167,16 +1167,38 @@ async function publicarVaga(){
     logEl.innerHTML=logs.map(l=>`<div>${l}</div>`).join('');
   };
   try{
-    // 1. Supabase
+    // 1. Supabase — verifica se já existe (por slug) e decide entre INSERT ou UPDATE.
+    // Isso evita depender de upsert/on_conflict, que exige uma constraint UNIQUE
+    // na coluna slug (constraint que não existe nesta tabela e causava falha silenciosa).
     if(SB_URL){
       step('⏳ [1/4] Salvando no Supabase...');
-      const r=await fetch(`${SB_URL}/rest/v1/vagas?on_conflict=slug`,{
-        method:'POST',
-        headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
-        body:JSON.stringify(_vagaObj)
-      });
-      if(!r.ok){let em=r.status;try{const e=await r.json();em=e.message||e.hint||e.details||r.status;}catch(_){}step('⚠️ Supabase: '+em+' — continuando com GitHub','aviso');}
-      else step('✅ [1/4] Supabase — OK','ok');
+      try{
+        const rCheck=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(_vagaObj.slug)}&select=slug`,
+          {headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY)}});
+        if(!rCheck.ok)throw new Error('HTTP '+rCheck.status+' ao verificar existência');
+        const existentes=await rCheck.json();
+
+        let r;
+        if(existentes.length>0){
+          // Já existe → UPDATE
+          r=await fetch(`${SB_URL}/rest/v1/vagas?slug=eq.${encodeURIComponent(_vagaObj.slug)}`,{
+            method:'PATCH',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify(_vagaObj)
+          });
+        }else{
+          // Não existe → INSERT
+          r=await fetch(`${SB_URL}/rest/v1/vagas`,{
+            method:'POST',
+            headers:{'apikey':SB_KEY,'Authorization':'Bearer '+(window.SB_TOKEN||SB_KEY),'Content-Type':'application/json','Prefer':'return=minimal'},
+            body:JSON.stringify(_vagaObj)
+          });
+        }
+        if(!r.ok){let em=r.status;try{const e=await r.json();em=e.message||e.hint||e.details||r.status;}catch(_){}throw new Error(String(em));}
+        step('✅ [1/4] Supabase — OK ('+(existentes.length>0?'atualizada':'criada')+')','ok');
+      }catch(e){
+        step('❌ [1/4] Supabase FALHOU: '+e.message+' — a vaga NÃO foi salva no banco (vai continuar só no GitHub, mas não vai aparecer na lista nem no admin)','erro');
+      }
     }else{step('⚠️ [1/4] Supabase não configurado — pulando','aviso');}
 
     // 2. GitHub
