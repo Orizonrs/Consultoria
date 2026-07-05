@@ -435,7 +435,8 @@ ALTER TABLE vagas ADD COLUMN IF NOT EXISTS horario TEXT;</pre>
       <label class="mtoggle"><input type="checkbox" id="mTelegram"/> ✈️ Telegram</label>
     </div>
 
-    <button class="btn-gerar" onclick="gerarHTML()">⚡ Gerar HTML da Vaga</button>
+    <button class="btn-gerar" onclick="gerarEPublicar()">🚀 Gerar e Publicar Vaga</button>
+    <button class="btn-gerar" style="background:rgba(255,255,255,0.06);color:var(--muted);margin-top:0.5rem;font-size:0.78rem;padding:0.6rem;" onclick="gerarHTML()">👁️ Só gerar prévia (sem publicar)</button>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;min-height:1.4rem;">
       <span id="draftInd" style="display:none;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--muted,#888);"></span>
       <button type="button" onclick="if(confirm('Descartar rascunho e limpar o formulário?')){descartarRascunho();limpar();}" style="display:none;" id="btnDescartarDraft" title="Descartar rascunho" style="background:none;border:none;cursor:pointer;font-size:0.7rem;color:var(--muted,#888);padding:0.1rem 0.4rem;border-radius:4px;opacity:0.7;">🗑️ Descartar rascunho</button>
@@ -935,6 +936,15 @@ async function slugUnico(titulo){
 
 // ── GERAR HTML (EXATAMENTE COMO O ORIGINAL) ──────────────────
 let _htmlGerado='',_slugAtual='',_vagaObj=null;
+
+// ── GERAR + PUBLICAR EM UM CLIQUE SÓ ───────────────────────────
+// Resolve a confusão de ter que clicar em "Gerar HTML" e depois
+// procurar o botão "Publicar no Site" mais abaixo na página.
+async function gerarEPublicar(){
+  await gerarHTML();
+  if(!_htmlGerado||!_vagaObj)return; // gerarHTML já mostrou o erro (ex: título/descrição vazios)
+  await publicarVaga();
+}
 
 async function gerarHTML(){
   const titulo=document.getElementById('vTitulo').value.trim();
