@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Por dentro do Orizon ATS | Orizon Consultoria</title>
+<meta name="description" content="79 módulos, um único fluxo: como o motor de recrutamento da Orizon funciona por dentro."/>
+
+<meta property="og:title" content="Por dentro do Orizon ATS"/>
+<meta property="og:description" content="79 módulos rodando por trás de cada contratação. Sem tela aberta, sem dado exposto — só o que o sistema faz."/>
+<meta property="og:type" content="website"/>
+<meta property="og:image" content="https://orizonrs.com/imagens/sistema-share.png"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://orizonrs.com/imagens/sistema-share.png"/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,340;0,9..144,480;0,9..144,600;1,9..144,460&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#060a0d;
+    --bg-2:#080f13;
+    --panel:#0b141a;
+    --panel-2: linear-gradient(160deg, #0d1a21, #0a141a);
+    --line:#152329;
+    --line-soft:#0e1a20;
+    --cyan:#00e5ff;
+    --cyan-soft:#3ecbe0;
+    --cyan-dim:#0a7f96;
+    --amber:#e0a530;
+    --text:#e9f6f9;
+    --muted:#7a99a2;
+    --muted-2:#3f5860;
+    --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  ::selection{background:rgba(0,229,255,.25); color:#fff;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    position:relative;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  :focus-visible{outline:2px solid var(--cyan); outline-offset:3px; border-radius:4px;}
+
+  /* ambient texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size:56px 56px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, black 20%, transparent 75%);
+            mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, black 20%, transparent 75%);
+    pointer-events:none;
+    z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse 60% 40% at 85% 0%, rgba(0,229,255,.06), transparent 60%),
+               radial-gradient(ellipse 50% 30% at 10% 90%, rgba(0,229,255,.04), transparent 60%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .wrap{position:relative; z-index:1; max-width:1160px; margin:0 auto; padding:0 32px;}
+
+  /* NAV */
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:34px 0; position:relative; z-index:2;
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Orbitron',sans-serif; font-weight:700; font-size:15px; letter-spacing:2px;}
+  .brand .dot{width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 10px var(--cyan);}
+  .brand small{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted-2); font-weight:400; letter-spacing:2px; margin-left:2px;}
+  .nav a.ext{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+    letter-spacing:1px; text-decoration:none; border:1px solid var(--line);
+    padding:9px 16px; border-radius:20px; transition:.2s;
+  }
+  .nav a.ext:hover{color:var(--cyan); border-color:var(--cyan-dim);}
+
+  /* HERO */
+  .hero{
+    display:grid; grid-template-columns:1.15fr .85fr; gap:60px;
+    align-items:center; padding:56px 0 90px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:3.5px;
+    color:var(--cyan-dim); text-transform:uppercase; margin-bottom:24px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow .rule{width:28px; height:1px; background:var(--cyan-dim);}
+
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:480;
+    font-size:clamp(38px,4.6vw,58px);
+    line-height:1.08;
+    letter-spacing:-.01em;
+    color:#f4fcfe;
+    margin-bottom:24px;
+  }
+  h1 em{
+    font-style:italic; font-weight:460; color:var(--cyan);
+    background:linear-gradient(90deg, var(--cyan), var(--cyan-soft));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .lead{
+    font-size:16.5px; line-height:1.75; color:var(--muted);
+    max-width:480px; margin-bottom:38px;
+  }
+
+  .stat-row{display:flex; gap:0; border-top:1px solid var(--line);}
+  .stat{
+    flex:1; padding:20px 22px 0 0; border-right:1px solid var(--line);
+  }
+  .stat:last-child{border-right:none;}
+  .stat b{
+    display:block; font-family:'JetBrains Mono',monospace; font-size:26px;
+    color:var(--cyan); font-weight:500;
+  }
+  .stat span{font-size:11.5px; color:var(--muted-2); letter-spacing:.4px;}
+
+  /* hero visual: abstract node network */
+  .hero-visual{position:relative; aspect-ratio:1/1; max-width:420px; justify-self:end;}
+  .hero-visual svg{width:100%; height:100%; overflow:visible;}
+  .node{filter:drop-shadow(0 0 6px rgba(0,229,255,.5));}
+  .core-ring{transform-origin:center; animation:spin 40s linear infinite;}
+  .core-ring-2{transform-origin:center; animation:spin 60s linear infinite reverse;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media (prefers-reduced-motion: reduce){
+    .core-ring, .core-ring-2{animation:none;}
+  }
+
+  /* PIPELINE */
+  .pipeline{padding:30px 0 10px;}
+  .section-head{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom:52px; flex-wrap:wrap; gap:14px; border-bottom:1px solid var(--line); padding-bottom:22px;
+  }
+  .section-head h2{
+    font-family:'Fraunces',serif; font-weight:480; font-size:28px; color:#f0fbfd; letter-spacing:-.01em;
+  }
+  .section-head p{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted-2); letter-spacing:.5px;}
+
+  .stages{display:flex; flex-direction:column; gap:0;}
+  .stage{
+    display:grid; grid-template-columns:64px 1fr; gap:26px;
+    padding:38px 0; border-bottom:1px solid var(--line);
+    opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease;
+  }
+  .stage.in{opacity:1; transform:none;}
+  .stage:last-child{border-bottom:none;}
+
+  .stage-icon{
+    width:56px; height:56px; border-radius:12px;
+    background:var(--panel-2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .stage-icon::after{
+    content:""; position:absolute; inset:-1px; border-radius:12px;
+    box-shadow:0 0 0 1px rgba(0,229,255,.08) inset;
+  }
+  .stage-icon svg{width:24px; height:24px; stroke:var(--cyan); fill:none; stroke-width:1.5;}
+
+  .stage-body-top{display:flex; align-items:baseline; gap:16px; margin-bottom:12px; flex-wrap:wrap;}
+  .stage-idx{font-family:'JetBrains Mono',monospace; color:var(--muted-2); font-size:12px;}
+  .stage-name{font-family:'Fraunces',serif; font-size:24px; font-weight:500; color:#f0fbfd;}
+  .stage-n{
+    margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    color:var(--cyan); border:1px solid var(--cyan-dim); border-radius:20px;
+    padding:4px 13px; white-space:nowrap;
+  }
+  .stage-desc{color:var(--muted); font-size:14.5px; line-height:1.75; margin-bottom:20px; max-width:640px;}
+
+  .tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .tag{
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#bfe4ec;
+    background:var(--panel); border:1px solid var(--line);
+    padding:7px 13px; border-radius:7px;
+    transition:border-color .2s, color .2s, transform .2s, background .2s;
+  }
+  .tag:hover{border-color:var(--cyan-dim); color:var(--cyan); background:#0d1c22; transform:translateY(-1px);}
+
+  /* CLOSER */
+  .closer{
+    margin-top:80px; padding:90px 0 100px; text-align:center;
+    border-top:1px solid var(--line); position:relative;
+  }
+  .closer::before{
+    content:""; position:absolute; top:-1px; left:50%; transform:translateX(-50%);
+    width:120px; height:1px; background:var(--cyan); box-shadow:0 0 20px var(--cyan);
+  }
+  .closer h3{
+    font-family:'Fraunces',serif; font-weight:480; font-size:clamp(26px,3.4vw,36px);
+    max-width:600px; margin:0 auto 34px; line-height:1.3; color:#f2fbfd;
+  }
+  .cta{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:1.4px;
+    color:var(--bg); background:var(--cyan);
+    padding:16px 32px; border-radius:8px; text-decoration:none;
+    text-transform:uppercase; font-weight:500;
+    box-shadow:0 0 34px rgba(0,229,255,.28);
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .cta:hover{transform:translateY(-2px); box-shadow:0 0 46px rgba(0,229,255,.42);}
+  .foot-note{margin-top:34px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted-2); letter-spacing:1.5px;}
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr; padding-bottom:60px;}
+    .hero-visual{justify-self:center; max-width:280px; margin-top:20px;}
+    .stat-row{flex-wrap:wrap; row-gap:20px;}
+    .stat{flex:1 1 45%; border-right:none; border-bottom:1px solid var(--line); padding-bottom:16px;}
+  }
+  @media (max-width:600px){
+    .stage{grid-template-columns:48px 1fr; gap:16px; padding:28px 0;}
+    .stage-icon{width:44px; height:44px;}
+    .stage-icon svg{width:20px; height:20px;}
+    .stage-name{font-size:19px;}
+    .stage-n{margin-left:0;}
+    .stage-body-top{gap:10px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav class="nav">
+    <div class="brand"><span class="dot"></span>ORIZON <small>// ATS</small></div>
+    <a class="ext" href="https://orizonrs.com/" target="_blank" rel="noopener">orizonrs.com ↗</a>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <div class="eyebrow"><span class="rule"></span>Por dentro do sistema</div>
+      <h1>Um único fluxo.<br><em>79 módulos</em> em movimento.</h1>
+      <p class="lead">Da primeira triagem até a carta de oferta assinada, cada etapa do processo seletivo passa por um motor construído sob medida. Nenhuma tela aberta aqui, nenhum dado exposto — só o que ele faz.</p>
+      <div class="stat-row">
+        <div class="stat"><b>79</b><span>MÓDULOS ATIVOS</span></div>
+        <div class="stat"><b>05</b><span>ESTÁGIOS DE FLUXO</span></div>
+        <div class="stat"><b>100%</b><span>CONSTRUÍDO SOB MEDIDA</span></div>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <svg viewBox="0 0 400 400">
+        <g class="core-ring">
+          <circle cx="200" cy="200" r="160" fill="none" stroke="#123038" stroke-width="1"/>
+          <circle class="node" cx="200" cy="40" r="5" fill="#00e5ff"/>
+          <circle class="node" cx="352" cy="120" r="4" fill="#0a7f96"/>
+          <circle class="node" cx="352" cy="280" r="4" fill="#0a7f96"/>
+          <circle class="node" cx="200" cy="360" r="5" fill="#00e5ff"/>
+          <circle class="node" cx="48" cy="280" r="4" fill="#0a7f96"/>
+          <circle class="node" cx="48" cy="120" r="4" fill="#0a7f96"/>
+        </g>
+        <g class="core-ring-2">
+          <circle cx="200" cy="200" r="105" fill="none" stroke="#152833" stroke-width="1" stroke-dasharray="2 6"/>
+        </g>
+        <circle cx="200" cy="200" r="54" fill="none" stroke="#00e5ff" stroke-width="1.2" opacity=".6"/>
+        <circle cx="200" cy="200" r="3" fill="#00e5ff"/>
+        <line x1="200" y1="200" x2="200" y2="40" stroke="#0a7f96" stroke-width="1" opacity=".5"/>
+        <line x1="200" y1="200" x2="352" y2="120" stroke="#0a7f96" stroke-width="1" opacity=".35"/>
+        <line x1="200" y1="200" x2="352" y2="280" stroke="#0a7f96" stroke-width="1" opacity=".35"/>
+        <line x1="200" y1="200" x2="200" y2="360" stroke="#0a7f96" stroke-width="1" opacity=".5"/>
+        <line x1="200" y1="200" x2="48" y2="280" stroke="#0a7f96" stroke-width="1" opacity=".35"/>
+        <line x1="200" y1="200" x2="48" y2="120" stroke="#0a7f96" stroke-width="1" opacity=".35"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="pipeline">
+    <div class="section-head">
+      <h2>O fluxo, estágio por estágio</h2>
+      <p>SEQUÊNCIA REAL · DA CAPTAÇÃO À INTELIGÊNCIA</p>
+    </div>
+
+    <div class="stages" id="stages">
+
+      <div class="stage">
+        <div class="stage-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 4h18l-7 9v6l-4 2v-8z" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="stage-body-top">
+            <span class="stage-idx">01</span>
+            <span class="stage-name">Captação</span>
+            <span class="stage-n">15 módulos</span>
+          </div>
+          <p class="stage-desc">Onde a vaga nasce: briefing com o cliente, publicação, banco de talentos, mapa de candidatos e portal próprio — tudo organizado antes do primeiro currículo chegar.</p>
+          <div class="tags">
+            <span class="tag">Briefing de Vaga</span>
+            <span class="tag">Vagas ATS</span>
+            <span class="tag">Publicar no Site</span>
+            <span class="tag">Importar Currículos</span>
+            <span class="tag">Banco de Talentos</span>
+            <span class="tag">Mapa de Talentos</span>
+            <span class="tag">Indicações</span>
+            <span class="tag">Portal do Candidato</span>
+            <span class="tag">Recolocações</span>
+            <span class="tag">Escolas</span>
+            <span class="tag">Clientes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-icon">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="stage-body-top">
+            <span class="stage-idx">02</span>
+            <span class="stage-name">Avaliação</span>
+            <span class="stage-n">23 módulos</span>
+          </div>
+          <p class="stage-desc">O maior bloco do sistema. Triagem com scoring, entrevistas em cada estágio, teste comportamental DISC completo, scorecard estruturado e comparação lado a lado dos candidatos.</p>
+          <div class="tags">
+            <span class="tag">Triagem & Scoring</span>
+            <span class="tag">Pipeline de Triagem</span>
+            <span class="tag">Pré-Entrevista</span>
+            <span class="tag">Fit Score</span>
+            <span class="tag">Scorecard de Entrevista</span>
+            <span class="tag">DISC</span>
+            <span class="tag">Perfil 5 Eixos</span>
+            <span class="tag">Parecer DISC</span>
+            <span class="tag">Fit Predictor</span>
+            <span class="tag">Comparativo de Candidatos</span>
+            <span class="tag">Banco de Perguntas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-icon">
+          <svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </div>
+        <div>
+          <div class="stage-body-top">
+            <span class="stage-idx">03</span>
+            <span class="stage-name">Automação</span>
+            <span class="stage-n">9 módulos</span>
+          </div>
+          <p class="stage-desc">O que roda sozinho: agendamento, disparo de e-mails e WhatsApp integrado, régua de relacionamento com o candidato e carta de oferta gerada ao fechar a vaga.</p>
+          <div class="tags">
+            <span class="tag">WhatsApp</span>
+            <span class="tag">E-mails em Massa</span>
+            <span class="tag">Notificações</span>
+            <span class="tag">Régua de Relacionamento</span>
+            <span class="tag">Retorno Automático</span>
+            <span class="tag">Agendamento</span>
+            <span class="tag">Carta de Oferta</span>
+            <span class="tag">Contratos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="stage-body-top">
+            <span class="stage-idx">04</span>
+            <span class="stage-name">Operação</span>
+            <span class="stage-n">14 módulos</span>
+          </div>
+          <p class="stage-desc">O controle por trás do processo: prazos por etapa, tarefas da equipe, metas de recrutador, permissões de acesso, trilha de auditoria e backup — nada se perde no caminho.</p>
+          <div class="tags">
+            <span class="tag">SLA & Prazos</span>
+            <span class="tag">Tarefas</span>
+            <span class="tag">Pendências</span>
+            <span class="tag">Meta do Recrutador</span>
+            <span class="tag">Onboarding de Recrutador</span>
+            <span class="tag">Permissões</span>
+            <span class="tag">Integrações</span>
+            <span class="tag">Auditoria</span>
+            <span class="tag">Backup & Export</span>
+            <span class="tag">Equipe</span>
+            <span class="tag">Comissionamento</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="stage-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 15l4-5 4 3 5-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <div class="stage-body-top">
+            <span class="stage-idx">05</span>
+            <span class="stage-name">Inteligência</span>
+            <span class="stage-n">18 módulos</span>
+          </div>
+          <p class="stage-desc">O que a Orizon aprende com cada processo: previsão de fechamento, NPS de candidatos e clientes, pesquisa de clima pós-contratação e um ranking dos melhores contratados.</p>
+          <div class="tags">
+            <span class="tag">Dashboard</span>
+            <span class="tag">Analytics</span>
+            <span class="tag">Previsão de Fechamento</span>
+            <span class="tag">Taxa de Conversão</span>
+            <span class="tag">Tempo Médio por Etapa</span>
+            <span class="tag">Análise de Desistência</span>
+            <span class="tag">NPS Candidatos</span>
+            <span class="tag">NPS Clientes</span>
+            <span class="tag">Pesquisa de Clima</span>
+            <span class="tag">Relatório Executivo</span>
+            <span class="tag">Hall dos Craques</span>
+            <span class="tag">Histórico por Cliente</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="closer">
+    <h3>Tudo isso construído do zero, rodando hoje por trás de cada vaga aberta pela Orizon.</h3>
+    <a class="cta" href="https://orizonrs.com/" target="_blank" rel="noopener">Conhecer a Orizon →</a>
+    <div class="foot-note">ORIZON CONSULTORIA · GESTÃO, RH & RECRUTAMENTO · GUAÍBA / RS</div>
+  </section>
+</div>
+
+<script>
+  const stages = document.querySelectorAll('.stage');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:.15});
+  stages.forEach(s=>io.observe(s));
+</script>
+
+</body>
+</html>
