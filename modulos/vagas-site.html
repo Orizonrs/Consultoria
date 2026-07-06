@@ -965,6 +965,39 @@ async function gerarHTML(){
   const tituloEsc=esc(titulo);
   const cidadeEsc=esc(cidade);
 
+  // ── Dados de endereço/CEP para o Google Jobs (evita avisos de dados incompletos) ──
+  const _cepMap={
+    'guaíba':'92500-000','guaiba':'92500-000','porto alegre':'90000-000','canoas':'92000-000',
+    'novo hamburgo':'93300-000','são leopoldo':'93000-000','sao leopoldo':'93000-000',
+    'gravataí':'94000-000','gravatai':'94000-000','viamão':'94400-000','viamao':'94400-000',
+    'alvorada':'94800-000','cachoeirinha':'94900-000','esteio':'93260-000',
+    'sapucaia do sul':'93210-000','eldorado do sul':'92990-000','pelotas':'96000-000',
+    'caxias do sul':'95000-000','santa maria':'97000-000','passo fundo':'99000-000',
+    'uruguaiana':'97500-000','bagé':'96400-000','bage':'96400-000','rio grande':'96200-000',
+    'santa cruz do sul':'96800-000','lajeado':'95900-000','charqueadas':'92760-000','outra':'92500-000'
+  };
+  const _cidadeNome=(cidade.split(',')[0]||cidade||'Guaíba').trim();
+  const _estadoNome=(cidade.includes(',')?cidade.split(',')[1].trim():'RS')||'RS';
+  const _cidadeKey=_cidadeNome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const _cepDinamico=_cepMap[_cidadeKey]||'92500-000';
+
+  // ── Mapeia campos livres do formulário para os valores que o Google Jobs aceita ──
+  function _mapEducacao(v){
+    const e=(v||'').toLowerCase();
+    if(e.includes('superior')) return 'bachelor degree';
+    if(e.includes('técnico')||e.includes('tecnico')) return 'associate degree';
+    if(e.includes('médio')||e.includes('medio')) return 'high school';
+    if(e.includes('fundamental')) return 'high school';
+    return 'no requirement';
+  }
+  function _mapExperiencia(v){
+    const n=(v||'').toLowerCase();
+    if(n.includes('sênior')||n.includes('senior')) return 60;
+    if(n.includes('pleno')) return 24;
+    if(n.includes('operacional')||n.includes('técnico')||n.includes('tecnico')||n.includes('júnior')||n.includes('junior')) return 0;
+    return 0;
+  }
+
   // Canais ativos — monta array para data-attribute do card
   const canaisAtivos=[];
   if(document.getElementById('mForms').checked)    canaisAtivos.push('forms');
@@ -1112,8 +1145,10 @@ ${linhasLi(beneficios)}
           "@type": "Place",
           "address": {
             "@type": "PostalAddress",
-            "addressLocality": "${esc(cidade.split(',')[0]||cidade)}",
-            "addressRegion": "${esc(cidade.includes(',')?cidade.split(',')[1].trim():'RS')}",
+            "streetAddress": "${esc(_cidadeNome)}, ${esc(_estadoNome)}",
+            "addressLocality": "${esc(_cidadeNome)}",
+            "addressRegion": "${esc(_estadoNome)}",
+            "postalCode": "${_cepDinamico}",
             "addressCountry": "BR"
           }
         },
@@ -1127,8 +1162,14 @@ ${linhasLi(beneficios)}
           }
         },
         ${modalid==='Remoto'?'"jobLocationType": "TELECOMMUTE",':''}
-        "educationRequirements": "${esc(escolaridade)}",
-        "experienceRequirements": "${esc(nivel)}",
+        "educationRequirements": {
+          "@type": "EducationalOccupationalCredential",
+          "credentialCategory": "${_mapEducacao(escolaridade)}"
+        },
+        "experienceRequirements": {
+          "@type": "OccupationalExperienceRequirements",
+          "monthsOfExperience": ${_mapExperiencia(nivel)}
+        },
         "industry": "${esc(segmento)}",
         "occupationalCategory": "${esc(area)}"
       }
