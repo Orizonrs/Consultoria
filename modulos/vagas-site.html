@@ -883,6 +883,12 @@ async function ghExcluir(c,path,msg){
 
 // ── HELPERS ───────────────────────────────────────────────────
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// Escapa texto para uso seguro DENTRO de um valor string de JSON-LD (evita quebrar
+// o JSON quando o texto tem quebras de linha, aspas, barras invertidas, etc).
+// Retorna a string JÁ COM AS ASPAS incluídas — não envolver o resultado em "..." de novo.
+function escJson(s){
+  return JSON.stringify(String(s||'')).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
+}
 function slugify(t){return('vaga-'+t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''));}
 function linhasLi(txt){return(txt||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>`                <li><span class="li-icon"></span> ${esc(l)}</li>`).join('\n');}
 function toggleConfidencial(){const c=document.getElementById('vConfidencial'),el=document.getElementById('vEmpresa');if(c.checked){el.value='Confidencial';el.disabled=true;}else{el.value='';el.disabled=false;}atualizarPreview();}
@@ -1131,7 +1137,7 @@ ${linhasLi(beneficios)}
         "@context": "https://schema.org/",
         "@type": "JobPosting",
         "title": "${esc(titulo)}",
-        "description": "${esc(descricao)} Requisitos: ${esc(requisitos)} Benefícios: ${esc(beneficios)}",
+        "description": ${escJson(`${descricao} Requisitos: ${requisitos} Benefícios: ${beneficios}`)},
         "datePosted": "${data}",
         "validThrough": "${new Date(new Date(data).setMonth(new Date(data).getMonth()+2)).toISOString().split('T')[0]}",
         "employmentType": "${regime==='Efetivo'?'FULL_TIME':regime==='Estágio'?'INTERN':regime==='Aprendiz'?'PART_TIME':regime==='PJ'?'CONTRACTOR':regime==='Temporário'?'TEMPORARY':'OTHER'}",
