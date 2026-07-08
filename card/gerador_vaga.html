@@ -67,6 +67,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 .lr{display:flex;gap:5px;align-items:center}
 .lr input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--bd);border-radius:2px;color:var(--wh);font-size:12px;padding:6px 8px;outline:none;transition:.18s;font-family:'DM Sans',sans-serif}
 .lr input:focus{border-color:rgba(0,200,255,.35)}
+.lr2{display:flex;gap:5px;align-items:center}
+.lr2 input{background:rgba(0,0,0,.4);border:1px solid var(--bd);border-radius:2px;color:var(--wh);font-size:12px;padding:6px 8px;outline:none;transition:.18s;font-family:'DM Sans',sans-serif}
+.lr2 input:focus{border-color:rgba(0,200,255,.35)}
+.lr2 input.lrk{flex:0 0 34%}
+.lr2 input.lrv{flex:1}
 .bx{width:22px;height:22px;border:1px solid rgba(255,80,80,.22);border-radius:2px;background:transparent;color:rgba(255,80,80,.5);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
 .bx:hover{border-color:rgba(255,80,80,.7);color:#ff5050}
 .badd{margin-top:4px;width:100%;background:transparent;border:1px dashed rgba(0,200,255,.18);border-radius:2px;color:var(--cd);font-size:11px;padding:6px;cursor:pointer;transition:.18s;font-family:'DM Sans',sans-serif}
@@ -269,6 +274,11 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
       </div>
       <div class="fld"><label>Horário</label><input id="horario" value="Segunda a Sexta — 08h às 17h" oninput="upd()"></div>
       <div class="fld"><label>Remuneração (opcional)</label><input id="sal" value="" placeholder="ex: R$ 3.500,00" oninput="upd()"></div>
+    </div>
+    <div class="sec">
+      <div class="slbl">Informações Extras (opcional)</div>
+      <div class="led" id="lExtra"></div>
+      <button class="badd" onclick="addExtra()">+ Adicionar campo livre</button>
     </div>
     <div class="sec">
       <div class="slbl">Diferenciais</div>
@@ -518,6 +528,7 @@ let ativ  = ['Suporte ao processo de recrutamento e seleção','Elaboração e p
 let req   = ['Cursando Psicologia, Administração ou áreas afins','Boa comunicação oral e escrita','Organização e atenção aos detalhes','Proatividade e trabalho em equipe'];
 let diff  = ['Experiência com sistemas ATS','Inglês intermediário','Vivência em consultoria de RH'];
 let benef = [];
+let extra = []; // campos livres: {k:'Rótulo', v:'Valor'}
 
 // ── TEMAS ────────────────────────────────────────────────────────
 const TH = {
@@ -597,12 +608,24 @@ function goTab(i,btn){
 }
 
 // ── LIST EDITORS ─────────────────────────────────────────────────
-function renderLists(){rl('lAtiv',ativ,'ativ');rl('lReq',req,'req');rl('lDiff',diff,'diff');rl('lBenef',benef,'benef');}
+function renderLists(){rl('lAtiv',ativ,'ativ');rl('lReq',req,'req');rl('lDiff',diff,'diff');rl('lBenef',benef,'benef');rlExtra();}
 function rl(id,arr,k){
   document.getElementById(id).innerHTML=arr.map((v,i)=>
     `<div class="lr"><input value="${esc(v)}" onchange="au('${k}',${i},this.value)"><button class="bx" onclick="del('${k}',${i})">✕</button></div>`
   ).join('');
 }
+function rlExtra(){
+  document.getElementById('lExtra').innerHTML=extra.map((e,i)=>
+    `<div class="lr2">
+      <input class="lrk" placeholder="Rótulo" value="${esc(e.k)}" onchange="auExtra(${i},'k',this.value)">
+      <input class="lrv" placeholder="Valor" value="${esc(e.v)}" onchange="auExtra(${i},'v',this.value)">
+      <button class="bx" onclick="delExtra(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+function addExtra(){extra.push({k:'',v:''});rlExtra();upd()}
+function auExtra(i,field,val){extra[i][field]=val;upd()}
+function delExtra(i){extra.splice(i,1);rlExtra();upd()}
 function esc(s){return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}
 function au(k,i,v){ga(k)[i]=v;upd()}
 function del(k,i){ga(k).splice(i,1);renderLists();upd()}
@@ -680,6 +703,7 @@ function upd(){
   const cells=[{k:'Localidade',v:loc},{k:'Modalidade',v:mod},{k:'Horário',v:hor},{k:'Contrato',v:tipo}];
   if(sSal&&sal) cells.push({k:'Remuneração',v:sal});
   if(area) cells.push({k:'Área',v:area});
+  extra.forEach(e=>{ if(e.k.trim()||e.v.trim()) cells.push({k:e.k.trim()||'Info', v:e.v}); });
   document.getElementById('p3info').innerHTML=cells.map(c=>`<div class="icell"><div class="ick">${c.k}</div><div class="icv">${c.v}</div></div>`).join('');
   // Numeração seções p3
   let n=3;
@@ -743,10 +767,11 @@ function getDados(){
   const cells  = [{k:'Localidade',v:loc},{k:'Modalidade',v:mod},{k:'Horário',v:hor},{k:'Contrato',v:tipo}];
   if(sSal&&sal) cells.push({k:'Remuneração',v:sal});
   if(area) cells.push({k:'Área',v:area});
+  extra.forEach(e=>{ if(e.k.trim()||e.v.trim()) cells.push({k:e.k.trim()||'Info', v:e.v}); });
   const contato = getContato();
   let nSeq = 3;
-  const nBenefImg = (sBenef && benef.length) ? pad(nSeq++) : null;
   const nDiffImg  = (sDiff  && diff.length)  ? pad(nSeq++) : null;
+  const nBenefImg = (sBenef && benef.length) ? pad(nSeq++) : null;
   const nInfoImg  = pad(nSeq);
   return {
     emp:   v('empresa')||'EMPRESA',
@@ -831,6 +856,12 @@ function buildSocialPage(pageType, w, h, d){
 
   const items = arr => arr.map(t=>`<div style="${itemStyle}"><div style="${dotStyle}"></div><span style="${txtStyle}">${t}</span></div>`).join('');
 
+  const tagStyle = `background:rgba(${r},.08);border:1px solid rgba(${r},.25);color:rgba(232,244,255,.82);font-size:${F.md};padding:${Math.round(base*0.3)}px ${Math.round(base*0.6)}px;border-radius:3px;${F.sans}`;
+  const diffBlock = (topGap) => `<div style="${topGap ? `margin-top:${topGap}px` : ''}">
+    ${secHead(d.nDiffImg,'Diferenciais')}
+    <div style="display:flex;flex-wrap:wrap;gap:${Math.round(base*0.3)}px">${d.diff.map(t=>`<span style="${tagStyle}">${t}</span>`).join('')}</div>
+  </div>`;
+
   // ── PAGE: CAPA ──────────────────────────────────────────────
   if(pageType === 'capa'){
     const pill = (icon, label, val) => `
@@ -898,7 +929,7 @@ function buildSocialPage(pageType, w, h, d){
         <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
           ${logoHtml}
-          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+          <div style="font-size:${F.xs};color:rgba(255,255,255,.85);font-weight:600;letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
         </div>
         <!-- Atividades -->
         <div style="margin-bottom:auto">
@@ -907,7 +938,7 @@ function buildSocialPage(pageType, w, h, d){
         </div>
         <!-- Footer -->
         <div style="padding-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.92);font-weight:600;letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
           <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
         </div>
       </div>
@@ -932,16 +963,16 @@ function buildSocialPage(pageType, w, h, d){
         <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
           ${logoHtml}
-          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+          <div style="font-size:${F.xs};color:rgba(255,255,255,.85);font-weight:600;letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
         </div>
-        <!-- Requisitos -->
+        <!-- Requisitos + Diferenciais -->
         <div style="margin-bottom:auto">
-          ${secHead('02','Requisitos')}
-          ${items(d.req)}
+          ${d.req.length ? `${secHead('02','Requisitos')}${items(d.req)}` : ''}
+          ${d.sDiff && d.diff.length ? diffBlock(d.req.length ? Math.round(h*0.045) : 0) : ''}
         </div>
         <!-- Footer -->
         <div style="padding-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.92);font-weight:600;letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
           <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
         </div>
       </div>
@@ -966,7 +997,7 @@ function buildSocialPage(pageType, w, h, d){
         <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
           ${logoHtml}
-          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+          <div style="font-size:${F.xs};color:rgba(255,255,255,.85);font-weight:600;letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
         </div>
         <!-- Benefícios -->
         <div style="margin-bottom:auto">
@@ -975,16 +1006,15 @@ function buildSocialPage(pageType, w, h, d){
         </div>
         <!-- Footer -->
         <div style="padding-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.92);font-weight:600;letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
           <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
         </div>
       </div>
     </body></html>`;
   }
 
-  // ── PAGE: DIFERENCIAIS + INFOS + CTA ───────────────────────
+  // ── PAGE: INFOS DA VAGA + CTA / CONTATO ───────────────────────
   if(pageType === 'final'){
-    const tagStyle = `background:rgba(${r},.08);border:1px solid rgba(${r},.25);color:rgba(232,244,255,.82);font-size:${F.md};padding:${Math.round(base*0.3)}px ${Math.round(base*0.6)}px;border-radius:3px;${F.sans}`;
     const cellStyle = `background:rgba(0,0,0,.35);border:1px solid rgba(${r},.16);border-radius:4px;padding:${Math.round(base*0.6)}px ${Math.round(base*0.7)}px`;
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -1003,13 +1033,8 @@ function buildSocialPage(pageType, w, h, d){
         <!-- Header -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${Math.round(h*0.055)}px;padding-bottom:${Math.round(base*0.5)}px;border-bottom:1px solid rgba(${r},.2)">
           ${logoHtml}
-          <div style="font-size:${F.xs};color:rgba(${r},.55);letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
+          <div style="font-size:${F.xs};color:rgba(255,255,255,.85);font-weight:600;letter-spacing:2px;text-align:right;${F.mono}">${d.tipo} · ${d.cargo.toUpperCase()}</div>
         </div>
-
-        ${d.sDiff && d.diff.length ? `<div style="margin-bottom:${Math.round(h*0.045)}px">
-          ${secHead(d.nDiffImg,'Diferenciais')}
-          <div style="display:flex;flex-wrap:wrap;gap:${Math.round(base*0.3)}px">${d.diff.map(t=>`<span style="${tagStyle}">${t}</span>`).join('')}</div>
-        </div>` : ''}
 
         <div style="margin-bottom:${Math.round(h*0.045)}px">
           ${secHead(d.nInfoImg,'Informações da Vaga')}
@@ -1033,7 +1058,7 @@ function buildSocialPage(pageType, w, h, d){
 
         <!-- Footer -->
         <div style="padding-top:${Math.round(base*0.5)}px;margin-top:${Math.round(base*0.5)}px;border-top:1px solid rgba(${r},.12);display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:${F.xs};color:rgba(255,255,255,.6);letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
+          <span style="font-size:${F.xs};color:rgba(255,255,255,.92);font-weight:600;letter-spacing:2px;${F.mono}">${d.emp.toUpperCase()} · ${d.sub.toUpperCase()}</span>
           <span style="font-size:${F.sm};font-weight:700;color:#fff;${F.sans}">${d.mail}</span>
         </div>
       </div>
@@ -1093,7 +1118,7 @@ async function exportarImagens(){
   // Monta a lista de páginas dinamicamente: cada seção vira sua própria imagem
   const pages = [{type:'capa', label:'capa'}];
   if(d.ativ.length) pages.push({type:'atividades', label:'atividades'});
-  if(d.req.length)  pages.push({type:'requisitos', label:'requisitos'});
+  if(d.req.length || (d.sDiff && d.diff.length)) pages.push({type:'requisitos', label:'requisitos'});
   if(d.sBenef && d.benef.length) pages.push({type:'beneficios', label:'beneficios'});
   pages.push({type:'final', label:'detalhes'});
 
