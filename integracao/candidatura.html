@@ -2258,6 +2258,21 @@ function mostrarGateway() {
   document.getElementById('discConcluido').style.display = 'none';
   document.getElementById('discSummary').classList.remove('visible');
   atualizarBadgesResultadosSalvos();
+
+  // Se não tem resultado DISC no localStorage (outra aba, outro dispositivo,
+  // cache limpo), tenta buscar no Supabase pelos dados de contato antes de
+  // simplesmente deixar a pessoa sem opção de reaproveitar.
+  if (!discResultado) {
+    const c = contatoAtual();
+    if (c.email || c.tel || c.mae || c.nome) {
+      buscarDiscResultadoPorContato(candidaturaId, c.nome, c.email, c.tel, c.mae).then(r => {
+        if (r && !discResultado) {
+          discResultado = r;
+          atualizarBadgesResultadosSalvos();
+        }
+      });
+    }
+  }
 }
 
 // Retorna o resultado salvo (se houver e ainda válido) que corresponde ao
@@ -2359,82 +2374,113 @@ function handlePdaReturn() {
   verificarPdaLS();
 }
 
+// Busca um resultado DISC salvo no Supabase (banco = fonte da verdade)
+// usando os dados de contato disponíveis (id, email, telefone, mãe, nome).
+// Usada tanto na volta do teste (handleDiscReturn) quanto num carregamento
+// normal da página, quando o localStorage não tem nada (outro dispositivo,
+// outra aba, cache limpo, etc.) — pra nunca obrigar a refazer à toa.
+async function buscarDiscResultadoPorContato(idParam, nomeParam, emailParam, telParam, maeParam) {
+  try {
+    const _id    = idParam   || candidaturaId;
+    const _nome  = nomeParam || '';
+    const _email = emailParam|| '';
+    const _tel   = telParam  || '';
+    const _mae   = maeParam  || '';
+    const TTL_3_SEMANAS = 21 * 24 * 60 * 60 * 1000;
+    let registro = null;
+
+    if (_id) {
+      const r = await fetch(`${SB}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_id)}&select=id,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&limit=1`, { headers: sbHeaders() });
+      if (r.ok) { const arr = await r.json(); if (arr && arr[0]) registro = arr[0]; }
+    }
+
+    if (!registro && (_email || _mae || _tel || _nome)) {
+      const SELECT_DISC = 'id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em';
+      const _telDigits = (_tel || '').replace(/\D/g, '');
+      const buscasDisc = await Promise.allSettled([
+        _email ? fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email.toLowerCase().trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
+        _mae   ? fetch(`${SB}/rest/v1/disc_historico?nome_mae=eq.${encodeURIComponent(_mae.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
+        _tel   ? fetch(`${SB}/rest/v1/disc_historico?tel_externo=eq.${encodeURIComponent(_tel.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
+        _nome  ? fetch(`${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(_nome.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
+      ]);
+      const vistos2 = new Set();
+      let candidatosDisc = [];
+      for (const b of buscasDisc) {
+        const lista = (b.status === 'fulfilled' && Array.isArray(b.value)) ? b.value : [];
+        for (const c of lista) { if (!vistos2.has(c.id)) { vistos2.add(c.id); candidatosDisc.push(c); } }
+      }
+      function pontuarDisc(c) {
+        let pts = 0;
+        if (_email && (c.email_externo||'').toLowerCase().trim() === _email.toLowerCase().trim()) pts += 4;
+        if (_mae   && (c.nome_mae    ||'').toLowerCase().trim() === _mae.toLowerCase().trim())   pts += 3;
+        if (_telDigits && (c.tel_externo||'').replace(/\D/g,'') === _telDigits)                  pts += 2;
+        if (_nome  && (c.nome        ||'').toLowerCase().trim() === _nome.toLowerCase().trim())   pts += 1;
+        return pts;
+      }
+      candidatosDisc.sort((a, b) => {
+        const pa = pontuarDisc(a), pb = pontuarDisc(b);
+        if (pa !== pb) return pb - pa;
+        const aDisc = !!(a.disc_perfil && parseFloat(a.pct_d||0) > 0);
+        const bDisc = !!(b.disc_perfil && parseFloat(b.pct_d||0) > 0);
+        return (aDisc ? 0 : 1) - (bDisc ? 0 : 1);
+      });
+      const _melhorPtsDisc = candidatosDisc.length > 0 ? pontuarDisc(candidatosDisc[0]) : 0;
+      let melhorDisc = (_melhorPtsDisc >= 2) ? candidatosDisc[0] : null;
+      if (melhorDisc && !(melhorDisc.disc_perfil && parseFloat(melhorDisc.pct_d||0) > 0)) {
+        const comDiscAlt = candidatosDisc.find(c => pontuarDisc(c) === _melhorPtsDisc && c.disc_perfil && parseFloat(c.pct_d||0) > 0);
+        if (comDiscAlt) melhorDisc = comDiscAlt;
+      }
+      if (melhorDisc) registro = melhorDisc;
+    }
+
+    if (registro && registro.disc_perfil) {
+      const discAt = registro.disc_atualizado_em ? new Date(registro.disc_atualizado_em).getTime() : 0;
+      if ((Date.now() - discAt) < TTL_3_SEMANAS) {
+        const dom = registro.disc_perfil, sec = registro.sec || '';
+        const resultado = {
+          dominante: dom, dom, secundario: sec, sec,
+          nome: dom + (sec ? '+' + sec : ''),
+          pct: { D: parseFloat(registro.pct_d||0), I: parseFloat(registro.pct_i||0), S: parseFloat(registro.pct_s||0), C: parseFloat(registro.pct_c||0) },
+          tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
+          ts: Date.now(),
+        };
+        if (!candidaturaId && registro.id) {
+          candidaturaId = registro.id;
+          try { localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() })); } catch(e){}
+        }
+        try { localStorage.setItem(LS_DISC_RES, JSON.stringify(resultado)); } catch(e){}
+        return resultado;
+      }
+    }
+    return null;
+  } catch(e) { console.warn('buscarDiscResultadoPorContato:', e); return null; }
+}
+
+// Lê os dados de contato disponíveis agora (inputs preenchidos ou o que
+// ficou salvo do passo 1) — usado pra alimentar a busca no Supabase.
+function contatoAtual() {
+  let dados = {};
+  try { dados = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '{}'); } catch(e){}
+  const nome  = document.getElementById('inNome')?.value  || dados.nome  || '';
+  const email = document.getElementById('inEmail')?.value || dados.email || '';
+  const tel   = document.getElementById('inTel')?.value   || dados.tel   || '';
+  const mae   = document.getElementById('inMae')?.value   || dados.mae   || '';
+  return { nome, email, tel, mae };
+}
+
 async function handleDiscReturn() {
   verificarDiscLS();
   if (!discResultado) {
-    try {
-      const up2  = new URLSearchParams(window.location.search);
-      const _id   = up2.get('candidato_id') || candidaturaId;
-      const _nome  = up2.get('nome')  || '';
-      const _email = up2.get('email') || '';
-      const _tel   = up2.get('tel')   || '';
-      const _mae   = up2.get('mae')   || '';
-      const TTL_3_SEMANAS = 21 * 24 * 60 * 60 * 1000;
-      let registro = null;
-
-      if (_id) {
-        const r = await fetch(`${SB}/rest/v1/disc_historico?id=eq.${encodeURIComponent(_id)}&select=id,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&limit=1`, { headers: sbHeaders() });
-        if (r.ok) { const arr = await r.json(); if (arr && arr[0]) registro = arr[0]; }
-      }
-
-      if (!registro && (_email || _mae || _tel || _nome)) {
-        const SELECT_DISC = 'id,nome,email_externo,tel_externo,nome_mae,disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em';
-        const _telDigits = (_tel || '').replace(/\D/g, '');
-        const buscasDisc = await Promise.allSettled([
-          _email ? fetch(`${SB}/rest/v1/disc_historico?email_externo=eq.${encodeURIComponent(_email.toLowerCase().trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
-          _mae   ? fetch(`${SB}/rest/v1/disc_historico?nome_mae=ilike.${encodeURIComponent(_mae.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
-          _tel   ? fetch(`${SB}/rest/v1/disc_historico?tel_externo=eq.${encodeURIComponent(_tel.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
-          _nome  ? fetch(`${SB}/rest/v1/disc_historico?nome=ilike.${encodeURIComponent(_nome.trim())}&select=${SELECT_DISC}&order=criado_em.desc&limit=20`, { headers: sbHeaders() }).then(r => r.ok ? r.json() : []) : Promise.resolve([]),
-        ]);
-        const vistos2 = new Set();
-        let candidatosDisc = [];
-        for (const b of buscasDisc) {
-          const lista = (b.status === 'fulfilled' && Array.isArray(b.value)) ? b.value : [];
-          for (const c of lista) { if (!vistos2.has(c.id)) { vistos2.add(c.id); candidatosDisc.push(c); } }
-        }
-        function pontuarDisc(c) {
-          let pts = 0;
-          if (_email && (c.email_externo||'').toLowerCase().trim() === _email.toLowerCase().trim()) pts += 4;
-          if (_mae   && (c.nome_mae    ||'').toLowerCase().trim() === _mae.toLowerCase().trim())   pts += 3;
-          if (_telDigits && (c.tel_externo||'').replace(/\D/g,'') === _telDigits)                  pts += 2;
-          if (_nome  && (c.nome        ||'').toLowerCase().trim() === _nome.toLowerCase().trim())   pts += 1;
-          return pts;
-        }
-        candidatosDisc.sort((a, b) => {
-          const pa = pontuarDisc(a), pb = pontuarDisc(b);
-          if (pa !== pb) return pb - pa;
-          const aDisc = !!(a.disc_perfil && parseFloat(a.pct_d||0) > 0);
-          const bDisc = !!(b.disc_perfil && parseFloat(b.pct_d||0) > 0);
-          return (aDisc ? 0 : 1) - (bDisc ? 0 : 1);
-        });
-        const _melhorPtsDisc = candidatosDisc.length > 0 ? pontuarDisc(candidatosDisc[0]) : 0;
-        let melhorDisc = (_melhorPtsDisc >= 2) ? candidatosDisc[0] : null;
-        if (melhorDisc && !(melhorDisc.disc_perfil && parseFloat(melhorDisc.pct_d||0) > 0)) {
-          const comDiscAlt = candidatosDisc.find(c => pontuarDisc(c) === _melhorPtsDisc && c.disc_perfil && parseFloat(c.pct_d||0) > 0);
-          if (comDiscAlt) melhorDisc = comDiscAlt;
-        }
-        if (melhorDisc) registro = melhorDisc;
-      }
-
-      if (registro && registro.disc_perfil) {
-        const discAt = registro.disc_atualizado_em ? new Date(registro.disc_atualizado_em).getTime() : 0;
-        if ((Date.now() - discAt) < TTL_3_SEMANAS) {
-          const dom = registro.disc_perfil, sec = registro.sec || '';
-          discResultado = {
-            dominante: dom, dom, secundario: sec, sec,
-            nome: dom + (sec ? '+' + sec : ''),
-            pct: { D: parseFloat(registro.pct_d||0), I: parseFloat(registro.pct_i||0), S: parseFloat(registro.pct_s||0), C: parseFloat(registro.pct_c||0) },
-            tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
-            ts: Date.now(),
-          };
-          if (!candidaturaId && registro.id) {
-            candidaturaId = registro.id;
-            localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() }));
-          }
-          try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e){}
-        }
-      }
-    } catch(e) { console.warn('handleDiscReturn:', e); }
+    const up2 = new URLSearchParams(window.location.search);
+    const c = contatoAtual();
+    const r = await buscarDiscResultadoPorContato(
+      up2.get('candidato_id') || candidaturaId,
+      up2.get('nome')  || c.nome,
+      up2.get('email') || c.email,
+      up2.get('tel')   || c.tel,
+      up2.get('mae')   || c.mae
+    );
+    if (r) discResultado = r;
   }
 
   if (candidaturaId && discResultado) {
