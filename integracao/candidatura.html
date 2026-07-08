@@ -1714,18 +1714,36 @@ function resolverConfigCanais() {
   return VAGAS_CONFIG[VAGA] || CANAL_PADRAO;
 }
 
-const LS_CAND_ID   = 'candidatura_id';
-const LS_CAND_DATA = 'candidatura_dados';
-const LS_DISC_RES  = 'disc_resultado';
-const LS_PDA_RES   = 'pda_resultado';
-const LS_TTL       = 21 * 24 * 60 * 60 * 1000;
+const LS_CAND_ID     = 'candidatura_id';
+const LS_CAND_DATA   = 'candidatura_dados';
+const LS_DISC_RES_IPS = 'disc_resultado_ipsativo';
+const LS_DISC_RES_CLA = 'disc_resultado_classico';
+const LS_DISC_RES_LEGACY = 'disc_resultado'; // chave antiga compartilhada — só para migração
+const LS_PDA_RES     = 'pda_resultado';
+const LS_TTL         = 21 * 24 * 60 * 60 * 1000;
+
+// Retorna a chave de localStorage certa para cada subtipo de DISC.
+function discKeyParaTipo(tipo) {
+  return tipo === 'classico' ? LS_DISC_RES_CLA : LS_DISC_RES_IPS;
+}
 
 let candidaturaId       = null;
+// discResultadoIpsativo / discResultadoClassico: gavetas independentes, uma
+// para cada formato de DISC — fazer um não sobrescreve o outro.
+let discResultadoIpsativo = null;
+let discResultadoClassico = null;
+// discResultado: ponteiro "ativo" usado no fluxo pós-teste (mostrarConcluido,
+// PATCH no Supabase) — sempre aponta pro resultado do teste que acabou de
+// ser concluído ou que foi escolhido para reaproveitar, nunca ambíguo entre
+// ipsativo/clássico.
 let discResultado       = null;
 let pdaResultado        = null;
 let entrevistaId        = null;
 let currentStep         = 1;
 let discTipoSelecionado = 'ipsativo';
+// Guarda qual resultado está na tela "já concluído" agora, pra Refazer
+// limpar só essa gaveta específica — nunca as outras duas por engano.
+let concluidoAtual      = null;
 
 // ──────────────────────────────────────────────
 // INIT
@@ -1777,19 +1795,23 @@ async function init() {
   verificarDiscLS();
   verificarPdaLS();
 
-  if (!discResultado && DISC_OK && up.get('d')) {
-    try {
-      const _dom = up.get('dom') || up.get('perfil') || '';
-      const _sec = up.get('sec') || '';
-      discResultado = {
-        dominante: _dom, dom: _dom, secundario: _sec, sec: _sec,
-        nome: _dom + (_sec ? '+'+_sec : ''),
-        pct: { D: parseFloat(up.get('d')||'0'), I: parseFloat(up.get('i')||'0'), S: parseFloat(up.get('s')||'0'), C: parseFloat(up.get('c')||'0') },
-        tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
-        ts: Date.now(),
-      };
-      localStorage.setItem('disc_resultado', JSON.stringify(discResultado));
-    } catch(e){}
+  if (DISC_OK && up.get('d')) {
+    const _tipoUrl = localStorage.getItem('disc_tipo_iniciado') || 'ipsativo';
+    if (!resultadoSalvoParaTipo(_tipoUrl)) {
+      try {
+        const _dom = up.get('dom') || up.get('perfil') || '';
+        const _sec = up.get('sec') || '';
+        const _res = {
+          dominante: _dom, dom: _dom, secundario: _sec, sec: _sec,
+          nome: _dom + (_sec ? '+'+_sec : ''),
+          pct: { D: parseFloat(up.get('d')||'0'), I: parseFloat(up.get('i')||'0'), S: parseFloat(up.get('s')||'0'), C: parseFloat(up.get('c')||'0') },
+          tipo: _tipoUrl,
+          ts: Date.now(),
+        };
+        localStorage.setItem(discKeyParaTipo(_tipoUrl), JSON.stringify(_res));
+        if (_tipoUrl === 'classico') discResultadoClassico = _res; else discResultadoIpsativo = _res;
+      } catch(e){}
+    }
   }
 
   if (!pdaResultado && PDA_OK && up.get('pda_dom')) {
@@ -1832,24 +1854,46 @@ async function init() {
 }
 
 function verificarDiscLS() {
+  const TTL_3_SEMANAS = 21 * 24 * 60 * 60 * 1000;
+
+  // Migração única: se existir a chave antiga compartilhada (de antes da
+  // separação ipsativo/clássico) e a gaveta nova correspondente ainda não
+  // existir, move o valor pra gaveta certa usando o campo "tipo" salvo nele
+  // (ou 'ipsativo' como default, já que era o formato mais usado).
   try {
-    const raw = localStorage.getItem(LS_DISC_RES);
-    if (!raw) return;
-    const obj = JSON.parse(raw);
-    const TTL_3_SEMANAS = 21 * 24 * 60 * 60 * 1000;
-    if (obj.ts && (Date.now() - obj.ts) < TTL_3_SEMANAS) {
-      discResultado = obj;
-      if (obj.maeCandidate) {
-        try {
-          const dadosLS = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
-          if (!dadosLS.mae) { dadosLS.mae = obj.maeCandidate; localStorage.setItem(LS_CAND_DATA, JSON.stringify(dadosLS)); }
-        } catch(e){}
+    const legado = localStorage.getItem(LS_DISC_RES_LEGACY);
+    if (legado) {
+      const obj = JSON.parse(legado);
+      const tipoLegado = obj.tipo === 'classico' ? 'classico' : 'ipsativo';
+      const chaveNova = discKeyParaTipo(tipoLegado);
+      if (!localStorage.getItem(chaveNova)) {
+        localStorage.setItem(chaveNova, JSON.stringify({ ...obj, tipo: tipoLegado }));
       }
-    } else {
-      localStorage.removeItem(LS_DISC_RES);
-      discResultado = null;
+      localStorage.removeItem(LS_DISC_RES_LEGACY);
     }
   } catch(e){}
+
+  function carregar(chave) {
+    try {
+      const raw = localStorage.getItem(chave);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (obj.ts && (Date.now() - obj.ts) < TTL_3_SEMANAS) {
+        if (obj.maeCandidate) {
+          try {
+            const dadosLS = JSON.parse(localStorage.getItem(LS_CAND_DATA) || '');
+            if (!dadosLS.mae) { dadosLS.mae = obj.maeCandidate; localStorage.setItem(LS_CAND_DATA, JSON.stringify(dadosLS)); }
+          } catch(e){}
+        }
+        return obj;
+      }
+      localStorage.removeItem(chave);
+      return null;
+    } catch(e) { return null; }
+  }
+
+  discResultadoIpsativo = carregar(LS_DISC_RES_IPS);
+  discResultadoClassico = carregar(LS_DISC_RES_CLA);
 }
 
 function verificarPdaLS() {
@@ -1867,12 +1911,29 @@ function verificarPdaLS() {
   } catch(e){}
 }
 
-// Retorna qual teste está concluído no momento (PDA tem prioridade se os
-// dois existirem — cenário raro de refazer com o outro formato).
+// Retorna qual teste está concluído no momento. Prioriza o teste que a
+// pessoa acabou de terminar agora (sinalizado por DISC_OK/PDA_OK na URL,
+// vindos do redirect de retorno do teste); se nenhum dos dois acabou de
+// ser concluído (ex.: chegada normal na etapa), usa o mais recente pelos
+// timestamps — nunca prioriza PDA às cegas só porque existe.
 function testeConcluido() {
-  if (pdaResultado)  return { tipo: 'pda',  r: pdaResultado };
-  if (discResultado) return { tipo: 'disc', r: discResultado };
-  return null;
+  const tipoIniciado = localStorage.getItem('disc_tipo_iniciado');
+
+  if (DISC_OK) {
+    const r = tipoIniciado === 'classico' ? discResultadoClassico : discResultadoIpsativo;
+    if (r) return { tipo: 'disc', subtipo: tipoIniciado === 'classico' ? 'classico' : 'ipsativo', r };
+  }
+  if (PDA_OK && pdaResultado) return { tipo: 'pda', r: pdaResultado };
+
+  // Nenhum dos dois acabou de ser concluído agora — pega o mais recente
+  // entre as 3 gavetas independentes (ipsativo, clássico, PDA).
+  const candidatos = [];
+  if (discResultadoIpsativo) candidatos.push({ tipo: 'disc', subtipo: 'ipsativo', r: discResultadoIpsativo, ts: discResultadoIpsativo.ts || 0 });
+  if (discResultadoClassico) candidatos.push({ tipo: 'disc', subtipo: 'classico', r: discResultadoClassico, ts: discResultadoClassico.ts || 0 });
+  if (pdaResultado)          candidatos.push({ tipo: 'pda',  r: pdaResultado,            ts: pdaResultado.ts || 0 });
+  if (!candidatos.length) return null;
+  candidatos.sort((a, b) => b.ts - a.ts);
+  return candidatos[0];
 }
 
 // ──────────────────────────────────────────────
@@ -2144,20 +2205,21 @@ async function salvarEtapa1() {
 
         const discAt = melhor.disc_atualizado_em ? new Date(melhor.disc_atualizado_em).getTime() : 0;
         const temDiscValido = melhor.disc_perfil && parseFloat(melhor.pct_d || 0) > 0 && (Date.now() - discAt) < TTL_3_SEMANAS;
-        if (temDiscValido && !discResultado) {
+        if (temDiscValido && !discResultadoIpsativo) {
           const fullRes = await fetch(`${SB}/rest/v1/disc_historico?id=eq.${melhor.id}&select=disc_perfil,sec,pct_d,pct_i,pct_s,pct_c,disc_atualizado_em&limit=1`, { headers: sbHeaders() });
           if (fullRes.ok) {
             const arr = await fullRes.json();
             if (arr && arr[0] && arr[0].disc_perfil) {
               const reg = arr[0];
-              discResultado = {
+              discResultadoIpsativo = {
                 dominante: reg.disc_perfil, dom: reg.disc_perfil,
                 secundario: reg.sec || '', sec: reg.sec || '',
                 nome: reg.disc_perfil + (reg.sec ? '+' + reg.sec : ''),
                 pct: { D: parseFloat(reg.pct_d||0), I: parseFloat(reg.pct_i||0), S: parseFloat(reg.pct_s||0), C: parseFloat(reg.pct_c||0) },
+                tipo: 'ipsativo',
                 ts: Date.now(),
               };
-              try { localStorage.setItem(LS_DISC_RES, JSON.stringify(discResultado)); } catch(e){}
+              try { localStorage.setItem(LS_DISC_RES_IPS, JSON.stringify(discResultadoIpsativo)); } catch(e){}
             }
           }
         }
@@ -2202,6 +2264,7 @@ async function renderStep2() {
 // Exibe a tela de resultado já concluído (usada tanto ao voltar do teste
 // quanto quando a pessoa opta por reaproveitar um resultado salvo).
 async function mostrarConcluido(concluido) {
+  concluidoAtual = concluido;
   renderTesteSummary(concluido.tipo, concluido.r);
   document.getElementById('discGateway').style.display   = 'none';
   document.getElementById('discConcluido').style.display = 'block';
@@ -2216,7 +2279,7 @@ async function mostrarConcluido(concluido) {
   // Busca o registro mais recente no Supabase pelo email para garantir ID correto
   // (esse cache/patch em disc_historico é específico do fluxo DISC — o PDA já
   // é persistido pela Edge Function perfil-5eixos-salvar no momento do save)
-  if (concluido.tipo === 'disc' && discResultado) {
+  if (concluido.tipo === 'disc' && concluido.r) {
     try {
       const dadosLS = JSON.parse(localStorage.getItem('candidatura_dados') || '');
       const emailBusca = dadosLS.email || '';
@@ -2231,9 +2294,9 @@ async function mostrarConcluido(concluido) {
         if (r.ok) { const arr = await r.json(); if (arr && arr[0]) { idAlvo = arr[0].id; candidaturaId = idAlvo; } }
       }
       if (idAlvo) {
-        const dimDisc = discResultado.dominante || discResultado.dom || null;
-        const secDisc = discResultado.secundario || discResultado.sec || null;
-        const pct = discResultado.pct || {};
+        const dimDisc = concluido.r.dominante || concluido.r.dom || null;
+        const secDisc = concluido.r.secundario || concluido.r.sec || null;
+        const pct = concluido.r.pct || {};
         const patchPayload = {
           status: 'disc_ok', disc_perfil: dimDisc, dom: dimDisc, sec: secDisc,
           pct_d: pct.D != null ? String(pct.D) : undefined,
@@ -2258,32 +2321,32 @@ function mostrarGateway() {
   document.getElementById('discConcluido').style.display = 'none';
   document.getElementById('discSummary').classList.remove('visible');
   atualizarBadgesResultadosSalvos();
+  garantirResultadoDoTipo('ipsativo');
+  garantirResultadoDoTipo('classico');
+}
 
-  // Se não tem resultado DISC no localStorage (outra aba, outro dispositivo,
-  // cache limpo), tenta buscar no Supabase pelos dados de contato antes de
-  // simplesmente deixar a pessoa sem opção de reaproveitar.
-  if (!discResultado) {
-    const c = contatoAtual();
-    if (c.email || c.tel || c.mae || c.nome) {
-      buscarDiscResultadoPorContato(candidaturaId, c.nome, c.email, c.tel, c.mae).then(r => {
-        if (r && !discResultado) {
-          discResultado = r;
-          atualizarBadgesResultadosSalvos();
-        }
-      });
-    }
-  }
+// Se a gaveta local do tipo informado estiver vazia (outra aba, outro
+// dispositivo, cache limpo), tenta buscar no Supabase pelos dados de
+// contato antes de simplesmente deixar a pessoa sem opção de reaproveitar.
+// PDA fica de fora aqui: a tabela dele é travada e só a Edge Function
+// consegue ler/gravar, o navegador não consulta direto por REST.
+function garantirResultadoDoTipo(tipo) {
+  if (tipo === 'pda') return;
+  if (resultadoSalvoParaTipo(tipo)) return;
+  const c = contatoAtual();
+  if (!(c.email || c.tel || c.mae || c.nome)) return;
+  buscarDiscResultadoPorContato(tipo, candidaturaId, c.nome, c.email, c.tel, c.mae).then(r => {
+    if (r) atualizarBadgesResultadosSalvos();
+  });
 }
 
 // Retorna o resultado salvo (se houver e ainda válido) que corresponde ao
-// tipo de teste informado. DISC Ipsativo e Clássico usam a mesma "gaveta"
-// de armazenamento (disc_resultado); por isso, resultados antigos que não
-// guardam o campo "tipo" (salvos antes dessa mudança) são considerados
-// compatíveis com qualquer um dos dois formatos DISC.
+// tipo de teste informado. Ipsativo, Clássico e PDA têm gavetas 100%
+// independentes — fazer um nunca sobrescreve ou aparece no lugar do outro.
 function resultadoSalvoParaTipo(tipo) {
-  if (tipo === 'pda') return pdaResultado || null;
-  if (discResultado && (!discResultado.tipo || discResultado.tipo === tipo)) return discResultado;
-  return null;
+  if (tipo === 'pda')      return pdaResultado || null;
+  if (tipo === 'classico') return discResultadoClassico || null;
+  return discResultadoIpsativo || null;
 }
 
 function nomeAmigavelTipo(tipo) {
@@ -2379,7 +2442,7 @@ function handlePdaReturn() {
 // Usada tanto na volta do teste (handleDiscReturn) quanto num carregamento
 // normal da página, quando o localStorage não tem nada (outro dispositivo,
 // outra aba, cache limpo, etc.) — pra nunca obrigar a refazer à toa.
-async function buscarDiscResultadoPorContato(idParam, nomeParam, emailParam, telParam, maeParam) {
+async function buscarDiscResultadoPorContato(tipoAlvo, idParam, nomeParam, emailParam, telParam, maeParam) {
   try {
     const _id    = idParam   || candidaturaId;
     const _nome  = nomeParam || '';
@@ -2437,18 +2500,20 @@ async function buscarDiscResultadoPorContato(idParam, nomeParam, emailParam, tel
       const discAt = registro.disc_atualizado_em ? new Date(registro.disc_atualizado_em).getTime() : 0;
       if ((Date.now() - discAt) < TTL_3_SEMANAS) {
         const dom = registro.disc_perfil, sec = registro.sec || '';
+        const tipoFinal = tipoAlvo === 'classico' ? 'classico' : 'ipsativo';
         const resultado = {
           dominante: dom, dom, secundario: sec, sec,
           nome: dom + (sec ? '+' + sec : ''),
           pct: { D: parseFloat(registro.pct_d||0), I: parseFloat(registro.pct_i||0), S: parseFloat(registro.pct_s||0), C: parseFloat(registro.pct_c||0) },
-          tipo: localStorage.getItem('disc_tipo_iniciado') || 'ipsativo',
+          tipo: tipoFinal,
           ts: Date.now(),
         };
         if (!candidaturaId && registro.id) {
           candidaturaId = registro.id;
           try { localStorage.setItem(LS_CAND_ID, JSON.stringify({ id: candidaturaId, ts: Date.now() })); } catch(e){}
         }
-        try { localStorage.setItem(LS_DISC_RES, JSON.stringify(resultado)); } catch(e){}
+        try { localStorage.setItem(discKeyParaTipo(tipoFinal), JSON.stringify(resultado)); } catch(e){}
+        if (tipoFinal === 'classico') discResultadoClassico = resultado; else discResultadoIpsativo = resultado;
         return resultado;
       }
     }
@@ -2470,10 +2535,13 @@ function contatoAtual() {
 
 async function handleDiscReturn() {
   verificarDiscLS();
+  const tipoConcluido = localStorage.getItem('disc_tipo_iniciado') === 'classico' ? 'classico' : 'ipsativo';
+  discResultado = resultadoSalvoParaTipo(tipoConcluido);
   if (!discResultado) {
     const up2 = new URLSearchParams(window.location.search);
     const c = contatoAtual();
     const r = await buscarDiscResultadoPorContato(
+      tipoConcluido,
       up2.get('candidato_id') || candidaturaId,
       up2.get('nome')  || c.nome,
       up2.get('email') || c.email,
@@ -2505,10 +2573,17 @@ async function handleDiscReturn() {
 function confirmarRefazerDisc() {
   const btn = event.currentTarget;
   if (btn.dataset.confirmando === '1') {
-    discResultado = null;
-    pdaResultado = null;
-    try { localStorage.removeItem(LS_DISC_RES); } catch(e){}
-    try { localStorage.removeItem(LS_PDA_RES); } catch(e){}
+    // Limpa só a gaveta do teste que está sendo mostrado agora — nunca as
+    // outras duas. Refazer o PDA não pode apagar um DISC já feito, e vice-versa.
+    if (concluidoAtual && concluidoAtual.tipo === 'pda') {
+      pdaResultado = null;
+      try { localStorage.removeItem(LS_PDA_RES); } catch(e){}
+    } else {
+      const subtipo = (concluidoAtual && concluidoAtual.subtipo) || discTipoSelecionado;
+      if (subtipo === 'classico') discResultadoClassico = null; else discResultadoIpsativo = null;
+      discResultado = null;
+      try { localStorage.removeItem(discKeyParaTipo(subtipo)); } catch(e){}
+    }
     try { localStorage.removeItem('disc_prog_' + (VAGA||'geral')); } catch(e){}
     document.getElementById('discConcluido').style.display = 'none';
     document.getElementById('discSummary').classList.remove('visible');
@@ -2541,11 +2616,9 @@ function confirmarRefazerDisc() {
 
 function atualizarTTLDisplay() {
   try {
-    const key = pdaResultado ? LS_PDA_RES : LS_DISC_RES;
-    const raw = localStorage.getItem(key);
-    if (!raw) return;
-    const obj = JSON.parse(raw);
-    if (!obj.ts) return;
+    const tipoAtual = (concluidoAtual && concluidoAtual.tipo === 'pda') ? 'pda' : ((concluidoAtual && concluidoAtual.subtipo) || discTipoSelecionado);
+    const obj = resultadoSalvoParaTipo(tipoAtual);
+    if (!obj || !obj.ts) return;
     const TTL_3_SEMANAS = 21 * 24 * 60 * 60 * 1000;
     const expiresAt = obj.ts + TTL_3_SEMANAS;
     const remaining = expiresAt - Date.now();
@@ -2567,6 +2640,7 @@ function selecionarTipoDisc(tipo) {
   document.getElementById('btnTypeClassico').classList.toggle('active', tipo === 'classico');
   document.getElementById('btnTypePda').classList.toggle('active', tipo === 'pda');
   atualizarAvisoResultadoSalvo(tipo);
+  garantirResultadoDoTipo(tipo);
 }
 
 function iniciarDisc() {
@@ -2575,8 +2649,13 @@ function iniciarDisc() {
   const email = dados.email || document.getElementById('inEmail')?.value || '';
   const tel   = dados.tel   || document.getElementById('inTel')?.value   || '';
   const mae   = dados.mae   || document.getElementById('inMae')?.value   || '';
-  localStorage.removeItem(LS_DISC_RES);
-  localStorage.removeItem(LS_PDA_RES);
+  if (discTipoSelecionado === 'pda') {
+    localStorage.removeItem(LS_PDA_RES);
+    pdaResultado = null;
+  } else {
+    localStorage.removeItem(discKeyParaTipo(discTipoSelecionado));
+    if (discTipoSelecionado === 'classico') discResultadoClassico = null; else discResultadoIpsativo = null;
+  }
   try { localStorage.setItem('disc_tipo_iniciado', discTipoSelecionado); } catch(e){}
   const base = window.location.href.replace(/candidatura\.html.*$/, '');
   const canaisParam = CANAIS_URL ? '&canais=' + encodeURIComponent(JSON.stringify(CANAIS_URL)) : '';
@@ -2835,7 +2914,8 @@ async function executarCanal(c) {
   }
   setTimeout(() => {
     try {
-      localStorage.removeItem(LS_DISC_RES);
+      localStorage.removeItem(LS_DISC_RES_IPS);
+      localStorage.removeItem(LS_DISC_RES_CLA);
       localStorage.removeItem(LS_CAND_ID);
       localStorage.removeItem(LS_CAND_DATA);
       localStorage.removeItem('entrevista_ok');
