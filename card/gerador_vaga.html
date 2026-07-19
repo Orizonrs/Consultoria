@@ -207,10 +207,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
         <select id="tipoContato" onchange="toggleContato()">
           <option value="email">E-mail</option>
           <option value="whatsapp">WhatsApp</option>
+          <option value="site">Site (cadastro no sistema)</option>
         </select>
       </div>
       <div class="fld" id="fldEmail"><label>E-mail de candidatura</label><input id="email" value="vagas@orizon.com.br" oninput="upd()"></div>
       <div class="fld" id="fldWpp" style="display:none"><label>WhatsApp de candidatura</label><input id="whatsapp" placeholder="(51) 99999-9999" oninput="maskWpp(this);upd()"></div>
+      <div class="fld" id="fldSite" style="display:none"><label>Link do site / sistema de vagas</label><input id="site" placeholder="orizon.com.br/vagas" oninput="upd()"></div>
     </div>
     <div class="sec">
       <div class="slbl">Tamanho da Logo</div>
@@ -645,11 +647,13 @@ function itemHtml(txt){return`<div class="item"><div class="idot"></div><div cla
 // ── CONTATO (E-mail / WhatsApp) ─────────────────────────────────
 const ICON_MAIL = '<svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>';
 const ICON_WPP  = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.6.1-.2.3-.7.9-.9 1-.2.2-.3.2-.6.1-.9-.4-1.9-1-2.7-1.9-.7-.8-1.2-1.6-1.5-2.2-.1-.3 0-.4.1-.6.2-.2.4-.4.5-.6.1-.2.1-.4 0-.6-.1-.2-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4-.2 0-.4 0-.6 0-.2 0-.5.1-.7.4-.2.3-.9 1-.9 2.3 0 1.3 1 2.6 1.1 2.8.1.2 1.6 2.5 4 3.5 2 .8 2.4.6 2.9.6.5-.1 1.7-.7 1.9-1.4.2-.6.2-1.2.1-1.3-.1-.1-.3-.2-.5-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.7 1.5 5.2L2 22l4.9-1.5C8.3 21.5 10.1 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.6 0-3.2-.4-4.5-1.2l-.3-.2-3.3 1 1-3.2-.2-.3C3.9 15 3.4 13.5 3.4 12 3.4 7.3 7.3 3.4 12 3.4s8.6 3.9 8.6 8.6-3.9 8.6-8.6 8.6z"/></svg>';
+const ICON_SITE = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
 
 function toggleContato(){
   const t=v('tipoContato');
-  document.getElementById('fldEmail').style.display = t==='whatsapp' ? 'none' : '';
+  document.getElementById('fldEmail').style.display = t==='email' ? '' : 'none';
   document.getElementById('fldWpp').style.display   = t==='whatsapp' ? '' : 'none';
+  document.getElementById('fldSite').style.display  = t==='site' ? '' : 'none';
   upd();
 }
 function maskWpp(el){
@@ -663,6 +667,9 @@ function getContato(){
   const t=v('tipoContato');
   if(t==='whatsapp'){
     return { mail: v('whatsapp') || '(00) 00000-0000', ctaLabel: 'Envie seu currículo via WhatsApp', icon: ICON_WPP };
+  }
+  if(t==='site'){
+    return { mail: v('site') || 'orizon.com.br/vagas', ctaLabel: 'Cadastre-se pelo nosso sistema', icon: ICON_SITE };
   }
   return { mail: v('email'), ctaLabel: 'Envie seu currículo para', icon: ICON_MAIL };
 }
