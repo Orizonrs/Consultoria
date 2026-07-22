@@ -320,7 +320,7 @@
       <h3>Tem uma vaga pra divulgar?</h3>
       <p>É gratuito. Mande os detalhes da vaga por WhatsApp ou e-mail e a gente publica aqui.</p>
       <a href="https://wa.me/5551900000000?text=Ol%C3%A1%2C%20quero%20divulgar%20uma%20vaga%20no%20mural" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contato@exemplo.com&su=Divulgar%20vaga%20no%20mural" target="_blank" rel="noopener">E-mail</a>
+      <a href="mailto:contato@exemplo.com?subject=Divulgar%20vaga%20no%20mural">E-mail</a>
     </div>
 
     <div class="sidebar-widget" id="como-funciona">
@@ -1332,14 +1332,6 @@ function linkWhatsapp(numero, mensagem) {
   return `https://wa.me/${numeroLimpo}?text=${texto}`;
 }
 
-function linkEmail(email, assunto) {
-  const para = encodeURIComponent(email || "");
-  const su = encodeURIComponent(assunto || "");
-  // Abre a tela de redação do Gmail (web/app) diretamente, sem depender de haver
-  // um cliente de e-mail padrão configurado no dispositivo (mailto: falha nesse caso).
-  return `https://mail.google.com/mail/?view=cm&fs=1&to=${para}&su=${su}`;
-}
-
 let filtroArea = "todas";
 let termoBusca = "";
 let filtroCidade = "";
@@ -1543,6 +1535,28 @@ popularFiltroCidade();
 popularFiltroEmpresa();
 renderStats();
 renderVagas();
+</script>
+
+<script>
+/* ORIZON EMAIL CLICK — no desktop abre o Gmail web direto; no mobile deixa o
+   mailto: nativo abrir o app de e-mail do aparelho (é isso que faz o app abrir). */
+(function(){
+  function isMobile(){
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent)
+        || ('ontouchstart' in window && window.innerWidth <= 1024);
+  }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest('a[href^="mailto:"]');
+    if(!a) return;
+    if(isMobile()) return;
+    e.preventDefault();
+    var full = a.href.replace(/^mailto:/i,'');
+    var parts = full.split('?');
+    var to = parts[0];
+    var params = parts[1] ? '&' + parts[1] : '';
+    window.open('https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) + params, '_blank');
+  }, true);
+})();
 </script>
 </body>
 </html>
