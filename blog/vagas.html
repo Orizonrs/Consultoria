@@ -320,7 +320,7 @@
       <h3>Tem uma vaga pra divulgar?</h3>
       <p>É gratuito. Mande os detalhes da vaga por WhatsApp ou e-mail e a gente publica aqui.</p>
       <a href="https://wa.me/5551900000000?text=Ol%C3%A1%2C%20quero%20divulgar%20uma%20vaga%20no%20mural" target="_blank" rel="noopener">WhatsApp</a>
-      <a href="mailto:contato@exemplo.com?subject=Divulgar%20vaga%20no%20mural">E-mail</a>
+      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=contato@exemplo.com&su=Divulgar%20vaga%20no%20mural" target="_blank" rel="noopener">E-mail</a>
     </div>
 
     <div class="sidebar-widget" id="como-funciona">
@@ -1332,6 +1332,14 @@ function linkWhatsapp(numero, mensagem) {
   return `https://wa.me/${numeroLimpo}?text=${texto}`;
 }
 
+function linkEmail(email, assunto) {
+  const para = encodeURIComponent(email || "");
+  const su = encodeURIComponent(assunto || "");
+  // Abre a tela de redação do Gmail (web/app) diretamente, sem depender de haver
+  // um cliente de e-mail padrão configurado no dispositivo (mailto: falha nesse caso).
+  return `https://mail.google.com/mail/?view=cm&fs=1&to=${para}&su=${su}`;
+}
+
 let filtroArea = "todas";
 let termoBusca = "";
 let filtroCidade = "";
@@ -1421,10 +1429,14 @@ function renderVagas() {
         </a>` : "";
 
     const btnEmail = v.email
-      ? `<a href="mailto:${escapeHtml(v.email)}?subject=${encodeURIComponent("Candidatura - " + v.cargo)}" class="vaga-btn vaga-btn-secondary">
+      ? `<a href="${linkEmail(v.email, "Candidatura - " + v.cargo)}" target="_blank" rel="noopener" class="vaga-btn vaga-btn-secondary">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
           E-mail
-        </a>` : "";
+        </a>
+        <button type="button" class="vaga-btn vaga-btn-secondary btn-copiar-email" data-email="${escapeHtml(v.email)}" title="Copiar endereço de e-mail">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar e-mail
+        </button>` : "";
 
     const avisoEncerrada = v.status === "encerrada"
       ? `<div class="vaga-encerrada-aviso"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg> Publicada há ${v.dias} dias — provavelmente encerrada</div>`
@@ -1479,6 +1491,24 @@ function renderStats() {
   document.getElementById("stat-empresas").textContent = empresas;
   document.getElementById("stat-atualizado").textContent = maisRecente ? formatarData(maisRecente) : "–";
 }
+
+document.getElementById("vagas-list").addEventListener("click", e => {
+  const btn = e.target.closest(".btn-copiar-email");
+  if (!btn) return;
+  const email = btn.dataset.email || "";
+  const original = btn.innerHTML;
+  const marcarCopiado = () => {
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Copiado!`;
+    setTimeout(() => { btn.innerHTML = original; }, 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(email).then(marcarCopiado).catch(() => {
+      window.prompt("Copie o e-mail abaixo:", email);
+    });
+  } else {
+    window.prompt("Copie o e-mail abaixo:", email);
+  }
+});
 
 document.getElementById("filter-nav-inner").addEventListener("click", e => {
   const btn = e.target.closest(".fnav-btn");
