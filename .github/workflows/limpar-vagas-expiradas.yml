@@ -1,1 +1,37 @@
+name: Limpar vagas expiradas
 
+on:
+  schedule:
+    # Todo dia às 09:00 (horário de Brasília, UTC-3) => 12:00 UTC
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}   # permite rodar manualmente pela aba "Actions" no GitHub
+
+permissions:
+  contents: write
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Rodar limpeza de vagas expiradas
+        run: node blog/limpar-vagas-expiradas.js blog/vagas.html
+
+      - name: Commitar alterações (se houver)
+        run: |
+          git config user.name "orizon-bot"
+          git config user.email "bot@orizonrs.com"
+          if git diff --quiet; then
+            echo "Nenhuma vaga expirada hoje. Nada para commitar."
+          else
+            git add blog/vagas.html blog/vagas-removidas.log.jsonl
+            git commit -m "chore: remove vagas expiradas automaticamente"
+            git push
+          fi
