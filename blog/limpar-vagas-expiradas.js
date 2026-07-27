@@ -3,7 +3,7 @@
  * limpar-vagas-expiradas.js
  * ──────────────────────────────────────────────────────────────────
  * Lê o vagas.html, calcula quais vagas já passaram do prazo de
- * expiração (mesmas regras já usadas no site: 60 dias para vagas com
+ * expiração (mesmas regras já usadas no site: 30 dias para vagas com
  * link de sistema, 15 dias para vagas só com WhatsApp/e-mail) e
  * REMOVE essas vagas de verdade do array `vagas` no arquivo.
  *
@@ -117,7 +117,7 @@ function extrairLimites(html) {
     return m ? Number(m[1]) : padrao;
   };
   return {
-    LIMITE_DIAS_LINK: pegar("LIMITE_DIAS_LINK", 60),
+    LIMITE_DIAS_LINK: pegar("LIMITE_DIAS_LINK", 30),
     LIMITE_DIAS_CONTATO: pegar("LIMITE_DIAS_CONTATO", 15),
   };
 }
