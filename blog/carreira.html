@@ -235,6 +235,10 @@
     .fnav-arrow[disabled]{opacity:0;pointer-events:none;}
     .fnav-arrow-left{margin-right:8px;}
     .fnav-arrow-right{margin-left:8px;}
+    .fnav-select-wrap{display:none;position:relative;max-width:1200px;margin:0 auto;padding:10px 24px;}
+    .fnav-select{width:100%;appearance:none;-webkit-appearance:none;-moz-appearance:none;background:var(--white);border:1.5px solid var(--border);border-radius:10px;padding:12px 40px 12px 16px;font-size:14px;font-weight:600;font-family:inherit;color:var(--text);cursor:pointer;}
+    .fnav-select:focus{outline:none;border-color:var(--brand);}
+    .fnav-select-wrap::after{content:'';position:absolute;right:36px;top:50%;width:9px;height:9px;border-right:2px solid var(--text-2);border-bottom:2px solid var(--text-2);transform:translateY(-65%) rotate(45deg);pointer-events:none;}
     .fnav-btn{background:none;border:1.5px solid var(--border);color:var(--text-2);padding:7px 16px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap;flex-shrink:0;}
     .fnav-btn:hover{border-color:var(--brand);color:var(--brand);}
     .fnav-btn.active{border-color:var(--brand);color:#fff;background:var(--brand);}
@@ -247,6 +251,8 @@
       .cat-hero h1{font-size:28px;}
       .cat-hero-stats{justify-content:center;gap:20px;flex-wrap:wrap;}
       .filter-nav{padding:0 12px;}
+      .filter-nav-wrap{display:none;}
+      .fnav-select-wrap{display:block;}
       .main{grid-template-columns:1fr!important;padding:24px 16px;gap:32px;}
       .sidebar{display:none;}
       .acc-header{padding:14px 16px;}
@@ -405,6 +411,18 @@
     <button class="fnav-btn" data-idx="7">5 Cursos grátis</button>
     </div>
     <button type="button" class="fnav-arrow fnav-arrow-right" id="fnav-next" aria-label="Rolar categorias para a direita">&#8250;</button>
+  </div>
+  <div class="fnav-select-wrap">
+    <select class="fnav-select" id="fnav-select" aria-label="Selecionar categoria">
+      <option value="0">Currículo IA</option>
+      <option value="1">Entrevistas</option>
+      <option value="2">Negociar salário</option>
+      <option value="3">Trabalho Remoto</option>
+      <option value="4">Soft Skills</option>
+      <option value="5">Recolocação</option>
+      <option value="6">IAs para Currículo</option>
+      <option value="7">5 Cursos grátis</option>
+    </select>
   </div>
 </div>
 <div class="main">
@@ -941,6 +959,23 @@
   scroller.addEventListener('scroll', update);
   window.addEventListener('resize', update);
   update();
+})();
+</script>
+<script>
+(function(){
+  var select = document.getElementById('fnav-select');
+  if(!select) return;
+  select.addEventListener('change', function(){
+    var idx = parseInt(this.value, 10);
+    var btns = document.querySelectorAll('.filter-nav-inner .fnav-btn');
+    if(btns[idx]) btns[idx].click();
+  });
+  // Manter o select sincronizado se um botao for clicado diretamente (ex: redimensionar janela)
+  document.querySelectorAll('.filter-nav-inner .fnav-btn').forEach(function(btn, i){
+    btn.addEventListener('click', function(){
+      select.value = String(i);
+    });
+  });
 })();
 </script>
 </body>
