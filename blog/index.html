@@ -423,7 +423,7 @@
     }
   
     @media(max-width:768px){
-      nav{display:none;} .header-cta{display:none;}
+      nav{display:none;} .header-cta{display:none;} .mobile-toggle{display:block;}
       .hero{padding:48px 16px 40px;}
       .hero-inner{flex-direction:column;text-align:center;gap:24px;}
       .hero h1{font-size:30px;}
@@ -498,7 +498,40 @@ a[title="Voltar ao site principal"] {
   font-weight: 700;
 }
 
-</style>
+
+    /* ===== TEMA CLARO/ESCURO ===== */
+    [data-theme="light"]{--bg:#f5f7fb;--white:#ffffff;--text:#1a1f2b;--text-2:#5a6278;--text-3:#8891a3;--border:#e3e7ef;--card-shadow:0 2px 12px rgba(0,0,0,0.06);--card-hover:0 8px 32px rgba(0,0,0,0.1);}
+    html{transition:background-color .25s ease;}
+    body{transition:background-color .25s ease,color .25s ease;}
+    header,.mobile-menu,.acc-card,.article-card,.list-card,.sidebar-widget,.featured-h{transition:background-color .25s ease,border-color .25s ease,box-shadow .25s ease;}
+
+    /* ===== HEADER ACTIONS (tema + hamburguer) ===== */
+    .header-actions{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
+    .theme-toggle{background:var(--brand-light,var(--border));border:none;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--text);flex-shrink:0;transition:background .2s;}
+    .theme-toggle:hover{background:var(--border);}
+    .mobile-toggle{display:none;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:var(--text);padding:4px 6px;flex-shrink:0;}
+
+    /* ===== DROPDOWN "BLOG" ===== */
+    .nav-dropdown{position:relative;}
+    .nav-dropdown-btn{cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:none;border:none;font:inherit;}
+    .dropdown-caret{font-size:10px;transition:transform .2s;display:inline-block;}
+    .nav-dropdown.open .dropdown-caret{transform:rotate(180deg);}
+    .nav-dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--card-shadow);min-width:190px;padding:8px;display:none;flex-direction:column;gap:2px;z-index:150;}
+    .nav-dropdown.open .nav-dropdown-menu{display:flex;}
+    .nav-dropdown-menu a{padding:9px 12px;border-radius:8px;font-size:14px;color:var(--text-2);text-decoration:none;font-weight:500;transition:.2s;}
+    .nav-dropdown-menu a:hover,.nav-dropdown-menu a.active{background:var(--brand-light);color:var(--brand);}
+
+  
+    /* ===== FOOTER PADRÃO ===== */
+    .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+    .footer-brand p{font-size:14px;margin-top:16px;line-height:1.7;max-width:280px;}
+    .footer-col h4{color:#fff;font-size:14px;font-weight:600;margin-bottom:16px;}
+    .footer-col ul{list-style:none;}
+    .footer-col li{margin-bottom:10px;}
+    .footer-col a{color:#9ca3af;text-decoration:none;font-size:14px;transition:.2s;}
+    .footer-col a:hover{color:#fff;}
+
+  </style>
 </head>
 <body>
 
@@ -512,13 +545,23 @@ a[title="Voltar ao site principal"] {
     <nav>
             <a href="../index.html" class="nav-link" style="background:var(--brand);color:#fff;border:1.5px solid var(--brand);margin-right:6px;border-radius:8px;padding:6px 14px;font-weight:700;font-size:13px;" title="Voltar ao site principal">← Site</a>
       <a href="index.html" class="nav-link active">Início</a>
-      <a href="tecnologia.html" class="nav-link">Tecnologia</a>
-      <a href="carreira.html" class="nav-link">Carreira</a>
-      <a href="negocios.html" class="nav-link">Negócios</a>
-      <a href="comunidade.html" class="nav-link">Comunidade</a>
+      <div class="nav-dropdown" id="blog-dropdown">
+      <button type="button" class="nav-link nav-dropdown-btn" id="blog-dropdown-btn">Blog <span class="dropdown-caret">▾</span></button>
+      <div class="nav-dropdown-menu">
+      <a href="tecnologia.html">Tecnologia</a>
+      <a href="carreira.html">Carreira</a>
+      <a href="negocios.html">Negócios</a>
+      <a href="comunidade.html">Comunidade</a>
+      <a href="linkedin.html">LinkedIn</a>
+      </div>
+    </div>
       <a href="apoio.html" class="nav-link">Apoio & Recursos</a>
     </nav>
-    <a href="contato.html" class="header-cta">Fale Conosco</a>
+    <div class="header-actions">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Alternar tema claro/escuro" title="Alternar tema">🌙</button>
+      <a href="contato.html" class="header-cta">Fale Conosco</a>
+      <button type="button" class="mobile-toggle" id="mobile-toggle" aria-label="Abrir menu">☰</button>
+    </div>
   </div>
 </header>
 
@@ -538,6 +581,7 @@ a[title="Voltar ao site principal"] {
     <a href="carreira.html" class="mobile-nav-link">Carreira</a>
     <a href="negocios.html" class="mobile-nav-link">Negócios</a>
     <a href="comunidade.html" class="mobile-nav-link">Comunidade</a>
+    <a href="linkedin.html" class="mobile-nav-link">LinkedIn</a>
     <a href="apoio.html" class="mobile-nav-link">Apoio & Recursos</a>
     <a href="contato.html" class="mobile-nav-link">Fale Conosco</a>
   </div>
@@ -1000,12 +1044,15 @@ a[title="Voltar ao site principal"] {
           <li><a href="carreira.html">Carreira</a></li>
           <li><a href="negocios.html">Negócios</a></li>
           <li><a href="comunidade.html">Comunidade</a></li>
+          <li><a href="linkedin.html">LinkedIn</a></li>
           <li><a href="apoio.html">Apoio & Recursos</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4>Recursos</h4>
         <ul>
+          <li><a href="vagas.html">Vagas</a></li>
+          <li><a href="apoio.html">Apoio & Recursos</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -1013,7 +1060,6 @@ a[title="Voltar ao site principal"] {
         <ul>
           <li><a href="#">Sobre nós</a></li>
           <li><a href="contato.html">Contato</a></li>
-          <li><a href="#">Escreva para nós</a></li>
         </ul>
       </div>
     </div>
@@ -1023,7 +1069,6 @@ a[title="Voltar ao site principal"] {
         <a href="#" class="social-link">in</a>
         <a href="#" class="social-link">tw</a>
         <a href="#" class="social-link">ig</a>
-        <a href="#" class="social-link">yt</a>
       </div>
     </div>
   </div>
@@ -1075,5 +1120,42 @@ function toggleAcc(el) {
   })();
   </script>
 
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var saved = localStorage.getItem('theme');
+  if(saved === 'light'){ root.setAttribute('data-theme','light'); }
+  function updateIcon(){
+    var btn = document.getElementById('theme-toggle');
+    if(btn) btn.textContent = root.getAttribute('data-theme') === 'light' ? '☀️' : '🌙';
+  }
+  updateIcon();
+  var themeBtn = document.getElementById('theme-toggle');
+  if(themeBtn){
+    themeBtn.addEventListener('click', function(){
+      var isLight = root.getAttribute('data-theme') === 'light';
+      if(isLight){ root.removeAttribute('data-theme'); localStorage.setItem('theme','dark'); }
+      else { root.setAttribute('data-theme','light'); localStorage.setItem('theme','light'); }
+      updateIcon();
+    });
+  }
+  var mobileMenu = document.getElementById('mobile-menu');
+  var mobileToggle = document.getElementById('mobile-toggle');
+  var mobileClose = document.getElementById('mobile-close');
+  if(mobileToggle && mobileMenu){
+    mobileToggle.addEventListener('click', function(){ mobileMenu.classList.add('open'); });
+  }
+  if(mobileClose && mobileMenu){
+    mobileClose.addEventListener('click', function(){ mobileMenu.classList.remove('open'); });
+  }
+  var dd = document.getElementById('blog-dropdown');
+  var ddBtn = document.getElementById('blog-dropdown-btn');
+  if(dd && ddBtn){
+    ddBtn.addEventListener('click', function(e){ e.stopPropagation(); dd.classList.toggle('open'); });
+    document.addEventListener('click', function(e){ if(!dd.contains(e.target)) dd.classList.remove('open'); });
+  }
+})();
+</script>
 </body>
 </html>
