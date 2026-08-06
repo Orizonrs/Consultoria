@@ -139,6 +139,12 @@
     .hero-stat .n{font-size:28px;font-weight:700;}
     .hero-stat .l{font-size:12px;opacity:.7;margin-top:2px;}
 
+    /* HERO — segmentação por tipo de contrato */
+    .hero-tipos{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.12);}
+    .hero-tipo-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,0.07);font-size:12.5px;font-weight:600;white-space:nowrap;}
+    .hero-tipo-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .hero-tipo-chip .count{opacity:.85;font-weight:700;}
+
     /* AVISO */
     .aviso-strip{background:#0d1a1e;border-bottom:1px solid var(--border);padding:10px 24px;text-align:justify;font-size:12.5px;color:#fff;hyphens:auto;-webkit-hyphens:auto;word-spacing:-0.5px;}
     .aviso-strip strong{color:var(--brand);}
@@ -411,6 +417,7 @@
         <div class="hero-stat"><div class="n" id="stat-vagas" style="color:var(--c-vagas)">–</div><div class="l">Vagas ativas</div></div>
         <div class="hero-stat"><div class="n" id="stat-empresas" style="color:var(--c-empresas)">–</div><div class="l">Empresas</div></div>
       </div>
+      <div class="hero-tipos" id="hero-tipos"></div>
     </div>
   </div>
 </section>
@@ -598,6 +605,34 @@ document.getElementById('mobile-close')?.addEventListener('click', () => documen
 document.getElementById('mobile-toggle')?.addEventListener('click', () => document.getElementById('mobile-menu').classList.add('open'));
 
 /* ══════════════════════════════════════════════════════════════════
+   PROMPT PARA CADASTRO DE VAGAS — use este roteiro quando o usuário
+   ditar uma vaga nova em outra conversa, para saber exatamente quais
+   informações pedir/preencher.
+
+   Ao cadastrar uma vaga, informe os seguintes campos:
+   - Link de candidatura: utilize o link da plataforma da empresa.
+     Caso a empresa não utilize uma plataforma de recrutamento, informe
+     o contato para candidatura via WhatsApp, e-mail ou outro meio
+     disponibilizado.
+   - Site da empresa. Se a empresa não tiver um site oficial, usar o
+     Instagram ou Facebook no lugar.
+   - Nome da vaga.
+   - Nome da empresa.
+   - Descrição da vaga.
+   - Requisitos.
+   - Benefícios.
+   - Categoria da vaga: por exemplo, Administrativa, Operacional,
+     Comercial/Vendas, Logística, Financeira, TI, entre outras.
+   - Cidade da vaga.
+   - Regime de contratação: CLT, PJ, Estágio, Jovem Aprendiz, Autônomo,
+     Temporário ou outro.
+   - Data de publicação da vaga.
+
+   Essas informações serão utilizadas para compor o card da vaga e
+   garantir que o anúncio seja exibido de forma completa e organizada.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
    BANCO DE VAGAS — edite/adicione objetos aqui para publicar vagas.
    Campos:
    - empresa      (texto, obrigatório)
@@ -638,8 +673,137 @@ document.getElementById('mobile-toggle')?.addEventListener('click', () => docume
    ══════════════════════════════════════════════════════════════════ */
 const vagas = [
   {
+    empresa: "Lojas Quero-Quero",
+    cargo: "Coordenador(a) Administrativo",
+    numeroVagas: 1,
+    area: "administrativo",
+    local: "Guaíba/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://lojasinauguradasquero-quero.pandape.infojobs.com.br/Detail/3466650",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Coordenador(a) Administrativo nas Lojas Quero-Quero, em Guaíba/RS, período integral. A empresa é a maior rede em número de lojas de casa e construção do Brasil, com mais de 530 unidades em 5 estados e mais de 8.000 colaboradores. Atividades: analisar e liberar crédito para compras de clientes; realizar cobranças; abertura e fechamento de caixa; auxiliar o gerente nas atividades administrativas; organização de arquivos e documentos da loja; controle de notas e fornecedores; renegociação de clientes inadimplentes; controle da área e liderança da equipe; divulgação de produtos; acompanhamento de metas; fidelização do cliente.",
+    requisitos: ["Ensino Médio (2º Grau)", "Experiência entre 1 e 3 anos", "Experiência com liderança e equipes", "Experiência em cobrança e em análise e liberação de crédito", "Conhecimento em Word, Excel e PowerPoint", "Superior em Administração/Contabilidade/Gestão Comercial/Gestão Financeira/Processos Gerenciais/RH é um diferencial"],
+    siteOficial: "https://www.queroquero.com.br/"
+  },
+  {
+    empresa: "Lojas Quero-Quero",
+    cargo: "Caixa",
+    numeroVagas: 1,
+    area: "administrativo",
+    local: "Guaíba/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://lojasinauguradasquero-quero.pandape.infojobs.com.br/Detail/3563267",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Caixa nas Lojas Quero-Quero, em Guaíba/RS, período integral. A empresa é a maior rede em número de lojas de casa e construção do Brasil, com mais de 530 unidades em 5 estados e mais de 8.000 colaboradores. Atividades: receber valores de venda de produtos; apresentar ao cliente formas de liquidação de dívidas, faturas do cartão da empresa e recarga de celular; suporte na análise de crédito para liberação; auxiliar na cobrança; ofertar e vender serviços financeiros; abertura e fechamento de caixa; organização de arquivos; renegociação de clientes inadimplentes; captura de cartões da empresa; divulgação de produtos; acompanhamento de metas; fidelização do cliente.",
+    requisitos: ["Ensino Médio (2º Grau)", "Experiência entre 1 e 3 anos é valorizada", "Conhecimento no segmento de material de construção, eletrodomésticos, eletroeletrônicos, móveis e/ou serviços financeiros", "Conhecimento em Word, Excel e PowerPoint", "Superior em Administração/Contabilidade/Gestão Comercial/Gestão Financeira/Processos Gerenciais é um diferencial"],
+    siteOficial: "https://www.queroquero.com.br/"
+  },
+  {
+    empresa: "Grupo Soma Hospitalar",
+    cargo: "Assistente de Vendas",
+    numeroVagas: 2,
+    area: "vendas",
+    local: "Eldorado do Sul/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://centro.pandape.infojobs.com.br/Detail/3233917",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Assistente de Vendas no Grupo Soma Hospitalar (Soma RS Produtos Hospitalares), em Eldorado do Sul/RS, período integral, 2 posições. A empresa atua há 40 anos no comércio atacadista de instrumentos e materiais para uso médico, cirúrgico, hospitalar e de laboratórios, com 5 unidades no Brasil (RS, SC, PR, SP e MG) e mais de 500 colaboradores. Atividades: mapeamento e prospecção ativa de novos clientes, oferecendo o portfólio de produtos; contato com carteira inativa buscando reativação; cotações via sistema e portais de compras; negociação de cotações; emissão de pedidos e pós-venda. Benefícios: vale-alimentação, vale-refeição, vale-transporte, assistência médica, assistência odontológica e Gympass.",
+    requisitos: ["Ensino Médio Completo", "Experiência em empresa do ramo hospitalar é um grande diferencial", "Responsabilidade e senso de urgência", "Proatividade e comunicação assertiva"],
+    siteOficial: "https://www.somahospitalar.com.br/"
+  },
+  {
+    empresa: "Grupo Lebes",
+    cargo: "Atendente de Produtos Financeiros",
+    numeroVagas: 1,
+    area: "administrativo",
+    local: "Eldorado do Sul/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://grupolebes.pandape.infojobs.com.br/Detail/3579312",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Atendente de Produtos Financeiros no Grupo Lebes, em Eldorado do Sul/RS, período integral. Atividades: atendimento telefônico e via WhatsApp oferecendo produtos financeiros aos clientes; manutenção de relacionamento próximo com os clientes, esclarecendo dúvidas; cumprimento de metas de vendas; registro e acompanhamento de interações e vendas no sistema da empresa; solicitação de documentos de identificação e atualização cadastral junto à Mesa de Crédito. Benefícios: academia na empresa, micromarket, rota fretada, refeitório no local, plano de saúde, plano odontológico e desconto nas Lojas da Rede Lebes.",
+    requisitos: ["Ensino médio completo", "Residir em Guaíba ou Eldorado do Sul", "Boa comunicação verbal e escrita", "Conhecimento básico de informática", "Experiência anterior em vendas ou telemarketing é um diferencial"],
+    siteOficial: "https://www.lebes.com.br/pessoas"
+  },
+  {
+    empresa: "Sodexo",
+    cargo: "Auxiliar Administrativo",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Eldorado do Sul/RS",
+    tipo: "Jovem Aprendiz",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://www.infojobs.com.br/vaga-de-jovem-aprendiz-administrativo-eldorado-do-sulrs-18406-em-rio-grande-do-sul__11889031.aspx",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Jovem Aprendiz Operacional na área de Atração de Talentos na Sodexo, em Eldorado do Sul/RS. Contrato de Jovem Aprendiz, jornada parcial (manhãs). Funções: apoio no pré-preparo de pratos, carnes, dietas, saladas e sobremesas; montagem, distribuição e reposição de alimentos, bebidas e utensílios; higienização de folhas, frutas, guarnições, utensílios e áreas; coleta e identificação de amostras de alimentos; e cumprimento das normas de saúde e segurança. Remuneração a combinar. Benefícios: vale-alimentação, assistência médica, seguro de vida, Gympass, Apoio Pass e vale-transporte.",
+    requisitos: ["Ensino Médio em curso ou concluído", "Disponibilidade para trabalhar em turnos", "Capacidade de aprender e se adaptar rapidamente", "Atitude proativa e engajamento com as atividades"],
+    siteOficial: "https://br.sodexo.com/"
+  },
+  {
+    empresa: "Long Móveis Personalizados",
+    cargo: "Ajudante de Marcenaria",
+    numeroVagas: 1,
+    area: "operacional",
+    local: "Guaíba/RS (bairro Santa Rita ou proximidades - preferencial)",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "",
+    whatsapp: "5551989966231",
+    mensagemWhats: "Olá! Vi a vaga de Ajudante de Marcenaria no mural e gostaria de saber mais.",
+    descricao: "Vaga para Ajudante de Marcenaria na Long Móveis Personalizados, em Guaíba/RS. Não exige experiência em marcenaria. Salário compatível com o mercado. Preferência para quem reside no bairro Santa Rita ou proximidades.",
+    requisitos: ["Habilidade no manuseio de ferramentas elétricas e manuais", "Cuidado, organização e atenção aos detalhes", "Atenção ao projeto", "Pessoa comprometida e pontual"],
+    redeSocial: "https://www.instagram.com/longmoveis/",
+    redeSocialLabel: "Instagram"
+  },
+  {
+    empresa: "Consthantys EPIs",
+    cargo: "Estoquista",
+    numeroVagas: 1,
+    area: "operacional",
+    local: "Centro - Guaíba/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "consthantysepi@gmail.com",
+    whatsapp: "5551999912094",
+    mensagemWhats: "Olá! Vi a vaga de Estoquista no mural e gostaria de saber mais.",
+    descricao: "Vaga para Estoquista na Consthantys EPIs (equipamentos de proteção individual), no Centro de Guaíba/RS. Atividades: recebimento e conferência de mercadorias, organização e armazenamento de produtos, separação e expedição de pedidos, controle de entrada e saída de estoque, inventários e contagens periódicas, e apoio na carga e descarga de mercadorias. Benefícios: salário compatível com a função, vale-alimentação, vale-transporte, plano de crescimento profissional e estabilidade em empresa com mais de 10 anos de mercado.",
+    requisitos: ["Organização e atenção aos detalhes", "Proatividade e senso de responsabilidade", "Facilidade para trabalhar em equipe", "Conhecimento básico em informática", "Experiência na área de estoque ou logística"],
+    siteOficial: "https://www.consthantys.com.br/"
+  },
+  {
+    empresa: "Milky Moo Guaíba",
+    cargo: "Atendente de Loja",
+    numeroVagas: 1,
+    area: "comercial",
+    local: "Guaíba/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "m.guaiba@milkymoo.com.br",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga para Atendente de Loja na Milky Moo Guaíba, unidade local da rede de milkshakes com mais de 600 lojas no Brasil. Atuação no atendimento ao cliente, preparo e montagem dos milkshakes, operação de caixa e organização da loja, em escala de trabalho 6x1.",
+    requisitos: ["Ensino médio completo", "Boa comunicação", "Agilidade e proatividade", "Organização", "Trabalho em equipe", "Pontualidade", "Informática básica", "Disponibilidade para trabalhar em escala 6x1"],
+    siteOficial: "https://www.milkymoo.com.br/"
+  },
+  {
     empresa: "Ambiensys (via AVL Consultoria)",
-    cargo: "Auxiliar Operacional - Guaíba RS03",
+    cargo: "Auxiliar Operacional",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -654,7 +818,7 @@ const vagas = [
   },
   {
     empresa: "Ambiensys (via AVL Consultoria)",
-    cargo: "Auxiliar Operacional - Guaíba",
+    cargo: "Auxiliar Operacional",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -729,7 +893,7 @@ const vagas = [
   },
   {
     empresa: "Supertex",
-    cargo: "Supervisor de Laboratório (Usina de Concreto)",
+    cargo: "Supervisor de Laboratório",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -819,7 +983,7 @@ const vagas = [
   },
   {
     empresa: "Body Gym",
-    cargo: "Estágio Instrutor",
+    cargo: "Instrutor",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -913,7 +1077,7 @@ const vagas = [
     numeroVagas: 1,
     area: "ti",
     local: "Guaíba/RS",
-    tipo: "A combinar",
+    tipo: "CLT",
     dataPublicacao: "2026-08-04",
     linkSistema: "https://vagas.dbccompany.com.br/vagas/304653",
     email: "",
@@ -969,7 +1133,7 @@ const vagas = [
   },
   {
     empresa: "TextilMax",
-    cargo: "Auxiliar Industrial - Guaíba/RS",
+    cargo: "Auxiliar Industrial",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -984,7 +1148,7 @@ const vagas = [
   },
   {
     empresa: "Mercado Marques",
-    cargo: "Operador(a) de Caixa - Guaíba/RS",
+    cargo: "Operador(a) de Caixa",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -999,7 +1163,7 @@ const vagas = [
   },
   {
     empresa: "Esquadrias DumDum",
-    cargo: "Auxiliar de Produção - Guaíba/RS",
+    cargo: "Auxiliar de Produção",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1014,7 +1178,7 @@ const vagas = [
   },
   {
     empresa: "FINACON",
-    cargo: "Consultor Comercial - Guaíba/RS",
+    cargo: "Consultor Comercial",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1029,7 +1193,7 @@ const vagas = [
   },
   {
     empresa: "Atraente Modas",
-    cargo: "Vendas Moda Feminina - Guaíba/RS",
+    cargo: "Vendas Moda Feminina",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1044,7 +1208,7 @@ const vagas = [
   },
   {
     empresa: "Gold Lar Imobiliária",
-    cargo: "Vendedor - Guaíba/RS",
+    cargo: "Vendedor",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1059,7 +1223,7 @@ const vagas = [
   },
   {
     empresa: "Colégio Schoenstatt",
-    cargo: "Diarista - Guaíba/RS (Centro)",
+    cargo: "Diarista",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1074,7 +1238,7 @@ const vagas = [
   },
   {
     empresa: "RSS3 - Segurança, Inovação e Tecnologia",
-    cargo: "Montador de Andaime - Atuação na CMPC Guaíba",
+    cargo: "Montador de Andaime",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS e região metropolitana",
@@ -1089,7 +1253,7 @@ const vagas = [
   },
   {
     empresa: "Magazine Luiza",
-    cargo: "Assistente de Loja Intermitente - Guaíba/RS",
+    cargo: "Assistente de Loja Intermitente",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1104,7 +1268,7 @@ const vagas = [
   },
   {
     empresa: "Iara Barbosa Desenvolvimento Humano",
-    cargo: "Servente de Obras - Guaíba/RS",
+    cargo: "Servente de Obras",
     numeroVagas: 5,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1119,7 +1283,7 @@ const vagas = [
   },
   {
     empresa: "DCS Construtora e Pavimentadora",
-    cargo: "Motorista de Truck - Guaíba/RS",
+    cargo: "Motorista de Truck",
     numeroVagas: 8,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1134,7 +1298,7 @@ const vagas = [
   },
   {
     empresa: "DCS Construtora e Pavimentadora",
-    cargo: "Apontador de Obras - Guaíba/RS",
+    cargo: "Apontador de Obras",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1149,7 +1313,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Transportes e Estradas - Guaíba/RS (Ermo)",
+    cargo: "Transportes e Estradas",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1164,7 +1328,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Proteção Florestal - Guaíba/RS (Ermo)",
+    cargo: "Proteção Florestal",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1179,7 +1343,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Processos - Guaíba/RS (Ermo)",
+    cargo: "Processos",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1194,7 +1358,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Facilities e Serviços Gerais - Guaíba/RS (Ermo)",
+    cargo: "Facilities e Serviços Gerais",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1209,7 +1373,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Auxiliar de Engenharia - Guaíba/RS (Colina)",
+    cargo: "Auxiliar de Engenharia",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1224,7 +1388,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Marketing/Atendimento - Guaíba/RS (Coronel Nassuca)",
+    cargo: "Marketing/Atendimento",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1239,7 +1403,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Vendas/Marketing - Guaíba/RS (Centro)",
+    cargo: "Vendas/Marketing",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1254,7 +1418,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em E-commerce - Guaíba/RS (Centro)",
+    cargo: "E-commerce",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1269,7 +1433,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em E-commerce - Guaíba/RS (Centro) - 2ª vaga",
+    cargo: "E-commerce",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1284,7 +1448,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Estágio em Contábil - Guaíba/RS (Centro)",
+    cargo: "Auxiliar Contábil",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1299,7 +1463,7 @@ const vagas = [
   },
   {
     empresa: "Facta Intermediação de Negócios",
-    cargo: "Consultor de Vendas - Guaíba/RS",
+    cargo: "Consultor de Vendas",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1329,7 +1493,7 @@ const vagas = [
   },
   {
     empresa: "Pompéia (Grupo Lins Ferrão)",
-    cargo: "Assistente de Vendas - Guaíba/RS",
+    cargo: "Assistente de Vendas",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1344,7 +1508,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Quero-Quero",
-    cargo: "Caixa - Guaíba/RS",
+    cargo: "Caixa",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1359,7 +1523,7 @@ const vagas = [
   },
   {
     empresa: "MATRI Indústria Metalúrgica",
-    cargo: "Representante Comercial (PJ) - Guaíba/RS e Região",
+    cargo: "Representante Comercial (PJ)",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1374,7 +1538,7 @@ const vagas = [
   },
   {
     empresa: "M&O Moda e Oferta Baby",
-    cargo: "Auxiliar de Loja - Guaíba/RS",
+    cargo: "Auxiliar de Loja",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1389,7 +1553,7 @@ const vagas = [
   },
   {
     empresa: "Raia / RD Saúde",
-    cargo: "Atendente de Farmácia - Guaíba/RS",
+    cargo: "Atendente de Farmácia",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1404,7 +1568,7 @@ const vagas = [
   },
   {
     empresa: "Depois do Culto - Lanches & Encontros",
-    cargo: "Auxiliar de Cozinha - Guaíba/RS",
+    cargo: "Auxiliar de Cozinha",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1419,7 +1583,7 @@ const vagas = [
   },
   {
     empresa: "Depois do Culto - Lanches & Encontros",
-    cargo: "Atendente - Guaíba/RS",
+    cargo: "Atendente",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1434,7 +1598,7 @@ const vagas = [
   },
   {
     empresa: "Depois do Culto - Lanches & Encontros",
-    cargo: "Chapista - Guaíba/RS",
+    cargo: "Chapista",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1449,7 +1613,7 @@ const vagas = [
   },
   {
     empresa: "Timenow Engenharia",
-    cargo: "Pessoa Engenheira de Planejamento - Guaíba/RS",
+    cargo: "Pessoa Engenheira de Planejamento",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -1464,7 +1628,7 @@ const vagas = [
   },
   {
     empresa: "Timenow Engenharia",
-    cargo: "Pessoa Analista de Planejamento (Controle/BI) - Guaíba/RS",
+    cargo: "Pessoa Analista de Planejamento (Controle/BI)",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -1479,7 +1643,7 @@ const vagas = [
   },
   {
     empresa: "Timenow Engenharia",
-    cargo: "Pessoa Analista de Planejamento - Guaíba/RS",
+    cargo: "Pessoa Analista de Planejamento",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -1494,7 +1658,7 @@ const vagas = [
   },
   {
     empresa: "Grupo Brasanitas",
-    cargo: "Recepcionista Trilíngue - Eldorado do Sul/RS",
+    cargo: "Recepcionista Trilíngue",
     numeroVagas: 3,
     area: "administrativo",
     local: "Eldorado do Sul/RS",
@@ -1509,7 +1673,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Montagem Eletrônica - Guaíba/RS",
+    cargo: "Montagem Eletrônica",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1524,7 +1688,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Analista Dados (Logística) - Guaíba/RS",
+    cargo: "Analista Dados (Logística)",
     numeroVagas: 1,
     area: "ti",
     local: "Guaíba/RS",
@@ -1539,7 +1703,7 @@ const vagas = [
   },
   {
     empresa: "EQS Engenharia",
-    cargo: "Técnico de Instalação e Manutenção - Guaíba/RS",
+    cargo: "Técnico de Instalação e Manutenção",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1554,7 +1718,7 @@ const vagas = [
   },
   {
     empresa: "JSL",
-    cargo: "Operador de Empilhadeira - Guaíba/RS",
+    cargo: "Operador de Empilhadeira",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1569,7 +1733,7 @@ const vagas = [
   },
   {
     empresa: "Masterflake",
-    cargo: "Operador de Empilhadeira I - Guaíba/RS",
+    cargo: "Operador de Empilhadeira I",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1584,7 +1748,7 @@ const vagas = [
   },
   {
     empresa: "Avante Recursos Humanos",
-    cargo: "Motorista de Entrega - Eldorado do Sul/RS",
+    cargo: "Motorista de Entrega",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -1599,7 +1763,7 @@ const vagas = [
   },
   {
     empresa: "Carrefour",
-    cargo: "Operador de Caixa - Guaíba/RS",
+    cargo: "Operador de Caixa",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1614,7 +1778,7 @@ const vagas = [
   },
   {
     empresa: "Atraente Modas",
-    cargo: "Vendas Moda Feminina - Guaíba/RS",
+    cargo: "Vendas Moda Feminina",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1629,7 +1793,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Auxiliar de Produção - Eldorado do Sul/RS (Masculino)",
+    cargo: "Auxiliar de Produção (Masculino)",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -1659,7 +1823,7 @@ const vagas = [
   },
   {
     empresa: "Pompéia (Grupo Lins Ferrão)",
-    cargo: "Jovem Aprendiz - Guaíba/RS",
+    cargo: "Auxiliar de Loja",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1674,7 +1838,7 @@ const vagas = [
   },
   {
     empresa: "Pompéia (Grupo Lins Ferrão)",
-    cargo: "Jovem Aprendiz - Guaíba/RS",
+    cargo: "Auxiliar de Loja",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1689,7 +1853,7 @@ const vagas = [
   },
   {
     empresa: "Asun Supermercados",
-    cargo: "Encarregado de Loja - Guaíba/RS",
+    cargo: "Encarregado de Loja",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1704,7 +1868,7 @@ const vagas = [
   },
   {
     empresa: "Grupo Sman & Muller Segurança e Serviços",
-    cargo: "Vigilante - Eldorado do Sul/RS",
+    cargo: "Vigilante",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS (próximo à entrada de Charqueadas)",
@@ -1719,7 +1883,7 @@ const vagas = [
   },
   {
     empresa: "Quiero Café",
-    cargo: "Barista - Guaíba/RS",
+    cargo: "Barista",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS (Av. Getúlio Vargas, 1401)",
@@ -1734,7 +1898,7 @@ const vagas = [
   },
   {
     empresa: "Círculo Saúde",
-    cargo: "Farmacêutico - Guaíba",
+    cargo: "Farmacêutico",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1749,7 +1913,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Analista Dados (Logística) - Guaíba/RS",
+    cargo: "Analista Dados (Logística)",
     numeroVagas: 1,
     area: "ti",
     local: "Guaíba/RS",
@@ -1764,7 +1928,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Montagem Eletrônica - Guaíba/RS",
+    cargo: "Montagem Eletrônica",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1779,7 +1943,7 @@ const vagas = [
   },
   {
     empresa: "Verisure",
-    cargo: "Vendedor Externo - RS Guaíba",
+    cargo: "Vendedor Externo",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1794,7 +1958,7 @@ const vagas = [
   },
   {
     empresa: "Verisure",
-    cargo: "Representante de Vendas - RS Guaíba",
+    cargo: "Representante de Vendas",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1809,7 +1973,7 @@ const vagas = [
   },
   {
     empresa: "Verisure",
-    cargo: "Consultor de Vendas - RS Guaíba",
+    cargo: "Consultor de Vendas",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1824,7 +1988,7 @@ const vagas = [
   },
   {
     empresa: "Integrar Cooperativa de Trabalho",
-    cargo: "Jovem Aprendiz - Administrativo - 5290",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 2,
     area: "estagio",
     local: "Guaíba/RS (Ermo)",
@@ -1839,7 +2003,7 @@ const vagas = [
   },
   {
     empresa: "Integrar Cooperativa de Trabalho",
-    cargo: "Estágio Técnico ou Graduação em Administração - 5046",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 2,
     area: "estagio",
     local: "Guaíba/RS (Centro)",
@@ -1858,7 +2022,7 @@ const vagas = [
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
-    tipo: "Cooperado",
+    tipo: "PJ",
     dataPublicacao: "2026-07-26",
     linkSistema: "https://integracooperativadosprofissionais.pandape.infojobs.com.br/Detail/3539143",
     email: "",
@@ -1869,7 +2033,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Quero-Quero",
-    cargo: "Coordenador (a) Administrativa - Guaíba/RS",
+    cargo: "Coordenador (a) Administrativa",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -1884,7 +2048,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Quero-Quero",
-    cargo: "Servente de Loja - Guaíba/RS",
+    cargo: "Servente de Loja",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -1914,7 +2078,7 @@ const vagas = [
   },
   {
     empresa: "Brechó Online (Moda Circular)",
-    cargo: "Estágio - Menor Aprendiz",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS (Parque Flórida)",
@@ -1929,7 +2093,7 @@ const vagas = [
   },
   {
     empresa: "Codebal",
-    cargo: "Operador(a) de Caixa - Guaíba/RS",
+    cargo: "Operador(a) de Caixa",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1944,7 +2108,7 @@ const vagas = [
   },
   {
     empresa: "Codebal",
-    cargo: "Supridor(a) de Loja - Guaíba/RS",
+    cargo: "Supridor(a) de Loja",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -1959,7 +2123,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Logística – Guaíba/RS",
+    cargo: "Logística",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1974,7 +2138,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Qualidade - Garantia e Análise de Falhas – Guaíba/RS",
+    cargo: "Qualidade - Garantia e Análise de Falhas",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -1989,7 +2153,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Advogado (a) Contratualista - Guaíba",
+    cargo: "Advogado (a) Contratualista",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -2004,7 +2168,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Analista Importação II - Guaíba/RS",
+    cargo: "Analista Importação II",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -2019,7 +2183,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio Engenharia de Vendas – Guaíba/RS",
+    cargo: "Engenharia de Vendas",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2034,7 +2198,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Processos e Sistemas – Serviços - Guaíba/RS",
+    cargo: "Processos e Sistemas – Serviços",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2049,7 +2213,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Qualidade – Guaíba/RS",
+    cargo: "Qualidade",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2079,7 +2243,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Comprador (a) e Inteligência de Dados - Guaíba/RS",
+    cargo: "Comprador (a) e Inteligência de Dados",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -2094,7 +2258,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Dados e Processos – PCP | Guaíba/RS",
+    cargo: "Dados e Processos – PCP",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2109,7 +2273,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Planejamento e Processos - PCP - Guaíba/RS",
+    cargo: "Planejamento e Processos - PCP",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2124,7 +2288,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Assistente de Logística - PcD - Guaíba/RS",
+    cargo: "Assistente de Logística - PcD",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2139,7 +2303,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Engenharia – Guaíba/RS",
+    cargo: "Engenharia",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2154,7 +2318,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Almoxarife - Guaíba/RS",
+    cargo: "Almoxarife",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2199,7 +2363,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Pessoa com Deficiência - Guaíba",
+    cargo: "Pessoa com Deficiência",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2214,7 +2378,7 @@ const vagas = [
   },
   {
     empresa: "Dipesul",
-    cargo: "Auxiliar de Oficina (Região de Guaíba)",
+    cargo: "Auxiliar de Oficina",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2229,7 +2393,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Assistente Comercial de Vendas - Guaíba",
+    cargo: "Assistente Comercial de Vendas",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2244,7 +2408,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Jovem Aprendiz - Guaíba",
+    cargo: "Auxiliar de Loja",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2259,7 +2423,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Fiscal de Caixa - Guaíba",
+    cargo: "Fiscal de Caixa",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2274,7 +2438,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Operador(a) de Perecíveis - Guaíba",
+    cargo: "Operador(a) de Perecíveis",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2289,7 +2453,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Repositor Noturno - Guaíba",
+    cargo: "Repositor Noturno",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2304,7 +2468,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Operador(a) de Supermercado - Guaíba",
+    cargo: "Operador(a) de Supermercado",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2319,7 +2483,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Auxiliar de Limpeza - Guaíba",
+    cargo: "Auxiliar de Limpeza",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2334,7 +2498,7 @@ const vagas = [
   },
   {
     empresa: "Panvel Logística (Centro de Distribuição)",
-    cargo: "Auxiliar de Logística I Eldorado do Sul",
+    cargo: "Auxiliar de Logística I",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -2499,7 +2663,7 @@ const vagas = [
   },
   {
     empresa: "SAGRES",
-    cargo: "Supervisor(a) Operacional - Guaíba/RS",
+    cargo: "Supervisor(a) Operacional",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2514,7 +2678,7 @@ const vagas = [
   },
   {
     empresa: "SAGRES",
-    cargo: "Ajudante de Produção e Carregamento - Guaíba/RS",
+    cargo: "Ajudante de Produção e Carregamento",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2559,7 +2723,7 @@ const vagas = [
   },
   {
     empresa: "CHECKOUT RH",
-    cargo: "Jovem Aprendiz e Estagiário em Supermercado - Guaíba/RS",
+    cargo: "Jovem Aprendiz e Estagiário em Supermercado",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2574,7 +2738,7 @@ const vagas = [
   },
   {
     empresa: "Alea (Vivo)",
-    cargo: "Vendedor(a) Loja Vivo - Guaíba/RS",
+    cargo: "Vendedor(a)",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2589,7 +2753,7 @@ const vagas = [
   },
   {
     empresa: "SAGRES",
-    cargo: "Operador de Máquinas - Guaíba/RS",
+    cargo: "Operador de Máquinas",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2604,7 +2768,7 @@ const vagas = [
   },
   {
     empresa: "Interlig RH (para Santher)",
-    cargo: "Caldeireiro Industrial - Guaíba/RS",
+    cargo: "Caldeireiro Industrial",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2619,7 +2783,7 @@ const vagas = [
   },
   {
     empresa: "Interlig RH (para Santher)",
-    cargo: "Soldador Industrial - Guaíba/RS",
+    cargo: "Soldador Industrial",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2634,7 +2798,7 @@ const vagas = [
   },
   {
     empresa: "Interlig RH (para Santher)",
-    cargo: "Eletricista Industrial - Guaíba/RS",
+    cargo: "Eletricista Industrial",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2649,7 +2813,7 @@ const vagas = [
   },
   {
     empresa: "Ecguaíba Contabilidade",
-    cargo: "Estágio Contábil - Guaíba/RS",
+    cargo: "Auxiliar Contábil",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -2664,7 +2828,7 @@ const vagas = [
   },
   {
     empresa: "CHECKOUT RH",
-    cargo: "Jovem Aprendiz e Estagiário em Supermercado - Eldorado do Sul/RS",
+    cargo: "Jovem Aprendiz e Estagiário em Supermercado",
     numeroVagas: 1,
     area: "estagio",
     local: "Eldorado do Sul/RS",
@@ -2709,7 +2873,7 @@ const vagas = [
   },
   {
     empresa: "RHevolutionize Consultoria",
-    cargo: "Motorista de Entrega (CNH C ou D) - Eldorado do Sul/RS",
+    cargo: "Motorista de Entrega (CNH C ou D)",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -2724,7 +2888,7 @@ const vagas = [
   },
   {
     empresa: "Grupo Brasanitas",
-    cargo: "Auxiliar Monitoramento - Eldorado do Sul/RS",
+    cargo: "Auxiliar Monitoramento",
     numeroVagas: 3,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -2769,7 +2933,7 @@ const vagas = [
   },
   {
     empresa: "Iara Barbosa Desenvolvimento Humano",
-    cargo: "Pedreiro - Eldorado do Sul/RS",
+    cargo: "Pedreiro",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -2784,7 +2948,7 @@ const vagas = [
   },
   {
     empresa: "Luandre Serviços Temporários",
-    cargo: "Cozinheiro(a) Líder - Eldorado do Sul/RS",
+    cargo: "Cozinheiro(a) Líder",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -2799,7 +2963,7 @@ const vagas = [
   },
   {
     empresa: "Grupo Villela",
-    cargo: "Executivo de Vendas (PJ) - Eldorado do Sul/RS",
+    cargo: "Executivo de Vendas (PJ)",
     numeroVagas: 1,
     area: "comercial",
     local: "Eldorado do Sul/RS e Híbrido",
@@ -2814,11 +2978,11 @@ const vagas = [
   },
   {
     empresa: "Lommez Assessoria Contábil",
-    cargo: "Analista Fiscal Pleno - Eldorado do Sul/RS",
+    cargo: "Analista Fiscal Pleno",
     numeroVagas: 1,
     area: "financeiro",
     local: "Eldorado do Sul/RS",
-    tipo: "Outsourcing",
+    tipo: "Contrato",
     dataPublicacao: "2026-07-22",
     linkSistema: "",
     email: "rh@lommez.com",
@@ -2829,7 +2993,7 @@ const vagas = [
   },
   {
     empresa: "Eldorado Caminhões (DAF)",
-    cargo: "Analista Fiscal - Eldorado do Sul/RS",
+    cargo: "Analista Fiscal",
     numeroVagas: 1,
     area: "financeiro",
     local: "Eldorado do Sul/RS",
@@ -2844,7 +3008,7 @@ const vagas = [
   },
   {
     empresa: "Eldorado Caminhões (DAF)",
-    cargo: "Analista de Contas a Receber - Eldorado do Sul/RS",
+    cargo: "Analista de Contas a Receber",
     numeroVagas: 1,
     area: "financeiro",
     local: "Eldorado do Sul/RS",
@@ -2874,7 +3038,7 @@ const vagas = [
   },
   {
     empresa: "Inbrape",
-    cargo: "Auxiliar de Produção - Guaíba/RS",
+    cargo: "Auxiliar de Produção",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -2904,7 +3068,7 @@ const vagas = [
   },
   {
     empresa: "Alea (Vivo)",
-    cargo: "Vendedor(a) - Loja Vivo Guaíba/RS",
+    cargo: "Vendedor(a)",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2919,7 +3083,7 @@ const vagas = [
   },
   {
     empresa: "Alea (Vivo)",
-    cargo: "Caixa - Loja Vivo Guaíba/RS",
+    cargo: "Caixa",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -2934,11 +3098,11 @@ const vagas = [
   },
   {
     empresa: "McDonald's (Arcos Dorados)",
-    cargo: "Atendente Restaurante 12x36 (Parque 35 - Guaíba/RS)",
+    cargo: "Atendente Restaurante 12x36",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
-    tipo: "CLT 12x36",
+    tipo: "CLT",
     dataPublicacao: "2026-07-16",
     linkSistema: "https://restaurantemc.gupy.io/jobs/11763140?jobBoardSource=gupy_public_page",
     email: "",
@@ -2949,11 +3113,11 @@ const vagas = [
   },
   {
     empresa: "McDonald's (Arcos Dorados)",
-    cargo: "Atendente Restaurante 12x36 (Parque 35 - Guaíba/RS)",
+    cargo: "Atendente Restaurante 12x36",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
-    tipo: "CLT 12x36",
+    tipo: "CLT",
     dataPublicacao: "2026-07-16",
     linkSistema: "https://restaurantemc.gupy.io/jobs/11763393?jobBoardSource=gupy_public_page",
     email: "",
@@ -2964,7 +3128,7 @@ const vagas = [
   },
   {
     empresa: "McDonald's (Arcos Dorados)",
-    cargo: "Gerente de Plantão Trainee (Parque 35 - Guaíba/RS)",
+    cargo: "Gerente de Plantão Trainee",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -2979,7 +3143,7 @@ const vagas = [
   },
   {
     empresa: "McDonald's (Arcos Dorados)",
-    cargo: "Técnico de Manutenção (Parque 35 - Guaíba/RS)",
+    cargo: "Técnico de Manutenção",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -3114,7 +3278,7 @@ const vagas = [
   },
   {
     empresa: "Randstad",
-    cargo: "Banco de Talentos - Auxiliar de Logística (Efetiva) - Zona Norte e Oeste",
+    cargo: "Banco de Talentos - Auxiliar de Logística (Efetiva)",
     numeroVagas: 100,
     area: "operacional",
     local: "Guaíba/RS, Eldorado do Sul/RS",
@@ -3219,7 +3383,7 @@ const vagas = [
   },
   {
     empresa: "Datateck Indústria e Comércio Ltda",
-    cargo: "Jovem Aprendiz",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3429,7 +3593,7 @@ const vagas = [
   },
   {
     empresa: "Umana",
-    cargo: "Promotor de Vendas (Vaga Temporária) — Cód. 334",
+    cargo: "Promotor de Vendas (Vaga Temporária)",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -3444,7 +3608,7 @@ const vagas = [
   },
   {
     empresa: "Inbrape",
-    cargo: "Estágio Administrativo",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3459,7 +3623,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio em Administração — Escritório de Advocacia",
+    cargo: "Auxiliar Administrativo (Escritório de Advocacia)",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3474,7 +3638,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio Ensino Médio (Feminino)",
+    cargo: "Ensino Médio (Feminino)",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3489,7 +3653,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio em Direito",
+    cargo: "Auxiliar Jurídico",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3579,7 +3743,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Lebes",
-    cargo: "Vendedor de Móveis (Loja Av. 20 de Setembro)",
+    cargo: "Vendedor de Móveis",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -3624,7 +3788,7 @@ const vagas = [
   },
   {
     empresa: "TK Elevator Brasil (GUA)",
-    cargo: "Estágio em Cloud e DevOps – Guaíba/RS",
+    cargo: "Cloud e DevOps",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3774,7 +3938,7 @@ const vagas = [
   },
   {
     empresa: "CIEE-RS",
-    cargo: "Contábil",
+    cargo: "Auxiliar Contábil",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS (Centro)",
@@ -3864,7 +4028,7 @@ const vagas = [
   },
   {
     empresa: "Prosegur",
-    cargo: "Bombeiro Civil Industrial — ID: 26000GTY",
+    cargo: "Bombeiro Civil Industrial",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -3909,7 +4073,7 @@ const vagas = [
   },
   {
     empresa: "Grupo Soma Hospitalar",
-    cargo: "Jovem Aprendiz",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "administrativo",
     local: "Eldorado do Sul/RS",
@@ -3969,7 +4133,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio - Pedagogia",
+    cargo: "Auxiliar Pedagógico",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3984,7 +4148,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio - Administração (Escritório de Advocacia)",
+    cargo: "Auxiliar Administrativo (Escritório de Advocacia)",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -3999,7 +4163,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio - Direito",
+    cargo: "Auxiliar Jurídico",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -4014,7 +4178,7 @@ const vagas = [
   },
   {
     empresa: "Linck Máquinas",
-    cargo: "Jovem Aprendiz",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "estagio",
     local: "Eldorado do Sul/RS",
@@ -4044,7 +4208,7 @@ const vagas = [
   },
   {
     empresa: "Santo Brilho",
-    cargo: "Vendedor Externo - Guaíba e Região",
+    cargo: "Vendedor Externo",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -4123,7 +4287,7 @@ const vagas = [
     numeroVagas: 1,
     area: "comercial",
     local: "Eldorado do Sul/RS",
-    tipo: "A combinar",
+    tipo: "CLT",
     dataPublicacao: "2026-07-27",
     linkSistema: "",
     email: "rh@cervosul.com.br",
@@ -4138,7 +4302,7 @@ const vagas = [
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
-    tipo: "Freelance",
+    tipo: "Freelancer",
     dataPublicacao: "2026-07-27",
     linkSistema: "",
     email: "",
@@ -4164,7 +4328,7 @@ const vagas = [
   },
   {
     empresa: "Inbrape",
-    cargo: "Estágio Administrativo",
+    cargo: "Auxiliar Administrativo",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -4194,7 +4358,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio – Produção de Alimentos (Meninos)",
+    cargo: "Produção de Alimentos",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS (Bairro Colina)",
@@ -4284,7 +4448,7 @@ const vagas = [
   },
   {
     empresa: "CMPC",
-    cargo: "Estágio Nível Superior - Engenharia Mecânica",
+    cargo: "Engenharia Mecânica",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -4299,7 +4463,7 @@ const vagas = [
   },
   {
     empresa: "CMPC",
-    cargo: "Estágio Nível Superior - Transporte e Estradas",
+    cargo: "Transporte e Estradas",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -4344,7 +4508,7 @@ const vagas = [
   },
   {
     empresa: "Círculo Saúde",
-    cargo: "Técnico de Infraestrutura - Guaíba",
+    cargo: "Técnico de Infraestrutura",
     numeroVagas: 1,
     area: "ti",
     local: "Guaíba/RS",
@@ -4359,7 +4523,7 @@ const vagas = [
   },
   {
     empresa: "Círculo Saúde",
-    cargo: "Analista de Infraestrutura - Guaíba",
+    cargo: "Analista de Infraestrutura",
     numeroVagas: 1,
     area: "ti",
     local: "Guaíba/RS",
@@ -4464,7 +4628,7 @@ const vagas = [
   },
   {
     empresa: "Círculo Saúde",
-    cargo: "Farmacêutico - Guaíba",
+    cargo: "Farmacêutico",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -4479,7 +4643,7 @@ const vagas = [
   },
   {
     empresa: "Círculo Saúde",
-    cargo: "Banco de Talentos - Guaíba",
+    cargo: "Banco de Talentos",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -4494,7 +4658,7 @@ const vagas = [
   },
   {
     empresa: "Stok Center Guaíba (Comercial Zaffari)",
-    cargo: "Gerente de Loja - Guaíba",
+    cargo: "Gerente de Loja",
     numeroVagas: 1,
     area: "administrativo",
     local: "Guaíba/RS",
@@ -4539,7 +4703,7 @@ const vagas = [
   },
   {
     empresa: "Datateck Indústria e Comércio Ltda",
-    cargo: "Estagiário de Engenharia",
+    cargo: "Engenharia",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -4569,7 +4733,7 @@ const vagas = [
   },
   {
     empresa: "Carrefour",
-    cargo: "Operador de Loja - Guaíba Schell",
+    cargo: "Operador de Loja",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -4764,7 +4928,7 @@ const vagas = [
   },
   {
     empresa: "Panvel Corporativo",
-    cargo: "Estágio Administrativo | Comercial Produtos Panvel",
+    cargo: "Comercial | Produtos Panvel",
     numeroVagas: 1,
     area: "estagio",
     local: "Eldorado do Sul/RS",
@@ -4974,7 +5138,7 @@ const vagas = [
   },
   {
     empresa: "Esquadrias DumDum",
-    cargo: "Auxiliar de Produção - Guaíba/RS",
+    cargo: "Auxiliar de Produção",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -4989,7 +5153,7 @@ const vagas = [
   },
   {
     empresa: "Restaurante (Eldorado do Sul)",
-    cargo: "Cozinheira - Eldorado do Sul/RS",
+    cargo: "Cozinheira",
     numeroVagas: 1,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -5004,7 +5168,7 @@ const vagas = [
   },
   {
     empresa: "Escola (Eldorado do Sul)",
-    cargo: "Professora e Auxiliar de Educação Infantil - Eldorado do Sul/RS",
+    cargo: "Professora e Auxiliar de Educação Infantil",
     numeroVagas: 2,
     area: "operacional",
     local: "Eldorado do Sul/RS",
@@ -5019,7 +5183,7 @@ const vagas = [
   },
   {
     empresa: "Ricardo Pizzaria e Restaurante",
-    cargo: "Garçom - Colina",
+    cargo: "Garçom",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS (Colina)",
@@ -5034,7 +5198,7 @@ const vagas = [
   },
   {
     empresa: "Alea (Vivo)",
-    cargo: "Vendedor(a) Loja Vivo - Guaíba/RS",
+    cargo: "Vendedor(a)",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS",
@@ -5049,7 +5213,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Lebes",
-    cargo: "Consultor(a) de Moda - Loja São José, Guaíba/RS",
+    cargo: "Consultor(a) de Moda",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS (Rua São José, 597)",
@@ -5064,7 +5228,7 @@ const vagas = [
   },
   {
     empresa: "Lojas Lebes",
-    cargo: "Consultor de Móveis - Loja São José, Guaíba/RS",
+    cargo: "Consultor de Móveis",
     numeroVagas: 1,
     area: "comercial",
     local: "Guaíba/RS (Rua São José, 597)",
@@ -5079,7 +5243,7 @@ const vagas = [
   },
   {
     empresa: "Rioprel Soluções em Engenharia Elétrica Industrial",
-    cargo: "Eletricista - Guaíba/RS",
+    cargo: "Eletricista",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -5094,7 +5258,7 @@ const vagas = [
   },
   {
     empresa: "Rioprel Soluções em Engenharia Elétrica Industrial",
-    cargo: "Auxiliar de Eletricista - Guaíba/RS",
+    cargo: "Auxiliar de Eletricista",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -5109,7 +5273,7 @@ const vagas = [
   },
   {
     empresa: "Confidencial (via grupo \"a procura de emprego em Guaíba\")",
-    cargo: "Auxiliar Operacional (Triagem de Resíduos) - Guaíba/RS",
+    cargo: "Auxiliar Operacional (Triagem de Resíduos)",
     numeroVagas: 1,
     area: "operacional",
     local: "Guaíba/RS",
@@ -5139,7 +5303,7 @@ const vagas = [
   },
   {
     empresa: "Agência Focco",
-    cargo: "Estágio - Vendedor(a) e Marketing",
+    cargo: "Vendedor(a) e Marketing",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -5149,12 +5313,11 @@ const vagas = [
     email: "agenciafocco@agenciafocco.com",
     whatsapp: "5551991591457",
     mensagemWhats: "Olá! Vi a vaga de Estágio - Vendedor(a) e Marketing divulgada pela Agência Focco e gostaria de saber mais.",
-    descricao: "Vaga de estágio em Vendedor(a) e Marketing, divulgada pela Agência Focco Consultoria e Serviços (Rua Bento Gonçalves, 340, sala 112, Guaíba/RS). Atividades: atendimento ao cliente, emissão de notas fiscais, edição de vídeos, marketing e vendas. Horário: 8h às 12h e das 13h às 15h. Enviar currículo em PDF para o e-mail, citando a vaga de interesse e a pretensão salarial no assunto.",
-    requisitos: ["Cursando Técnico em Administração, Marketing ou Publicidade (a partir do 2º semestre)", "Boa comunicação", "Proatividade e interesse na área"]
+    descricao: "Vaga de estágio em Vendedor(a) e Marketing, divulgada pela Agência Focco Consultoria e Serviços (Rua Bento Gonçalves, 340, sala 112, Guaíba/RS). Atividades: atendimento ao cliente, emissão de notas fiscais, edição de vídeos, marketing e vendas. Horário: 8h às 12h e das 13h às 15h. Enviar currículo em PDF para o e-mail, citando a vaga de interesse e a pretensão salarial no assunto.",    requisitos: ["Cursando Técnico em Administração, Marketing ou Publicidade (a partir do 2º semestre)", "Boa comunicação", "Proatividade e interesse na área"]
   },
   {
     empresa: "Escola de Educação Infantil Turminha do Pooh",
-    cargo: "Estagiária de Pedagogia",
+    cargo: "Auxiliar Pedagógico",
     numeroVagas: 1,
     area: "estagio",
     local: "Guaíba/RS",
@@ -5259,7 +5422,7 @@ const vagas = [
   },
   {
     empresa: "Dell Technologies",
-    cargo: "Estágio em Serviços de Recuperação de Ativos",
+    cargo: "Serviços de Recuperação de Ativos",
     numeroVagas: 1,
     area: "estagio",
     local: "Eldorado do Sul/RS",
@@ -5274,7 +5437,7 @@ const vagas = [
   },
   {
     empresa: "Dell Technologies",
-    cargo: "Estágio em Gestão de Riscos Tributários",
+    cargo: "Gestão de Riscos Tributários",
     numeroVagas: 1,
     area: "estagio",
     local: "Eldorado do Sul/RS",
@@ -5286,6 +5449,148 @@ const vagas = [
     mensagemWhats: "",
     descricao: "Vaga de estágio em Gestão de Riscos Tributários, na equipe de Finanças da Dell Technologies, em Eldorado do Sul/RS. Bolsa-estágio de R$1.790 por mês. Atividades: apoiar a área de Finanças no acompanhamento e mapeamento de riscos tributários, auxiliando em rotinas fiscais e de conformidade da empresa.",
     requisitos: ["Cursando Ensino Superior em Ciências Contábeis, Direito, Administração ou áreas correlatas", "Disponibilidade para estágio presencial em Eldorado do Sul", "Interesse na área tributária/fiscal"]
+  },
+  {
+    empresa: "TK Elevator Brasil (GUA)",
+    cargo: "Estágio Engenharia de Vendas",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "Estágio",
+    dataPublicacao: "2026-08-04",
+    linkSistema: "https://jobs.tkelevator.com/pt/job/Est%C3%A1gio-Engenharia-de-Vendas-%E2%80%93-Gua%C3%ADba_RS-Gua%C3%ADba?id=962513",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Estágio em Engenharia de Vendas na TK Elevator, em Guaíba/RS, presencial, de segunda a sexta (7h35 às 14h35). Atividades: apoiar a análise de consultas técnicas relacionadas a elevadores especiais, elaborar estudos de viabilidade e projetos preliminares para atendimento aos clientes, realizar cálculos de tráfego de elevadores e análises de eficiência energética, e auxiliar na elaboração de documentações técnicas e no suporte aos processos do departamento. Benefícios: plano de saúde, plano odontológico, telemedicina/telenutrição/telepsicologia, Wellhub (Gympass), seguro de vida, refeitório no local (café da manhã custeado e almoço com desconto) e transporte fretado.",
+    requisitos: ["Cursando Engenharia Mecânica, Engenharia de Produção, Engenharia de Automação ou Engenharia Elétrica", "A partir do 2º semestre da graduação", "Disponibilidade para estagiar presencialmente em Guaíba, de segunda a sexta, das 7h35 às 14h35", "Diferencial: disponibilidade para estagiar por até 2 anos", "Diferencial: inglês e espanhol em nível intermediário", "Diferencial: conhecimento em Power BI"],
+    siteOficial: "https://www.tkelevator.com/br-pt/"
+  },
+  {
+    empresa: "TK Elevator Brasil (GUA)",
+    cargo: "Estágio em Processos e Sistemas – Serviços",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "Estágio",
+    dataPublicacao: "2026-08-04",
+    linkSistema: "https://jobs.tkelevator.com/pt/job/Est%C3%A1gio-em-Processos-e-Sistemas-%E2%80%93-Servi%C3%A7os-Gua%C3%ADba_RS-Gua%C3%ADba?id=962514",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Estágio em Processos e Sistemas, área de Serviços, na TK Elevator, em Guaíba/RS, presencial. Atividades: apoiar a coleta, organização e análise de dados operacionais para identificar oportunidades de melhoria; apoiar o mapeamento, entendimento e documentação de processos de negócio junto às áreas envolvidas; dar suporte na elaboração e atualização de documentos, materiais analíticos e apresentações da área; apoiar o acompanhamento de demandas junto à TI (organização de informações, validações e testes funcionais); participar de reuniões com áreas de negócio; e apoiar na organização de indicadores, controles e planos de ação relacionados aos processos de Serviços. Benefícios: plano de saúde, plano odontológico, telemedicina/telenutrição/telepsicologia, Wellhub (Gympass), seguro de vida, refeitório no local (café da manhã custeado e almoço com desconto) e transporte fretado.",
+    requisitos: ["Cursando Ensino Superior em Engenharia, Sistemas de Informação ou áreas correlatas", "Conhecimento em Excel", "Capacidade de aprendizado rápido e raciocínio lógico", "Organização e atenção aos detalhes", "Interesse em processos, sistemas e análise de dados", "Proatividade e vontade de se desenvolver profissionalmente", "Diferencial: inglês intermediário", "Diferencial: disponibilidade para estagiar por até 2 anos"],
+    siteOficial: "https://www.tkelevator.com/br-pt/"
+  },
+  {
+    empresa: "TK Elevator Brasil (GUA)",
+    cargo: "Estágio Gestão de Projetos",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "Estágio",
+    dataPublicacao: "2026-08-05",
+    linkSistema: "https://jobs.tkelevator.com/pt/job/Est%C3%A1gio-Gest%C3%A3o-de-Projetos-%E2%80%93-Gua%C3%ADba_RS-Gua%C3%ADba?id=962805",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Estágio em Gestão de Projetos na TK Elevator, em Guaíba/RS, presencial. Atividades: apoiar a coleta, consolidação, análise e atualização de KPIs estratégicos; elaborar apresentações executivas, relatórios e materiais de apoio; trabalhar com melhorias de processos (mapeamento, documentação e revisão); apoiar a gestão e atualização dos A3s e o acompanhamento de iniciativas de melhoria contínua; dar suporte nos processos de gestão de projetos da área (reuniões, atas, cronogramas e reportes gerenciais); revisar entregáveis e apoiar a validação de informações dos projetos; colaborar na organização das rotinas administrativas da área; e produzir conteúdos sobre planejamento estratégico e gestão de projetos para a intranet corporativa. Benefícios: plano de saúde, plano odontológico, telemedicina/telenutrição/telepsicologia, Wellhub (Gympass), seguro de vida, refeitório no local (café da manhã custeado e almoço com desconto) e transporte fretado.",
+    requisitos: ["Cursando Engenharia, Administração ou correlatos", "Conhecimento intermediário em Microsoft Office", "Perfil dinâmico, flexível, organizado e comprometido, com boa comunicação", "Senso crítico e analítico", "Diferencial: disponibilidade para estagiar por até 2 anos", "Diferencial: conhecimento em inglês", "Diferencial: conhecimentos em gestão de projetos e Power BI"],
+    siteOficial: "https://www.tkelevator.com/br-pt/"
+  },
+  {
+    empresa: "TK Elevator Brasil (GUA)",
+    cargo: "Estágio em Logística",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "Estágio",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://jobs.tkelevator.com/pt/job/Est%C3%A1gio-em-Log%C3%ADstica-%E2%80%93-Gua%C3%ADba_RS-Gua%C3%ADba?id=962913",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Estágio em Logística na TK Elevator, em Guaíba/RS, presencial, das 7h35 às 14h35 (1h de intervalo). Vaga para apoiar a operação garantindo o fluxo de entrada e saída de materiais. Atividades: acompanhar o recebimento de materiais e realizar a conferência de volumes e notas fiscais; acondicionar os materiais no estoque; realizar picking; realizar processo de logística reversa; e acompanhar o processo de expedição. Benefícios: plano de saúde, plano odontológico, telemedicina/telenutrição/telepsicologia, Wellhub (Gympass), seguro de vida, refeitório no local (café da manhã custeado e almoço com desconto) e transporte fretado.",
+    requisitos: ["Cursando Ensino Superior em Logística ou áreas afins", "Disponibilidade para estagiar por até 2 anos", "Disponibilidade para atuar das 7h35 às 14h35, com 1h de intervalo", "Conhecimento em Excel, Word e PowerPoint", "Boa comunicação interpessoal, organização, raciocínio lógico e capacidade para resolver problemas sobre demanda", "Diferencial: familiaridade com o sistema SAP módulo WM"],
+    siteOficial: "https://www.tkelevator.com/br-pt/"
+  },
+  {
+    empresa: "Nilo Tozzo Distribuidora",
+    cargo: "RCA - Representante Comercial Autônomo",
+    numeroVagas: 1,
+    area: "comercial",
+    local: "Guaíba/RS",
+    tipo: "Autônomo",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "",
+    whatsapp: "5549991670990",
+    mensagemWhats: "Olá! Vi a vaga de RCA (Representante Comercial Autônomo) da Nilo Tozzo Distribuidora em Guaíba/RS e gostaria de me candidatar.",
+    descricao: "A Nilo Tozzo Distribuidora está expandindo em Guaíba/RS e busca Representante Comercial Autônomo (RCA). A empresa oferece grandes oportunidades de negócio, excelente portfólio de produtos, estrutura e suporte comercial e de trade marketing, além de possibilidade de altos ganhos. Candidatura via WhatsApp com o time administrativo.",
+    requisitos: ["Experiência em Representação Comercial", "Veículo próprio", "Perfil empreendedor e foco em resultados"],
+    siteOficial: "https://www.tozzo.com.br/"
+  },
+  {
+    empresa: "Agência Focco",
+    cargo: "Auxiliar de Agropecuária",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "Estágio",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "agenciafocco@agenciafocco.com",
+    whatsapp: "5551991591457",
+    mensagemWhats: "Olá! Vi a vaga de estágio em Auxiliar de Agropecuária divulgada pela Agência Focco e gostaria de saber mais.",
+    descricao: "Vaga de estágio para Auxiliar de Agropecuária, divulgada pela Agência Focco Consultoria e Serviços (Rua Bento Gonçalves, 340, sala 112, Guaíba/RS). Atividades: atendimento ao cliente, divulgação de produtos, organização e limpeza da loja, e organização do estoque. Horário: 5 horas de segunda a sexta e 4 horas aos sábados. Enviar currículo em PDF para o e-mail, citando a vaga de interesse e a pretensão salarial no assunto.",
+    requisitos: ["Cursando o Ensino Médio", "16 ou 17 anos", "Morador do bairro Colina"]
+  },
+  {
+    empresa: "Contratante particular (via app Famyle)",
+    cargo: "Diarista / Faxineira",
+    numeroVagas: 1,
+    area: "operacional",
+    local: "Guaíba/RS",
+    tipo: "Autônomo",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://famyle.com/vaga/diarista/guaiba/1056002",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Diarista (horista) para faxina, postada por um contratante particular (Wellington C.) no bairro Jardim Iolanda, Guaíba/RS, através do aplicativo Famyle. Valor: R$ 45/hora. Diferente das demais vagas do mural, esta não é de uma empresa: é uma contratação doméstica direta entre família e profissional, e a candidatura só é feita pelo app/site da Famyle (é necessário criar perfil na plataforma para se candidatar).",
+    requisitos: ["Disponibilidade para dormir no local de trabalho"],
+    siteOficial: "https://famyle.com/"
+  },
+  {
+    empresa: "Contratante particular (via app Famyle)",
+    cargo: "Pet Sitter",
+    numeroVagas: 1,
+    area: "operacional",
+    local: "Guaíba/RS",
+    tipo: "Autônomo",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "https://famyle.com/vaga/pet-sitter/guaiba/1144852",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Pet Sitter (horista) para cuidado diário de cães e gatos, postada por uma contratante particular (Tamires O.) no bairro Bom Fim, Guaíba/RS, através do aplicativo Famyle. Valor: R$ 45/hora. Diferente das demais vagas do mural, esta não é de uma empresa: é uma contratação direta entre família e profissional, e a candidatura só é feita pelo app/site da Famyle (é necessário criar perfil na plataforma para se candidatar).",
+    requisitos: ["Saber cuidar de cães"],
+    siteOficial: "https://famyle.com/"
+  },
+  {
+    empresa: "Condua Soluções em RH",
+    cargo: "Tutor(a) de Pós-graduação",
+    numeroVagas: 1,
+    area: "estagio",
+    local: "Guaíba/RS",
+    tipo: "PJ",
+    dataPublicacao: "2026-08-06",
+    linkSistema: "",
+    email: "vagas@abgestaovirtual.com.br",
+    whatsapp: "5511942999934",
+    mensagemWhats: "Olá! Vi a vaga de Tutor(a) de Pós-graduação divulgada pela Condua (Guaíba/RS) e gostaria de saber mais.",
+    descricao: "Vaga para Tutor(a) de Pós-graduação, divulgada pela Condua Soluções em RH, para atuação em Guaíba/RS, no modelo híbrido. O profissional será responsável pelo suporte às atividades administrativas relacionadas às aulas de pós-graduação, realizando o acompanhamento e envio prévio de materiais aos alunos, além de apoiar nos lançamentos e atualizações em sistemas e softwares (LMS). Jornada: híbrida, 2 vezes por semana das 15h30 às 21h30 (eventualmente às sextas). Enviar currículo para o e-mail informado.",
+    requisitos: ["Formada em Administração, Pedagogia, Secretariado ou RH", "Experiência em monitoria de graduação e/ou pós-graduação", "Disponibilidade para o modelo híbrido, 2x na semana das 15h30 às 21h30 (eventualmente às sextas)"]
   }
 ];;;;;;
 
@@ -5651,6 +5956,14 @@ function renderVagas() {
       </div>`;
 
     const corArea = areaColors[v.area] || "#14b8a6";
+    // Quando a vaga está na categoria "estágio" (não existe aba própria pra
+    // Jovem Aprendiz/outros no menu) mas o contrato real não é Estágio,
+    // mostramos o tipo real no badge em vez de "Estágio" fixo, pra não
+    // contradizer o ícone de contrato logo abaixo.
+    const tiposDaVaga = tiposDe(v.tipo);
+    const areaLabel = (v.area === "estagio" && !tiposDaVaga.includes("Estágio"))
+      ? (tiposDaVaga[0] || v.tipo)
+      : (areaLabels[v.area] || v.area);
     const numVagas = v.numeroVagas || 1;
     const numVagasHtml = numVagas > 1
       ? `<div class="vaga-numvagas"><img src="data:image/png;base64,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" alt="" width="13" height="13"> ${numVagas} vagas</div>`
@@ -5663,7 +5976,7 @@ function renderVagas() {
             <div class="vaga-titulo">${escapeHtml(v.cargo)}</div>
             <div class="vaga-empresa">${escapeHtml(v.empresa)}</div>
           </div>
-          <span class="vaga-area-chip" style="--area-color:${corArea}">${areaLabels[v.area] || v.area}</span>
+          <span class="vaga-area-chip" style="--area-color:${corArea}">${escapeHtml(areaLabel)}</span>
         </div>
         ${numVagasHtml}
         <div class="vaga-meta">
@@ -5698,6 +6011,46 @@ function renderStats() {
   document.getElementById("stat-postagens").textContent = postagensAtivas;
   document.getElementById("stat-vagas").textContent = vagasAtivas;
   document.getElementById("stat-empresas").textContent = empresas;
+
+  renderStatsPorTipo(ativasList);
+}
+
+// Cores fixas para os tipos de contrato mais comuns, para manter consistência
+// visual entre atualizações. Tipos fora dessa lista usam a paleta de reserva.
+const CORES_TIPO = {
+  "CLT": "#14b8a6",
+  "Estágio": "#eab308",
+  "PJ": "#f97316",
+  "Temporário": "#3b82f6",
+  "Jovem Aprendiz": "#ec4899",
+  "Autônomo": "#8b5cf6",
+  "Trainee": "#22c55e",
+  "Freelancer": "#06b6d4",
+  "Contrato": "#a855f7",
+  "Intermitente": "#f43f5e"
+};
+const CORES_RESERVA = ["#94a3b8", "#84cc16", "#e879f9", "#38bdf8", "#fb923c"];
+
+function renderStatsPorTipo(ativasList) {
+  const container = document.getElementById("hero-tipos");
+  if (!container) return;
+
+  // Cada vaga pode ter mais de um tipo (ex.: "CLT / Estágio / Jovem Aprendiz / PJ",
+  // usado em bancos de talentos). Contamos numeroVagas em cada tipo listado.
+  const contagem = {};
+  ativasList.forEach(v => {
+    tiposDe(v.tipo).forEach(tipo => {
+      contagem[tipo] = (contagem[tipo] || 0) + (v.numeroVagas || 1);
+    });
+  });
+
+  const tiposOrdenados = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+
+  let reservaIdx = 0;
+  container.innerHTML = tiposOrdenados.map(([tipo, count]) => {
+    const cor = CORES_TIPO[tipo] || CORES_RESERVA[(reservaIdx++) % CORES_RESERVA.length];
+    return `<span class="hero-tipo-chip"><span class="dot" style="background:${cor}"></span>${tipo} <span class="count">${count}</span></span>`;
+  }).join("");
 }
 
 document.getElementById("vagas-list").addEventListener("click", e => {
