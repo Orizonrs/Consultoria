@@ -84,11 +84,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--brand:#14b8a6;--brand-dark:#0e9488;--bg:#0d0f14;--white:#161b24;--text:#e8ecf4;--text-2:#9aa3b8;--text-3:#5a6278;--border:#252c3a;--card-shadow:0 2px 12px rgba(0,0,0,0.4);--card-hover:0 8px 32px rgba(20,184,166,0.18);--radius:12px;--radius-lg:20px;
+    :root{--brand:#14b8a6;--brand-dark:#0e9488;--brand-light:#0c2b28;--bg:#0d0f14;--white:#161b24;--text:#e8ecf4;--text-2:#9aa3b8;--text-3:#5a6278;--border:#252c3a;--card-shadow:0 2px 12px rgba(0,0,0,0.4);--card-hover:0 8px 32px rgba(20,184,166,0.18);--radius:12px;--radius-lg:20px;
       --card-bg:#0a0c11;--text-strong:#fff;
       --c-administrativo:#3b82f6;--c-comercial:#f97316;--c-rh:#ec4899;--c-ti:#8b5cf6;--c-operacional:#14b8a6;--c-financeiro:#22c55e;--c-estagio:#eab308;
       --c-postagens:#3b82f6;--c-vagas:#f97316;--c-empresas:#8b5cf6;--c-atualizado:#22c55e;}
-    [data-theme="light"]{--bg:#f5f7fb;--white:#ffffff;--text:#1a1f2b;--text-2:#5a6278;--text-3:#8891a3;--border:#e3e7ef;--card-shadow:0 2px 12px rgba(0,0,0,0.06);--card-hover:0 8px 32px rgba(20,184,166,0.15);--card-bg:#ffffff;--text-strong:#0f1420;}
+    [data-theme="light"]{--bg:#f5f7fb;--white:#ffffff;--text:#1a1f2b;--text-2:#5a6278;--text-3:#8891a3;--border:#e3e7ef;--brand-light:#e3fbf6;--card-shadow:0 2px 12px rgba(0,0,0,0.06);--card-hover:0 8px 32px rgba(20,184,166,0.15);--card-bg:#ffffff;--text-strong:#0f1420;}
     html{transition:background-color .25s ease;}
     body{transition:background-color .25s ease,color .25s ease;}
     header,.vaga-card,.mobile-menu{transition:background-color .25s ease,border-color .25s ease,box-shadow .25s ease;}
@@ -105,6 +105,7 @@
     nav{display:flex;align-items:center;gap:4px;flex:1;justify-content:flex-end;}
     .nav-link{text-decoration:none;font-size:14px;font-weight:500;color:var(--text-2);padding:8px 14px;border-radius:8px;transition:all .2s;white-space:nowrap;}
     .nav-link:hover{background:#08302e;color:var(--brand);}
+    .nav-link.active{background:#08302e;color:var(--brand);font-weight:600;}
     [data-theme="light"] header .logo-name{color:#f5f7fb;}
     [data-theme="light"] header .nav-link{color:#cfd8e6;}
     [data-theme="light"] header .nav-link:hover{color:var(--brand);}
@@ -114,6 +115,17 @@
     .header-actions{display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;}
     .theme-toggle{background:#08302e;border:none;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#f5f7fb;flex-shrink:0;transition:background .2s;}
     .theme-toggle:hover{background:#0a3f3c;}
+
+    /* ===== DROPDOWN "BLOG" ===== */
+    .nav-dropdown{position:relative;}
+    .nav-dropdown-btn{cursor:pointer;display:inline-flex;align-items:center;gap:5px;background:none;border:none;font:inherit;color:inherit;}
+    .dropdown-caret{font-size:10px;transition:transform .2s;display:inline-block;}
+    .nav-dropdown.open .dropdown-caret{transform:rotate(180deg);}
+    .nav-dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:var(--card-shadow);min-width:190px;padding:8px;display:none;flex-direction:column;gap:2px;z-index:150;}
+    .nav-dropdown.open .nav-dropdown-menu{display:flex;}
+    .nav-dropdown-menu a{padding:9px 12px;border-radius:8px;font-size:14px;color:var(--text-2);text-decoration:none;font-weight:500;transition:.2s;}
+    .nav-dropdown-menu a:hover,.nav-dropdown-menu a.active{background:var(--brand-light);color:var(--brand);}
+    [data-theme="light"] .nav-dropdown-menu a{color:#5a6278;}
 
     /* HERO */
     .hero{background:#063a3d;padding:60px 24px;color:#fff;}
@@ -298,6 +310,10 @@
     p a:visited{color:var(--brand);}
     footer .footer-links a:hover{text-decoration:underline;}
 
+    @media(max-width:1050px){
+      .header-cta{display:none;}
+    }
+
     @media(max-width:768px){
       nav{display:none;} .header-cta{display:none;}
       .mobile-toggle{display:flex;align-items:center;justify-content:center;}
@@ -335,7 +351,19 @@
     </a>
     <nav>
       <a href="../index.html" class="nav-link" style="background:var(--brand);color:#fff;border:1.5px solid var(--brand);margin-right:6px;border-radius:8px;padding:6px 14px;font-weight:700;font-size:13px;" title="Voltar ao site principal">← Site</a>
-      <a href="index.html" class="nav-link">Blog</a>
+      <a href="index.html" class="nav-link">Início</a>
+      <div class="nav-dropdown" id="blog-dropdown">
+        <button type="button" class="nav-link nav-dropdown-btn" id="blog-dropdown-btn">Blog <span class="dropdown-caret">▾</span></button>
+        <div class="nav-dropdown-menu">
+          <a href="tecnologia.html">Tecnologia</a>
+          <a href="carreira.html">Carreira</a>
+          <a href="negocios.html">Negócios</a>
+          <a href="comunidade.html">Comunidade</a>
+          <a href="linkedin.html">LinkedIn</a>
+        </div>
+      </div>
+      <a href="vagas.html" class="nav-link active">Mural de Vagas</a>
+      <a href="apoio.html" class="nav-link">Apoio & Recursos</a>
       <a href="#como-funciona" class="nav-link">Como funciona</a>
     </nav>
     <a href="#publicar" class="header-cta">Publicar uma vaga</a>
@@ -357,12 +385,13 @@
   </div>
   <div class="mobile-nav-links">
     <a href="../index.html" class="mobile-nav-link" style="background:var(--brand);color:#fff;border-radius:8px;margin-bottom:8px;font-weight:700;">← Voltar ao Site</a>
-    <a href="index.html" class="mobile-nav-link">Blog</a>
+    <a href="index.html" class="mobile-nav-link">Início</a>
     <a href="tecnologia.html" class="mobile-nav-link">Tecnologia</a>
     <a href="carreira.html" class="mobile-nav-link">Carreira</a>
     <a href="negocios.html" class="mobile-nav-link">Negócios</a>
     <a href="comunidade.html" class="mobile-nav-link">Comunidade</a>
     <a href="linkedin.html" class="mobile-nav-link">LinkedIn</a>
+    <a href="vagas.html" class="mobile-nav-link" style="background:#08302e;color:var(--brand);font-weight:600;">Mural de Vagas</a>
     <a href="apoio.html" class="mobile-nav-link">Apoio & Recursos</a>
     <a href="#como-funciona" class="mobile-nav-link">Como funciona</a>
     <a href="#publicar" class="mobile-nav-link">Publicar uma vaga</a>
@@ -549,6 +578,12 @@
       updateIcon();
     });
   }
+  var dd = document.getElementById('blog-dropdown');
+  var ddBtn = document.getElementById('blog-dropdown-btn');
+  if(dd && ddBtn){
+    ddBtn.addEventListener('click', function(e){ e.stopPropagation(); dd.classList.toggle('open'); });
+    document.addEventListener('click', function(e){ if(!dd.contains(e.target)) dd.classList.remove('open'); });
+  }
 })();
 </script>
 <script>
@@ -595,6 +630,38 @@ document.getElementById('mobile-toggle')?.addEventListener('click', () => docume
    LIMITE_DIAS_LINK e LIMITE_DIAS_CONTATO mais abaixo no <script>.
    ══════════════════════════════════════════════════════════════════ */
 const vagas = [
+  {
+    empresa: "Lebes Financeira",
+    siteOficial: "https://www.lebes.com.br",
+    cargo: "Analista de Estratégia de Crédito | Financeira",
+    numeroVagas: 1,
+    area: "administrativo",
+    local: "Eldorado do Sul/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-05",
+    linkSistema: "https://grupolebes.pandape.infojobs.com.br/Detail/3577202",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga para Analista de Estratégia de Crédito na Lebes Financeira, em Eldorado do Sul/RS. Presencial, efetivo CLT, período integral, 1 posição. Atividades: desenvolver e monitorar estratégias de concessão de crédito, propor melhorias na Política de Crédito com base em performance, risco e rentabilidade, construir estudos de otimização de aprovação e limites de crédito, monitorar indicadores de risco e desempenho da carteira, realizar análises estatísticas com grandes volumes de dados, conduzir testes A/B, apoiar a parametrização do motor de decisão de crédito e elaborar dashboards e apresentações executivas.",
+    requisitos: ["Ensino Superior completo em Administração, Economia, Estatística, Matemática, Engenharia, Ciência de Dados ou áreas correlatas", "Experiência em Crédito, Risco, Estratégia ou Analytics", "Conhecimento em SQL", "Excel avançado", "Forte capacidade analítica e boa comunicação para apresentação de análises"]
+  },
+  {
+    empresa: "CMPC",
+    siteOficial: "https://cmpcbrasil.com.br",
+    cargo: "Técnico de Manutenção Industrial I - Águas e Efluentes",
+    numeroVagas: 1,
+    area: "operacional",
+    local: "Guaíba/RS",
+    tipo: "CLT",
+    dataPublicacao: "2026-08-05",
+    linkSistema: "https://cmpc.csod.com/ux/ats/careersite/25/home/requisition/18632?c=cmpc&source=LinkedIn",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga para Técnico de Manutenção Industrial I, na área de Águas e Efluentes, na CMPC em Guaíba/RS (requisição req18632). Atividades: manutenção preditiva, preventiva e corretiva em equipamentos rotativos (alinhamento a laser, ajustes de rolamentos), rotas de inspeção, montagem de novos equipamentos, atendimento a clientes internos, participação em comissionamento de projetos, liberação para Paradas Gerais e Programadas, e liderança técnica de equipes e empresas contratadas em reparos e montagens.",
+    requisitos: ["Curso Técnico completo em Mecânica ou áreas correlatas", "Experiência em manutenção industrial ou áreas correlatas", "Conhecimento de metrologia, instrumentos, alinhamento de equipamentos e lubrificação básica", "NR's 11, 12, 26, 33, 35", "Desejável: Pacote Office, leitura de desenhos técnicos, SAP-PM, noção de fluxo de PCM, inglês e espanhol intermediários"]
+  },
   {
     empresa: "GRSA",
     siteOficial: "https://www.grsa.com.br",
@@ -815,38 +882,6 @@ const vagas = [
     requisitos: []
   },
   {
-    empresa: "Brasil Terrenos",
-    siteOficial: "https://btsa.com.br",
-    cargo: "Operador de Trator Esteira - Para Obra",
-    numeroVagas: 1,
-    area: "operacional",
-    local: "Guaíba/RS e São Leopoldo/RS",
-    tipo: "CLT",
-    dataPublicacao: "2026-08-04",
-    linkSistema: "",
-    email: "",
-    whatsapp: "556392414850",
-    mensagemWhats: "Olá! Vi a vaga de Operador de Trator Esteira no mural e gostaria de saber mais.",
-    descricao: "Vaga para Operador de Trator Esteira na Brasil Terrenos, para obra em Guaíba e São Leopoldo/RS. Horário de segunda a sexta-feira, das 8h às 18h. Benefícios: salário base da categoria, vale transporte, vale alimentação, seguro de vida, TotalPass, faculdade corporativa e plano odontológico.",
-    requisitos: ["Comprometimento e responsabilidade", "Experiência na operação de trator esteira"]
-  },
-  {
-    empresa: "Brasil Terrenos",
-    siteOficial: "https://btsa.com.br",
-    cargo: "Operador de Trator Agrícola - Para Obra",
-    numeroVagas: 1,
-    area: "operacional",
-    local: "Guaíba/RS e São Leopoldo/RS",
-    tipo: "CLT",
-    dataPublicacao: "2026-08-04",
-    linkSistema: "",
-    email: "",
-    whatsapp: "556392414850",
-    mensagemWhats: "Olá! Vi a vaga de Operador de Trator Agrícola no mural e gostaria de saber mais.",
-    descricao: "Vaga para Operador de Trator Agrícola na Brasil Terrenos, para obra em Guaíba e São Leopoldo/RS. Horário de segunda a sexta-feira, das 8h às 18h. Benefícios: salário base da categoria, vale transporte, vale alimentação, seguro de vida, TotalPass, faculdade corporativa e plano odontológico.",
-    requisitos: ["Comprometimento e responsabilidade", "Experiência na operação de trator agrícola"]
-  },
-  {
     empresa: "TextilMax",
     redeSocial: "https://www.facebook.com/p/TextilMax-Embalagens-em-Polipropileno-Tran%C3%A7ado-Ltda-100054277971716/",
     redeSocialLabel: "Facebook",
@@ -976,54 +1011,6 @@ const vagas = [
     mensagemWhats: "Olá! Vi a vaga de Montador de Andaime no mural e gostaria de saber mais.",
     descricao: "Vaga para Montador de Andaime com atuação na CMPC - Guaíba, via RSS3 Segurança, Inovação e Tecnologia. Contratação local, CLT, início imediato. Benefícios: plano de saúde e seguro de vida.",
     requisitos: ["Experiência comprovada na função", "Disponibilidade para turnos e escala", "Compromisso com práticas de segurança e uso obrigatório de EPIs"]
-  },
-  {
-    empresa: "Brasil Terrenos",
-    siteOficial: "https://btsa.com.br",
-    cargo: "Operador de Motoniveladora - Para Obra",
-    numeroVagas: 1,
-    area: "operacional",
-    local: "Guaíba/RS e São Leopoldo/RS",
-    tipo: "CLT",
-    dataPublicacao: "2026-08-04",
-    linkSistema: "",
-    email: "",
-    whatsapp: "556392414850",
-    mensagemWhats: "Olá! Vi a vaga de Operador de Motoniveladora no mural e gostaria de saber mais.",
-    descricao: "Vaga para Operador de Motoniveladora (140K) na Brasil Terrenos, para obra em Guaíba e São Leopoldo/RS. Horário de segunda a sexta-feira, das 8h às 18h. Benefícios: salário base da categoria, vale transporte, vale alimentação, seguro de vida, TotalPass, faculdade corporativa e plano odontológico.",
-    requisitos: ["Comprometimento e responsabilidade", "Experiência na operação de motoniveladora"]
-  },
-  {
-    empresa: "Brasil Terrenos",
-    siteOficial: "https://btsa.com.br",
-    cargo: "Auxiliar de Serviços Gerais - Para Obra",
-    numeroVagas: 1,
-    area: "operacional",
-    local: "Guaíba/RS e São Leopoldo/RS",
-    tipo: "CLT",
-    dataPublicacao: "2026-08-04",
-    linkSistema: "",
-    email: "",
-    whatsapp: "556392414850",
-    mensagemWhats: "Olá! Vi a vaga de Auxiliar de Serviços Gerais no mural e gostaria de saber mais.",
-    descricao: "Vaga para Auxiliar de Serviços Gerais na Brasil Terrenos, para obra em Guaíba e São Leopoldo/RS. Horário de segunda a sexta-feira, das 8h às 18h. Benefícios: salário base da categoria, vale transporte, vale alimentação, seguro de vida, TotalPass, faculdade corporativa e plano odontológico.",
-    requisitos: ["Organização e comprometimento", "Gosto por colaborar em ambiente limpo, seguro e produtivo"]
-  },
-  {
-    empresa: "Brasil Terrenos",
-    siteOficial: "https://btsa.com.br",
-    cargo: "Auxiliar de Serviços Gerais e Copa - Vaga Feminina",
-    numeroVagas: 1,
-    area: "operacional",
-    local: "São Leopoldo/RS",
-    tipo: "CLT",
-    dataPublicacao: "2026-08-04",
-    linkSistema: "",
-    email: "",
-    whatsapp: "5521979378102",
-    mensagemWhats: "Olá! Vi a vaga de Auxiliar de Serviços Gerais e Copa no mural e gostaria de saber mais.",
-    descricao: "Vaga feminina para Auxiliar de Serviços Gerais e Copa na Brasil Terrenos, em São Leopoldo/RS. Horário de segunda a sexta-feira, das 8h às 18h. Benefícios: salário base da categoria, vale transporte, vale alimentação, seguro de vida, TotalPass, faculdade corporativa e plano odontológico.",
-    requisitos: ["Organização, capricho e comprometimento", "Gosto por manter ambientes limpos e acolhedores"]
   },
   {
     empresa: "Magazine Luiza",
@@ -4386,7 +4373,7 @@ const vagas = [
     cargo: "Auxiliar de Cozinha",
     numeroVagas: 1,
     area: "operacional",
-    local: "Expointer - Esteio/RS",
+    local: "Esteio/RS (Expointer)",
     tipo: "Temporário",
     dataPublicacao: "2026-07-28",
     linkSistema: "",
@@ -4892,22 +4879,6 @@ const vagas = [
   {
     empresa: "Panvel Corporativo",
     siteOficial: "https://www.panvel.com",
-    cargo: "Especialista de Expansão | Lojas Próprias",
-    numeroVagas: 1,
-    area: "administrativo",
-    local: "Florianópolis/SC ou Curitiba/PR",
-    tipo: "CLT",
-    dataPublicacao: "2026-07-31",
-    linkSistema: "https://corporativopanvel.gupy.io/jobs/10921883?jobBoardSource=gupy_public_page",
-    email: "",
-    whatsapp: "",
-    mensagemWhats: "",
-    descricao: "Busca de novas oportunidades de abertura de lojas Panvel, estudos de geomarketing, validação de pontos comerciais e negociação de condições contratuais. Requer disponibilidade para mudança/residir em Florianópolis/SC ou Curitiba/PR.",
-    requisitos: ["Superior em Administração, Economia, Engenharia ou Arquitetura", "Experiência em expansão de lojas próprias no varejo"]
-  },
-  {
-    empresa: "Panvel Corporativo",
-    siteOficial: "https://www.panvel.com",
     cargo: "Gerente de Segurança da Informação",
     numeroVagas: 1,
     area: "ti",
@@ -5229,7 +5200,7 @@ const vagas = [
     cargo: "Garçom - Colina",
     numeroVagas: 1,
     area: "operacional",
-    local: "Colina",
+    local: "Guaíba/RS (Colina)",
     tipo: "CLT",
     dataPublicacao: "2026-08-03",
     linkSistema: "",
@@ -5509,7 +5480,8 @@ function cidadeDe(local) {
 }
 
 function cidadesDe(local) {
-  return (local || "")
+  const semParenteses = (local || "").replace(/\([^)]*\)/g, "");
+  return semParenteses
     .split(",")
     .map(seg => seg.split("/")[0].trim())
     .filter(Boolean);
