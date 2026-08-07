@@ -254,6 +254,7 @@
     .vaga-bullets li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--brand);}
     .vaga-bullets.bullets-ativ li::before{background:#60a5fa;}
     .vaga-bullets.bullets-benef li::before{background:#f59e0b;}
+    .vaga-bullets.bullets-horario li::before{background:#a78bfa;}
     .vaga-section-titulo{margin-top:14px;}
     .vaga-section-titulo:first-child{margin-top:0;}
     .vaga-actions{display:flex;gap:10px;flex-wrap:wrap;}
@@ -294,7 +295,7 @@
        mesma cor no título e nos bullets daquela seção, pra criar a
        associação visual entre os dois. Descrição e Requisitos ficam com o
        teal da marca (--brand); Atividades em azul; Benefícios em âmbar. */
-    .titulo-desc,.titulo-req,.titulo-ativ,.titulo-benef{color:var(--text-strong);}
+    .titulo-desc,.titulo-req,.titulo-ativ,.titulo-benef,.titulo-horario{color:var(--text-strong);}
     .vaga-desc-titulo{margin-top:0;}
     .vaga-encerrada-aviso{font-size:12px;color:#ff6b6b;font-weight:600;display:flex;align-items:center;gap:6px;margin-top:10px;}
     [data-theme="light"] .vaga-encerrada-aviso{color:#dc2626;}
@@ -305,6 +306,21 @@
     .vaga-presencial-box strong{color:var(--text-strong);}
     .vaga-presencial-endereco{color:var(--text-strong);font-weight:600;}
     [data-theme="light"] .vaga-presencial-box{background:rgba(2,132,199,0.08);border-color:rgba(2,132,199,0.3);}
+    .vaga-canais{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:14px;}
+    .vaga-canais-label{font-size:11.5px;color:var(--text-strong);margin-right:2px;}
+    .vaga-canal-chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:20px;text-decoration:none;border:1px solid;transition:all .2s;}
+    .vaga-canal-chip.canal-site{color:#fbbf24;border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.08);}
+    .vaga-canal-chip.canal-site:hover{border-color:#fbbf24;}
+    .vaga-canal-chip.canal-instagram{color:#e879b9;border-color:rgba(232,121,185,0.4);background:rgba(232,121,185,0.08);}
+    .vaga-canal-chip.canal-instagram:hover{border-color:#e879b9;}
+    .vaga-canal-chip.canal-facebook{color:#5b8def;border-color:rgba(91,141,239,0.4);background:rgba(91,141,239,0.08);}
+    .vaga-canal-chip.canal-facebook:hover{border-color:#5b8def;}
+    .vaga-canal-chip.canal-linkedin{color:#4a9eef;border-color:rgba(74,158,239,0.4);background:rgba(74,158,239,0.08);}
+    .vaga-canal-chip.canal-linkedin:hover{border-color:#4a9eef;}
+    [data-theme="light"] .vaga-canal-chip.canal-site{color:#b45309;border-color:rgba(180,83,9,0.35);}
+    [data-theme="light"] .vaga-canal-chip.canal-instagram{color:#c2267f;border-color:rgba(194,38,127,0.35);}
+    [data-theme="light"] .vaga-canal-chip.canal-facebook{color:#1d5fd6;border-color:rgba(29,95,214,0.35);}
+    [data-theme="light"] .vaga-canal-chip.canal-linkedin{color:#0a66c2;border-color:rgba(10,102,194,0.35);}
     #btn-topo{position:fixed;right:20px;bottom:20px;width:46px;height:46px;border-radius:50%;background:var(--brand);color:#03211e;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.35);opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .25s,transform .25s,visibility .25s,background .2s;z-index:150;}
     #btn-topo.show{opacity:1;visibility:visible;transform:translateY(0);}
     #btn-topo:hover{background:var(--brand-dark);color:#fff;}
@@ -322,6 +338,7 @@
     .fill-atencao{background:#f5b800;}
     .fill-encerrada{background:#ff6b6b;}
     .vaga-countdown-label{font-size:11.5px;color:var(--text-3);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .vaga-countdown-label .vaga-publicada{color:var(--text-strong);}
     .vaga-countdown-label .exp-ativa{color:#00c47e;}
     .vaga-countdown-label .exp-atencao{color:#f5b800;}
     .vaga-countdown-label .exp-encerrada{color:#ff6b6b;}
@@ -7186,7 +7203,10 @@ function extrairBeneficiosDaDescricao(texto) {
     const ch = base[i];
     if (ch === "(") depth++;
     else if (ch === ")") depth = Math.max(0, depth - 1);
-    else if (ch === "." && depth === 0) { fim = i; break; }
+    else if (ch === "." && depth === 0) {
+      const numerico = /[0-9]/.test(base[i - 1] || "") && /[0-9]/.test(base[i + 1] || "");
+      if (!numerico) { fim = i; break; }
+    }
   }
 
   const clausula = base.slice(inicioClausula, fim);
@@ -7231,7 +7251,10 @@ function extrairAtividadesDaDescricao(texto) {
     const ch = base[i];
     if (ch === "(") depth++;
     else if (ch === ")") depth = Math.max(0, depth - 1);
-    else if (ch === "." && depth === 0) { fim = i; break; }
+    else if (ch === "." && depth === 0) {
+      const numerico = /[0-9]/.test(base[i - 1] || "") && /[0-9]/.test(base[i + 1] || "");
+      if (!numerico) { fim = i; break; }
+    }
   }
 
   const clausula = base.slice(inicioClausula, fim);
@@ -7243,6 +7266,65 @@ function extrairAtividadesDaDescricao(texto) {
   const descricaoLimpa = (base.slice(0, inicioAtiv) + " " + restoDepois).replace(/\s+/g, " ").trim();
 
   return { descricao: descricaoLimpa, atividades: itens };
+}
+
+// Extrai a cláusula "Remuneração: ... ." embutida no texto da descrição
+// e devolve como valor de benefício, para aparecer junto dos demais
+// benefícios da vaga (destacando o salário quando informado).
+function extrairRemuneracaoDaDescricao(texto) {
+  const base = (texto || "").trim();
+  const m = base.match(/Remunera[cç][aã]o\s*:\s*/i);
+  if (!m) return { descricao: base, remuneracao: null };
+
+  const inicio = m.index;
+  const inicioClausula = inicio + m[0].length;
+  let depth = 0;
+  let fim = base.length;
+  for (let i = inicioClausula; i < base.length; i++) {
+    const ch = base[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    else if (ch === "." && depth === 0) {
+      const numerico = /[0-9]/.test(base[i - 1] || "") && /[0-9]/.test(base[i + 1] || "");
+      if (!numerico) { fim = i; break; }
+    }
+  }
+
+  const clausula = base.slice(inicioClausula, fim).trim();
+  const restoDepois = fim < base.length ? base.slice(fim + 1) : "";
+  const descricaoLimpa = (base.slice(0, inicio) + " " + restoDepois).replace(/\s+/g, " ").trim();
+
+  return { descricao: descricaoLimpa, remuneracao: clausula };
+}
+
+// Extrai a cláusula "Horário: ... ." embutida no texto da descrição e
+// devolve como seção própria, para não ficar misturada no texto corrido
+// (mesma lógica da extração de remuneração, respeitando pontos usados
+// como separador de milhar/hora e parênteses).
+function extrairHorarioDaDescricao(texto) {
+  const base = (texto || "").trim();
+  const m = base.match(/Hor[aá]rio\s*:\s*/i);
+  if (!m) return { descricao: base, horario: null };
+
+  const inicio = m.index;
+  const inicioClausula = inicio + m[0].length;
+  let depth = 0;
+  let fim = base.length;
+  for (let i = inicioClausula; i < base.length; i++) {
+    const ch = base[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    else if (ch === "." && depth === 0) {
+      const numerico = /[0-9]/.test(base[i - 1] || "") && /[0-9]/.test(base[i + 1] || "");
+      if (!numerico) { fim = i; break; }
+    }
+  }
+
+  const clausula = base.slice(inicioClausula, fim).trim();
+  const restoDepois = fim < base.length ? base.slice(fim + 1) : "";
+  const descricaoLimpa = (base.slice(0, inicio) + " " + restoDepois).replace(/\s+/g, " ").trim();
+
+  return { descricao: descricaoLimpa, horario: clausula };
 }
 
 // Garante que cada chip de benefício comece com letra maiúscula, mesmo
@@ -7454,13 +7536,18 @@ function renderVagas() {
           Ver mais
         </button>` : "";
     const reBeneficio = /^benef[ií]cios?\s*:\s*/i;
+    const reHorario = /^hor[aá]rio\s*:\s*/i;
     const todosRequisitos = v.requisitos || [];
-    const requisitosPuros = todosRequisitos.filter(r => !reBeneficio.test(r));
+    const requisitosPuros = todosRequisitos.filter(r => !reBeneficio.test(r) && !reHorario.test(r));
     const beneficiosDeRequisitos = todosRequisitos
       .filter(r => reBeneficio.test(r))
       .flatMap(r => r.replace(reBeneficio, "").split(/,\s*/))
       .map(b => b.trim())
       .filter(Boolean);
+    const horarioDeRequisitos = todosRequisitos
+      .filter(r => reHorario.test(r))
+      .map(r => r.replace(reHorario, "").trim())
+      .filter(Boolean)[0] || null;
 
     // Extrai trechos "Atividades: ..." e "Benefícios: ..." que ainda estejam
     // embutidos dentro da própria descrição (formato usado nas vagas mais
@@ -7469,13 +7556,20 @@ function renderVagas() {
     // v.atividades / v.beneficios (ver instruções no topo do arquivo).
     const { descricao: descricaoSemAtividades, atividades: atividadesDaDescricao } =
       extrairAtividadesDaDescricao(v.descricao);
+    const { descricao: descricaoSemRemuneracao, remuneracao: remuneracaoDaDescricao } =
+      extrairRemuneracaoDaDescricao(descricaoSemAtividades);
+    const { descricao: descricaoSemHorario, horario: horarioDaDescricao } =
+      extrairHorarioDaDescricao(descricaoSemRemuneracao);
     const { descricao: descricaoExibida, beneficios: beneficiosDaDescricao } =
-      extrairBeneficiosDaDescricao(descricaoSemAtividades);
+      extrairBeneficiosDaDescricao(descricaoSemHorario);
 
     const atividadesLista = [...(v.atividades || []), ...atividadesDaDescricao]
       .map(capitalizarPrimeiraLetra);
-    const beneficiosLista = [...(v.beneficios || []), ...beneficiosDeRequisitos, ...beneficiosDaDescricao]
-      .map(capitalizarPrimeiraLetra);
+    const beneficiosLista = [
+      ...(remuneracaoDaDescricao || v.remuneracao ? [`Remuneração: ${remuneracaoDaDescricao || v.remuneracao}`] : []),
+      ...(v.beneficios || []), ...beneficiosDeRequisitos, ...beneficiosDaDescricao
+    ].map(capitalizarPrimeiraLetra);
+    const horarioFinal = horarioDaDescricao || horarioDeRequisitos || v.horario || null;
 
     const descricaoHtml = descricaoExibida
       ? `<div class="vaga-req-titulo vaga-desc-titulo titulo-desc">Descrição</div>
@@ -7489,12 +7583,16 @@ function renderVagas() {
     const beneficiosHtml = beneficiosLista.length
       ? `<div class="vaga-req-titulo vaga-section-titulo titulo-benef">Benefícios</div>
          <ul class="vaga-bullets bullets-benef">${beneficiosLista.map(b => `<li>${escapeHtml(b)}</li>`).join("")}</ul>` : "";
+    const horarioHtml = horarioFinal
+      ? `<div class="vaga-req-titulo vaga-section-titulo titulo-horario">Horário</div>
+         <ul class="vaga-bullets bullets-horario"><li>${escapeHtml(horarioFinal)}</li></ul>` : "";
     const detalhesHtml = temDetalhes
       ? `<div class="vaga-detalhes" id="${cardId}">
           ${descricaoHtml}
           ${requisitosHtml}
           ${atividadesHtml}
           ${beneficiosHtml}
+          ${horarioHtml}
         </div>` : "";
 
     const avisoEncerrada = v.status === "encerrada"
@@ -7513,10 +7611,16 @@ function renderVagas() {
       <div class="vaga-countdown">
         <div class="vaga-countdown-bar"><div class="vaga-countdown-fill fill-${v.status}" style="width:${percentual}%"></div></div>
         <div class="vaga-countdown-label">
-          <span>Publicada há ${v.dias === 0 ? "hoje" : v.dias + " dia" + (v.dias > 1 ? "s" : "")}</span>
+          <span class="vaga-publicada">Publicada há ${v.dias === 0 ? "hoje" : v.dias + " dia" + (v.dias > 1 ? "s" : "")}</span>
           <span class="exp-${v.status}">${labelRestante} · sai do mural em ${dataExpiracaoStr(v.dataPublicacao, v.limite)} (${origemLabel})</span>
         </div>
       </div>`;
+
+    const temCanalOficial = !!(v.siteOficial || v.instagram || v.facebook || v.linkedin);
+    const canaisHtml = temCanalOficial
+      ? `<div class="vaga-canais">
+          <span class="vaga-canais-label">Canais oficiais de ${escapeHtml(v.empresa)}:</span>
+        </div>` : "";
 
     const corArea = areaColors[v.area] || "#14b8a6";
     // Quando a vaga está na categoria "estágio" (não existe aba própria pra
@@ -7548,6 +7652,7 @@ function renderVagas() {
           <span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Publicada em ${formatarData(v.dataPublicacao)}</span>
         </div>
         ${contadorHtml}
+        ${canaisHtml}
         ${presencialBox}
         <div class="vaga-actions">
           ${btnWhats}
