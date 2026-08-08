@@ -312,8 +312,6 @@
     .vaga-btn-whats:hover{background:#1da851;}
     .vaga-btn-email{background:#3b82f6;color:#fff;}
     .vaga-btn-email:hover{background:#2563eb;}
-    .vaga-btn-copiar{background:#8b5cf6;color:#fff;}
-    .vaga-btn-copiar:hover{background:#7c3aed;}
     .vaga-btn-site{background:transparent;color:#fbbf24;border-color:rgba(251,191,36,0.4);}
     .vaga-btn-site:hover{color:#fcd34d;border-color:#fbbf24;}
     [data-theme="light"] .vaga-btn-site{color:#b45309;border-color:rgba(180,83,9,0.35);}
@@ -330,7 +328,9 @@
     [data-theme="light"] .vaga-btn-facebook:hover{color:#1746a2;border-color:#1d5fd6;}
     [data-theme="light"] .vaga-btn-linkedin{color:#0a66c2;border-color:rgba(10,102,194,0.35);}
     [data-theme="light"] .vaga-btn-linkedin:hover{color:#084a8e;border-color:#0a66c2;}
-    .vaga-btn-toggle{background:#60a5fa;color:#0c1e3d;border-color:#60a5fa;cursor:pointer;font-family:inherit;font-weight:700;}
+    .vaga-actions-divider{height:5px;border-radius:3px;background:#3a4358;margin:16px 0 14px;}
+    [data-theme="light"] .vaga-actions-divider{background:#c7ccd6;}
+    .vaga-btn-toggle{background:#60a5fa;color:#0c1e3d;border-color:#60a5fa;cursor:pointer;font-family:inherit;font-weight:700;width:100%;padding:10px 8px;}
     .vaga-btn-toggle:hover{background:#3b82f6;border-color:#3b82f6;color:#fff;}
     .vaga-btn-toggle svg{transition:transform .2s;}
     .vaga-btn-toggle[aria-expanded="true"] svg{transform:rotate(180deg);}
@@ -378,7 +378,7 @@
 
     /* CONTADOR DE DIAS */
     .vaga-countdown{margin-bottom:12px;}
-    .vaga-countdown-bar{height:5px;border-radius:3px;background:#1c2230;overflow:hidden;margin-bottom:6px;}
+    .vaga-countdown-bar{height:5px;border-radius:3px;background:#3a4358;overflow:hidden;margin-bottom:6px;}
     .vaga-countdown-fill{height:100%;border-radius:3px;transition:width .3s;}
     .fill-ativa{background:#00c47e;}
     .fill-atencao{background:#f5b800;}
@@ -388,7 +388,7 @@
     .vaga-countdown-label .exp-ativa{color:#00c47e;}
     .vaga-countdown-label .exp-atencao{color:#f5b800;}
     .vaga-countdown-label .exp-encerrada{color:#ff6b6b;}
-    [data-theme="light"] .vaga-countdown-bar{background:#e3e7ef;}
+    [data-theme="light"] .vaga-countdown-bar{background:#c7ccd6;}
     [data-theme="light"] .vaga-countdown-label .exp-atencao{color:#b45309;}
     [data-theme="light"] .vaga-countdown-label .exp-encerrada{color:#dc2626;}
     [data-theme="light"] .vaga-countdown-label .exp-ativa{color:#0d8a5c;}
@@ -7704,11 +7704,7 @@ function renderVagas() {
       ? `<a href="mailto:${escapeHtml(v.email)}?subject=${encodeURIComponent("Candidatura - " + v.cargo)}" class="vaga-btn vaga-btn-email" title="Abre o app de e-mail padrão do seu computador ou celular (Gmail, Outlook, etc.)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
           Abrir e-mail
-        </a>
-        <button type="button" class="vaga-btn vaga-btn-copiar btn-copiar-email" data-email="${escapeHtml(v.email)}" title="Copiar endereço de e-mail">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copiar e-mail
-        </button>` : "";
+        </a>` : "";
 
     const btnMapa = v.enderecoPresencial
       ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.enderecoPresencial)}" target="_blank" rel="noopener" class="vaga-btn vaga-btn-mapa" title="Ver rota no Google Maps">
@@ -7830,8 +7826,8 @@ function renderVagas() {
       <div class="vaga-countdown">
         <div class="vaga-countdown-bar"><div class="vaga-countdown-fill fill-${v.status}" style="width:${percentual}%"></div></div>
         <div class="vaga-countdown-label">
-          <span class="vaga-publicada">Publicada há ${v.dias === 0 ? "hoje" : v.dias + " dia" + (v.dias > 1 ? "s" : "")}</span>
-          <span class="exp-${v.status}">${labelRestante} · sai do mural em ${dataExpiracaoStr(v.dataPublicacao, v.limite)} (${origemLabel})</span>
+          <span class="vaga-publicada">Publicado no mural ${v.dias === 0 ? "hoje" : "há " + v.dias + " dia" + (v.dias > 1 ? "s" : "")}</span>
+          <span class="exp-${v.status}" title="${labelRestante} (${origemLabel})">Sai do mural em ${dataExpiracaoStr(v.dataPublicacao, v.limite)}</span>
         </div>
       </div>`;
 
@@ -7882,8 +7878,8 @@ function renderVagas() {
           ${btnInstagram}
           ${btnFacebook}
           ${btnLinkedin}
-          ${btnToggle}
         </div>
+        ${btnToggle ? `<div class="vaga-actions-divider"></div>${btnToggle}` : ""}
         ${detalhesHtml}
         ${avisoEncerrada}
       </div>`;
@@ -7941,24 +7937,6 @@ function renderStatsPorTipo(ativasList) {
     return `<span class="hero-tipo-chip"><span class="dot" style="background:${cor}"></span>${tipo} <span class="count">${count}</span></span>`;
   }).join("");
 }
-
-document.getElementById("vagas-list").addEventListener("click", e => {
-  const btn = e.target.closest(".btn-copiar-email");
-  if (!btn) return;
-  const email = btn.dataset.email || "";
-  const original = btn.innerHTML;
-  const marcarCopiado = () => {
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg> Copiado!`;
-    setTimeout(() => { btn.innerHTML = original; }, 2000);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(email).then(marcarCopiado).catch(() => {
-      window.prompt("Copie o e-mail abaixo:", email);
-    });
-  } else {
-    window.prompt("Copie o e-mail abaixo:", email);
-  }
-});
 
 document.getElementById("vagas-list").addEventListener("click", e => {
   const btn = e.target.closest(".btn-toggle-detalhes");
