@@ -171,6 +171,33 @@
     .search-box select:hover{border-color:#3a4358;}
     .search-box select:focus{outline:none;border-color:var(--brand);}
     .search-box select option{background:var(--white);color:var(--text);}
+    /* CUSTOM FILTER DROPDOWNS (cidade, empresa, área, tipo) — mesmo visual do calendário */
+    .filtro-select-native{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden;pointer-events:none;left:-9999px;}
+    .filtro-select-trigger{width:100%;display:flex;align-items:center;gap:8px;background:var(--white);border:1.5px solid var(--border);color:var(--text);padding:11px 34px 11px 40px;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer;transition:border-color .2s;text-align:left;position:relative;}
+    .filtro-select-trigger:hover{border-color:#3a4358;}
+    .filtro-select-trigger.active{border-color:var(--brand);color:var(--brand);}
+    .filtro-select-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .filtro-select-caret{font-size:10px;opacity:.6;transition:transform .2s;flex-shrink:0;}
+    .filtro-select-trigger.active .filtro-select-caret{transform:rotate(180deg);opacity:1;color:var(--brand);}
+    .filtro-select-panel{position:absolute;top:calc(100% + 8px);left:0;z-index:200;background:var(--cal-bg);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,0.5);width:min(280px,calc(100vw - 32px));max-height:min(360px,70vh);overflow:hidden;display:none;flex-direction:column;box-sizing:border-box;}
+    [data-theme="light"] .filtro-select-panel{box-shadow:0 16px 48px rgba(20,40,60,0.18);}
+    .filtro-select-panel.aberto{display:flex;animation:calFade .15s ease;}
+    .filtro-select-search{padding:10px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .filtro-select-search-input{width:100%;background:var(--white);border:1.5px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;}
+    .filtro-select-search-input:focus{outline:none;border-color:var(--brand);}
+    .filtro-select-options{overflow-y:auto;overflow-x:hidden;min-height:0;padding:6px 4px 6px 6px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;-webkit-overflow-scrolling:touch;}
+    .filtro-select-options::-webkit-scrollbar{width:6px;}
+    .filtro-select-options::-webkit-scrollbar-track{background:transparent;}
+    .filtro-select-options::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+    .filtro-select-options::-webkit-scrollbar-thumb:hover{background:var(--text-3);}
+    .filtro-select-option{text-align:left;background:none;border:none;padding:9px 12px;border-radius:8px;font-size:13.5px;color:var(--text-2);cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .filtro-select-option:hover{background:var(--border);color:var(--text);}
+    .filtro-select-option.active{background:var(--brand-light);color:var(--brand);font-weight:600;}
+    .filtro-select-no-results{padding:14px 12px;font-size:13px;color:var(--text-3);text-align:center;display:none;}
+    @media(max-width:480px){
+      .filtro-select-panel{left:0;right:0;margin:0 auto;max-height:min(320px,65vh);}
+    }
+
     .toggle-encerradas{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-2);cursor:pointer;user-select:none;white-space:nowrap;}
     .toggle-encerradas input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer;}
     .results-count{font-size:13px;color:var(--text-3);white-space:nowrap;}
@@ -511,29 +538,61 @@
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="text" id="busca-vaga" placeholder="Buscar por cargo ou empresa...">
   </div>
-  <div class="search-box city-box">
+  <div class="search-box city-box filtro-select">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-    <select id="filtro-cidade">
+    <button type="button" class="filtro-select-trigger" id="filtro-cidade-trigger" aria-haspopup="listbox" aria-expanded="false">
+      <span class="filtro-select-label" id="filtro-cidade-label">Todas as cidades</span>
+      <span class="filtro-select-caret">▾</span>
+    </button>
+    <select id="filtro-cidade" class="filtro-select-native" tabindex="-1" aria-hidden="true">
       <option value="">Todas as cidades</option>
     </select>
+    <div class="filtro-select-panel" id="filtro-cidade-panel" role="listbox" aria-label="Selecionar cidade">
+      <div class="filtro-select-search"><input type="text" class="filtro-select-search-input" placeholder="Buscar cidade..."></div>
+      <div class="filtro-select-options" id="filtro-cidade-options"></div>
+    </div>
   </div>
-  <div class="search-box city-box">
+  <div class="search-box city-box filtro-select">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-    <select id="filtro-empresa">
+    <button type="button" class="filtro-select-trigger" id="filtro-empresa-trigger" aria-haspopup="listbox" aria-expanded="false">
+      <span class="filtro-select-label" id="filtro-empresa-label">Todas as empresas</span>
+      <span class="filtro-select-caret">▾</span>
+    </button>
+    <select id="filtro-empresa" class="filtro-select-native" tabindex="-1" aria-hidden="true">
       <option value="">Todas as empresas</option>
     </select>
+    <div class="filtro-select-panel" id="filtro-empresa-panel" role="listbox" aria-label="Selecionar empresa">
+      <div class="filtro-select-search"><input type="text" class="filtro-select-search-input" placeholder="Buscar empresa..."></div>
+      <div class="filtro-select-options" id="filtro-empresa-options"></div>
+    </div>
   </div>
-  <div class="search-box city-box">
+  <div class="search-box city-box filtro-select">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-    <select id="filtro-area">
+    <button type="button" class="filtro-select-trigger" id="filtro-area-trigger" aria-haspopup="listbox" aria-expanded="false">
+      <span class="filtro-select-label" id="filtro-area-label">Todas as áreas</span>
+      <span class="filtro-select-caret">▾</span>
+    </button>
+    <select id="filtro-area" class="filtro-select-native" tabindex="-1" aria-hidden="true">
       <option value="">Todas as áreas</option>
     </select>
+    <div class="filtro-select-panel" id="filtro-area-panel" role="listbox" aria-label="Selecionar área">
+      <div class="filtro-select-search"><input type="text" class="filtro-select-search-input" placeholder="Buscar área..."></div>
+      <div class="filtro-select-options" id="filtro-area-options"></div>
+    </div>
   </div>
-  <div class="search-box city-box">
+  <div class="search-box city-box filtro-select">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>
-    <select id="filtro-tipo">
+    <button type="button" class="filtro-select-trigger" id="filtro-tipo-trigger" aria-haspopup="listbox" aria-expanded="false">
+      <span class="filtro-select-label" id="filtro-tipo-label">Todos os tipos</span>
+      <span class="filtro-select-caret">▾</span>
+    </button>
+    <select id="filtro-tipo" class="filtro-select-native" tabindex="-1" aria-hidden="true">
       <option value="">Todos os tipos</option>
     </select>
+    <div class="filtro-select-panel" id="filtro-tipo-panel" role="listbox" aria-label="Selecionar tipo">
+      <div class="filtro-select-search"><input type="text" class="filtro-select-search-input" placeholder="Buscar tipo..."></div>
+      <div class="filtro-select-options" id="filtro-tipo-options"></div>
+    </div>
   </div>
   <div class="date-box" id="date-box">
     <button type="button" class="date-box-btn" id="date-box-btn" aria-haspopup="true" aria-expanded="false">
@@ -8135,6 +8194,109 @@ popularFiltroEmpresa();
 popularFiltroTipo();
 renderStats();
 renderVagas();
+
+/* ══════════════════════════════════════════════════════════════════
+   DROPDOWNS CUSTOMIZADOS — cidade, empresa, área, tipo
+   (o <select> nativo continua no DOM, escondido, só pra manter
+   toda a lógica de filtro/eventos que já existia funcionando)
+   ══════════════════════════════════════════════════════════════════ */
+(function () {
+  const ids = ["filtro-cidade", "filtro-empresa", "filtro-area", "filtro-tipo"];
+
+  function fecharTodos() {
+    document.querySelectorAll(".filtro-select-panel.aberto").forEach(p => p.classList.remove("aberto"));
+    document.querySelectorAll(".filtro-select-trigger.active").forEach(t => {
+      t.classList.remove("active");
+      t.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  ids.forEach(id => {
+    const select = document.getElementById(id);
+    const trigger = document.getElementById(id + "-trigger");
+    const label = document.getElementById(id + "-label");
+    const panel = document.getElementById(id + "-panel");
+    const optionsWrap = document.getElementById(id + "-options");
+    const searchInput = panel.querySelector(".filtro-select-search-input");
+    if (!select || !trigger || !panel) return;
+
+    let noResultsEl = document.createElement("div");
+    noResultsEl.className = "filtro-select-no-results";
+    noResultsEl.textContent = "Nenhum resultado";
+    optionsWrap.after(noResultsEl);
+
+    function buildOptions() {
+      optionsWrap.innerHTML = "";
+      Array.from(select.options).forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "filtro-select-option";
+        btn.setAttribute("role", "option");
+        btn.dataset.value = opt.value;
+        btn.textContent = opt.textContent;
+        if (opt.value === select.value) {
+          btn.classList.add("active");
+          btn.setAttribute("aria-selected", "true");
+        }
+        btn.addEventListener("click", () => {
+          select.value = opt.value;
+          select.dispatchEvent(new Event("change"));
+          label.textContent = opt.textContent;
+          optionsWrap.querySelectorAll(".filtro-select-option").forEach(o => {
+            o.classList.remove("active");
+            o.removeAttribute("aria-selected");
+          });
+          btn.classList.add("active");
+          btn.setAttribute("aria-selected", "true");
+          fecharTodos();
+        });
+        optionsWrap.appendChild(btn);
+      });
+    }
+    buildOptions();
+
+    function filtrarOpcoes(termo) {
+      const t = termo.trim().toLowerCase();
+      let visiveis = 0;
+      optionsWrap.querySelectorAll(".filtro-select-option").forEach(btn => {
+        const match = btn.textContent.toLowerCase().includes(t);
+        btn.style.display = match ? "" : "none";
+        if (match) visiveis++;
+      });
+      noResultsEl.style.display = visiveis === 0 ? "block" : "none";
+    }
+
+    function abrir() {
+      const jaAberto = panel.classList.contains("aberto");
+      fecharTodos();
+      if (jaAberto) return;
+      panel.classList.add("aberto");
+      trigger.classList.add("active");
+      trigger.setAttribute("aria-expanded", "true");
+      if (searchInput) {
+        searchInput.value = "";
+        filtrarOpcoes("");
+        setTimeout(() => searchInput.focus(), 0);
+      }
+    }
+
+    trigger.addEventListener("click", e => {
+      e.stopPropagation();
+      abrir();
+    });
+    panel.addEventListener("click", e => e.stopPropagation());
+
+    if (searchInput) {
+      searchInput.addEventListener("input", e => filtrarOpcoes(e.target.value));
+      searchInput.addEventListener("click", e => e.stopPropagation());
+    }
+  });
+
+  document.addEventListener("click", fecharTodos);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") fecharTodos();
+  });
+})();
 </script>
 
 <script>
