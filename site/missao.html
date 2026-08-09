@@ -3296,16 +3296,23 @@ body.dark-mode .accordion-item.open .accordion-btn{background:rgba(0,200,255,.1)
 
             const fontSize = Math.max(11, W()*0.014);
             ctx.font = `600 ${fontSize}px Segoe UI`;
-            ctx.textAlign = 'center';
             const padX = 10, padY = 6;
             const tw = ctx.measureText(hub.label).width;
             const ly = hub.y + offset;
+            // Clampeia o centro da pílula para que ela nunca ultrapasse as
+            // bordas do canvas — nos polos das pontas (Pessoas/Empresas, a
+            // ~12%/88% da largura) o texto "Empresas" é largo o bastante pra
+            // estourar a borda direita e ser cortado pelo próprio canvas.
+            const halfPill = tw/2 + padX;
+            const margin = 4;
+            const lx = Math.min(Math.max(hub.x, halfPill + margin), W() - halfPill - margin);
+            ctx.textAlign = 'center';
             ctx.fillStyle = isDark() ? 'rgba(10,15,25,0.55)' : 'rgba(255,255,255,0.65)';
             ctx.beginPath();
-            ctx.roundRect(hub.x - tw/2 - padX, ly - fontSize/2 - padY, tw + padX*2, fontSize + padY*2, 8);
+            ctx.roundRect(lx - halfPill, ly - fontSize/2 - padY, halfPill*2, fontSize + padY*2, 8);
             ctx.fill();
             ctx.fillStyle = C.phase();
-            ctx.fillText(hub.label, hub.x, ly + fontSize*0.32);
+            ctx.fillText(hub.label, lx, ly + fontSize*0.32);
           });
 
           // Nó central "Orizon": dourado, maior, com brilho — é a marca que
@@ -3383,17 +3390,21 @@ body.dark-mode .accordion-item.open .accordion-btn{background:rgba(0,200,255,.1)
         }
 
         function drawPhaseLabel() {
+          // Desenhado no canto SUPERIOR-ESQUERDO (não superior-direito): o
+          // botão flutuante do tradutor de voz é position:fixed no topo
+          // direito da tela e, ao rolar até esta seção, tampa qualquer coisa
+          // desenhada ali — por isso o texto fica do lado oposto.
           const names=['Desconexão','Encontro','Crescimento'];
           ctx.fillStyle = C.bar[phase]();
           ctx.font = `bold ${Math.max(11, W()*0.016)}px Segoe UI`;
-          ctx.textAlign = 'right';
-          ctx.fillText('Fase: '+names[phase], W()-12, 22);
+          ctx.textAlign = 'left';
+          ctx.fillText('Fase: '+names[phase], 12, 22);
           ctx.strokeStyle = 'rgba(96,165,250,0.25)';
           ctx.lineWidth = 1;
           const bw = Math.min(120, W()*0.22);
-          ctx.strokeRect(W()-bw-12, 30, bw, 4);
+          ctx.strokeRect(12, 30, bw, 4);
           ctx.fillStyle = C.bar[phase]();
-          ctx.fillRect(W()-bw-12, 30, (phaseTime/DUR)*bw, 4);
+          ctx.fillRect(12, 30, (phaseTime/DUR)*bw, 4);
         }
 
         function updateStats() {
