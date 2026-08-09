@@ -3510,7 +3510,9 @@ function setAccBodyHeight(item, opening){
 
 function toggleAccM(id){
   const item=document.getElementById(id);
+  const anchorEl = item.querySelector('.accordion-btn') || item;
   const isOpen=item.classList.contains('open');
+
   document.querySelectorAll('#accordionMissao .accordion-item').forEach(el=>{
     if(el.classList.contains('open')){
       el.classList.remove('open');
@@ -3521,6 +3523,23 @@ function toggleAccM(id){
     item.classList.add('open');
     setAccBodyHeight(item, true);
   }
+
+  // Corrige o "salto" de rolagem: se o item que fechou fica ACIMA do que
+  // foi clicado (ex.: o acordeão 1, aberto por padrão), a altura da página
+  // encolhe por cima da posição atual enquanto a transição roda, e o
+  // navegador não realoca o scroll sozinho — o conteúdo visível "foge" pra
+  // baixo, na direção do rodapé. Reancoramos o botão clicado na mesma
+  // posição de tela durante toda a animação (~550ms), quadro a quadro.
+  let prevTop = anchorEl.getBoundingClientRect().top;
+  const start = performance.now();
+  function reanchor(now){
+    const currentTop = anchorEl.getBoundingClientRect().top;
+    const diff = currentTop - prevTop;
+    if (diff !== 0) window.scrollBy(0, diff);
+    prevTop = anchorEl.getBoundingClientRect().top;
+    if (now - start < 550) requestAnimationFrame(reanchor);
+  }
+  requestAnimationFrame(reanchor);
 }
 
 // Item aberto por padrão (Nossa Missão): garante que a primeira troca de
@@ -3686,9 +3705,6 @@ window.addEventListener('resize', () => {
       <button class="chatbot-send-btn" onclick="enviarMensagem()">➤</button>
     </div>
   </div>
-
-  <!-- Botão Voltar ao Topo -->
-  <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Voltar ao topo">&#9650;</button>
 
   <!-- Chatbot -->
 <!-- NOVO -->
