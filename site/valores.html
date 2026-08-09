@@ -603,6 +603,53 @@ body.dark-mode .footer-contact-item:hover {
     ]
   }
   </script>
+
+<style>
+/* ===== Ajustes: container mais largo no desktop ===== */
+@media (min-width: 769px) {
+  .content-section, .contact-section { max-width: 1280px !important; }
+}
+@media (min-width: 1400px) {
+  .content-section, .contact-section { max-width: 1400px !important; }
+}
+
+/* ===== Ajustes: tópicos com números em vez de emoji ===== */
+.topics-link, .topics-link-mobile {
+  display: flex !important;
+  align-items: center;
+  gap: 0.65rem;
+}
+.topics-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(30,64,175,0.12);
+  color: #1e40af;
+  border: 1.5px solid #fff;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+body.dark-mode .topics-num {
+  background: rgba(255,255,255,0.1);
+  color: #d4d4d8;
+}
+.topics-link:hover .topics-num,
+.topics-link-mobile:hover .topics-num {
+  background: #1e40af;
+  color: #fff;
+  transform: scale(1.08);
+}
+body.dark-mode .topics-link:hover .topics-num,
+body.dark-mode .topics-link-mobile:hover .topics-num {
+  background: rgba(255,255,255,0.22);
+  color: #f5f5f5;
+}
+</style>
 </head>
 
   <style>
@@ -3175,16 +3222,14 @@ body:not(.dark-mode) .review-card:hover {
     </div>
   </div>
   <div class="topics-dropdown" id="topicsDropdown">
-    <a href="#cultura" class="topics-link" onclick="closeTopics()">🌱 Nossa Cultura</a>
-    <a href="#valores-principais" class="topics-link" onclick="closeTopics()">⭐ Valores Principais</a>
-    <a href="#define" class="topics-link" onclick="closeTopics()">🎯 O Que nos Define</a>
-    <a href="#principios" class="topics-link" onclick="closeTopics()">🔥 Princípios de Ação</a>
+    <a href="#acc-v1" class="topics-link" onclick="goToTopic('acc-v1'); return false;"><span class="topics-num">1</span> Nossa Cultura</a>
+    <a href="#acc-v2" class="topics-link" onclick="goToTopic('acc-v2'); return false;"><span class="topics-num">2</span> O Que nos Define</a>
+    <a href="#acc-v3" class="topics-link" onclick="goToTopic('acc-v3'); return false;"><span class="topics-num">3</span> Nossos Princípios de Ação</a>
   </div>
   <div class="topics-dropdown-mobile" id="topicsDropdownMobile">
-    <a href="#cultura" class="topics-link-mobile" onclick="closeTopicsMobile()">🌱 Nossa Cultura</a>
-    <a href="#valores-principais" class="topics-link-mobile" onclick="closeTopicsMobile()">⭐ Valores Principais</a>
-    <a href="#define" class="topics-link-mobile" onclick="closeTopicsMobile()">🎯 O Que nos Define</a>
-    <a href="#principios" class="topics-link-mobile" onclick="closeTopicsMobile()">🔥 Princípios de Ação</a>
+    <a href="#acc-v1" class="topics-link-mobile" onclick="goToTopic('acc-v1', true); return false;"><span class="topics-num">1</span> Nossa Cultura</a>
+    <a href="#acc-v2" class="topics-link-mobile" onclick="goToTopic('acc-v2', true); return false;"><span class="topics-num">2</span> O Que nos Define</a>
+    <a href="#acc-v3" class="topics-link-mobile" onclick="goToTopic('acc-v3', true); return false;"><span class="topics-num">3</span> Nossos Princípios de Ação</a>
   </div>
 
   <div class="topics-overlay" id="topicsOverlay" onclick="closeTopics(); closeTopicsMobile();"></div>
@@ -3261,9 +3306,10 @@ body.dark-mode .accordion-btn:hover{background:rgba(0,200,255,.09)}
 body.dark-mode .accordion-item.open .accordion-btn{background:rgba(0,200,255,.1);color:#00c8ff}
 .accordion-arrow{flex-shrink:0;transition:transform .3s ease;font-size:.85rem;opacity:.6}
 .accordion-item.open .accordion-arrow{transform:rotate(180deg)}
-.accordion-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
-.accordion-item.open .accordion-body{max-height:3000px}
-.accordion-inner{padding:1.1rem 1.25rem 1.25rem;font-size:.97rem;line-height:1.75}
+.accordion-body{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1)}
+.accordion-item.open .accordion-body{max-height:var(--acc-h,3000px)}
+.accordion-inner{padding:1.1rem 1.25rem 1.25rem;font-size:.97rem;line-height:1.75;opacity:0;transform:translateY(-22px) scale(.97);transition:opacity .45s ease .1s,transform .45s cubic-bezier(.34,1.56,.64,1) .1s}
+.accordion-item.open .accordion-inner{opacity:1;transform:translateY(0) scale(1)}
 @media(max-width:600px){.accordion-inner{padding:.85rem .9rem 1rem;font-size:.93rem}}
 .accordion-inner p{margin-bottom:.85rem}
 .accordion-inner p:last-child{margin-bottom:0}
@@ -3373,8 +3419,32 @@ body.dark-mode .accordion-item.open .accordion-btn{background:rgba(0,200,255,.1)
 function toggleAccV(id){
   const item=document.getElementById(id);
   const isOpen=item.classList.contains('open');
-  document.querySelectorAll('#accordionValores .accordion-item').forEach(el=>el.classList.remove('open'));
-  if(!isOpen) item.classList.add('open');
+  const scrollYBefore=window.scrollY;
+  const itemTopBefore=item.getBoundingClientRect().top;
+
+  document.querySelectorAll('#accordionValores .accordion-item').forEach(el=>{
+    el.classList.remove('open');
+    const body=el.querySelector('.accordion-body');
+    if(body) body.style.removeProperty('--acc-h');
+  });
+
+  if(!isOpen){
+    item.classList.add('open');
+    const body=item.querySelector('.accordion-body');
+    const inner=item.querySelector('.accordion-inner');
+    if(body && inner){
+      body.style.setProperty('--acc-h', inner.scrollHeight+'px');
+    }
+  }
+
+  // evita o salto de scroll quando um item acima fecha/abre
+  requestAnimationFrame(()=>{
+    const itemTopAfter=item.getBoundingClientRect().top;
+    const diff=itemTopAfter-itemTopBefore;
+    if(Math.abs(diff)>1){
+      window.scrollTo({top:scrollYBefore+diff,behavior:'instant'});
+    }
+  });
 }
 </script>
 
@@ -4168,6 +4238,19 @@ Tente novamente em instantes.`));
       const overlay = document.getElementById('topicsOverlay');
       dropdown.classList.remove('open');
       overlay.classList.remove('open');
+    }
+
+    function goToTopic(id, isMobile) {
+      if (isMobile) { closeTopicsMobile(); } else { closeTopics(); }
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.classList.contains('accordion-item')) {
+        document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('open'));
+        el.classList.add('open');
+      }
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
     }
     document.addEventListener('click', (e) => {
       const toggle = document.getElementById('topicsToggle');
