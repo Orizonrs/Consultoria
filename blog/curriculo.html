@@ -149,23 +149,24 @@
 
     /* ── SECTION TABS ── */
     .page-tabs { background: var(--white); border-bottom: 1px solid var(--border); position:sticky; top:68px; z-index:90; }
-    .page-tabs { position:sticky; }
     .page-tabs-wrap { position:relative; }
-    .page-tabs-wrap::before, .page-tabs-wrap::after { content:''; position:absolute; top:0; bottom:0; width:36px; pointer-events:none; z-index:2; opacity:0; transition:opacity .2s ease; }
-    .page-tabs-wrap::before { left:0; background:linear-gradient(90deg, var(--white), transparent); }
-    .page-tabs-wrap::after { right:0; background:linear-gradient(270deg, var(--white), transparent); }
-    .page-tabs-wrap.can-scroll-left::before { opacity:1; }
-    .page-tabs-wrap.can-scroll-right::after { opacity:1; }
-    .tabs-arrow { position:absolute; top:50%; transform:translateY(-50%); width:22px; height:22px; border-radius:50%; background:var(--brand); color:#fff; font-size:12px; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:3; opacity:0; transition:opacity .2s ease; box-shadow:0 2px 8px rgba(0,0,0,0.25); }
-    .tabs-arrow.left { left:4px; }
-    .tabs-arrow.right { right:4px; }
-    .page-tabs-wrap.can-scroll-left .tabs-arrow.left { opacity:1; }
-    .page-tabs-wrap.can-scroll-right .tabs-arrow.right { opacity:1; }
     .page-tabs-inner { max-width:1200px; margin:0 auto; display:flex; gap:4px; padding:12px 24px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; }
     .page-tabs-inner::-webkit-scrollbar { display:none; }
     .page-tab { flex-shrink:0; padding:9px 18px; border-radius:20px; font-size:13px; font-weight:600; text-decoration:none; color:var(--text-2); border:1.5px solid var(--border); transition:.2s; background:none; cursor:pointer; }
     .page-tab:hover { border-color:var(--brand); color:var(--brand); }
     .page-tab.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+
+    /* Dropdown de tópicos (mobile) — some no desktop, .page-tabs-wrap horizontal some no mobile (ver media query) */
+    .page-tabs-dropdown { display:none; position:relative; padding:10px 16px; }
+    .tabs-dropdown-btn { width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:12px 16px; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; font-size:14px; font-weight:700; color:var(--text); cursor:pointer; font-family:inherit; }
+    .tabs-dropdown-btn:hover { border-color:var(--brand); }
+    .tabs-dropdown-btn .dropdown-caret { transition:transform .2s ease; color:var(--brand); }
+    .page-tabs-dropdown.open .tabs-dropdown-btn .dropdown-caret { transform:rotate(180deg); }
+    .tabs-dropdown-menu { display:none; flex-direction:column; gap:2px; position:absolute; left:16px; right:16px; top:calc(100% - 2px); background:var(--white); border:1px solid var(--border); border-radius:10px; box-shadow:var(--card-shadow); padding:8px; z-index:150; }
+    .page-tabs-dropdown.open .tabs-dropdown-menu { display:flex; }
+    .tabs-dropdown-link { padding:11px 14px; border-radius:8px; font-size:14px; font-weight:600; color:var(--text-2); text-decoration:none; border:none; }
+    .tabs-dropdown-link:hover { background:var(--brand-light); color:var(--brand); }
+    .tabs-dropdown-link.active { background:var(--brand-light); color:var(--brand); }
 
     .section-wrap { max-width:1200px; margin:0 auto; padding:56px 24px; }
     .section-heading { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--brand); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -199,6 +200,12 @@
     .tpl-picker { display:flex; gap:10px; flex-wrap:wrap; }
     .tpl-chip { border:1.5px solid var(--border); background:var(--bg); color:var(--text-2); padding:8px 14px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; transition:.2s; }
     .tpl-chip.active { background:var(--brand); border-color:var(--brand); color:#fff; }
+    .form-group.is-hidden { display:none; }
+    .section-add-picker .tpl-picker { flex-wrap:wrap; }
+    .add-section-chip { display:flex; align-items:center; gap:6px; }
+    .add-section-chip:hover { background:var(--brand-light); border-color:var(--brand); color:var(--brand); }
+    .form-group.is-added .btn-remove-section { background:none; border:none; color:var(--text-2); font-size:12px; font-weight:600; cursor:pointer; text-decoration:underline; white-space:nowrap; }
+    .form-group.is-added .btn-remove-section:hover { color:var(--brand); }
 
     .builder-actions { display:flex; gap:10px; margin-top:26px; flex-wrap:wrap; }
     .btn-brand { background:var(--brand); color:#fff; border:none; padding:13px 22px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:.2s; }
@@ -321,6 +328,9 @@
       .preview-sticky { position:static; }
       .tpl-cards { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr 1fr; }
+      .page-tabs-wrap { display:none; }
+      .page-tabs-dropdown { display:block; }
+      textarea { min-height: 190px; }
     }
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
@@ -440,344 +450,28 @@
 <!-- TABS -->
 <nav class="page-tabs">
   <div class="page-tabs-wrap" id="pageTabsWrap">
-    <span class="tabs-arrow left" aria-hidden="true">‹</span>
     <div class="page-tabs-inner" id="pageTabsInner">
-      <a href="#gerador" class="page-tab active" data-tab="gerador">📝 Gerador</a>
-      <a href="#modelos" class="page-tab" data-tab="modelos">🎨 Modelos</a>
-      <a href="#word" class="page-tab" data-tab="word">📄 Modelos Word</a>
+      <a href="#dicas" class="page-tab active" data-tab="dicas">💡 Dicas</a>
       <a href="#palavras-chave" class="page-tab" data-tab="palavras-chave">🔑 Palavras-chave</a>
-      <a href="#dicas" class="page-tab" data-tab="dicas">💡 Dicas</a>
+      <a href="#modelos" class="page-tab" data-tab="modelos">🎨 Modelos</a>
+      <a href="#gerador" class="page-tab" data-tab="gerador">📝 Gerador</a>
+      <a href="#word" class="page-tab" data-tab="word">📄 Modelos Word</a>
     </div>
-    <span class="tabs-arrow right" aria-hidden="true">›</span>
+  </div>
+
+  <div class="page-tabs-dropdown" id="pageTabsDropdown">
+    <button type="button" class="tabs-dropdown-btn" id="tabsDropdownBtn">
+      <span id="tabsDropdownLabel">💡 Dicas</span> <span class="dropdown-caret">▾</span>
+    </button>
+    <div class="tabs-dropdown-menu" id="tabsDropdownMenu">
+      <a href="#dicas" class="page-tab tabs-dropdown-link active" data-tab="dicas">💡 Dicas</a>
+      <a href="#palavras-chave" class="page-tab tabs-dropdown-link" data-tab="palavras-chave">🔑 Palavras-chave</a>
+      <a href="#modelos" class="page-tab tabs-dropdown-link" data-tab="modelos">🎨 Modelos</a>
+      <a href="#gerador" class="page-tab tabs-dropdown-link" data-tab="gerador">📝 Gerador</a>
+      <a href="#word" class="page-tab tabs-dropdown-link" data-tab="word">📄 Modelos Word</a>
+    </div>
   </div>
 </nav>
-
-<!-- GERADOR -->
-<section class="section-wrap" id="gerador">
-  <div class="section-heading">Gerador</div>
-  <h2 class="section-title">Construa o currículo com estratégia</h2>
-  <p class="section-sub">Preencha os campos e acompanhe o resultado em tempo real. Antes de baixar, use as orientações abaixo para transformar suas experiências em conteúdo objetivo, relevante e fácil de interpretar por recrutadores e sistemas ATS.</p>
-
-  <div class="builder-grid">
-    <!-- FORM -->
-    <div class="builder-form" id="builderForm">
-
-      <div class="form-group">
-        <h3>Modelo</h3>
-        <div class="tpl-picker">
-          <button type="button" class="tpl-chip active" data-tpl="classico">Clássico</button>
-          <button type="button" class="tpl-chip" data-tpl="moderno">Moderno</button>
-          <button type="button" class="tpl-chip" data-tpl="criativo">Criativo</button>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <h3>Contato e posicionamento</h3>
-        <div class="form-row">
-          <div><label>Nome completo</label><input type="text" id="fName" placeholder="Ex: Maria da Silva"></div>
-          <div><label>Cargo-alvo</label><input type="text" id="fTitle" placeholder="Ex: Analista Administrativo"></div>
-        </div>
-        <div class="form-row">
-          <div><label>E-mail</label><input type="email" id="fEmail" placeholder="maria@email.com"></div>
-          <div><label>Telefone</label><input type="tel" id="fPhone" placeholder="(51) 99999-9999"></div>
-        </div>
-        <div class="form-row">
-          <div><label>Cidade / UF</label><input type="text" id="fCity" placeholder="Guaíba, RS"></div>
-          <div><label>LinkedIn (opcional)</label><input type="text" id="fLinkedin" placeholder="linkedin.com/in/seunome"></div>
-        </div>
-        <div class="form-row single">
-          <div><label>Resumo profissional</label><textarea id="fSummary" placeholder="2 a 4 linhas: área, experiência, especialidades e um resultado ou diferencial comprovável."></textarea></div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <h3>Experiência profissional <button type="button" class="btn-add" id="addExperience">+ Adicionar</button></h3>
-        <div id="experienceList"></div>
-      </div>
-
-      <div class="form-group">
-        <h3>Formação acadêmica <button type="button" class="btn-add" id="addEducation">+ Adicionar</button></h3>
-        <div id="educationList"></div>
-      </div>
-
-      <div class="form-group">
-        <h3>Habilidades</h3>
-        <div class="form-row single">
-          <div><label>Separe por vírgula</label><input type="text" id="fSkills" placeholder="Ex: Excel, Power BI, Gestão de estoque, Atendimento"></div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <h3>Idiomas <button type="button" class="btn-add" id="addLanguage">+ Adicionar</button></h3>
-        <div id="languageList"></div>
-      </div>
-
-      <div class="builder-actions">
-        <button type="button" class="btn-brand" id="btnDownload">⬇ Baixar em PDF</button>
-        <button type="button" class="btn-ghost" id="btnClear">Limpar formulário</button>
-      </div>
-    </div>
-
-    <!-- PREVIEW -->
-    <div class="preview-sticky">
-      <div class="preview-frame">
-        <div class="resume-preview" id="resumePreview" data-template="classico">
-          <div class="r-header">
-            <h2 id="rvName">Seu Nome Completo</h2>
-            <div class="r-title" id="rvTitle">Seu Cargo-Alvo</div>
-            <div class="r-contact" id="rvContact"><span>seuemail@exemplo.com</span><span>(51) 90000-0000</span><span>Sua Cidade, RS</span></div>
-          </div>
-          <div class="r-body">
-            <div class="r-main">
-              <div class="r-section">
-                <h3>Resumo</h3>
-                <p id="rvSummary" class="r-empty-hint">Seu resumo profissional aparecerá aqui.</p>
-              </div>
-              <div class="r-section">
-                <h3>Experiência</h3>
-                <div id="rvExperience" class="r-empty-hint">Adicione uma experiência e descreva atividades, contexto e resultados.</div>
-              </div>
-              <div class="r-section">
-                <h3>Formação</h3>
-                <div id="rvEducation" class="r-empty-hint">Adicione sua formação acadêmica ou técnica.</div>
-              </div>
-            </div>
-            <div class="r-aside">
-              <div class="r-section">
-                <h3>Habilidades</h3>
-                <div id="rvSkills" class="r-tags"><span class="r-empty-hint">—</span></div>
-              </div>
-              <div class="r-section">
-                <h3>Idiomas</h3>
-                <div id="rvLanguages" class="r-empty-hint">—</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- MODELOS -->
-<section class="section-wrap" id="modelos" style="border-top:1px solid var(--border);">
-  <div class="section-heading">Modelos</div>
-  <h2 class="section-title">Escolha o modelo — mas priorize a leitura</h2>
-  <p class="section-sub">O visual deve organizar a informação, não competir com ela. Para processos com ATS, prefira sempre uma estrutura simples, legível e com texto selecionável.</p>
-
-  <div class="tpl-cards">
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
-  <rect x="12" y="12" width="284" height="166" rx="6" fill="#12203f" opacity="0.10"/>
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="#ffffff" stroke="#e3e7ef" stroke-width="1"/>
-  <circle cx="150" cy="34" r="14" fill="#eaf0ff"/>
-  <circle cx="150" cy="30" r="5" fill="#12203f"/>
-  <path d="M139 42a11 11 0 0 1 22 0z" fill="#12203f"/>
-  <rect x="94" y="54" width="112" height="9" rx="3" fill="#12203f"/>
-  <rect x="110" y="68" width="80" height="6" rx="3" fill="#3b6fff"/>
-  <line x1="24" y1="88" x2="276" y2="88" stroke="#12203f" stroke-width="2"/>
-  <rect x="24" y="100" width="58" height="6" rx="2" fill="#12203f"/>
-  <rect x="24" y="112" width="240" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="24" y="122" width="214" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="24" y="132" width="184" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="24" y="148" width="66" height="6" rx="2" fill="#12203f"/>
-  <rect x="24" y="160" width="150" height="5" rx="2" fill="#e3e7ef"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>Clássico</h3>
-        <p>Limpo, objetivo e tradicional. Uma boa escolha quando você quer máxima clareza e hierarquia de informações, especialmente em áreas administrativas, operações, finanças e processos mais formais.</p>
-        <button type="button" class="btn-add" onclick="useTemplate('classico')">Usar este modelo</button>
-      </div>
-    </div>
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
-  <defs>
-    <clipPath id="modClip"><rect x="8" y="8" width="284" height="166" rx="6"/></clipPath>
-  </defs>
-  <rect x="12" y="12" width="284" height="166" rx="6" fill="#00794f" opacity="0.08"/>
-  <g clip-path="url(#modClip)">
-    <rect x="8" y="8" width="284" height="166" fill="#ffffff"/>
-    <rect x="8" y="8" width="6" height="166" fill="#00a86b"/>
-  </g>
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="none" stroke="#d8ede3" stroke-width="1"/>
-  <rect x="26" y="26" width="118" height="10" rx="3" fill="#0d2a1e"/>
-  <rect x="26" y="42" width="80" height="7" rx="3" fill="#00a86b"/>
-  <rect x="26" y="56" width="140" height="4" rx="2" fill="#c7ccd6"/>
-  <line x1="26" y1="70" x2="276" y2="70" stroke="#c9f0dd" stroke-width="2"/>
-  <rect x="26" y="82" width="58" height="6" rx="2" fill="#00794f"/>
-  <rect x="26" y="94" width="170" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="26" y="104" width="150" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="26" y="114" width="130" height="5" rx="2" fill="#e3e7ef"/>
-  <rect x="206" y="82" width="60" height="6" rx="2" fill="#00794f"/>
-  <rect x="206" y="94" width="34" height="10" rx="5" fill="#e4f8ee"/>
-  <rect x="244" y="94" width="32" height="10" rx="5" fill="#e4f8ee"/>
-  <rect x="206" y="108" width="40" height="10" rx="5" fill="#e4f8ee"/>
-  <rect x="250" y="108" width="26" height="10" rx="5" fill="#e4f8ee"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>Moderno</h3>
-        <p>Visual contemporâneo, com hierarquia bem marcada. Pode funcionar em tecnologia, marketing, negócios e ambientes mais dinâmicos, desde que a leitura continue simples.</p>
-        <button type="button" class="btn-add" onclick="useTemplate('moderno')">Usar este modelo</button>
-      </div>
-    </div>
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
-  <defs>
-    <clipPath id="creClip"><rect x="8" y="8" width="284" height="166" rx="6"/></clipPath>
-    <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6d28d9"/>
-      <stop offset="1" stop-color="#9333ea"/>
-    </linearGradient>
-  </defs>
-  <rect x="12" y="12" width="284" height="166" rx="6" fill="#6d28d9" opacity="0.08"/>
-  <g clip-path="url(#creClip)">
-    <rect x="8" y="8" width="284" height="166" fill="#ffffff"/>
-    <rect x="8" y="8" width="284" height="40" fill="url(#purpleGrad)"/>
-    <rect x="8" y="48" width="90" height="126" fill="#f6f1fc"/>
-  </g>
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="none" stroke="#e4d4fb" stroke-width="1"/>
-  <rect x="22" y="18" width="112" height="9" rx="3" fill="#ffffff" opacity="0.97"/>
-  <rect x="22" y="31" width="72" height="6" rx="3" fill="#e9d5ff"/>
-  <rect x="20" y="62" width="42" height="5" rx="2" fill="#6d28d9"/>
-  <rect x="20" y="72" width="62" height="4" rx="2" fill="#d8bdf7"/>
-  <rect x="20" y="80" width="50" height="4" rx="2" fill="#d8bdf7"/>
-  <rect x="20" y="96" width="54" height="5" rx="2" fill="#6d28d9"/>
-  <rect x="20" y="106" width="52" height="8" rx="4" fill="#e9d8fb"/>
-  <rect x="20" y="118" width="40" height="8" rx="4" fill="#e9d8fb"/>
-  <rect x="20" y="130" width="58" height="8" rx="4" fill="#e9d8fb"/>
-  <rect x="106" y="62" width="52" height="5" rx="2" fill="#5b21b6"/>
-  <rect x="106" y="72" width="168" height="4" rx="2" fill="#e3e7ef"/>
-  <rect x="106" y="80" width="150" height="4" rx="2" fill="#e3e7ef"/>
-  <rect x="106" y="96" width="68" height="5" rx="2" fill="#5b21b6"/>
-  <rect x="106" y="106" width="168" height="4" rx="2" fill="#e3e7ef"/>
-  <rect x="106" y="114" width="150" height="4" rx="2" fill="#e3e7ef"/>
-  <rect x="106" y="122" width="160" height="4" rx="2" fill="#e3e7ef"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>Criativo</h3>
-        <p>Mais expressivo e visual. Pode combinar com comunicação, design e áreas criativas, mas use com critério quando a candidatura passar por ATS.</p>
-        <button type="button" class="btn-add" onclick="useTemplate('criativo')">Usar este modelo</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- MODELOS WORD -->
-<section class="section-wrap" id="word" style="border-top:1px solid var(--border);">
-  <div class="section-heading">Download em Word</div>
-  <h2 class="section-title">Prefere editar no Word? Baixe o modelo pronto</h2>
-  <p class="section-sub">O gerador acima já entrega um PDF pronto para envio. Mas se você quiser ajustar o texto com calma, reaproveitar o arquivo depois ou preencher direto no computador, baixe um dos modelos abaixo em <strong>.docx</strong>. Diferente da seção "Modelos" acima (focada em visual), aqui os 3 modelos têm <strong>estrutura e seções pensadas para cada tipo de vínculo</strong> — CLT, Estágio ou Jovem Aprendiz. Basta abrir no Word (ou no Google Docs/LibreOffice), substituir o que está entre colchetes <code>[ ]</code> e salvar.</p>
-
-  <div class="tpl-cards">
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo CLT">
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="#eef2fb" stroke="#d7deef" stroke-width="1"/>
-  <rect x="110" y="46" width="80" height="16" rx="4" fill="none" stroke="#0d2a4a" stroke-width="5"/>
-  <path d="M132 46v-8a18 18 0 0 1 36 0v8" fill="none" stroke="#0d2a4a" stroke-width="5"/>
-  <rect x="70" y="62" width="160" height="88" rx="8" fill="#0d2a4a"/>
-  <rect x="70" y="62" width="160" height="88" rx="8" fill="none" stroke="#1d4ed8" stroke-width="2"/>
-  <rect x="128" y="94" width="44" height="24" rx="3" fill="#1d4ed8"/>
-  <line x1="70" y1="96" x2="230" y2="96" stroke="#eef2fb" stroke-width="2" opacity="0.35"/>
-  <rect x="94" y="152" width="112" height="8" rx="4" fill="#0d2a4a"/>
-  <rect x="112" y="166" width="76" height="6" rx="3" fill="#8ea3c9"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>CLT (Word)</h3>
-        <p>Estrutura com resumo profissional, experiências com resultados numéricos e competências técnicas — pronta para vagas com carteira assinada.</p>
-        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-clt.docx" download>⬇ Baixar .docx</a>
-      </div>
-    </div>
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo Estágio">
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="#eaf6ef" stroke="#cfe8da" stroke-width="1"/>
-  <path d="M150 46 L206 68 L150 90 L94 68 Z" fill="#0f5132"/>
-  <path d="M118 76 v22 c0 8 14 16 32 16 s32 -8 32 -16 v-22" fill="none" stroke="#0f5132" stroke-width="5" stroke-linecap="round"/>
-  <line x1="206" y1="68" x2="206" y2="98" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="206" cy="103" r="4" fill="#16a34a"/>
-  <rect x="86" y="120" width="128" height="8" rx="4" fill="#0f5132"/>
-  <rect x="100" y="134" width="100" height="6" rx="3" fill="#7fbf9a"/>
-  <rect x="112" y="148" width="76" height="6" rx="3" fill="#a9d6bb"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>Estágio (Word)</h3>
-        <p>Coloca a formação em destaque, com espaço para projetos acadêmicos e monitorias no lugar de experiência formal — ideal para quem está na faculdade.</p>
-        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-estagio.docx" download>⬇ Baixar .docx</a>
-      </div>
-    </div>
-    <div class="tpl-card">
-      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo Jovem Aprendiz">
-  <rect x="8" y="8" width="284" height="166" rx="6" fill="#fdf1ea" stroke="#f3ddcb" stroke-width="1"/>
-  <rect x="120" y="40" width="60" height="20" rx="8" fill="#7c2d12"/>
-  <path d="M110 60 h80 a10 10 0 0 1 10 10 v58 a10 10 0 0 1 -10 10 h-80 a10 10 0 0 1 -10 -10 v-58 a10 10 0 0 1 10 -10 Z" fill="#ea580c"/>
-  <rect x="100" y="78" width="100" height="34" rx="6" fill="#fdf1ea"/>
-  <line x1="150" y1="60" x2="150" y2="138" stroke="#7c2d12" stroke-width="3" opacity="0.5"/>
-  <rect x="118" y="122" width="64" height="8" rx="4" fill="#7c2d12"/>
-  <rect x="128" y="136" width="44" height="6" rx="3" fill="#c2703f"/>
-</svg></div>
-      <div class="tpl-body">
-        <h3>Jovem Aprendiz (Word)</h3>
-        <p>Foco em formação escolar, cursos livres e habilidades comportamentais — feito para quem está buscando a primeira oportunidade, sem experiência prévia.</p>
-        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-aprendiz.docx" download>⬇ Baixar .docx</a>
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:24px;padding:20px 22px;border-radius:14px;background:var(--brand-light);border:1px solid var(--border);">
-    <p style="font-size:13.5px;line-height:1.7;color:var(--text-2);"><strong>Dica:</strong> os campos entre colchetes, como <code>[Cargo]</code> ou <code>[Empresa]</code>, são só marcadores de posição — apague-os e escreva as suas informações no lugar. Está em dúvida qual baixar? CLT é para quem já tem (ou busca) experiência formal com carteira assinada; Estágio é para quem ainda está cursando a faculdade; Jovem Aprendiz é voltado a adolescentes/jovens (14 a 24 anos) na primeira experiência profissional, geralmente ainda no ensino médio. Para duplicar um bloco de experiência ou formação, selecione o parágrafo inteiro no Word e cole quantas vezes precisar.</p>
-  </div>
-</section>
-
-<!-- PALAVRAS-CHAVE COM IA -->
-<section class="section-wrap" id="palavras-chave" style="border-top:1px solid var(--border);">
-  <div class="section-heading">Palavras-chave</div>
-  <h2 class="section-title">Como usar IA para encontrar as palavras-chave certas</h2>
-  <p class="section-sub">Muitas empresas usam sistemas ATS que filtram currículos por palavras-chave antes de um recrutador ler qualquer coisa. Uma ferramenta de IA (como o ChatGPT, Claude ou Gemini) pode te ajudar a identificar rapidamente quais termos da vaga você deveria destacar — desde que você use as informações com honestidade, sem inventar competências que não tem.</p>
-
-  <div class="acc-item" onclick="toggleAcc(this)">
-    <div class="acc-head"><h3>1. Cole a descrição da vaga e peça as palavras-chave</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
-    <div class="acc-body">
-      <p>Copie o texto completo do anúncio da vaga e cole em uma IA com um pedido direto. Um exemplo de comando (prompt):</p>
-      <p><strong>"Aqui está a descrição de uma vaga: [cole o texto]. Liste as 15 palavras-chave e habilidades técnicas mais importantes que aparecem nesse anúncio, separando entre 'obrigatórias' e 'desejáveis'."</strong></p>
-      <p>Isso te dá, em segundos, uma lista objetiva do que o recrutador (ou o sistema ATS) provavelmente vai buscar.</p>
-    </div>
-  </div>
-
-  <div class="acc-item" onclick="toggleAcc(this)">
-    <div class="acc-head"><h3>2. Compare a lista com o que você já fez</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
-    <div class="acc-body">
-      <p>Pegue a lista de palavras-chave gerada e confira, uma a uma, quais você realmente domina ou já praticou. Só inclua no currículo o que for verdade — a IA sugere o que a vaga pede, mas quem decide o que entra é você.</p>
-      <p>Um comando útil: <strong>"Aqui está o meu currículo: [cole o texto]. Com base nessa lista de palavras-chave [cole a lista], quais delas eu já demonstro nas minhas experiências e quais estão faltando?"</strong></p>
-    </div>
-  </div>
-
-  <div class="acc-item" onclick="toggleAcc(this)">
-    <div class="acc-head"><h3>3. Peça ajuda para reescrever bullets com a palavra-chave certa</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
-    <div class="acc-body">
-      <p>Se uma palavra-chave importante já faz parte da sua experiência, mas está descrita com outros termos, peça à IA para reformular a frase incluindo o termo correto — sem mudar o que de fato aconteceu.</p>
-      <p>Exemplo de comando: <strong>"Reescreva esta descrição de experiência incluindo naturalmente o termo 'gestão de estoque', sem exagerar ou inventar informações: [cole a frase]."</strong></p>
-    </div>
-  </div>
-
-  <div class="acc-item" onclick="toggleAcc(this)">
-    <div class="acc-head"><h3>4. Use a IA para revisar o resumo profissional e as habilidades</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
-    <div class="acc-body">
-      <p>O resumo e a lista de habilidades são os pontos onde mais vale concentrar as palavras-chave certas, já que costumam ser os primeiros trechos lidos. Peça uma revisão direcionada:</p>
-      <p><strong>"Revise este resumo profissional e sugira ajustes para incluir de forma natural as palavras-chave desta vaga: [cole a lista], mantendo o texto verdadeiro em relação à minha experiência: [cole seu resumo]."</strong></p>
-    </div>
-  </div>
-
-  <div class="acc-item" onclick="toggleAcc(this)">
-    <div class="acc-head"><h3>5. Cuidados ao usar IA nesse processo</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
-    <div class="acc-body">
-      <ul>
-        <li>Nunca peça para a IA "inventar" experiências, cursos ou resultados que você não teve.</li>
-        <li>Revise sempre o texto gerado — a IA pode sugerir termos técnicos que não fazem sentido para a sua área.</li>
-        <li>Evite empilhar palavras-chave de forma forçada ou repetitiva; isso soa artificial tanto para o ATS quanto para quem lê depois.</li>
-        <li>Palavras-chave ajudam a passar pela triagem, mas quem garante a entrevista é a evidência real do que você sabe fazer.</li>
-      </ul>
-    </div>
-  </div>
-</section>
 
 <!-- DICAS -->
 <section class="section-wrap" id="dicas" style="border-top:1px solid var(--border);">
@@ -935,11 +629,353 @@
     <h3 style="font-size:18px;margin-bottom:8px;">A ideia central</h3>
     <p style="font-size:14px;line-height:1.7;color:var(--text-2);">Um currículo forte não tenta impressionar com palavras difíceis. Ele facilita a decisão de quem lê. Mostre <strong>o que você fez, como fez, em qual contexto e qual impacto gerou</strong>. Use números quando tiver dados, verbos de ação para deixar sua contribuição clara e palavras-chave verdadeiras para aumentar a relevância da candidatura. Seja específico, objetivo e honesto.</p>
   </div>
+</section>
 
-  <div style="text-align:center;margin-top:32px;">
-    <a href="vagas.html" class="btn-brand" style="display:inline-block;text-decoration:none;">Explorar o Mural de Vagas</a>
+<!-- PALAVRAS-CHAVE COM IA -->
+<section class="section-wrap" id="palavras-chave" style="border-top:1px solid var(--border);">
+  <div class="section-heading">Palavras-chave</div>
+  <h2 class="section-title">Como usar IA para encontrar as palavras-chave certas</h2>
+  <p class="section-sub">Muitas empresas usam sistemas ATS que filtram currículos por palavras-chave antes de um recrutador ler qualquer coisa. Uma ferramenta de IA (como o ChatGPT, Claude ou Gemini) pode te ajudar a identificar rapidamente quais termos da vaga você deveria destacar — desde que você use as informações com honestidade, sem inventar competências que não tem.</p>
+
+  <div class="acc-item" onclick="toggleAcc(this)">
+    <div class="acc-head"><h3>1. Cole a descrição da vaga e peça as palavras-chave</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
+    <div class="acc-body">
+      <p>Copie o texto completo do anúncio da vaga e cole em uma IA com um pedido direto. Um exemplo de comando (prompt):</p>
+      <p><strong>"Aqui está a descrição de uma vaga: [cole o texto]. Liste as 15 palavras-chave e habilidades técnicas mais importantes que aparecem nesse anúncio, separando entre 'obrigatórias' e 'desejáveis'."</strong></p>
+      <p>Isso te dá, em segundos, uma lista objetiva do que o recrutador (ou o sistema ATS) provavelmente vai buscar.</p>
+    </div>
+  </div>
+
+  <div class="acc-item" onclick="toggleAcc(this)">
+    <div class="acc-head"><h3>2. Compare a lista com o que você já fez</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
+    <div class="acc-body">
+      <p>Pegue a lista de palavras-chave gerada e confira, uma a uma, quais você realmente domina ou já praticou. Só inclua no currículo o que for verdade — a IA sugere o que a vaga pede, mas quem decide o que entra é você.</p>
+      <p>Um comando útil: <strong>"Aqui está o meu currículo: [cole o texto]. Com base nessa lista de palavras-chave [cole a lista], quais delas eu já demonstro nas minhas experiências e quais estão faltando?"</strong></p>
+    </div>
+  </div>
+
+  <div class="acc-item" onclick="toggleAcc(this)">
+    <div class="acc-head"><h3>3. Peça ajuda para reescrever bullets com a palavra-chave certa</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
+    <div class="acc-body">
+      <p>Se uma palavra-chave importante já faz parte da sua experiência, mas está descrita com outros termos, peça à IA para reformular a frase incluindo o termo correto — sem mudar o que de fato aconteceu.</p>
+      <p>Exemplo de comando: <strong>"Reescreva esta descrição de experiência incluindo naturalmente o termo 'gestão de estoque', sem exagerar ou inventar informações: [cole a frase]."</strong></p>
+    </div>
+  </div>
+
+  <div class="acc-item" onclick="toggleAcc(this)">
+    <div class="acc-head"><h3>4. Use a IA para revisar o resumo profissional e as habilidades</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
+    <div class="acc-body">
+      <p>O resumo e a lista de habilidades são os pontos onde mais vale concentrar as palavras-chave certas, já que costumam ser os primeiros trechos lidos. Peça uma revisão direcionada:</p>
+      <p><strong>"Revise este resumo profissional e sugira ajustes para incluir de forma natural as palavras-chave desta vaga: [cole a lista], mantendo o texto verdadeiro em relação à minha experiência: [cole seu resumo]."</strong></p>
+    </div>
+  </div>
+
+  <div class="acc-item" onclick="toggleAcc(this)">
+    <div class="acc-head"><h3>5. Cuidados ao usar IA nesse processo</h3><span class="acc-toggle-hint">▼ Ler mais</span></div>
+    <div class="acc-body">
+      <ul>
+        <li>Nunca peça para a IA "inventar" experiências, cursos ou resultados que você não teve.</li>
+        <li>Revise sempre o texto gerado — a IA pode sugerir termos técnicos que não fazem sentido para a sua área.</li>
+        <li>Evite empilhar palavras-chave de forma forçada ou repetitiva; isso soa artificial tanto para o ATS quanto para quem lê depois.</li>
+        <li>Palavras-chave ajudam a passar pela triagem, mas quem garante a entrevista é a evidência real do que você sabe fazer.</li>
+      </ul>
+    </div>
   </div>
 </section>
+
+<!-- MODELOS -->
+<section class="section-wrap" id="modelos" style="border-top:1px solid var(--border);">
+  <div class="section-heading">Modelos</div>
+  <h2 class="section-title">Escolha o modelo — mas priorize a leitura</h2>
+  <p class="section-sub">O visual deve organizar a informação, não competir com ela. Para processos com ATS, prefira sempre uma estrutura simples, legível e com texto selecionável.</p>
+
+  <div class="tpl-cards">
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
+  <rect x="12" y="12" width="284" height="166" rx="6" fill="#12203f" opacity="0.10"/>
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="#ffffff" stroke="#e3e7ef" stroke-width="1"/>
+  <circle cx="150" cy="34" r="14" fill="#eaf0ff"/>
+  <circle cx="150" cy="30" r="5" fill="#12203f"/>
+  <path d="M139 42a11 11 0 0 1 22 0z" fill="#12203f"/>
+  <rect x="94" y="54" width="112" height="9" rx="3" fill="#12203f"/>
+  <rect x="110" y="68" width="80" height="6" rx="3" fill="#3b6fff"/>
+  <line x1="24" y1="88" x2="276" y2="88" stroke="#12203f" stroke-width="2"/>
+  <rect x="24" y="100" width="58" height="6" rx="2" fill="#12203f"/>
+  <rect x="24" y="112" width="240" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="24" y="122" width="214" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="24" y="132" width="184" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="24" y="148" width="66" height="6" rx="2" fill="#12203f"/>
+  <rect x="24" y="160" width="150" height="5" rx="2" fill="#e3e7ef"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>Clássico</h3>
+        <p>Limpo, objetivo e tradicional. Uma boa escolha quando você quer máxima clareza e hierarquia de informações, especialmente em áreas administrativas, operações, finanças e processos mais formais.</p>
+        <button type="button" class="btn-add" onclick="useTemplate('classico')">Usar este modelo</button>
+      </div>
+    </div>
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
+  <defs>
+    <clipPath id="modClip"><rect x="8" y="8" width="284" height="166" rx="6"/></clipPath>
+  </defs>
+  <rect x="12" y="12" width="284" height="166" rx="6" fill="#00794f" opacity="0.08"/>
+  <g clip-path="url(#modClip)">
+    <rect x="8" y="8" width="284" height="166" fill="#ffffff"/>
+    <rect x="8" y="8" width="6" height="166" fill="#00a86b"/>
+  </g>
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="none" stroke="#d8ede3" stroke-width="1"/>
+  <rect x="26" y="26" width="118" height="10" rx="3" fill="#0d2a1e"/>
+  <rect x="26" y="42" width="80" height="7" rx="3" fill="#00a86b"/>
+  <rect x="26" y="56" width="140" height="4" rx="2" fill="#c7ccd6"/>
+  <line x1="26" y1="70" x2="276" y2="70" stroke="#c9f0dd" stroke-width="2"/>
+  <rect x="26" y="82" width="58" height="6" rx="2" fill="#00794f"/>
+  <rect x="26" y="94" width="170" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="26" y="104" width="150" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="26" y="114" width="130" height="5" rx="2" fill="#e3e7ef"/>
+  <rect x="206" y="82" width="60" height="6" rx="2" fill="#00794f"/>
+  <rect x="206" y="94" width="34" height="10" rx="5" fill="#e4f8ee"/>
+  <rect x="244" y="94" width="32" height="10" rx="5" fill="#e4f8ee"/>
+  <rect x="206" y="108" width="40" height="10" rx="5" fill="#e4f8ee"/>
+  <rect x="250" y="108" width="26" height="10" rx="5" fill="#e4f8ee"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>Moderno</h3>
+        <p>Visual contemporâneo, com hierarquia bem marcada. Pode funcionar em tecnologia, marketing, negócios e ambientes mais dinâmicos, desde que a leitura continue simples.</p>
+        <button type="button" class="btn-add" onclick="useTemplate('moderno')">Usar este modelo</button>
+      </div>
+    </div>
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Miniatura do modelo">
+  <defs>
+    <clipPath id="creClip"><rect x="8" y="8" width="284" height="166" rx="6"/></clipPath>
+    <linearGradient id="purpleGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d28d9"/>
+      <stop offset="1" stop-color="#9333ea"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="12" width="284" height="166" rx="6" fill="#6d28d9" opacity="0.08"/>
+  <g clip-path="url(#creClip)">
+    <rect x="8" y="8" width="284" height="166" fill="#ffffff"/>
+    <rect x="8" y="8" width="284" height="40" fill="url(#purpleGrad)"/>
+    <rect x="8" y="48" width="90" height="126" fill="#f6f1fc"/>
+  </g>
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="none" stroke="#e4d4fb" stroke-width="1"/>
+  <rect x="22" y="18" width="112" height="9" rx="3" fill="#ffffff" opacity="0.97"/>
+  <rect x="22" y="31" width="72" height="6" rx="3" fill="#e9d5ff"/>
+  <rect x="20" y="62" width="42" height="5" rx="2" fill="#6d28d9"/>
+  <rect x="20" y="72" width="62" height="4" rx="2" fill="#d8bdf7"/>
+  <rect x="20" y="80" width="50" height="4" rx="2" fill="#d8bdf7"/>
+  <rect x="20" y="96" width="54" height="5" rx="2" fill="#6d28d9"/>
+  <rect x="20" y="106" width="52" height="8" rx="4" fill="#e9d8fb"/>
+  <rect x="20" y="118" width="40" height="8" rx="4" fill="#e9d8fb"/>
+  <rect x="20" y="130" width="58" height="8" rx="4" fill="#e9d8fb"/>
+  <rect x="106" y="62" width="52" height="5" rx="2" fill="#5b21b6"/>
+  <rect x="106" y="72" width="168" height="4" rx="2" fill="#e3e7ef"/>
+  <rect x="106" y="80" width="150" height="4" rx="2" fill="#e3e7ef"/>
+  <rect x="106" y="96" width="68" height="5" rx="2" fill="#5b21b6"/>
+  <rect x="106" y="106" width="168" height="4" rx="2" fill="#e3e7ef"/>
+  <rect x="106" y="114" width="150" height="4" rx="2" fill="#e3e7ef"/>
+  <rect x="106" y="122" width="160" height="4" rx="2" fill="#e3e7ef"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>Criativo</h3>
+        <p>Mais expressivo e visual. Pode combinar com comunicação, design e áreas criativas, mas use com critério quando a candidatura passar por ATS.</p>
+        <button type="button" class="btn-add" onclick="useTemplate('criativo')">Usar este modelo</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GERADOR -->
+<section class="section-wrap" id="gerador">
+  <div class="section-heading">Gerador</div>
+  <h2 class="section-title">Construa o currículo com estratégia</h2>
+  <p class="section-sub">Preencha os campos e acompanhe o resultado em tempo real. Antes de baixar, use as orientações abaixo para transformar suas experiências em conteúdo objetivo, relevante e fácil de interpretar por recrutadores e sistemas ATS.</p>
+
+  <div class="builder-grid">
+    <!-- FORM -->
+    <div class="builder-form" id="builderForm">
+
+      <div class="form-group">
+        <h3>Modelo</h3>
+        <div class="tpl-picker">
+          <button type="button" class="tpl-chip active" data-tpl="classico">Clássico</button>
+          <button type="button" class="tpl-chip" data-tpl="moderno">Moderno</button>
+          <button type="button" class="tpl-chip" data-tpl="criativo">Criativo</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <h3>Contato e posicionamento</h3>
+        <div class="form-row">
+          <div><label>Nome completo</label><input type="text" id="fName" placeholder="Ex: Maria da Silva"></div>
+          <div><label>Cargo-alvo</label><input type="text" id="fTitle" placeholder="Ex: Analista Administrativo"></div>
+        </div>
+        <div class="form-row">
+          <div><label>E-mail</label><input type="email" id="fEmail" placeholder="maria@email.com"></div>
+          <div><label>Telefone</label><input type="tel" id="fPhone" placeholder="(51) 99999-9999"></div>
+        </div>
+        <div class="form-row">
+          <div><label>Cidade / UF</label><input type="text" id="fCity" placeholder="Guaíba, RS"></div>
+          <div><label>LinkedIn (opcional)</label><input type="text" id="fLinkedin" placeholder="linkedin.com/in/seunome"></div>
+        </div>
+        <div class="form-row single">
+          <div><label>Resumo profissional</label><textarea id="fSummary" placeholder="2 a 4 linhas: área, experiência, especialidades e um resultado ou diferencial comprovável."></textarea></div>
+        </div>
+      </div>
+
+      <div class="form-group section-add-picker" id="sectionAddPicker">
+        <h3>Adicionar seção</h3>
+        <p style="font-size:13px;color:var(--text-2);margin:-8px 0 14px;">Clique para incluir mais informações no currículo.</p>
+        <div class="tpl-picker">
+          <button type="button" class="tpl-chip add-section-chip" data-add-section="experience">+ Experiência profissional</button>
+          <button type="button" class="tpl-chip add-section-chip" data-add-section="education">+ Formação acadêmica</button>
+          <button type="button" class="tpl-chip add-section-chip" data-add-section="skills">+ Habilidades</button>
+          <button type="button" class="tpl-chip add-section-chip" data-add-section="languages">+ Idiomas</button>
+        </div>
+      </div>
+
+      <div class="form-group is-hidden" id="groupExperience" data-section="experience">
+        <h3>Experiência profissional <span style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-add" id="addExperience">+ Adicionar</button><button type="button" class="btn-remove-section" data-remove-section="experience">Remover seção</button></span></h3>
+        <div id="experienceList"></div>
+      </div>
+
+      <div class="form-group is-hidden" id="groupEducation" data-section="education">
+        <h3>Formação acadêmica <span style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-add" id="addEducation">+ Adicionar</button><button type="button" class="btn-remove-section" data-remove-section="education">Remover seção</button></span></h3>
+        <div id="educationList"></div>
+      </div>
+
+      <div class="form-group is-hidden" id="groupSkills" data-section="skills">
+        <h3>Habilidades <button type="button" class="btn-remove-section" data-remove-section="skills">Remover seção</button></h3>
+        <div class="form-row single">
+          <div><label>Separe por vírgula</label><input type="text" id="fSkills" placeholder="Ex: Excel, Power BI, Gestão de estoque, Atendimento"></div>
+        </div>
+      </div>
+
+      <div class="form-group is-hidden" id="groupLanguages" data-section="languages">
+        <h3>Idiomas <span style="display:flex;align-items:center;gap:10px;"><button type="button" class="btn-add" id="addLanguage">+ Adicionar</button><button type="button" class="btn-remove-section" data-remove-section="languages">Remover seção</button></span></h3>
+        <div id="languageList"></div>
+      </div>
+
+      <div class="builder-actions">
+        <button type="button" class="btn-brand" id="btnDownload">⬇ Baixar em PDF</button>
+        <button type="button" class="btn-ghost" id="btnClear">Limpar formulário</button>
+      </div>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="preview-sticky">
+      <div class="preview-frame">
+        <div class="resume-preview" id="resumePreview" data-template="classico">
+          <div class="r-header">
+            <h2 id="rvName">Seu Nome Completo</h2>
+            <div class="r-title" id="rvTitle">Seu Cargo-Alvo</div>
+            <div class="r-contact" id="rvContact"><span>seuemail@exemplo.com</span><span>(51) 90000-0000</span><span>Sua Cidade, RS</span></div>
+          </div>
+          <div class="r-body">
+            <div class="r-main">
+              <div class="r-section">
+                <h3>Resumo</h3>
+                <p id="rvSummary" class="r-empty-hint">Seu resumo profissional aparecerá aqui.</p>
+              </div>
+              <div class="r-section">
+                <h3>Experiência</h3>
+                <div id="rvExperience" class="r-empty-hint">Adicione uma experiência e descreva atividades, contexto e resultados.</div>
+              </div>
+              <div class="r-section">
+                <h3>Formação</h3>
+                <div id="rvEducation" class="r-empty-hint">Adicione sua formação acadêmica ou técnica.</div>
+              </div>
+            </div>
+            <div class="r-aside">
+              <div class="r-section">
+                <h3>Habilidades</h3>
+                <div id="rvSkills" class="r-tags"><span class="r-empty-hint">—</span></div>
+              </div>
+              <div class="r-section">
+                <h3>Idiomas</h3>
+                <div id="rvLanguages" class="r-empty-hint">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODELOS WORD -->
+<section class="section-wrap" id="word" style="border-top:1px solid var(--border);">
+  <div class="section-heading">Download em Word</div>
+  <h2 class="section-title">Prefere editar no Word? Baixe o modelo pronto</h2>
+  <p class="section-sub">O gerador acima já entrega um PDF pronto para envio. Mas se você quiser ajustar o texto com calma, reaproveitar o arquivo depois ou preencher direto no computador, baixe um dos modelos abaixo em <strong>.docx</strong>. Diferente da seção "Modelos" acima (focada em visual), aqui os 3 modelos têm <strong>estrutura e seções pensadas para cada tipo de vínculo</strong> — CLT, Estágio ou Jovem Aprendiz. Basta abrir no Word (ou no Google Docs/LibreOffice), substituir o que está entre colchetes <code>[ ]</code> e salvar.</p>
+
+  <div class="tpl-cards">
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo CLT">
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="#eef2fb" stroke="#d7deef" stroke-width="1"/>
+  <rect x="110" y="46" width="80" height="16" rx="4" fill="none" stroke="#0d2a4a" stroke-width="5"/>
+  <path d="M132 46v-8a18 18 0 0 1 36 0v8" fill="none" stroke="#0d2a4a" stroke-width="5"/>
+  <rect x="70" y="62" width="160" height="88" rx="8" fill="#0d2a4a"/>
+  <rect x="70" y="62" width="160" height="88" rx="8" fill="none" stroke="#1d4ed8" stroke-width="2"/>
+  <rect x="128" y="94" width="44" height="24" rx="3" fill="#1d4ed8"/>
+  <line x1="70" y1="96" x2="230" y2="96" stroke="#eef2fb" stroke-width="2" opacity="0.35"/>
+  <rect x="94" y="152" width="112" height="8" rx="4" fill="#0d2a4a"/>
+  <rect x="112" y="166" width="76" height="6" rx="3" fill="#8ea3c9"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>CLT (Word)</h3>
+        <p>Estrutura com resumo profissional, experiências com resultados numéricos e competências técnicas — pronta para vagas com carteira assinada.</p>
+        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-clt.docx" download>⬇ Baixar .docx</a>
+      </div>
+    </div>
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo Estágio">
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="#eaf6ef" stroke="#cfe8da" stroke-width="1"/>
+  <path d="M150 46 L206 68 L150 90 L94 68 Z" fill="#0f5132"/>
+  <path d="M118 76 v22 c0 8 14 16 32 16 s32 -8 32 -16 v-22" fill="none" stroke="#0f5132" stroke-width="5" stroke-linecap="round"/>
+  <line x1="206" y1="68" x2="206" y2="98" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="206" cy="103" r="4" fill="#16a34a"/>
+  <rect x="86" y="120" width="128" height="8" rx="4" fill="#0f5132"/>
+  <rect x="100" y="134" width="100" height="6" rx="3" fill="#7fbf9a"/>
+  <rect x="112" y="148" width="76" height="6" rx="3" fill="#a9d6bb"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>Estágio (Word)</h3>
+        <p>Coloca a formação em destaque, com espaço para projetos acadêmicos e monitorias no lugar de experiência formal — ideal para quem está na faculdade.</p>
+        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-estagio.docx" download>⬇ Baixar .docx</a>
+      </div>
+    </div>
+    <div class="tpl-card">
+      <div class="tpl-thumb"><svg viewBox="0 0 300 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone modelo Jovem Aprendiz">
+  <rect x="8" y="8" width="284" height="166" rx="6" fill="#fdf1ea" stroke="#f3ddcb" stroke-width="1"/>
+  <rect x="120" y="40" width="60" height="20" rx="8" fill="#7c2d12"/>
+  <path d="M110 60 h80 a10 10 0 0 1 10 10 v58 a10 10 0 0 1 -10 10 h-80 a10 10 0 0 1 -10 -10 v-58 a10 10 0 0 1 10 -10 Z" fill="#ea580c"/>
+  <rect x="100" y="78" width="100" height="34" rx="6" fill="#fdf1ea"/>
+  <line x1="150" y1="60" x2="150" y2="138" stroke="#7c2d12" stroke-width="3" opacity="0.5"/>
+  <rect x="118" y="122" width="64" height="8" rx="4" fill="#7c2d12"/>
+  <rect x="128" y="136" width="44" height="6" rx="3" fill="#c2703f"/>
+</svg></div>
+      <div class="tpl-body">
+        <h3>Jovem Aprendiz (Word)</h3>
+        <p>Foco em formação escolar, cursos livres e habilidades comportamentais — feito para quem está buscando a primeira oportunidade, sem experiência prévia.</p>
+        <a class="btn-add" style="display:inline-block;text-decoration:none;" href="modelos-word/curriculo-modelo-aprendiz.docx" download>⬇ Baixar .docx</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;padding:20px 22px;border-radius:14px;background:var(--brand-light);border:1px solid var(--border);">
+    <p style="font-size:13.5px;line-height:1.7;color:var(--text-2);"><strong>Dica:</strong> os campos entre colchetes, como <code>[Cargo]</code> ou <code>[Empresa]</code>, são só marcadores de posição — apague-os e escreva as suas informações no lugar. Está em dúvida qual baixar? CLT é para quem já tem (ou busca) experiência formal com carteira assinada; Estágio é para quem ainda está cursando a faculdade; Jovem Aprendiz é voltado a adolescentes/jovens (14 a 24 anos) na primeira experiência profissional, geralmente ainda no ensino médio. Para duplicar um bloco de experiência ou formação, selecione o parágrafo inteiro no Word e cole quantas vezes precisar.</p>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="section-wrap" style="border-top:1px solid var(--border);text-align:center;padding-top:48px;padding-bottom:48px;">
+  <h2 class="section-title" style="font-size:24px;">Currículo pronto — e agora?</h2>
+  <p class="section-sub" style="margin-left:auto;margin-right:auto;">Depois de montar seu currículo, o próximo passo é encontrar as vagas certas para aplicar.</p>
+  <a href="vagas.html" class="btn-brand" style="display:inline-block;text-decoration:none;">Explorar o Mural de Vagas</a>
+</section>
+
 
 <!-- FOOTER -->
 <footer>
@@ -1023,15 +1059,32 @@
   }
 })();
 
-/* ══ Tabs (rolagem suave + estado ativo) ══ */
+/* ══ Tabs (rolagem suave + estado ativo + dropdown mobile) ══ */
 (function(){
   var tabs = document.querySelectorAll('.page-tab');
+  var dropdown = document.getElementById('pageTabsDropdown');
+  var dropdownBtn = document.getElementById('tabsDropdownBtn');
+  var dropdownLabel = document.getElementById('tabsDropdownLabel');
+
   tabs.forEach(function(tab){
     tab.addEventListener('click', function(){
       tabs.forEach(function(t){ t.classList.remove('active'); });
-      tab.classList.add('active');
+      // Ativa todos os elementos que apontam para o mesmo href (pill + item do dropdown)
+      tabs.forEach(function(t){ if(t.getAttribute('href') === tab.getAttribute('href')) t.classList.add('active'); });
+      if(dropdownLabel) dropdownLabel.textContent = tab.textContent.trim();
+      if(dropdown) dropdown.classList.remove('open');
     });
   });
+
+  if(dropdown && dropdownBtn){
+    dropdownBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function(e){
+      if(!dropdown.contains(e.target)) dropdown.classList.remove('open');
+    });
+  }
 })();
 
 /* ══ Accordion (dicas) ══ */
@@ -1489,31 +1542,77 @@ function toggleAcc(el) {
     expList.innerHTML = '';
     eduList.innerHTML = '';
     langList.innerHTML = '';
+    ['experience','education','skills','languages'].forEach(function(key){
+      var group = document.getElementById('group' + key.charAt(0).toUpperCase() + key.slice(1));
+      if(!group) return;
+      group.classList.add('is-hidden');
+      group.classList.remove('is-added');
+      var chip = document.getElementById('sectionAddPicker').querySelector('[data-add-section="' + key + '"]');
+      if(chip) chip.style.display = '';
+    });
+    document.getElementById('sectionAddPicker').classList.remove('is-hidden');
     updatePreview();
   });
 
-  // Estado inicial: uma experiência e uma formação em branco, para orientar
-  addExperience();
-  addEducation();
-  addLanguage();
-  updatePreview();
-})();
+  // Seções opcionais: começam ocultas, pessoa clica para adicionar
+  var sectionGroups = {
+    experience: document.getElementById('groupExperience'),
+    education: document.getElementById('groupEducation'),
+    skills: document.getElementById('groupSkills'),
+    languages: document.getElementById('groupLanguages')
+  };
+  var sectionAddPicker = document.getElementById('sectionAddPicker');
 
-// Fade de scroll horizontal nas abas do menu de seções
-(function(){
-  var wrap = document.getElementById('pageTabsWrap');
-  var inner = document.getElementById('pageTabsInner');
-  if(!wrap || !inner) return;
-  function update(){
-    var scrollable = inner.scrollWidth > inner.clientWidth + 1;
-    wrap.classList.toggle('can-scroll-left', scrollable && inner.scrollLeft > 4);
-    wrap.classList.toggle('can-scroll-right', scrollable && inner.scrollLeft < (inner.scrollWidth - inner.clientWidth - 4));
+  function addSectionFirstEntry(key){
+    if(key === 'experience') addExperience();
+    if(key === 'education') addEducation();
+    if(key === 'languages') addLanguage();
   }
-  inner.addEventListener('scroll', update, { passive: true });
-  window.addEventListener('resize', update);
-  update();
-  // Reconfere depois que fontes/layout assentam
-  setTimeout(update, 300);
+
+  function revealSection(key){
+    var group = sectionGroups[key];
+    if(!group || !group.classList.contains('is-hidden')) return;
+    group.classList.remove('is-hidden');
+    group.classList.add('is-added');
+    addSectionFirstEntry(key);
+    var chip = sectionAddPicker.querySelector('[data-add-section="' + key + '"]');
+    if(chip) chip.style.display = 'none';
+    updatePicker();
+    var focusEl = group.querySelector('input, textarea');
+    if(focusEl) focusEl.focus();
+  }
+
+  function hideSection(key){
+    var group = sectionGroups[key];
+    if(!group) return;
+    if(key === 'experience') expList.innerHTML = '';
+    if(key === 'education') eduList.innerHTML = '';
+    if(key === 'languages') langList.innerHTML = '';
+    if(key === 'skills') document.getElementById('fSkills').value = '';
+    group.classList.add('is-hidden');
+    group.classList.remove('is-added');
+    var chip = sectionAddPicker.querySelector('[data-add-section="' + key + '"]');
+    if(chip) chip.style.display = '';
+    updatePicker();
+    updatePreview();
+  }
+
+  function updatePicker(){
+    var anyVisible = Array.prototype.some.call(sectionAddPicker.querySelectorAll('.add-section-chip'), function(c){ return c.style.display !== 'none'; });
+    sectionAddPicker.classList.toggle('is-hidden', !anyVisible);
+  }
+
+  sectionAddPicker.querySelectorAll('[data-add-section]').forEach(function(chip){
+    chip.addEventListener('click', function(){ revealSection(chip.getAttribute('data-add-section')); });
+  });
+  document.getElementById('builderForm').querySelectorAll('[data-remove-section]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!confirm('Remover esta seção e o que foi preenchido nela?')) return;
+      hideSection(btn.getAttribute('data-remove-section'));
+    });
+  });
+
+  updatePreview();
 })();
 </script>
 
