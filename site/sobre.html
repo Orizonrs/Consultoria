@@ -3424,7 +3424,7 @@ body.dark-mode .accordion-item.open .accordion-btn {
   background: transparent;
 }
 .accordion-item.open .accordion-body {
-  max-height: 2000px;
+  max-height: 3000px; /* fallback só até o JS medir a altura real (scrollHeight) e sobrescrever via inline style */
 }
 .accordion-inner {
   padding: 1.1rem 1.25rem 1.25rem;
@@ -3663,15 +3663,60 @@ body.dark-mode .accordion-item.open .accordion-btn {
 </div><!-- fim .accordion-wrap -->
 
 <script>
+function setAccBodyHeight(item, opening){
+  const body = item.querySelector('.accordion-body');
+  if(!body) return;
+  if(opening){
+    body.style.maxHeight = body.scrollHeight + 'px';
+  } else {
+    // fixa a altura atual antes de fechar, senão o navegador não tem de
+    // onde animar (max-height:3000px fixo faz a transição real durar uma
+    // fração de segundo em vez do tempo definido)
+    body.style.maxHeight = body.scrollHeight + 'px';
+    body.offsetHeight; // força reflow
+    body.style.maxHeight = '0px';
+  }
+}
+
 function toggleAcc(id) {
   const item = document.getElementById(id);
+  const anchorEl = item.querySelector('.accordion-btn') || item;
   const isOpen = item.classList.contains('open');
+
   // Fechar todos
-  document.querySelectorAll('.accordion-item').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.accordion-item').forEach(el => {
+    if (el.classList.contains('open')) {
+      el.classList.remove('open');
+      setAccBodyHeight(el, false);
+    }
+  });
   // Abrir o clicado (se estava fechado)
-  if (!isOpen) item.classList.add('open');
+  if (!isOpen) {
+    item.classList.add('open');
+    setAccBodyHeight(item, true);
+  }
+
+  // Corrige o "salto" de rolagem: se o item que fechou fica ACIMA do que
+  // foi clicado, a altura da página encolhe por cima da posição atual
+  // enquanto a transição roda, e o navegador não realoca o scroll
+  // sozinho — o conteúdo visível "foge" pra baixo, na direção do rodapé.
+  // Reancoramos o botão clicado na mesma posição de tela durante toda a
+  // animação (~550ms), quadro a quadro.
+  let prevTop = anchorEl.getBoundingClientRect().top;
+  const start = performance.now();
+  function reanchor(now){
+    const currentTop = anchorEl.getBoundingClientRect().top;
+    const diff = currentTop - prevTop;
+    if (diff !== 0) window.scrollBy(0, diff);
+    prevTop = anchorEl.getBoundingClientRect().top;
+    if (now - start < 550) requestAnimationFrame(reanchor);
+  }
+  requestAnimationFrame(reanchor);
 }
 // Todos fechados por padrão
+window.addEventListener('resize', () => {
+  document.querySelectorAll('#accordionSobre .accordion-item.open').forEach(el => setAccBodyHeight(el, true));
+});
 </script>
 <!-- ===== ACCORDION FIM ===== -->
 
