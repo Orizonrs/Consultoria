@@ -921,9 +921,25 @@ body:not(.dark-mode) .theme-toggle {
     padding: 1.8rem;
     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
     border: 1px solid rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
+    transition: none;
     text-align: center;
+    position: relative;
+    overflow: hidden;
   }
+  .card-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: none;
+    background: radial-gradient(220px circle at 50% 50%, rgba(37,99,235,0.14), transparent 70%);
+    z-index: 0;
+  }
+  body.dark-mode .card-glow {
+    background: radial-gradient(220px circle at 50% 50%, rgba(0,200,255,0.16), transparent 70%);
+  }
+  .card.glow-active .card-glow { opacity: 1; }
+  .card > *:not(.card-glow) { position: relative; z-index: 1; }
   body.dark-mode .card { background: rgba(0,200,255,0.04) !important; border: 1px solid rgba(0,200,255,0.2) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.08) !important; }
   .card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(37,99,235,0.15) !important; border-color: rgba(37,99,235,0.4) !important; background: rgba(37,99,235,0.08) !important; }
 
@@ -936,6 +952,19 @@ body:not(.dark-mode) .theme-toggle {
     100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); filter: blur(0); }}
   @media (prefers-reduced-motion: reduce) {
     .card { opacity: 1; transform: none; filter: none; animation: none; }}
+
+  /* Desktop: sem transições nem animação de entrada — cards aparecem direto */
+  @media (min-width: 769px) {
+    .card { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+    .card:hover { transform: translateY(-6px); }
+  }
+
+  /* Mobile: mantém transições e animação de entrada, porém mais rápidas */
+  @media (max-width: 768px) {
+    .card { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease; }
+    .card-glow { transition: opacity .12s ease; }
+    .card.card-in-view { animation: cardRevealIn 0.6s cubic-bezier(.22,1,.36,1) forwards; }
+  }
 
   .card-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
   .card-icon img {
@@ -4640,6 +4669,32 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
   })();
   </script>
 
+  <!-- ═══ Brilho magnético nos cards (facho de luz segue o cursor) ═══ -->
+  <script>
+  (function () {
+    document.querySelectorAll('.cards-grid .card').forEach(card => {
+      const glow = document.createElement('div');
+      glow.className = 'card-glow';
+      card.prepend(glow);
+
+      card.addEventListener('mousemove', e => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cor = document.body.classList.contains('dark-mode')
+          ? 'rgba(0,200,255,0.16)'
+          : 'rgba(37,99,235,0.14)';
+        glow.style.background = 'radial-gradient(220px circle at ' + x + 'px ' + y + 'px, ' + cor + ', transparent 70%)';
+        card.classList.add('glow-active');
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.classList.remove('glow-active');
+      });
+    });
+  })();
+  </script>
+
   <!-- ═══ Entrada animada dos cards ao rolar (scroll reveal) ═══ -->
   <script>
   (function () {
@@ -4649,7 +4704,8 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
     }
     document.querySelectorAll('.cards-grid').forEach(grid => {
       grid.querySelectorAll('.card').forEach((card, i) => {
-        card.style.animationDelay = (i * 0.18) + 's';
+        const passo = window.innerWidth <= 768 ? 0.08 : 0.18;
+        card.style.animationDelay = (i * passo) + 's';
       });
     });
     const cardObserver = new IntersectionObserver((entries, obs) => {
