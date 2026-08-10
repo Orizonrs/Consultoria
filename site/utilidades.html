@@ -1365,6 +1365,65 @@ body:not(.dark-mode) .theme-toggle {
   }
   .ats-flow-note { font-size:0.8rem; line-height:1.6; opacity:0.75; text-align:center; margin-top:1.2rem; }
 
+  /* ── ATS: texto responsivo (completo no desktop, resumido no mobile) ── */
+  .ats-mobile-only { display:none; }
+  .ats-mobile-note {
+    font-size:0.85rem; font-weight:600; opacity:0.8; text-align:left;
+    padding:0.7rem 1rem; border-radius:10px;
+    background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.18);
+  }
+  body.dark-mode .ats-mobile-note { background:rgba(0,200,255,0.06); border-color:rgba(0,200,255,0.2); color:#38bdf8; }
+
+  /* ── SITES DE VAGAS & CURSOS: rede interativa "radar" ──────────── */
+  .vn-grid {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:1rem; margin-top:0.6rem;
+  }
+  .vn-intro { font-size:0.85rem; opacity:0.65; text-align:center; margin:-0.2rem 0 0.8rem; }
+  .vn-card {
+    background:white; border-radius:16px; border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 6px 20px rgba(0,0,0,0.06); overflow:hidden;
+    transition:box-shadow 0.3s ease, transform 0.3s ease;
+  }
+  .vn-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,0.1); }
+  body.dark-mode .vn-card { background:#161d24; border-color:rgba(56,189,248,0.15); box-shadow:0 4px 20px rgba(0,0,0,0.35); }
+  .vn-card-head {
+    width:100%; display:flex; align-items:center; gap:0.85rem; padding:1rem 1.1rem;
+    background:none; border:none; cursor:pointer; text-align:left; font-family:inherit; color:inherit;
+  }
+  .vn-radar { position:relative; width:52px; height:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+  .vn-radar::before, .vn-radar::after {
+    content:''; position:absolute; inset:0; border-radius:50%;
+    border:2px solid var(--primary); opacity:0; animation:vnPing 3s ease-out infinite;
+  }
+  .vn-radar::after { animation-delay:1.5s; }
+  body.dark-mode .vn-radar::before, body.dark-mode .vn-radar::after { border-color:#38bdf8; }
+  @keyframes vnPing { 0%{ transform:scale(0.6); opacity:0.65; } 80%,100%{ transform:scale(1.55); opacity:0; } }
+  .vn-radar img {
+    width:30px; height:30px; object-fit:contain; position:relative; z-index:1;
+    background:white; border-radius:50%; padding:5px; box-shadow:0 2px 8px rgba(0,0,0,0.12);
+  }
+  body.dark-mode .vn-radar img { background:#1e1e1e; }
+  .vn-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:0.3rem; }
+  .vn-name { font-weight:800; font-size:0.95rem; }
+  .vn-tag { align-self:flex-start; margin-bottom:0 !important; }
+  .vn-chevron { font-size:0.8rem; opacity:0.5; transition:transform 0.3s ease; flex-shrink:0; }
+  .vn-card.open .vn-chevron { transform:rotate(180deg); }
+  .vn-body { max-height:0; overflow:hidden; transition:max-height 0.4s ease, padding 0.4s ease; padding:0 1.1rem; }
+  .vn-card.open .vn-body { max-height:420px; padding:0 1.1rem 1.1rem; }
+  .vn-body p { font-size:0.86rem; line-height:1.6; opacity:0.85; margin:0 0 0.6rem; }
+  .vn-body .card-link { display:block; margin-top:0.25rem; }
+
+  /* ── CURSOS: trilha conectada reaproveitando os cards acima ──── */
+  .trilha-flow { display:flex; align-items:stretch; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem; }
+  .trilha-flow .vn-card { flex:1; min-width:230px; }
+  @media (max-width:640px) {
+    .ats-desktop-only { display:none; }
+    .ats-mobile-only { display:block; }
+    .trilha-flow { flex-direction:column; align-items:stretch; }
+    .trilha-flow .ats-flow-connector { align-self:center; transform:rotate(90deg); }
+  }
+
   /* ── REDES SOCIAIS ───────────────────────────────── */
   .social-grid {
     display: grid;
@@ -2734,65 +2793,98 @@ body.dark-mode .download-free-tag { color: #34d399; }
     💡 <strong>Dica:</strong> Mantenha perfis completos nas principais plataformas, seja para busca de profissionais, fornecedores ou parcerias. Configure alertas para receber notificações quando surgir algo relevante para o seu negócio ou carreira.
   </div>
 
-  <div class="cards-grid">
+  <p class="vn-intro">📡 Toque em cada plataforma pra ver os detalhes e o link direto de acesso.</p>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/linkedin (1).png" width="42" height="42" alt="LinkedIn">
-      </span>
-      <span class="card-tag tag-blue">Nacional</span>
-      <h3>LinkedIn</h3>
-      <p>Maior rede profissional do mundo. Fundamental para empresas, consultores e profissionais. Além de vagas e talentos, é onde parcerias, contratos e negócios começam. Perfil completo com foto, resumo e portfólio aumenta visibilidade e credibilidade corporativa.</p>
-      <a href="https://linkedin.com/jobs" target="_blank" rel="noopener noreferrer" class="card-link">→ Ver vagas no LinkedIn</a>
+  <div class="vn-grid">
+
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/linkedin (1).png" alt="LinkedIn"></span>
+        <span class="vn-info">
+          <span class="vn-name">LinkedIn</span>
+          <span class="card-tag tag-blue vn-tag">Nacional</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Maior rede profissional do mundo. Fundamental para empresas, consultores e profissionais. Além de vagas e talentos, é onde parcerias, contratos e negócios começam. Perfil completo com foto, resumo e portfólio aumenta visibilidade e credibilidade corporativa.</p>
+        <a href="https://linkedin.com/jobs" target="_blank" rel="noopener noreferrer" class="card-link">→ Ver vagas no LinkedIn</a>
+      </div>
     </div>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/catho.png" width="42px" height="42px" alt="Catho">
-      </span>
-      <span class="card-tag tag-blue">Nacional</span>
-      <h3>Catho</h3>
-      <p>Uma das maiores plataformas de emprego do Brasil. Forte em vagas de nível médio e superior em todo o país. Tem uma ferramenta de comparação de salários muito útil para negociações.</p>
-      <a href="https://catho.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Catho</a>
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/catho.png" alt="Catho"></span>
+        <span class="vn-info">
+          <span class="vn-name">Catho</span>
+          <span class="card-tag tag-blue vn-tag">Nacional</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Uma das maiores plataformas de emprego do Brasil. Forte em vagas de nível médio e superior em todo o país. Tem uma ferramenta de comparação de salários muito útil para negociações.</p>
+        <a href="https://catho.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Catho</a>
+      </div>
     </div>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/infojobs-seeklogo.png" width="42px" height="42px" alt="InfoJobs">
-      </span>
-      <span class="card-tag tag-blue">Nacional</span>
-      <h3>InfoJobs</h3>
-      <p>Plataforma popular com muitas vagas de diversas áreas. Fácil de usar e com boa cobertura de vagas no Rio Grande do Sul e região Sul do Brasil.</p>
-      <a href="https://infojobs.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar InfoJobs</a>
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/infojobs-seeklogo.png" alt="InfoJobs"></span>
+        <span class="vn-info">
+          <span class="vn-name">InfoJobs</span>
+          <span class="card-tag tag-blue vn-tag">Nacional</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Plataforma popular com muitas vagas de diversas áreas. Fácil de usar e com boa cobertura de vagas no Rio Grande do Sul e região Sul do Brasil.</p>
+        <a href="https://infojobs.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar InfoJobs</a>
+      </div>
     </div>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/gupy.png" width="42px" height="42px" alt="Gupy">
-      </span>
-      <span class="card-tag tag-blue">Nacional</span>
-      <h3>Gupy</h3>
-<p>Plataforma moderna de recrutamento usada por muitas empresas no Brasil. Nela é possível se candidatar a vagas de diversos níveis, desde operacionais até cargos técnicos e administrativos. Manter o perfil completo na Gupy aumenta a visibilidade para recrutadores e facilita candidaturas em processos seletivos corporativos.</p>      <a href="https://portal.gupy.io" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Gupy</a>
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/gupy.png" alt="Gupy"></span>
+        <span class="vn-info">
+          <span class="vn-name">Gupy</span>
+          <span class="card-tag tag-blue vn-tag">Nacional</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Plataforma moderna de recrutamento usada por muitas empresas no Brasil. Nela é possível se candidatar a vagas de diversos níveis, desde operacionais até cargos técnicos e administrativos. Manter o perfil completo na Gupy aumenta a visibilidade para recrutadores e facilita candidaturas em processos seletivos corporativos.</p>
+        <a href="https://portal.gupy.io" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Gupy</a>
+      </div>
     </div>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/sine.png" width="42px" height="42px" alt="Sine">
-      </span>
-      <span class="card-tag tag-green">Governo</span>
-      <h3>SINE / Emprega Brasil</h3>
-      <p>Sistema Nacional de Emprego gratuito e com muitas vagas formais. Pode ser acessado online ou presencialmente. Ótimo para vagas CLT em empresas locais e regionais.</p>
-      <a href="https://empregabrasil.mte.gov.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Emprega Brasil</a>
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/sine.png" alt="Sine"></span>
+        <span class="vn-info">
+          <span class="vn-name">SINE / Emprega Brasil</span>
+          <span class="card-tag tag-green vn-tag">Governo</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Sistema Nacional de Emprego gratuito e com muitas vagas formais. Pode ser acessado online ou presencialmente. Ótimo para vagas CLT em empresas locais e regionais.</p>
+        <a href="https://empregabrasil.mte.gov.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Emprega Brasil</a>
+      </div>
     </div>
 
-    <div class="card">
-      <span class="card-icon">
-        <img src="../imagens/indeed.png" width="42px" height="42px" alt="Indeed">
-      </span>
-      <span class="card-tag tag-blue">Internacional</span>
-      <h3>Indeed</h3>
-      <p>Motor de busca agregador de oportunidades, reúne posições de vários sites em um só lugar. Útil para comparar e encontrar oportunidades que não estão nas outras plataformas.</p>
-      <a href="https://br.indeed.com" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Indeed</a>
+    <div class="vn-card">
+      <button class="vn-card-head" onclick="toggleVn(this)">
+        <span class="vn-radar"><img src="../imagens/indeed.png" alt="Indeed"></span>
+        <span class="vn-info">
+          <span class="vn-name">Indeed</span>
+          <span class="card-tag tag-blue vn-tag">Internacional</span>
+        </span>
+        <span class="vn-chevron">▾</span>
+      </button>
+      <div class="vn-body">
+        <p>Motor de busca agregador de oportunidades, reúne posições de vários sites em um só lugar. Útil para comparar e encontrar oportunidades que não estão nas outras plataformas.</p>
+        <a href="https://br.indeed.com" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Indeed</a>
+      </div>
     </div>
 
   </div>
@@ -2803,41 +2895,63 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <!-- ============================================================ -->
   <div class="info-bar" id="sec-cursos" data-i18n="util-sec-cursos">🎓 Cursos Gratuitos & Certificações</div>
   <section class="content-section">
-    <div class="cards-grid">
 
-<div class="card">
-  <span class="card-icon">
-    <img src="../imagens/senai.png" width="42" height="42" alt="SENAI SENAC">
-  </span>
-  <span class="card-tag tag-green">Gratuito</span>
-  <h3>Senai</h3>
-  <p>Cursos técnicos e profissionalizantes com ótima reputação no mercado. Muitas opções presenciais e online, algumas totalmente gratuitas. Certificado reconhecido por empresas de todos os setores.</p>
-  <a href="https://online.senai.br" target="_blank" rel="noopener noreferrer" class="card-link">→ SENAI Online</a><br>
-  <a href="https://www.ead.senac.br" target="_blank" rel="noopener noreferrer" class="card-link">→ SENAC EAD</a>
-</div>
+    <p class="vn-intro">🎓 Uma trilha, três paradas: toque em cada instituição pra ver o que ela oferece.</p>
 
-<div class="card">
-  <span class="card-icon">
-    <img src="../imagens/coursera.png" width="42" height="42" alt="Coursera">
-  </span>
-  <span class="card-tag tag-green">Gratuito</span>
-  <h3>Coursera</h3>
-  <p>Plataforma com cursos de universidades mundiais. É possível auditar (assistir) gratuitamente. Tem certificados pagos, mas o aprendizado é gratuito. Ótimo para aprender inglês técnico e hard skills.</p>
-  <a href="https://coursera.org" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Coursera</a>
-</div>
+    <div class="trilha-flow">
 
-<div class="card">
-  <span class="card-icon">
-    <img src="../imagens/bradesco.png" width="42" height="42" alt="Fundação Bradesco">
-  </span>
-  <span class="card-tag tag-green">Gratuito</span>
-  <h3>Fundação Bradesco</h3>
-  <p>Mais de 100 cursos gratuitos em TI, administração, contabilidade e mais. Certificados reconhecidos pelo MEC. Ótima alternativa para quem está iniciando a carreira ou quer se requalificar.</p>
-  <a href="https://www.ev.org.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Escola Virtual Bradesco</a>
-</div>
+      <div class="vn-card">
+        <button class="vn-card-head" onclick="toggleVn(this)">
+          <span class="vn-radar"><img src="../imagens/senai.png" alt="SENAI SENAC"></span>
+          <span class="vn-info">
+            <span class="vn-name">Senai</span>
+            <span class="card-tag tag-green vn-tag">Gratuito</span>
+          </span>
+          <span class="vn-chevron">▾</span>
+        </button>
+        <div class="vn-body">
+          <p>Cursos técnicos e profissionalizantes com ótima reputação no mercado. Muitas opções presenciais e online, algumas totalmente gratuitas. Certificado reconhecido por empresas de todos os setores.</p>
+          <a href="https://online.senai.br" target="_blank" rel="noopener noreferrer" class="card-link">→ SENAI Online</a>
+          <a href="https://www.ead.senac.br" target="_blank" rel="noopener noreferrer" class="card-link">→ SENAC EAD</a>
+        </div>
+      </div>
 
-</div>
-</div></section>
+      <span class="ats-flow-connector">➜</span>
+
+      <div class="vn-card">
+        <button class="vn-card-head" onclick="toggleVn(this)">
+          <span class="vn-radar"><img src="../imagens/coursera.png" alt="Coursera"></span>
+          <span class="vn-info">
+            <span class="vn-name">Coursera</span>
+            <span class="card-tag tag-green vn-tag">Gratuito</span>
+          </span>
+          <span class="vn-chevron">▾</span>
+        </button>
+        <div class="vn-body">
+          <p>Plataforma com cursos de universidades mundiais. É possível auditar (assistir) gratuitamente. Tem certificados pagos, mas o aprendizado é gratuito. Ótimo para aprender inglês técnico e hard skills.</p>
+          <a href="https://coursera.org" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Coursera</a>
+        </div>
+      </div>
+
+      <span class="ats-flow-connector">➜</span>
+
+      <div class="vn-card">
+        <button class="vn-card-head" onclick="toggleVn(this)">
+          <span class="vn-radar"><img src="../imagens/bradesco.png" alt="Fundação Bradesco"></span>
+          <span class="vn-info">
+            <span class="vn-name">Fundação Bradesco</span>
+            <span class="card-tag tag-green vn-tag">Gratuito</span>
+          </span>
+          <span class="vn-chevron">▾</span>
+        </button>
+        <div class="vn-body">
+          <p>Mais de 100 cursos gratuitos em TI, administração, contabilidade e mais. Certificados reconhecidos pelo MEC. Ótima alternativa para quem está iniciando a carreira ou quer se requalificar.</p>
+          <a href="https://www.ev.org.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Escola Virtual Bradesco</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
 
   <!-- ============================================================ -->
   <!-- SEÇÃO: DICAS RÁPIDAS — LISTA                                 -->
@@ -3057,9 +3171,10 @@ body.dark-mode .download-free-tag { color: #34d399; }
     <p>
       ATS é um <strong>sistema de rastreamento de candidatos</strong> usado por empresas para gerenciar processos seletivos de forma automatizada. Antes que um humano veja seu currículo, um algoritmo já decidiu se ele passa ou não — por isso entender como o ATS funciona é essencial para não ser eliminado antes da entrevista.
     </p>
-    <p>
+    <p class="ats-desktop-only">
       O funcionamento típico começa com o recebimento totalmente automatizado dos currículos. O sistema aplica algoritmos de ranqueamento, atribuindo uma pontuação de aderência a cada candidato em relação à vaga — por exemplo, de 1 a 100 para 100 candidatos — filtrando por palavras-chave, experiência, qualificações e compatibilidade geral. Os mais bem ranqueados são destacados para possível entrevista, enquanto os demais recebem respostas automáticas de reprovação. Agendamentos também podem ser automatizados, e alguns sistemas ainda aplicam testes de perfil comportamental (como DISC) ou de habilidades específicas antes da decisão final.
     </p>
+    <p class="ats-mobile-only ats-mobile-note">💻 Explicação completa disponível na versão para computador.</p>
 
     <div class="ats-scanner">
       <div class="ats-scanner-doc">
@@ -4791,6 +4906,11 @@ async function responderComIA(texto) {
       const cw=document.getElementById('chatbotWindow'); const cb=document.getElementById('chatbotBtn');
       if(cw.classList.contains('active')&&!cw.contains(e.target)&&!cb.contains(e.target)) toggleChatbot();
     });
+
+      // VAGAS / CURSOS — cards com radar (abrir/fechar detalhes)
+    function toggleVn(headBtn) {
+      headBtn.closest('.vn-card').classList.toggle('open');
+    }
 
       // TRANSPORTE — dropdown
     function mostrarTransporte(val) {
