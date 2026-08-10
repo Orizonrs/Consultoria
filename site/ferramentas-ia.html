@@ -557,6 +557,53 @@ body.dark-mode .filter-box {
     ]
   }
   </script>
+
+<style>
+/* ===== Ajustes: container mais largo no desktop ===== */
+@media (min-width: 769px) {
+  .content-section, .contact-section { max-width: 1280px !important; }
+}
+@media (min-width: 1400px) {
+  .content-section, .contact-section { max-width: 1400px !important; }
+}
+
+/* ===== Ajustes: tópicos com números em vez de emoji ===== */
+.topics-link, .topics-link-mobile {
+  display: flex !important;
+  align-items: center;
+  gap: 0.65rem;
+}
+.topics-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(30,64,175,0.12);
+  color: #1e40af;
+  border: 1.5px solid #fff;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+body.dark-mode .topics-num {
+  background: rgba(255,255,255,0.1);
+  color: #d4d4d8;
+}
+.topics-link:hover .topics-num,
+.topics-link-mobile:hover .topics-num {
+  background: #1e40af;
+  color: #fff;
+  transform: scale(1.08);
+}
+body.dark-mode .topics-link:hover .topics-num,
+body.dark-mode .topics-link-mobile:hover .topics-num {
+  background: rgba(255,255,255,0.22);
+  color: #f5f5f5;
+}
+</style>
 </head>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -867,8 +914,11 @@ body:not(.dark-mode) .theme-toggle {
 
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
+  }
+  @media (min-width: 1000px) {
+    .cards-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   }
 
   .card {
@@ -883,7 +933,30 @@ body:not(.dark-mode) .theme-toggle {
   body.dark-mode .card { background: rgba(0,200,255,0.04) !important; border: 1px solid rgba(0,200,255,0.2) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.08) !important; }
   .card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0,200,255,0.15) !important; border-color: rgba(0,200,255,0.4) !important; background: rgba(0,200,255,0.08) !important; }
 
+  /* Entrada moderna dos cards ao rolar a tela */
+  .card { opacity: 0; transform: translateY(32px) scale(.96); }
+  .card.card-in-view { animation: cardRevealIn .7s cubic-bezier(.16,1,.3,1) forwards; }
+  @keyframes cardRevealIn { to { opacity: 1; transform: translateY(0) scale(1); } }
+  @media (prefers-reduced-motion: reduce) {
+    .card { opacity: 1; transform: none; animation: none; }
+  }
+
   .card-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .card-icon img {
+    width: 42px;
+    height: 42px;
+    max-width: 42px;
+    max-height: 42px;
+    object-fit: contain;
+    display: inline-block;
+    overflow: hidden;
+    font-size: 0.6rem;
+    line-height: 1.2;
+    vertical-align: middle;
+    color: var(--text-light);
+    opacity: 0.7;
+  }
+  body.dark-mode .card-icon img { color: var(--text-dark); }
 
   .card h3 { color: var(--primary); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.7rem; }
   body.dark-mode .card h3 { color: #38bdf8; }
@@ -2514,12 +2587,12 @@ body.dark-mode .download-free-tag { color: #34d399; }
   </div>
   <div class="topics-overlay" id="topicsOverlay" onclick="closeTopics(); closeTopicsMobile();"></div>
   <div class="topics-dropdown" id="topicsDropdown">
-    <a href="#ferramentas-gratis" class="topics-link" onclick="closeTopics()">💡 Ferramentas Gratuitas</a>
-    <a href="#ferramentas-design" class="topics-link" onclick="closeTopics()">🎨 Design e Apresentações</a>
+    <a href="#ferramentas-gratis" class="topics-link" onclick="goToTopic('ferramentas-gratis'); return false;"><span class="topics-num">1</span> Ferramentas Gratuitas</a>
+    <a href="#ferramentas-design" class="topics-link" onclick="goToTopic('ferramentas-design'); return false;"><span class="topics-num">2</span> Design e Apresentações</a>
   </div>
   <div class="topics-dropdown-mobile" id="topicsDropdownMobile">
-    <a href="#ferramentas-gratis" class="topics-link-mobile" onclick="closeTopicsMobile()">💡 Ferramentas Gratuitas</a>
-    <a href="#ferramentas-design" class="topics-link-mobile" onclick="closeTopicsMobile()">🎨 Design e Apresentações</a>
+    <a href="#ferramentas-gratis" class="topics-link-mobile" onclick="goToTopic('ferramentas-gratis', true); return false;"><span class="topics-num">1</span> Ferramentas Gratuitas</a>
+    <a href="#ferramentas-design" class="topics-link-mobile" onclick="goToTopic('ferramentas-design', true); return false;"><span class="topics-num">2</span> Design e Apresentações</a>
   </div>
 
   <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
@@ -3202,6 +3275,19 @@ function closeMenu() {
     function closeTopicsMobile() {
       document.getElementById('topicsDropdownMobile').classList.remove('open');
       document.getElementById('topicsOverlay').classList.remove('open');
+    }
+
+    function goToTopic(id, isMobile) {
+      if (isMobile) { closeTopicsMobile(); } else { closeTopics(); }
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.classList.contains('accordion-item')) {
+        document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('open'));
+        el.classList.add('open');
+      }
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
     }
 </script>
 
@@ -4594,6 +4680,30 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
     // Só soma +1, não mostra nada nesta página
     ref.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
       .catch((err) => console.warn("[Contador de visitas] erro:", err));
+  })();
+  </script>
+
+  <!-- ═══ Entrada animada dos cards ao rolar (scroll reveal) ═══ -->
+  <script>
+  (function () {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.card').forEach(c => c.classList.add('card-in-view'));
+      return;
+    }
+    document.querySelectorAll('.cards-grid').forEach(grid => {
+      grid.querySelectorAll('.card').forEach((card, i) => {
+        card.style.animationDelay = (i * 0.09) + 's';
+      });
+    });
+    const cardObserver = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('card-in-view');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.card').forEach(card => cardObserver.observe(card));
   })();
   </script>
 
