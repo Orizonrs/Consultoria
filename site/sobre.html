@@ -3056,7 +3056,10 @@ body:not(.dark-mode) .review-card:hover {
 <p>Nascemos no Rio Grande do Sul, mas nosso ecossistema digital de consultoria, blog e conteúdo alcança toda nossa comunidade. Atendemos empresas, profissionais e comunidades em toda região. Explore o mapa abaixo:</p>
 
 <!-- ===== GLOBO INTERATIVO – INÍCIO ===== -->
-<div id="globe-section" style="margin: 1.5rem 0; text-align: center;">
+<div id="globe-stage" class="globe-stage">
+  <canvas id="globe-starfield" class="globe-starfield" aria-hidden="true"></canvas>
+
+  <div id="globe-section" style="margin: 1.5rem 0; text-align: center; position:relative; z-index:1;">
 
   <!-- Canvas do globo (responsivo) -->
   <div id="globe-wrap" style="display:inline-block; width:100%; max-width:460px; aspect-ratio:1/1; position:relative;">
@@ -3085,6 +3088,148 @@ body:not(.dark-mode) .review-card:hover {
     </label>
   </div>
 </div>
+
+<!-- ===== CAMPO ESTELAR (SOMENTE DESKTOP) — INÍCIO ===== -->
+<style>
+  .globe-stage {
+    position: relative;
+    border-radius: 20px;
+  }
+  .globe-starfield {
+    display: none;
+  }
+
+  @media (min-width: 769px) {
+    .globe-stage {
+      overflow: hidden;
+      padding: 3rem 1rem;
+      background: radial-gradient(ellipse at 50% 40%, #0c1330 0%, #060a1e 55%, #030510 100%);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.5);
+    }
+    body:not(.dark-mode) .globe-stage {
+      background: radial-gradient(ellipse at 50% 40%, #0f1a45 0%, #08102c 55%, #030614 100%);
+    }
+    .globe-starfield {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    #globe-info { color: #cfe0ff !important; }
+    #globe-play-btn { border-color: #6fb3ff !important; color: #cfe0ff !important; }
+    #globe-section label { color: #9fb4d9 !important; }
+  }
+</style>
+<script>
+(function(){
+  const stage  = document.getElementById('globe-stage');
+  const canvas = document.getElementById('globe-starfield');
+  if(!stage || !canvas) return;
+  const ctx = canvas.getContext('2d');
+  const mq = window.matchMedia('(min-width: 769px)');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let stars = [], shooting = [], w = 0, h = 0, dpr = 1, raf = null;
+
+  function buildStars(){
+    const rect = stage.getBoundingClientRect();
+    w = Math.max(1, Math.round(rect.width));
+    h = Math.max(1, Math.round(rect.height));
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const density = (w * h) / 9000; // estrelas proporcionais à área
+    const count = Math.max(60, Math.min(220, Math.round(density)));
+    stars = Array.from({length: count}, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.15 + 0.25,
+      baseA: Math.random() * 0.5 + 0.35,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.015 + 0.006,
+      hue: Math.random() < 0.15 ? '160,200,255' : '255,255,255'
+    }));
+    shooting = [];
+  }
+
+  function maybeSpawnShootingStar(){
+    if (reduceMotion) return;
+    if (Math.random() < 0.006 && shooting.length < 1) {
+      const startX = Math.random() * w * 0.6;
+      const startY = Math.random() * h * 0.35;
+      shooting.push({ x:startX, y:startY, len: 70 + Math.random()*50, vx: 6+Math.random()*3, vy: 3+Math.random()*1.5, life: 1 });
+    }
+  }
+
+  function draw(t){
+    ctx.clearRect(0,0,w,h);
+
+    // estrelas com leve cintilar
+    for (const s of stars) {
+      const a = reduceMotion ? s.baseA : s.baseA + Math.sin(t*s.speed + s.phase) * 0.25;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${s.hue},${Math.max(0.1, a).toFixed(2)})`;
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // estrelas cadentes ocasionais (desativadas se o usuário prefere menos movimento)
+    if (!reduceMotion) {
+      maybeSpawnShootingStar();
+      shooting = shooting.filter(sh => sh.life > 0);
+      for (const sh of shooting) {
+        const grad = ctx.createLinearGradient(sh.x, sh.y, sh.x - sh.len, sh.y - sh.len*0.45);
+        grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+        grad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(sh.x, sh.y);
+        ctx.lineTo(sh.x - sh.len, sh.y - sh.len*0.45);
+        ctx.stroke();
+        sh.x += sh.vx; sh.y += sh.vy; sh.life -= 0.02;
+      }
+    }
+  }
+
+  function loop(t){
+    draw(t || 0);
+    raf = requestAnimationFrame(loop);
+  }
+
+  function start(){
+    if (raf) return;
+    buildStars();
+    raf = requestAnimationFrame(loop);
+  }
+  function stop(){
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+
+  function sync(){
+    if (mq.matches) start(); else stop();
+  }
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (mq.matches) buildStars(); }, 150);
+  });
+  mq.addEventListener ? mq.addEventListener('change', sync) : mq.addListener(sync);
+
+  sync();
+})();
+</script>
+<!-- ===== CAMPO ESTELAR (SOMENTE DESKTOP) — FIM ===== -->
+
+</div>
+<!-- fim .globe-stage -->
 
 <!-- Scripts do globo (D3 + TopoJSON) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
