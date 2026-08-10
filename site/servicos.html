@@ -152,6 +152,11 @@
   border-color: rgba(37,99,235,0.35);
   border-radius: 12px 12px 0 0;
 }
+body:not(.dark-mode) .acc-header { background: #e5e7eb; }
+body:not(.dark-mode) .acc-header:hover { background: #dde1e6; }
+body:not(.dark-mode) .acc-section.open .acc-header { background: #dde1e6; }
+body:not(.dark-mode) .acc-body { background: #eceef1; }
+body:not(.dark-mode) .acc-icon-wrap { background: #dde1e6; }
 
 .acc-icon-wrap {
   width: 34px;
@@ -3943,85 +3948,313 @@ body.dark-mode .download-free-tag { color: #34d399; }
       <p style="text-align:center; opacity: 0.7; margin-bottom: 1.5rem; font-size: 0.9rem;">Um ecossistema pensado para empresas, profissionais e a comunidade</p>
 
       <style>
-        .timeline-orizon { position: relative; max-width: 100%; margin: 0 auto; padding: 0.5rem 0 1rem; }
-        .timeline-item { margin-bottom: 1rem; opacity: 0; animation: slideInUp 0.5s ease forwards; }
-        .timeline-item:nth-child(1) { animation-delay: 0.1s; }
-        .timeline-item:nth-child(2) { animation-delay: 0.2s; }
-        .timeline-item:nth-child(3) { animation-delay: 0.3s; }
-        .timeline-item:nth-child(4) { animation-delay: 0.4s; }
-        .timeline-item:nth-child(5) { animation-delay: 0.5s; }
-        @keyframes slideInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }}
-        .timeline-content { display: flex; align-items: center; gap: 1rem; position: relative; z-index: 2; }
-        .timeline-content.reverse { flex-direction: row-reverse; }
-        .timeline-icon-wrapper { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.15)); border: 2px solid #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; position: relative; box-shadow: 0 0 18px rgba(37,99,235,0.25); transition: transform 0.3s ease, box-shadow 0.3s ease; overflow: hidden; }
-        .timeline-icon-wrapper img { width: 74%; height: 74%; object-fit: contain; transition: transform 0.3s ease; display: block; }
-        .timeline-item:hover .timeline-icon-wrapper { transform: scale(1.08); box-shadow: 0 0 30px rgba(37,99,235,0.5); }
-        .timeline-item:hover .timeline-icon-wrapper img { transform: scale(1.1); }
-        .timeline-icon-wrapper.final { background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(37,99,235,0.15)); border-color: #2563eb; }
-        .timeline-text { flex: 1; padding: 0.6rem 0.9rem; border-radius: 10px; background: rgba(26,26,26,0.4); border: 1px solid rgba(0,200,255,0.15); backdrop-filter: blur(8px); transition: all 0.3s ease; }
-        .timeline-item:hover .timeline-text { background: rgba(26,26,26,0.6); border-color: rgba(0,200,255,0.3); transform: translateY(-2px); }
-        body:not(.dark-mode) .timeline-text { background: rgba(255,255,255,0.6); border: 1px solid rgba(30,64,175,0.15); }
-        body:not(.dark-mode) .timeline-item:hover .timeline-text { background: rgba(255,255,255,0.85); }
-        .timeline-title { font-size: 0.95rem; font-weight: 700; color: #00c8ff; margin: 0 0 0.2rem 0; }
-        body:not(.dark-mode) .timeline-title { color: #1e40af; }
-        .timeline-desc { font-size: 0.78rem; opacity: 0.75; margin: 0; line-height: 1.35; }
-        .timeline-step-number { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; background: linear-gradient(135deg, #2563eb, #1e40af); border: 2px solid rgba(26,26,26,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.65rem; color: white; }
-        .timeline-step-number.final { background: linear-gradient(135deg, #2563eb, #2563eb); }
-        @media (max-width: 768px) { .timeline-content, .timeline-content.reverse { flex-direction: row !important; } .timeline-icon-wrapper { width: 44px; height: 44px; font-size: 1.1rem; }}
-        @media (max-width: 480px) { .timeline-icon-wrapper { width: 38px; height: 38px; font-size: 1rem; } .timeline-title { font-size: 0.88rem; } .timeline-desc { font-size: 0.72rem; }}</style>
+        .process-wrap { position: relative; max-width: 1180px; margin: 0 auto; padding: 0.5rem 0 1rem; }
 
-      <div class="timeline-orizon">
-        <div class="timeline-item">
-          <div class="timeline-content">
-            <div class="timeline-icon-wrapper"><img src="../imagens/prancheta.png" alt="Briefing" loading="lazy"></div>
-            <div class="timeline-text">
-              <h3 class="timeline-title">1. Entendimento do Projeto</h3>
-              <p class="timeline-desc">Você nos conta o que precisa, seja uma vaga, um site, um sistema, uma consultoria, uma palestra ou qualquer outro serviço. Definimos o escopo, prazo e expectativas juntos.</p>
-              <div class="timeline-step-number">1</div>
-            </div>
+        /* Barra de progresso no topo, preenche conforme a rolagem passa pela seção */
+        .process-progress { position: relative; height: 4px; border-radius: 4px; background: rgba(0,200,255,0.14); margin-bottom: 2.4rem; overflow: hidden; }
+        body:not(.dark-mode) .process-progress { background: rgba(30,64,175,0.12); }
+        .process-progress-fill { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #2563eb, #00c8ff, #22c55e); border-radius: 4px; box-shadow: 0 0 12px rgba(0,200,255,0.6); transition: width 0.1s linear; }
+
+        .process-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1.4rem; }
+
+        /* Card externo: fundo, borda, brilho — NÃO gira, só o conteúdo interno vira */
+        .process-card {
+          position: relative;
+          height: 250px;
+          border-radius: 16px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(0,200,255,0.14);
+          overflow: hidden;
+          isolation: isolate;
+          cursor: pointer;
+          opacity: 0;
+          transform: translateY(26px);
+          transition: opacity 0.55s ease, transform 0.55s cubic-bezier(.34,1.2,.4,1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        body:not(.dark-mode) .process-card { background: #e5e7eb; border-color: rgba(30,64,175,0.12); }
+        .process-card.in-view { opacity: 1; transform: translateY(0); }
+        .process-card:hover, .process-card.flipped { border-color: rgba(0,200,255,0.45); box-shadow: 0 14px 34px rgba(0,0,0,0.35), 0 0 24px rgba(0,200,255,0.15); }
+        .process-card.final:hover, .process-card.final.flipped { border-color: rgba(34,197,94,0.5); box-shadow: 0 14px 34px rgba(0,0,0,0.35), 0 0 24px rgba(34,197,94,0.18); }
+
+        /* Cards extras (SVG) escondidos no mobile — só as 5 primeiras aparecem lá */
+        .process-card.bonus { display: none; }
+        @media (min-width: 769px) { .process-card.bonus { display: block; } }
+
+        /* Barra superior com brilho que "escorre" da esquerda pra direita */
+        .process-card::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; height: 3px;
+          background: linear-gradient(90deg, transparent, #00c8ff, transparent);
+          background-size: 200% 100%;
+          animation: shimmerBar 2.6s linear infinite;
+          z-index: 3;
+        }
+        .process-card.final::before { background: linear-gradient(90deg, transparent, #22c55e, transparent); background-size: 200% 100%; }
+        @keyframes shimmerBar { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* Mecânica do flip 3D */
+        .process-card-flip { position: relative; width: 100%; height: 100%; perspective: 1200px; }
+        .process-card-flip-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(.4,.2,.2,1); transform-style: preserve-3d; }
+        .process-card:hover .process-card-flip-inner,
+        .process-card.flipped .process-card-flip-inner { transform: rotateY(180deg); }
+
+        .process-card-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; padding: 1.5rem 1.3rem 1.4rem; }
+        .process-card-face-back { transform: rotateY(180deg); justify-content: center; }
+
+        .process-card-top { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem; }
+        .process-icon { width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0; background: linear-gradient(135deg, rgba(37,99,235,0.2), rgba(0,200,255,0.1)); border: 1px solid rgba(0,200,255,0.32); display: flex; align-items: center; justify-content: center; color: #00c8ff; }
+        .process-icon img { width: 58%; height: 58%; object-fit: contain; }
+        .process-icon svg { width: 54%; height: 54%; }
+        .process-card.final .process-icon { background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.08)); border-color: rgba(34,197,94,0.45); color: #22c55e; }
+
+        .process-number {
+          width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+          background: linear-gradient(135deg, #2563eb, #00c8ff);
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 800; font-size: 0.85rem; color: #061018;
+          margin-left: auto;
+          box-shadow: 0 0 12px rgba(0,200,255,0.4);
+        }
+        .process-card.final .process-number { background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 0 12px rgba(34,197,94,0.4); }
+
+        .process-title { font-size: 0.98rem; font-weight: 700; color: #ffffff; margin: 0 0 0.4rem; }
+        body:not(.dark-mode) .process-title { color: #111827; }
+        .process-card.final .process-title { color: #ffffff; }
+        body:not(.dark-mode) .process-card.final .process-title { color: #111827; }
+        .process-desc { font-size: 0.8rem; opacity: 0.82; margin: 0; line-height: 1.42; }
+        .process-flip-hint { margin-top: auto; padding-top: 0.6rem; font-size: 0.68rem; opacity: 0.45; display: flex; align-items: center; gap: 0.3rem; }
+        .process-flip-hint svg { width: 12px; height: 12px; }
+        .process-card-face-back .process-title-small { font-size: 0.75rem; font-weight: 700; opacity: 0.6; margin: 0 0 0.5rem; text-transform: uppercase; letter-spacing: 0.03em; }
+
+        @media (max-width: 480px) { .process-card { height: 270px; } }
+
+        @media (prefers-reduced-motion: reduce) {
+          .process-card, .process-card.in-view, .process-card::before, .process-card-flip-inner {
+            animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important;
+          }
+        }
+      </style>
+
+      <div class="process-wrap">
+        <div class="process-progress"><div class="process-progress-fill" id="processProgressFill"></div></div>
+
+        <div class="process-grid">
+
+          <div class="process-card">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon"><img src="../imagens/prancheta.png" alt="Briefing" loading="lazy"></div>
+                  <div class="process-number">1</div>
+                </div>
+                <h3 class="process-title">Entendimento do Projeto</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Você nos conta o que precisa, seja uma vaga, um site, um sistema, uma consultoria, uma palestra ou qualquer outro serviço. Definimos o escopo, prazo e expectativas juntos.</p>
+              </div>
+            </div></div>
           </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-content reverse">
-            <div class="timeline-icon-wrapper"><img src="../imagens/objetivo.png" alt="Plano" loading="lazy"></div>
-            <div class="timeline-text">
-              <h3 class="timeline-title">2. Plano de Execução</h3>
-              <p class="timeline-desc">Montamos um plano claro com etapas, responsáveis, prazos e indicadores de sucesso. Transparência total do início ao fim, você acompanha cada passo.</p>
-              <div class="timeline-step-number">2</div>
-            </div>
+
+          <div class="process-card">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon"><img src="../imagens/objetivo.png" alt="Plano" loading="lazy"></div>
+                  <div class="process-number">2</div>
+                </div>
+                <h3 class="process-title">Plano de Execução</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Montamos um plano claro com etapas, responsáveis, prazos e indicadores de sucesso. Transparência total do início ao fim, você acompanha cada passo.</p>
+              </div>
+            </div></div>
           </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-content">
-            <div class="timeline-icon-wrapper"><img src="../imagens/ia.png" alt="IA e Tecnologia" loading="lazy"></div>
-            <div class="timeline-text">
-              <h3 class="timeline-title">3. Execução com IA e Tecnologia</h3>
-              <p class="timeline-desc">Usamos inteligência artificial (Claude, Gemini, Lhama), ferramentas digitais avançadas e metodologias modernas para entregar com mais eficiência, qualidade e precisão.</p>
-              <div class="timeline-step-number">3</div>
-            </div>
+
+          <div class="process-card">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon"><img src="../imagens/ia.png" alt="IA e Tecnologia" loading="lazy"></div>
+                  <div class="process-number">3</div>
+                </div>
+                <h3 class="process-title">Execução com IA e Tecnologia</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Usamos inteligência artificial (Claude, Gemini, Lhama), ferramentas digitais avançadas e metodologias modernas para entregar com mais eficiência, qualidade e precisão.</p>
+              </div>
+            </div></div>
           </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-content reverse">
-            <div class="timeline-icon-wrapper"><img src="../imagens/equipe.png" alt="Acompanhamento" loading="lazy"></div>
-            <div class="timeline-text">
-              <h3 class="timeline-title">4. Acompanhamento Contínuo</h3>
-              <p class="timeline-desc">Nossa equipe permanece ao seu lado em cada etapa do processo. Comunicação direta, ágil e sem burocracia, você nunca fica sem resposta.</p>
-              <div class="timeline-step-number">4</div>
-            </div>
+
+          <div class="process-card">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon"><img src="../imagens/equipe.png" alt="Acompanhamento" loading="lazy"></div>
+                  <div class="process-number">4</div>
+                </div>
+                <h3 class="process-title">Acompanhamento Contínuo</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Nossa equipe permanece ao seu lado em cada etapa do processo. Comunicação direta, ágil e sem burocracia, você nunca fica sem resposta.</p>
+              </div>
+            </div></div>
           </div>
-        </div>
-        <div class="timeline-item">
-          <div class="timeline-content">
-            <div class="timeline-icon-wrapper final"><img src="../imagens/excelencia.png" alt="Entrega" loading="lazy"></div>
-            <div class="timeline-text">
-              <h3 class="timeline-title" style="color: #2563eb; text-shadow: 0 0 10px rgba(37,99,235,0.3);">5. Entrega e Resultado</h3>
-              <p class="timeline-desc">Entregamos o resultado final com documentação, relatório e suporte pós-projeto. Independente do serviço contratado, satisfação garantida.</p>
-              <div class="timeline-step-number final">✓</div>
-            </div>
+
+          <div class="process-card final">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon"><img src="../imagens/excelencia.png" alt="Entrega" loading="lazy"></div>
+                  <div class="process-number">✓</div>
+                </div>
+                <h3 class="process-title">Entrega e Resultado</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Entregamos o resultado final com documentação, relatório e suporte pós-projeto. Independente do serviço contratado, satisfação garantida.</p>
+              </div>
+            </div></div>
           </div>
+
+          <!-- 3 cards extras (desktop only) — ícones em SVG, não PNG -->
+          <div class="process-card bonus">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/>
+                      <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                  </div>
+                  <div class="process-number">6</div>
+                </div>
+                <h3 class="process-title">Segurança &amp; Confidencialidade</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Seus dados e os do seu processo seletivo ficam protegidos do início ao fim. Sigilo contratual e boas práticas de segurança em cada etapa do trabalho.</p>
+              </div>
+            </div></div>
+          </div>
+
+          <div class="process-card bonus">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 12a8 8 0 0 1 16 0v5a2 2 0 0 1-2 2h-1v-6h3"/>
+                      <path d="M4 17v-5h3v6H6a2 2 0 0 1-2-2z"/>
+                      <path d="M9 21h4a2 2 0 0 0 2-2"/>
+                    </svg>
+                  </div>
+                  <div class="process-number">7</div>
+                </div>
+                <h3 class="process-title">Atendimento Multicanal</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">WhatsApp, e-mail, telefone ou vídeo — você escolhe o canal. Nossa equipe responde rápido, sem burocracia e sem deixar você sem retorno.</p>
+              </div>
+            </div></div>
+          </div>
+
+          <div class="process-card bonus">
+            <div class="process-card-flip"><div class="process-card-flip-inner">
+              <div class="process-card-face process-card-face-front">
+                <div class="process-card-top">
+                  <div class="process-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 4v6h-6"/>
+                      <path d="M1 20v-6h6"/>
+                      <path d="M3.5 9a9 9 0 0 1 14.85-3.36L23 10"/>
+                      <path d="M20.5 15a9 9 0 0 1-14.85 3.36L1 14"/>
+                    </svg>
+                  </div>
+                  <div class="process-number">8</div>
+                </div>
+                <h3 class="process-title">Metodologia Ágil</h3>
+                <div class="process-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg> passe o mouse / toque</div>
+              </div>
+              <div class="process-card-face process-card-face-back">
+                <p class="process-title-small">Como funciona</p>
+                <p class="process-desc">Trabalhamos em ciclos curtos, com entregas e ajustes constantes. Você acompanha o progresso de perto e pode redirecionar o rumo a qualquer momento.</p>
+              </div>
+            </div></div>
+          </div>
+
         </div>
       </div>
+
+      <script>
+      (function() {
+        var cards = document.querySelectorAll('.process-grid .process-card');
+
+        // Revela cada card, em cascata, quando entra na tela
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+              if (entry.isIntersecting) {
+                var idx = Array.prototype.indexOf.call(cards, entry.target);
+                entry.target.style.transitionDelay = ((idx % 4) * 0.1) + 's';
+                entry.target.classList.add('in-view');
+                io.unobserve(entry.target);
+              }
+            });
+          }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+          cards.forEach(function(card) { io.observe(card); });
+        } else {
+          cards.forEach(function(card) { card.classList.add('in-view'); });
+        }
+
+        // Clique/toque também vira o card (além do hover no desktop)
+        cards.forEach(function(card) {
+          card.addEventListener('click', function() {
+            card.classList.toggle('flipped');
+          });
+        });
+
+        // Barra de progresso preenche conforme a seção passa pela tela
+        var wrap = document.querySelector('.process-wrap');
+        var fill = document.getElementById('processProgressFill');
+        function updateProgress() {
+          if (!wrap || !fill) return;
+          var rect = wrap.getBoundingClientRect();
+          var vh = window.innerHeight || document.documentElement.clientHeight;
+          var start = vh * 0.9;
+          var end = vh * 0.25;
+          var total = rect.height + (start - end);
+          var progress = total > 0 ? (start - rect.top) / total : 0;
+          progress = Math.max(0, Math.min(1, progress));
+          fill.style.width = (progress * 100) + '%';
+        }
+        var ticking = false;
+        function onScroll() {
+          if (!ticking) {
+            window.requestAnimationFrame(function() { updateProgress(); ticking = false; });
+            ticking = true;
+          }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', updateProgress);
+        updateProgress();
+      })();
+      </script>
+
+
 
       <!-- MAPA RS -->
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
