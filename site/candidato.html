@@ -1319,9 +1319,31 @@ body.dark-mode .btn-secondary {
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
+    body.dark-mode .badge-novidade {
+      background: rgba(0,200,255,0.1) !important;
+      border-color: rgba(0,200,255,0.45) !important;
+      color: #00c8ff !important;
+      text-shadow: 0 0 8px rgba(0,200,255,0.35);
+    }
+
     .contact-card:hover {
       transform: translateY(-10px);
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Entrada moderna dos cards ao rolar a tela */
+    .contact-card {
+      opacity: 0;
+      transform: translateY(32px) scale(.96);
+    }
+    .contact-card.card-in-view {
+      animation: cardRevealIn .7s cubic-bezier(.16,1,.3,1) forwards;
+    }
+    @keyframes cardRevealIn {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .contact-card { opacity: 1; transform: none; animation: none; }
     }
 
     body.dark-mode .contact-card:hover {
@@ -4005,7 +4027,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
     
   <!-- Cabeçalho -->
   <div style="text-align:center;margin-bottom:2.5rem;">
-    <span style="display:inline-block;background:rgba(79,114,20,0.12);border:1px solid rgba(79,114,20,0.35);border-radius:99px;padding:0.3rem 1rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1e40af;margin-bottom:0.9rem;">✦ Novidade</span>
+    <span class="badge-novidade" style="display:inline-block;background:rgba(79,114,20,0.12);border:1px solid rgba(79,114,20,0.35);border-radius:99px;padding:0.3rem 1rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#1e40af;margin-bottom:0.9rem;">✦ Novidade</span>
     <h2 id="section-gerador" style="font-size:1.7rem;font-weight:900;margin-bottom:0.6rem;line-height:1.2;">Gere seu Currículo em PDF na hora</h2>
     <p style="font-size:0.95rem;opacity:0.65;max-width:520px;margin:0 auto;line-height:1.65;">Sem Word, sem complicação. Preencha uma vez e baixe 3 versões prontas — para e-mail, WhatsApp e sistemas ATS.</p>
   </div>
@@ -6237,6 +6259,32 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
     // Só soma +1, não mostra nada nesta página
     ref.set({ count: firebase.firestore.FieldValue.increment(1) }, { merge: true })
       .catch((err) => console.warn("[Contador de visitas] erro:", err));
+  })();
+  </script>
+
+  <!-- ═══ Entrada animada dos cards ao rolar (scroll reveal) ═══ -->
+  <script>
+  (function () {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.contact-card').forEach(c => c.classList.add('card-in-view'));
+      return;
+    }
+    const grids = document.querySelectorAll('.contact-grid');
+    grids.forEach(grid => {
+      const cards = grid.querySelectorAll('.contact-card');
+      cards.forEach((card, i) => {
+        card.style.animationDelay = (i * 0.09) + 's';
+      });
+    });
+    const cardObserver = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('card-in-view');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.contact-card').forEach(card => cardObserver.observe(card));
   })();
   </script>
 
