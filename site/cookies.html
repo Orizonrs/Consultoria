@@ -2786,6 +2786,53 @@ body.dark-mode .content-section::before {
 }
 </style>
 
+
+<style>
+/* ===== Ajustes: container mais largo no desktop ===== */
+@media (min-width: 769px) {
+  .content-section, .contact-section { max-width: 1280px !important; }
+}
+@media (min-width: 1400px) {
+  .content-section, .contact-section { max-width: 1400px !important; }
+}
+
+/* ===== Ajustes: tópicos com números em vez de emoji ===== */
+.topics-link, .topics-link-mobile {
+  display: flex !important;
+  align-items: center;
+  gap: 0.65rem;
+}
+.topics-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(30,64,175,0.12);
+  color: #1e40af;
+  border: 1.5px solid #fff;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+body.dark-mode .topics-num {
+  background: rgba(255,255,255,0.1);
+  color: #d4d4d8;
+}
+.topics-link:hover .topics-num,
+.topics-link-mobile:hover .topics-num {
+  background: #1e40af;
+  color: #fff;
+  transform: scale(1.08);
+}
+body.dark-mode .topics-link:hover .topics-num,
+body.dark-mode .topics-link-mobile:hover .topics-num {
+  background: rgba(255,255,255,0.22);
+  color: #f5f5f5;
+}
+</style>
 </head>
 <body>
   <div class="top-right-buttons" id="topRightButtons">
@@ -2895,18 +2942,18 @@ body.dark-mode .content-section::before {
   </div>
 
   <div class="topics-dropdown" id="topicsDropdown">
-    <a href="#section-cookies" class="topics-link" onclick="closeTopics()">🍪 O que são Cookies?</a>
-    <a href="#section-tipos" class="topics-link" onclick="closeTopics()">📋 Tipos de Cookies</a>
-    <a href="#section-essenciais" class="topics-link" onclick="closeTopics()">🔒 Cookies Essenciais</a>
-    <a href="#section-direitos" class="topics-link" onclick="closeTopics()">⚖️ Seus Direitos</a>
-    <a href="#section-contato" class="topics-link" onclick="closeTopics()">📧 Contato</a>
+    <a href="#section-cookies" class="topics-link" onclick="goToTopic('section-cookies'); return false;"><span class="topics-num">1</span> O que são Cookies?</a>
+    <a href="#section-tipos" class="topics-link" onclick="goToTopic('section-tipos'); return false;"><span class="topics-num">2</span> Tipos de Cookies</a>
+    <a href="#section-essenciais" class="topics-link" onclick="goToTopic('section-essenciais'); return false;"><span class="topics-num">3</span> Cookies Essenciais</a>
+    <a href="#section-direitos" class="topics-link" onclick="goToTopic('section-direitos'); return false;"><span class="topics-num">4</span> Seus Direitos</a>
+    <a href="#section-contato" class="topics-link" onclick="goToTopic('section-contato'); return false;"><span class="topics-num">5</span> Contato</a>
   </div>
   <div class="topics-dropdown-mobile" id="topicsDropdownMobile">
-    <a href="#section-cookies" class="topics-link-mobile" onclick="closeTopicsMobile()">🍪 O que são Cookies?</a>
-    <a href="#section-tipos" class="topics-link-mobile" onclick="closeTopicsMobile()">📋 Tipos de Cookies</a>
-    <a href="#section-essenciais" class="topics-link-mobile" onclick="closeTopicsMobile()">🔒 Cookies Essenciais</a>
-    <a href="#section-direitos" class="topics-link-mobile" onclick="closeTopicsMobile()">⚖️ Seus Direitos</a>
-    <a href="#section-contato" class="topics-link-mobile" onclick="closeTopicsMobile()">📧 Contato</a>
+    <a href="#section-cookies" class="topics-link-mobile" onclick="goToTopic('section-cookies', true); return false;"><span class="topics-num">1</span> O que são Cookies?</a>
+    <a href="#section-tipos" class="topics-link-mobile" onclick="goToTopic('section-tipos', true); return false;"><span class="topics-num">2</span> Tipos de Cookies</a>
+    <a href="#section-essenciais" class="topics-link-mobile" onclick="goToTopic('section-essenciais', true); return false;"><span class="topics-num">3</span> Cookies Essenciais</a>
+    <a href="#section-direitos" class="topics-link-mobile" onclick="goToTopic('section-direitos', true); return false;"><span class="topics-num">4</span> Seus Direitos</a>
+    <a href="#section-contato" class="topics-link-mobile" onclick="goToTopic('section-contato', true); return false;"><span class="topics-num">5</span> Contato</a>
   </div>
 
   <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
@@ -3844,6 +3891,19 @@ Tente novamente em instantes.`));
     }
     function closeTopicsMobile() {
       document.getElementById('topicsDropdownMobile').classList.remove('open');
+    }
+
+    function goToTopic(id, isMobile) {
+      if (isMobile) { closeTopicsMobile(); } else { closeTopics(); }
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.classList.contains('accordion-item')) {
+        document.querySelectorAll('.accordion-item').forEach(item => item.classList.remove('open'));
+        el.classList.add('open');
+      }
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
     }
     document.addEventListener('click', (e) => {
       const t = document.getElementById('topicsToggle');
