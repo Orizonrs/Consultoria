@@ -959,11 +959,38 @@ body:not(.dark-mode) .theme-toggle {
     .card:hover { transform: translateY(-6px); }
   }
 
-  /* Mobile: mantém transições e animação de entrada, porém mais rápidas */
+  /* Mobile: mantém transições, mais rápidas ainda, e brilho automático (sem precisar tocar) */
   @media (max-width: 768px) {
-    .card { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease; }
-    .card-glow { transition: opacity .12s ease; }
-    .card.card-in-view { animation: cardRevealIn 0.6s cubic-bezier(.22,1,.36,1) forwards; }
+    .card { transition: transform .1s ease, box-shadow .1s ease, border-color .1s ease, background .1s ease; }
+    .card-glow { transition: opacity .08s ease; }
+    .card.card-in-view { animation: cardRevealIn 0.45s cubic-bezier(.22,1,.36,1) forwards; }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -60%;
+      width: 55%;
+      height: 100%;
+      background: linear-gradient(115deg, transparent, rgba(37,99,235,0.22), transparent);
+      transform: skewX(-18deg);
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+    }
+    body.dark-mode .card::after {
+      background: linear-gradient(115deg, transparent, rgba(0,200,255,0.28), transparent);
+    }
+    .card.card-in-view::after {
+      animation: shineSweep 1s ease-out forwards;
+      animation-delay: inherit;
+    }
+    @keyframes shineSweep {
+      0%   { left: -60%; opacity: 0; }
+      12%  { opacity: 1; }
+      55%  { opacity: 1; }
+      100% { left: 130%; opacity: 0; }
+    }
   }
 
   .card-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
