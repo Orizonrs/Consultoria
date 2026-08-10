@@ -1350,7 +1350,10 @@ body:not(.dark-mode) .theme-toggle {
   @media (max-width:640px) {
     .ats-flow { flex-direction:column; align-items:stretch; }
     .ats-flow-step { width:100%; max-width:none; min-width:0; box-sizing:border-box; }
-    .ats-flow-connector { align-self:center; transform:rotate(90deg); }}
+    .ats-flow-connector { align-self:center; transform:rotate(90deg); }
+    .ats-desktop-only { display:none; }
+    .ats-mobile-only { display:block; }
+  }
   .ats-flow-note { font-size:0.8rem; line-height:1.6; opacity:0.75; text-align:center; margin-top:1.2rem; }
 
   /* ── ATS: texto responsivo (completo no desktop, resumido no mobile) ── */
@@ -1362,7 +1365,7 @@ body:not(.dark-mode) .theme-toggle {
   }
   body.dark-mode .ats-mobile-note { background:rgba(0,200,255,0.06); border-color:rgba(0,200,255,0.2); color:#38bdf8; }
 
-  /* ── SITES DE VAGAS & CURSOS: cards 3D interativos (viram ao toque) ── */
+  /* ── SITES DE VAGAS: cards modernos com expansão suave ao toque ── */
   .op-intro { font-size:0.85rem; opacity:0.65; text-align:center; margin:-0.2rem 0 0.9rem; }
 
   .op-filters { display:flex; flex-wrap:wrap; justify-content:center; gap:0.5rem; margin:0 0 1.1rem; }
@@ -1378,59 +1381,35 @@ body:not(.dark-mode) .theme-toggle {
 
   .op-grid {
     display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-    gap:1.1rem; margin-top:0.6rem; perspective:1400px;
-  }
-  .op-card {
-    height:172px; cursor:pointer; transition:opacity 0.3s ease, transform 0.3s ease, max-height 0.3s ease;
+    gap:1.1rem; margin-top:0.6rem; align-items:start;
   }
   .op-card.op-hidden { display:none; }
-  .op-card-inner {
-    position:relative; width:100%; height:100%; text-align:left;
-    transform-style:preserve-3d; transition:transform 0.55s cubic-bezier(.4,.2,.2,1);
+  .op-card {
+    background:white; border-radius:16px; border:1px solid rgba(0,0,0,0.06);
+    box-shadow:0 6px 20px rgba(0,0,0,0.06); cursor:pointer; overflow:hidden;
+    transition:box-shadow 0.25s ease, transform 0.25s ease;
   }
-  .op-card.flipped .op-card-inner { transform:rotateY(180deg); }
-  .op-face {
-    position:absolute; inset:0; backface-visibility:hidden; border-radius:16px;
-    background:white; border:1px solid rgba(0,0,0,0.06); box-shadow:0 6px 20px rgba(0,0,0,0.06);
-    display:flex; flex-direction:column; overflow:hidden;
-  }
-  body.dark-mode .op-face { background:#161d24; border-color:rgba(56,189,248,0.15); box-shadow:0 4px 20px rgba(0,0,0,0.35); }
-  .op-card:hover .op-face { box-shadow:0 10px 28px rgba(0,0,0,0.12); }
+  body.dark-mode .op-card { background:#161d24; border-color:rgba(56,189,248,0.15); box-shadow:0 4px 20px rgba(0,0,0,0.35); }
+  .op-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,0.1); }
 
-  .op-front { align-items:center; justify-content:center; text-align:center; gap:0.5rem; padding:1.2rem 1rem; }
-  .op-icon { width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; }
-  .op-icon::before {
-    content:''; position:absolute; inset:-6px; border-radius:50%;
-    border:2px solid var(--primary); opacity:0.35; animation:opPing 3s ease-out infinite;
+  .op-front {
+    width:100%; display:flex; align-items:center; gap:0.85rem; padding:1rem 1.1rem;
+    background:none; border:none; text-align:left; font:inherit; color:inherit; cursor:pointer;
+    box-sizing:border-box;
   }
-  body.dark-mode .op-icon::before { border-color:#38bdf8; }
-  @keyframes opPing { 0%{ transform:scale(0.75); opacity:0.5; } 80%,100%{ transform:scale(1.4); opacity:0; }}
-  .op-icon img { width:30px; height:30px; object-fit:contain; position:relative; z-index:1; background:white; border-radius:50%; padding:5px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
+  .op-icon { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; position:relative; flex-shrink:0; }
+  .op-icon img { width:28px; height:28px; object-fit:contain; position:relative; z-index:1; background:white; border-radius:50%; padding:5px; box-shadow:0 2px 8px rgba(0,0,0,0.12); }
   body.dark-mode .op-icon img { background:#1e1e1e; }
   .op-icon.op-cover img { object-fit:cover; }
+  .op-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:0.3rem; }
   .op-name { font-weight:800; font-size:0.95rem; }
-  .op-flip-hint { font-size:0.7rem; opacity:0.5; display:flex; align-items:center; gap:0.3rem; margin-top:0.1rem; }
-  .op-flip-hint svg { width:12px; height:12px; animation:opSpin 3s linear infinite; }
-  @keyframes opSpin { to { transform:rotate(360deg); } }
+  .op-chevron { font-size:0.8rem; opacity:0.5; transition:transform 0.3s ease; flex-shrink:0; }
+  .op-card.open .op-chevron { transform:rotate(180deg); }
 
-  .op-back { transform:rotateY(180deg); padding:1.1rem 1.1rem 1rem; justify-content:space-between; }
-  .op-back p { font-size:0.82rem; line-height:1.55; opacity:0.85; margin:0; overflow-y:auto; }
-  .op-back .card-link { margin-top:0.5rem; flex-shrink:0; }
-
-  /* step badge usado na trilha de cursos */
-  .op-step { position:absolute; top:0.6rem; left:0.6rem; z-index:2; width:22px; height:22px; border-radius:50%;
-    background:var(--primary); color:#fff; font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; }
-  body.dark-mode .op-step { background:#00c8ff; color:#0a0a0a; }
-
-  /* ── CURSOS: trilha conectada reaproveitando os cards acima ──── */
-  .trilha-flow { display:flex; align-items:stretch; justify-content:center; flex-wrap:wrap; gap:0.5rem; margin-top:0.6rem; perspective:1400px; }
-  .trilha-flow .op-card { flex:1; min-width:210px; }
-  @media (max-width:640px) {
-    .ats-desktop-only { display:none; }
-    .ats-mobile-only { display:block; }
-    .trilha-flow { flex-direction:column; align-items:stretch; }
-    .trilha-flow .ats-flow-connector { align-self:center; transform:rotate(90deg); }
-  }
+  .op-back { max-height:0; overflow:hidden; transition:max-height 0.35s ease, padding 0.35s ease; padding:0 1.1rem; }
+  .op-card.open .op-back { max-height:260px; padding:0 1.1rem 1.1rem; }
+  .op-back p { font-size:0.82rem; line-height:1.55; opacity:0.85; margin:0 0 0.5rem; }
+  .op-back .card-link { display:block; margin-top:0.15rem; }
 
   /* ── REDES SOCIAIS ───────────────────────────────── */
   .social-grid {
@@ -2665,20 +2644,18 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <div class="topics-dropdown" id="topicsDropdown">
     <a href="#sec-dicas" class="topics-link" onclick="goToTopic('sec-dicas'); return false;"><span class="topics-num">1</span> Dicas de Carreira</a>
     <a href="#sec-vagas" class="topics-link" onclick="goToTopic('sec-vagas'); return false;"><span class="topics-num">2</span> Sites de Vagas</a>
-    <a href="#sec-cursos" class="topics-link" onclick="goToTopic('sec-cursos'); return false;"><span class="topics-num">3</span> Cursos Gratuitos</a>
-    <a href="#sec-dicas-rapidas" class="topics-link" onclick="goToTopic('sec-dicas-rapidas'); return false;"><span class="topics-num">4</span> Dicas Rápidas</a>
-    <a href="#sec-transporte" class="topics-link" onclick="goToTopic('sec-transporte'); return false;"><span class="topics-num">5</span> Transporte</a>
-    <a href="#sec-ats" class="topics-link" onclick="goToTopic('sec-ats'); return false;"><span class="topics-num">6</span> Sistema ATS</a>
-    <a href="#sec-grupos" class="topics-link" onclick="goToTopic('sec-grupos'); return false;"><span class="topics-num">7</span> Grupos & Redes</a>
+    <a href="#sec-dicas-rapidas" class="topics-link" onclick="goToTopic('sec-dicas-rapidas'); return false;"><span class="topics-num">3</span> Dicas Rápidas</a>
+    <a href="#sec-transporte" class="topics-link" onclick="goToTopic('sec-transporte'); return false;"><span class="topics-num">4</span> Transporte</a>
+    <a href="#sec-ats" class="topics-link" onclick="goToTopic('sec-ats'); return false;"><span class="topics-num">5</span> Sistema ATS</a>
+    <a href="#sec-grupos" class="topics-link" onclick="goToTopic('sec-grupos'); return false;"><span class="topics-num">6</span> Grupos & Redes</a>
   </div>
   <div class="topics-dropdown-mobile" id="topicsDropdownMobile">
     <a href="#sec-dicas" class="topics-link-mobile" onclick="goToTopic('sec-dicas', true); return false;"><span class="topics-num">1</span> Dicas de Carreira</a>
     <a href="#sec-vagas" class="topics-link-mobile" onclick="goToTopic('sec-vagas', true); return false;"><span class="topics-num">2</span> Sites de Vagas</a>
-    <a href="#sec-cursos" class="topics-link-mobile" onclick="goToTopic('sec-cursos', true); return false;"><span class="topics-num">3</span> Cursos Gratuitos</a>
-    <a href="#sec-dicas-rapidas" class="topics-link-mobile" onclick="goToTopic('sec-dicas-rapidas', true); return false;"><span class="topics-num">4</span> Dicas Rápidas</a>
-    <a href="#sec-transporte" class="topics-link-mobile" onclick="goToTopic('sec-transporte', true); return false;"><span class="topics-num">5</span> Transporte</a>
-    <a href="#sec-ats" class="topics-link-mobile" onclick="goToTopic('sec-ats', true); return false;"><span class="topics-num">6</span> Sistema ATS</a>
-    <a href="#sec-grupos" class="topics-link-mobile" onclick="goToTopic('sec-grupos', true); return false;"><span class="topics-num">7</span> Grupos & Redes</a>
+    <a href="#sec-dicas-rapidas" class="topics-link-mobile" onclick="goToTopic('sec-dicas-rapidas', true); return false;"><span class="topics-num">3</span> Dicas Rápidas</a>
+    <a href="#sec-transporte" class="topics-link-mobile" onclick="goToTopic('sec-transporte', true); return false;"><span class="topics-num">4</span> Transporte</a>
+    <a href="#sec-ats" class="topics-link-mobile" onclick="goToTopic('sec-ats', true); return false;"><span class="topics-num">5</span> Sistema ATS</a>
+    <a href="#sec-grupos" class="topics-link-mobile" onclick="goToTopic('sec-grupos', true); return false;"><span class="topics-num">6</span> Grupos & Redes</a>
   </div>
 
   <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
@@ -2787,7 +2764,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
     💡 <strong>Dica:</strong> Mantenha perfis completos nas principais plataformas, seja para busca de profissionais, fornecedores ou parcerias. Configure alertas para receber notificações quando surgir algo relevante para o seu negócio ou carreira.
   </div>
 
-  <p class="op-intro">Toque em cada plataforma pra virar o card e ver os detalhes.</p>
+  <p class="op-intro">Toque em cada plataforma pra ver os detalhes e o link direto de acesso.</p>
 
   <div class="op-filters" role="tablist" aria-label="Filtrar plataformas">
     <button class="op-filter active" onclick="opFilter(this,'todas')">Todas</button>
@@ -2798,185 +2775,128 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
   <div class="op-grid" id="opGridPlataformas">
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/linkedin (1).png" alt="LinkedIn"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/linkedin (1).png" alt="LinkedIn"></span>
+        <span class="op-info">
           <span class="op-name">LinkedIn</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Maior rede profissional do mundo. Fundamental para empresas, consultores e profissionais. Além de vagas e talentos, é onde parcerias, contratos e negócios começam.</p>
-          <a href="https://linkedin.com/jobs" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Ver vagas no LinkedIn</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Maior rede profissional do mundo. Fundamental para empresas, consultores e profissionais. Além de vagas e talentos, é onde parcerias, contratos e negócios começam.</p>
+        <a href="https://linkedin.com/jobs" target="_blank" rel="noopener noreferrer" class="card-link">→ Ver vagas no LinkedIn</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/catho.png" alt="Catho"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/catho.png" alt="Catho"></span>
+        <span class="op-info">
           <span class="op-name">Catho</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Uma das maiores plataformas de emprego do Brasil. Forte em vagas de nível médio e superior em todo o país. Ferramenta de comparação de salários útil para negociações.</p>
-          <a href="https://catho.com.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Catho</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Uma das maiores plataformas de emprego do Brasil. Forte em vagas de nível médio e superior em todo o país. Ferramenta de comparação de salários útil para negociações.</p>
+        <a href="https://catho.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Catho</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/infojobs-seeklogo.png" alt="InfoJobs"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/infojobs-seeklogo.png" alt="InfoJobs"></span>
+        <span class="op-info">
           <span class="op-name">InfoJobs</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Plataforma popular com muitas vagas de diversas áreas. Fácil de usar e com boa cobertura de vagas no Rio Grande do Sul e região Sul do Brasil.</p>
-          <a href="https://infojobs.com.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar InfoJobs</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Plataforma popular com muitas vagas de diversas áreas. Fácil de usar e com boa cobertura de vagas no Rio Grande do Sul e região Sul do Brasil.</p>
+        <a href="https://infojobs.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar InfoJobs</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/gupy.png" alt="Gupy"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/gupy.png" alt="Gupy"></span>
+        <span class="op-info">
           <span class="op-name">Gupy</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Plataforma moderna de recrutamento usada por muitas empresas no Brasil, de vagas operacionais a técnicas e administrativas. Perfil completo aumenta a visibilidade para recrutadores.</p>
-          <a href="https://portal.gupy.io" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Gupy</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Plataforma moderna de recrutamento usada por muitas empresas no Brasil, de vagas operacionais a técnicas e administrativas. Perfil completo aumenta a visibilidade para recrutadores.</p>
+        <a href="https://portal.gupy.io" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Gupy</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/solides.png" alt="Sólides"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/solides.png" alt="Sólides"></span>
+        <span class="op-info">
           <span class="op-name">Sólides</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Portal com mais de 45 mil vagas em todo o país, 100% gratuito para candidatos. Forte em áreas administrativas, industriais, saúde e RH.</p>
-          <a href="https://vagas.solides.com.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Sólides Vagas</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Portal com mais de 45 mil vagas em todo o país, 100% gratuito para candidatos. Forte em áreas administrativas, industriais, saúde e RH.</p>
+        <a href="https://vagas.solides.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Sólides Vagas</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="nacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon op-cover"><img src="../imagens/vagas.png" alt="Vagas.com"></span>
+    <div class="op-card" data-cat="nacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon op-cover"><img src="../imagens/vagas.png" alt="Vagas.com"></span>
+        <span class="op-info">
           <span class="op-name">Vagas.com</span>
           <span class="card-tag tag-blue">Nacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Um dos portais mais tradicionais do Brasil, no ar desde 1999. Reúne vagas de mais de 2.000 empresas, com filtros por benefícios, PCD, estágio e trainee.</p>
-          <a href="https://www.vagas.com.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Vagas.com</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Um dos portais mais tradicionais do Brasil, no ar desde 1999. Reúne vagas de mais de 2.000 empresas, com filtros por benefícios, PCD, estágio e trainee.</p>
+        <a href="https://www.vagas.com.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Vagas.com</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="governo" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/sine.png" alt="Sine"></span>
+    <div class="op-card" data-cat="governo">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/sine.png" alt="Sine"></span>
+        <span class="op-info">
           <span class="op-name">SINE / Emprega Brasil</span>
           <span class="card-tag tag-green">Governo</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Sistema Nacional de Emprego gratuito e com muitas vagas formais. Pode ser acessado online ou presencialmente. Ótimo para vagas CLT em empresas locais e regionais.</p>
-          <a href="https://empregabrasil.mte.gov.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Emprega Brasil</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Sistema Nacional de Emprego gratuito e com muitas vagas formais. Pode ser acessado online ou presencialmente. Ótimo para vagas CLT em empresas locais e regionais.</p>
+        <a href="https://empregabrasil.mte.gov.br" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Emprega Brasil</a>
       </div>
     </div>
 
-    <div class="op-card" data-cat="internacional" onclick="opFlip(this,event)">
-      <div class="op-card-inner">
-        <div class="op-face op-front">
-          <span class="op-icon"><img src="../imagens/indeed.png" alt="Indeed"></span>
+    <div class="op-card" data-cat="internacional">
+      <button class="op-front" onclick="opToggle(this)">
+        <span class="op-icon"><img src="../imagens/indeed.png" alt="Indeed"></span>
+        <span class="op-info">
           <span class="op-name">Indeed</span>
           <span class="card-tag tag-blue">Internacional</span>
-        </div>
-        <div class="op-face op-back">
-          <p>Motor de busca agregador de oportunidades, reúne posições de vários sites em um só lugar. Útil para comparar e encontrar oportunidades que não estão nas outras plataformas.</p>
-          <a href="https://br.indeed.com" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Indeed</a>
-        </div>
+        </span>
+        <span class="op-chevron">▾</span>
+      </button>
+      <div class="op-back">
+        <p>Motor de busca agregador de oportunidades, reúne posições de vários sites em um só lugar. Útil para comparar e encontrar oportunidades que não estão nas outras plataformas.</p>
+        <a href="https://br.indeed.com" target="_blank" rel="noopener noreferrer" class="card-link">→ Acessar Indeed</a>
       </div>
     </div>
 
   </div>
 </div></section>
-
-  <!-- ============================================================ -->
-  <!-- SEÇÃO: CURSOS GRATUITOS & CERTIFICAÇÕES                      -->
-  <!-- ============================================================ -->
-  <div class="info-bar" id="sec-cursos" data-i18n="util-sec-cursos">🎓 Cursos Gratuitos</div>
-  <section class="content-section">
-
-    <p class="op-intro">Uma trilha, três paradas: toque em cada instituição pra virar o card e ver o que ela oferece.</p>
-
-    <div class="trilha-flow">
-
-      <div class="op-card" onclick="opFlip(this,event)" style="position:relative;">
-        <span class="op-step">1</span>
-        <div class="op-card-inner">
-          <div class="op-face op-front">
-            <span class="op-icon"><img src="../imagens/senai.png" alt="SENAI SENAC"></span>
-            <span class="op-name">Senai</span>
-            <span class="card-tag tag-green">Gratuito</span>
-          </div>
-          <div class="op-face op-back">
-            <p>Cursos técnicos e profissionalizantes com ótima reputação no mercado. Muitas opções presenciais e online, algumas totalmente gratuitas. Certificado reconhecido por empresas de todos os setores.</p>
-            <span style="display:flex;flex-direction:column;gap:0.2rem;">
-              <a href="https://online.senai.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ SENAI Online</a>
-              <a href="https://www.ead.senac.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ SENAC EAD</a>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <span class="ats-flow-connector">➜</span>
-
-      <div class="op-card" onclick="opFlip(this,event)" style="position:relative;">
-        <span class="op-step">2</span>
-        <div class="op-card-inner">
-          <div class="op-face op-front">
-            <span class="op-icon"><img src="../imagens/coursera.png" alt="Coursera"></span>
-            <span class="op-name">Coursera</span>
-            <span class="card-tag tag-green">Gratuito</span>
-          </div>
-          <div class="op-face op-back">
-            <p>Plataforma com cursos de universidades mundiais. É possível auditar (assistir) gratuitamente. Tem certificados pagos, mas o aprendizado é gratuito. Ótimo para inglês técnico e hard skills.</p>
-            <a href="https://coursera.org" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Acessar Coursera</a>
-          </div>
-        </div>
-      </div>
-
-      <span class="ats-flow-connector">➜</span>
-
-      <div class="op-card" onclick="opFlip(this,event)" style="position:relative;">
-        <span class="op-step">3</span>
-        <div class="op-card-inner">
-          <div class="op-face op-front">
-            <span class="op-icon"><img src="../imagens/bradesco.png" alt="Fundação Bradesco"></span>
-            <span class="op-name">Fundação Bradesco</span>
-            <span class="card-tag tag-green">Gratuito</span>
-          </div>
-          <div class="op-face op-back">
-            <p>Mais de 100 cursos gratuitos em TI, administração, contabilidade e mais. Certificados reconhecidos pelo MEC. Ótima alternativa para quem está iniciando a carreira ou quer se requalificar.</p>
-            <a href="https://www.ev.org.br" target="_blank" rel="noopener noreferrer" class="card-link" onclick="event.stopPropagation()">→ Escola Virtual Bradesco</a>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
 
   <!-- ============================================================ -->
   <!-- SEÇÃO: DICAS RÁPIDAS — LISTA                                 -->
@@ -4925,10 +4845,9 @@ async function responderComIA(texto) {
       if(cw.classList.contains('active')&&!cw.contains(e.target)&&!cb.contains(e.target)) toggleChatbot();
     });
 
-      // VAGAS / CURSOS — cards 3D que viram ao toque
-    function opFlip(card, ev) {
-      if (ev) ev.stopPropagation();
-      card.classList.toggle('flipped');
+      // VAGAS — cards com expansão suave (abrir/fechar detalhes)
+    function opToggle(headBtn) {
+      headBtn.closest('.op-card').classList.toggle('open');
     }
     function opFilter(btn, cat) {
       document.querySelectorAll('.op-filters .op-filter').forEach(b => b.classList.remove('active'));
@@ -4936,7 +4855,7 @@ async function responderComIA(texto) {
       document.querySelectorAll('#opGridPlataformas .op-card').forEach(card => {
         const show = (cat === 'todas') || (card.dataset.cat === cat);
         card.classList.toggle('op-hidden', !show);
-        card.classList.remove('flipped');
+        card.classList.remove('open');
       });
     }
 
@@ -5358,7 +5277,6 @@ let vtRecognition = null;
         'util-header-subtitle': 'Dicas gerais, sites úteis e recursos para facilitar sua vida profissional',
         'util-sec-dicas': '🌟 Dicas Gerais de Carreira',
         'util-sec-vagas': 'Sites para Busca de Oportunidades',
-        'util-sec-cursos': '🎓 Cursos Gratuitos & Certificações',
         'util-sec-dicas-rapidas': '⚡ Dicas Rápidas',
         'util-sec-transporte': '🚌 Transporte: Horários e Linhas',
         'util-sec-ats': '🤖 O que é um Sistema ATS?',
@@ -5372,7 +5290,6 @@ let vtRecognition = null;
         'util-header-subtitle': 'General tips, useful websites and resources to make your professional life easier',
         'util-sec-dicas': '🌟 General Career Tips',
         'util-sec-vagas': 'Job Search Websites',
-        'util-sec-cursos': '🎓 Free Courses & Certifications',
         'util-sec-dicas-rapidas': '⚡ Quick Tips',
         'util-sec-transporte': '🚌 Transportation: Schedules & Lines',
         'util-sec-ats': '🤖 What is an ATS System?',
@@ -5386,7 +5303,6 @@ let vtRecognition = null;
         'util-header-subtitle': 'Consejos generales, sitios útiles y recursos para facilitar su vida profesional',
         'util-sec-dicas': '🌟 Consejos Generales de Carrera',
         'util-sec-vagas': 'Sitios para Buscar Empleo',
-        'util-sec-cursos': '🎓 Cursos Gratuitos y Certificaciones',
         'util-sec-dicas-rapidas': '⚡ Consejos Rápidos',
         'util-sec-transporte': '🚌 Transporte: Horarios y Líneas',
         'util-sec-ats': '🤖 ¿Qué es un Sistema ATS?',
