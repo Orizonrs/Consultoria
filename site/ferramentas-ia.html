@@ -913,14 +913,20 @@ body:not(.dark-mode) .theme-toggle {
 
   .info-bar {
     width: 100%; margin: 2rem auto;
-    font-size: 1.4rem; font-weight: 800; color: #1e40af;
-    text-align: center; padding: 1rem 0;
+    font-size: 1.5rem; font-weight: 800; color: #1e40af;
+    text-align: center; padding: 0.3rem 0;
   }
   body.dark-mode .info-bar { color: #38bdf8; }
 
   @media (min-width: 769px) {
-    .content-section { margin: 0.5rem auto !important; }
-    .info-bar { margin: 0.2rem auto !important; padding: 0.15rem 0 !important; font-size: 1.1rem !important; }
+    /* .content-section removido daqui. Essa regra forçava a margem da seção
+       pra 0.5rem só no desktop (>=769px), mas os títulos .info-bar têm
+       margem negativa de -1.6rem calculada pra "comer" uma margem de 3rem
+       (igual ao candidato.html, que NUNCA reduz essa margem no desktop).
+       Resultado: no desktop a margem real (0.5rem) era menor que o corte
+       (-1.6rem), e a seção seguinte subia demais, sobrepondo os cards da
+       seção anterior. Removendo isso, a margem de 3rem fica igual em
+       qualquer tamanho de tela — igual ao candidato.html. */
     .tip-box { margin: 0.6rem 0 !important; }
   }
 
@@ -935,12 +941,18 @@ body:not(.dark-mode) .theme-toggle {
     .cards-grid { grid-template-columns: repeat(3, 1fr); }}
 
   .card {
-    background: white;
+    --accent-rgb: 37,99,235;
+    background:
+      radial-gradient(140% 90% at 50% 0%, rgba(var(--accent-rgb), 0.16), rgba(var(--accent-rgb), 0.03) 70%),
+      white;
     border-radius: 16px;
     padding: 1.8rem;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-    border: 2.5px solid rgba(0,0,0,0.35);
-    transition: none;
+    box-shadow:
+      inset 0 4px 0 rgba(var(--accent-rgb), 0.95),
+      0 0 0 1px rgba(var(--accent-rgb), 0.22),
+      0 10px 26px rgba(0,0,0,0.08);
+    border: 2.5px solid rgba(var(--accent-rgb), 0.55);
+    transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease, border-color .35s ease, background .35s ease;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -950,17 +962,41 @@ body:not(.dark-mode) .theme-toggle {
     inset: 0;
     pointer-events: none;
     opacity: 0;
-    transition: none;
-    background: radial-gradient(220px circle at 50% 50%, rgba(37,99,235,0.14), transparent 70%);
+    transition: opacity .35s ease;
+    background: radial-gradient(220px circle at 50% 50%, rgba(var(--accent-rgb), 0.18), transparent 70%);
     z-index: 0;
   }
   body.dark-mode .card-glow {
-    background: radial-gradient(220px circle at 50% 50%, rgba(0,200,255,0.16), transparent 70%);
+    background: radial-gradient(220px circle at 50% 50%, rgba(var(--accent-rgb), 0.26), transparent 70%);
   }
   .card.glow-active .card-glow { opacity: 1; }
   .card > *:not(.card-glow) { position: relative; z-index: 1; }
-  body.dark-mode .card { background: rgba(0,200,255,0.04) !important; border: 2.5px solid rgba(255,255,255,0.35) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.08) !important; }
-  .card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(37,99,235,0.15) !important; border-color: rgba(0,0,0,0.35) !important; background: rgba(37,99,235,0.08) !important; }
+  body.dark-mode .card {
+    background:
+      radial-gradient(140% 90% at 50% 0%, rgba(var(--accent-rgb), 0.18), rgba(var(--accent-rgb), 0.02) 70%),
+      #0f1420 !important;
+    border: 2px solid rgba(var(--accent-rgb), 0.45) !important;
+    box-shadow:
+      inset 0 3px 0 rgba(var(--accent-rgb), 0.9),
+      0 0 0 1px rgba(var(--accent-rgb), 0.22),
+      0 4px 24px rgba(0,0,0,0.35) !important;
+  }
+  .card:hover {
+    transform: translateY(-8px) scale(1.015);
+    border-color: rgba(var(--accent-rgb), 0.75) !important;
+    box-shadow:
+      inset 0 3px 0 rgba(var(--accent-rgb), 1),
+      0 0 0 1px rgba(var(--accent-rgb), 0.35),
+      0 22px 40px -12px rgba(var(--accent-rgb), 0.45),
+      0 10px 26px rgba(0,0,0,0.1) !important;
+  }
+  body.dark-mode .card:hover {
+    box-shadow:
+      inset 0 3px 0 rgba(var(--accent-rgb), 1),
+      0 0 0 1px rgba(var(--accent-rgb), 0.4),
+      0 22px 44px -12px rgba(var(--accent-rgb), 0.55),
+      0 4px 24px rgba(0,0,0,0.4) !important;
+  }
 
   /* Entrada moderna dos cards ao rolar a tela */
   .card { opacity: 0; transform: translateY(46px) scale(.9) rotate(-1.5deg); filter: blur(6px); will-change: transform, opacity, filter; }
@@ -1013,12 +1049,35 @@ body:not(.dark-mode) .theme-toggle {
     }
   }
 
-  .card-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+  .card-icon {
+    font-size: 3rem;
+    margin: 0 auto 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background:
+      radial-gradient(120% 120% at 50% 20%, rgba(var(--accent-rgb), 0.55), rgba(var(--accent-rgb), 0.22) 70%);
+    border: 2px solid rgba(var(--accent-rgb), 0.75);
+    box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0.13), 0 6px 14px -4px rgba(var(--accent-rgb), 0.5);
+    transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
+  }
+  .card:hover .card-icon {
+    transform: scale(1.08) rotate(-4deg);
+    box-shadow: 0 0 0 9px rgba(var(--accent-rgb), 0.18), 0 8px 20px -4px rgba(var(--accent-rgb), 0.6);
+  }
+  body.dark-mode .card-icon {
+    background: radial-gradient(120% 120% at 50% 20%, rgba(var(--accent-rgb), 0.55), rgba(var(--accent-rgb), 0.18) 70%);
+    border-color: rgba(var(--accent-rgb), 0.8);
+    box-shadow: 0 0 0 6px rgba(var(--accent-rgb), 0.16), 0 6px 14px -4px rgba(var(--accent-rgb), 0.55);
+  }
   .card-icon img {
-    width: 42px;
-    height: 42px;
-    max-width: 42px;
-    max-height: 42px;
+    width: 40px;
+    height: 40px;
+    max-width: 40px;
+    max-height: 40px;
     object-fit: contain;
     display: inline-block;
     overflow: hidden;
@@ -1026,35 +1085,55 @@ body:not(.dark-mode) .theme-toggle {
     line-height: 1.2;
     vertical-align: middle;
     color: var(--text-light);
-    opacity: 0.7;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
   }
   body.dark-mode .card-icon img { color: var(--text-dark); }
 
-  .card h3 { color: var(--primary); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.7rem; }
-  body.dark-mode .card h3 { color: #38bdf8; }
+  .card h3 { color: rgb(var(--accent-rgb)); font-size: 1.15rem; font-weight: 700; margin-bottom: 0.7rem; letter-spacing: -0.01em; }
+  body.dark-mode .card h3 { color: rgb(var(--accent-rgb)); filter: brightness(1.4); }
+  .card:hover h3 { filter: brightness(0.85); }
+  body.dark-mode .card:hover h3 { filter: brightness(1.65); }
 
-  .card p { color: var(--text-light); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1rem; opacity: 0.85; }
+  .card p { color: var(--text-light); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.1rem; opacity: 0.85; }
   body.dark-mode .card p { color: var(--text-dark); }
 
   .card-tag {
-    display: inline-block; padding: 0.25rem 0.75rem;
-    border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-    margin-bottom: 0.5rem;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.75rem 0.25rem 0.6rem;
+    border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    margin-bottom: 0.6rem;
+    border: 1px solid transparent;
   }
-  .tag-free     { background: rgba(37,99,235,0.12); color: var(--primary); }
-  .tag-freemium { background: rgba(255,165,0,0.12); color: #b87400; }
-  .tag-pago     { background: rgba(200,0,0,0.08);   color: #b00000; }
-  body.dark-mode .tag-free     { background: rgba(59,130,246,0.2);  color: #38bdf8; }
-  body.dark-mode .tag-freemium { background: rgba(255,165,0,0.2);  color: #ffd080; }
-  body.dark-mode .tag-pago     { background: rgba(200,0,0,0.15);   color: #ff8080; }
+  .card-tag::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0;
+  }
+  .tag-free     { background: rgba(16,163,127,0.12); color: #0d8f6f; border-color: rgba(16,163,127,0.25); }
+  .tag-freemium { background: rgba(255,165,0,0.12); color: #b87400; border-color: rgba(255,165,0,0.3); }
+  .tag-pago     { background: rgba(200,0,0,0.08);   color: #b00000; border-color: rgba(200,0,0,0.25); }
+  body.dark-mode .tag-free     { background: rgba(16,163,127,0.18); color: #4ade80; border-color: rgba(16,163,127,0.35); }
+  body.dark-mode .tag-freemium { background: rgba(255,165,0,0.2);  color: #ffd080; border-color: rgba(255,165,0,0.35); }
+  body.dark-mode .tag-pago     { background: rgba(200,0,0,0.15);   color: #ff8080; border-color: rgba(255,100,100,0.35); }
 
   .card-link {
-    display: inline-block; margin-top: 0.5rem;
-    color: var(--primary); font-weight: 600; font-size: 0.9rem;
-    text-decoration: none; transition: all 0.3s ease;
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.3rem;
+    padding: 0.5rem 1.1rem;
+    color: rgb(var(--accent-rgb)); font-weight: 700; font-size: 0.85rem;
+    text-decoration: none; border-radius: 999px;
+    border: 1.5px solid rgba(var(--accent-rgb), 0.45);
+    background: rgba(var(--accent-rgb), 0.06);
+    transition: all 0.3s cubic-bezier(.22,1,.36,1);
   }
-  .card-link:hover { color: var(--accent); text-decoration: underline; }
-  body.dark-mode .card-link { color: #38bdf8; }
+  .card-link:hover {
+    color: #fff;
+    background: rgb(var(--accent-rgb));
+    border-color: rgb(var(--accent-rgb));
+    box-shadow: 0 8px 20px -6px rgba(var(--accent-rgb), 0.6);
+    transform: translateY(-2px);
+    text-decoration: none;
+  }
+  body.dark-mode .card-link { color: rgb(var(--accent-rgb)); background: rgba(var(--accent-rgb), 0.1); }
+  body.dark-mode .card-link:hover { color: #0f1420; background: rgb(var(--accent-rgb)); }
 
   .tip-box {
     background: rgba(37,99,235,0.08);
@@ -2454,7 +2533,7 @@ body.dark-mode .downloads-trigger:hover { background: rgba(0,200,255,.07); }
   font-size: 1.05rem; font-weight: 800;
   color: #1e40af;
 }
-body.dark-mode .downloads-trigger-title { color: #00c8ff; }
+body.dark-mode .downloads-trigger-title { color: #ffffff; }
 .downloads-trigger-count {
   font-size: .75rem; font-weight: 700; background: rgba(30,64,175,.12);
   color: #1e40af; padding: .2rem .6rem; border-radius: 999px; flex-shrink: 0;
@@ -2510,10 +2589,10 @@ body.dark-mode .download-card:hover {
 .download-card-icon img { width: 100%; height: 100%; object-fit: contain; }
 .download-card-body { flex: 1; min-width: 0; }
 .download-card-title {
-  font-size: .9rem; font-weight: 700; margin-bottom: .25rem;
-  color: #172a73;
+  font-size: .92rem; font-weight: 700; margin-bottom: .25rem;
+  color: #000000;
 }
-body.dark-mode .download-card-title { color: #e2e8f0; }
+body.dark-mode .download-card-title { color: #ffffff; }
 .download-card-desc {
   font-size: .78rem; opacity: .7; line-height: 1.45; margin-bottom: .5rem;
 }
@@ -2712,7 +2791,17 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <!-- ============================================================ -->
   <!-- SEÇÃO: CURRÍCULO & LINKEDIN                                  -->
   <!-- ============================================================ -->
-  <div class="info-bar">🤖 Inteligência Artificial</div>
+  <div id="info-bar-first" class="info-bar" style="
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem auto -1.6rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e40af;
+  text-align: center;
+  padding: 0.3rem 0;
+">🤖 Inteligência Artificial</div>
   <h2 class="section-title" style="display:none">Ferramentas de IA para Currículo e Entrevista</h2>
 <section class="content-section" id="ferramentas-gratis">
 <div class="tip-box">
@@ -2721,7 +2810,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
     <div class="cards-grid">
 
-      <div class="card">
+      <div class="card" style="--accent:#10a37f; --accent-rgb:16,163,127;">
         <span class="card-icon"><img src="../imagens/bate-papo-gpt.png" loading="eager" width="42" height="42" alt="ChatGPT OpenAI — IA para consultoria administrativa e gestão empresarial"></span>
         <span class="card-tag tag-free">Gratuito</span>
         <h3>ChatGPT (OpenAI)</h3>
@@ -2729,7 +2818,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
         <a href="https://chat.openai.com" target="_blank" rel="noopener noreferrer" title="Acessar ChatGPT — IA para currículo e entrevistas" class="card-link">→ Acessar ChatGPT</a>
       </div>
 
-      <div class="card">
+      <div class="card" style="--accent:#4285f4; --accent-rgb:66,133,244;">
         <span class="card-icon"><img src="../imagens/icons8-gêmeos-ai-94.png" loading="lazy" width="42" height="42" alt="Google Gemini — IA para gestão empresarial e pesquisa de mercado"></span>
         <span class="card-tag tag-free">Gratuito</span>
         <h3>Google Gemini</h3>
@@ -2737,7 +2826,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
         <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer" title="Acessar Google Gemini — IA para otimizar currículo" class="card-link">→ Acessar Gemini</a>
       </div>
 
-      <div class="card">
+      <div class="card" style="--accent:#d97757; --accent-rgb:217,119,87;">
         <span class="card-icon"><img src="../imagens/Claude-ai-icon.svg.png" loading="lazy" width="42" height="42" alt="Claude Anthropic — IA para produção textual e documentos corporativos"></span>
         <span class="card-tag tag-free">Gratuito</span>
         <h3>Claude (Anthropic)</h3>
@@ -2745,7 +2834,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
         <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" title="Acessar Claude — IA Anthropic para análise de currículo" class="card-link">→ Acessar Claude</a>
       </div>
 
- <div class="card">
+ <div class="card" style="--accent:#0078d4; --accent-rgb:0,120,212;">
   <span class="card-icon">
     <img src="../imagens/icons8-3d-microsoft-copilot-logo-94.png" loading="lazy" width="42" height="42" alt="Microsoft Copilot — IA integrada ao Office para carreira profissional">
   </span>
@@ -2755,7 +2844,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <a href="https://www.microsoft.com/en-us/microsoft-365/copilot" target="_blank" rel="noopener noreferrer" title="Acessar Microsoft Copilot — IA para Office" class="card-link">→ Saiba mais sobre o Copilot</a>
 </div>
 
-    <div class="card">
+    <div class="card" style="--accent:#0a66c2; --accent-rgb:10,102,194;">
   <span class="card-icon">
     <img src="../imagens/linkedin (1).png" loading="lazy" width="42" height="42" alt="LinkedIn — rede profissional com IA para perfil e carreira">
   </span>
@@ -2765,7 +2854,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" title="Acessar LinkedIn — perfil profissional com IA" class="card-link">→ Acessar LinkedIn</a>
 </div>
 
-   <div class="card">
+   <div class="card" style="--accent:#20808d; --accent-rgb:32,128,141;">
   <span class="card-icon">
     <img src="../imagens/perplexity-ai-icon.png" loading="lazy" width="42" height="42" alt="Perplexity AI — motor de busca com IA para pesquisa de empresas">
   </span>
@@ -2777,7 +2866,17 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
     </div>
 </div>  </section>
-  <div class="info-bar">✍️ Produção Textual e Design</div>
+  <div class="info-bar" style="
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: -1.6rem auto;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e40af;
+  text-align: center;
+  padding: 0.3rem 0;
+">✍️ Produção Textual e Design</div>
   <section class="content-section" id="ferramentas-design">
 <div class="tip-box">
   💡 <strong>Dica Orizon:</strong> Para documentos corporativos formais — contratos, propostas, relatórios — use sempre o Word e converta para PDF antes de enviar. Para apresentações executivas e materiais de comunicação visual, o Canva e o Gamma AI entregam resultado profissional com agilidade.
@@ -2785,7 +2884,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
  <div class="cards-grid">
 
-    <div class="card">
+    <div class="card" style="--accent:#7c3aed; --accent-rgb:124,58,237;">
   <span class="card-icon"><img src="../imagens/canva.png" loading="lazy" width="42" height="42" alt="Canva — design e comunicação visual empresarial"></span>
   <span class="card-tag tag-free">Gratuito</span>
   <h3>Canva</h3>
@@ -2796,7 +2895,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <a href="https://www.canva.com/resumes/templates/" target="_blank" rel="noopener noreferrer" title="Acessar Canva — modelos de currículo visual" class="card-link">→ Acessar Canva</a>
 </div>
 
-<div class="card">
+<div class="card" style="--accent:#2b579a; --accent-rgb:43,87,154;">
   <span class="card-icon"><img src="../imagens/palavra.png" loading="lazy" width="42" height="42" alt="Microsoft Word — produção textual e documentos corporativos"></span>
   <span class="card-tag tag-free">Gratuito/Office</span>
   <h3>Microsoft Word</h3>
@@ -2804,7 +2903,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <a href="https://www.microsoft.com/pt-br/microsoft-365/word" target="_blank" rel="noopener noreferrer" title="Acessar Microsoft Word — criar currículo profissional" class="card-link">→ Acessar Word</a>
 </div>
 
-<div class="card">
+<div class="card" style="--accent:#e5252a; --accent-rgb:229,37,42;">
   <span class="card-icon"><img src="../imagens/pdf.png" loading="lazy" width="42" height="42" alt="PDF — formato padrão para documentos empresariais"></span>
   <span class="card-tag tag-free">Gratuito</span>
   <h3>PDF</h3>
@@ -4287,12 +4386,12 @@ body.dark-mode .icon-docx { background: rgba(0,150,255,0.12); }
 .download-card-title {
   font-size: 0.92rem;
   font-weight: 700;
-  color: #172a73;
+  color: #000000;
   margin: 0 0 0.3rem;
   line-height: 1.3;
 }
 body.dark-mode .download-card-title {
-  color: #e0f4ff;
+  color: #ffffff;
 }
 
 .download-card-desc {
@@ -4435,7 +4534,7 @@ body.dark-mode .download-notice {
   margin-bottom: 0 !important;
 }
 .downloads-body .download-card-title {
-  font-size: 0.9rem !important;
+  font-size: 0.92rem !important;
   font-weight: 700 !important;
 }
 .downloads-body .download-card-desc {
@@ -4510,7 +4609,7 @@ body.dark-mode .downloads-trigger:hover { background: rgba(0,200,255,.07); }
   color: #1e40af;
   flex: 1;
 }
-body.dark-mode .downloads-trigger-title { color: #00c8ff; }
+body.dark-mode .downloads-trigger-title { color: #ffffff; }
 
 .downloads-trigger-count {
   font-size: .72rem;
@@ -4607,13 +4706,13 @@ body.dark-mode .downloads-body .download-card-icon {
 .downloads-body .download-card-body { flex: 1; min-width: 0; }
 
 .downloads-body .download-card-title {
-  font-size: .9rem !important;
+  font-size: .92rem !important;
   font-weight: 700 !important;
   margin-bottom: .3rem;
-  color: #172a73;
+  color: #000000;
   line-height: 1.35;
 }
-body.dark-mode .downloads-body .download-card-title { color: #e2e8f0; }
+body.dark-mode .downloads-body .download-card-title { color: #ffffff; }
 
 .downloads-body .download-card-desc {
   font-size: .78rem !important;
@@ -4728,10 +4827,9 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
         const rect = card.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const cor = document.body.classList.contains('dark-mode')
-          ? 'rgba(0,200,255,0.16)'
-          : 'rgba(37,99,235,0.14)';
-        glow.style.background = 'radial-gradient(220px circle at ' + x + 'px ' + y + 'px, ' + cor + ', transparent 70%)';
+        const rgb = getComputedStyle(card).getPropertyValue('--accent-rgb').trim() || '37,99,235';
+        const alpha = document.body.classList.contains('dark-mode') ? 0.26 : 0.18;
+        glow.style.background = 'radial-gradient(220px circle at ' + x + 'px ' + y + 'px, rgba(' + rgb + ',' + alpha + '), transparent 70%)';
         card.classList.add('glow-active');
       });
 
@@ -4772,7 +4870,6 @@ body.dark-mode .downloads-body .download-free-tag { color: #4ade80; }
 /* ═══════════════════════════════════════════════════════════
    PADRONIZAÇÃO FINAL DE CORES — CARDS (fundo único do site)
    ═══════════════════════════════════════════════════════════ */
-body.dark-mode .card,
 body.dark-mode .vaga-card,
 body.dark-mode .job-card,
 body.dark-mode .feature-card,
@@ -4782,7 +4879,6 @@ body.dark-mode .box,
 body.dark-mode .download-card {
   background: #141925 !important;
 }
-body.dark-mode .card:hover,
 body.dark-mode .vaga-card:hover,
 body.dark-mode .job-card:hover,
 body.dark-mode .feature-card:hover,
@@ -4792,7 +4888,6 @@ body.dark-mode .box:hover,
 body.dark-mode .download-card:hover {
   background: #1a2134 !important;
 }
-body:not(.dark-mode) .card,
 body:not(.dark-mode) .vaga-card,
 body:not(.dark-mode) .job-card,
 body:not(.dark-mode) .feature-card,
@@ -4802,7 +4897,6 @@ body:not(.dark-mode) .box,
 body:not(.dark-mode) .download-card {
   background: #e5e7eb !important;
 }
-body:not(.dark-mode) .card:hover,
 body:not(.dark-mode) .vaga-card:hover,
 body:not(.dark-mode) .job-card:hover,
 body:not(.dark-mode) .feature-card:hover,
@@ -4812,6 +4906,18 @@ body:not(.dark-mode) .box:hover,
 body:not(.dark-mode) .download-card:hover {
   background: #d7dbe1 !important;
 }
+
+/* .card fica de fora da padronização: usa a cor de cada ferramenta (--accent)
+   para um fundo com gradiente sutil na cor da marca, em vez de cinza plano. */
+body:not(.dark-mode) .card {
+  background:
+    radial-gradient(140% 90% at 50% 0%, rgba(var(--accent-rgb), 0.20), rgba(var(--accent-rgb), 0.05) 60%, #ffffff 100%) !important;
+}
+body:not(.dark-mode) .card:hover {
+  background:
+    radial-gradient(140% 90% at 50% 0%, rgba(var(--accent-rgb), 0.30), rgba(var(--accent-rgb), 0.08) 60%, #ffffff 100%) !important;
+}
+
 </style>
 
 
@@ -4823,6 +4929,44 @@ body.dark-mode .downloads-body { background: #141925 !important; border-color: r
 body:not(.dark-mode) .downloads-trigger { background: #e5e7eb !important; border-color: #9ca3af !important; }
 body:not(.dark-mode) .downloads-trigger:hover { background: #d7dbe1 !important; border-color: #6b7280 !important; }
 body:not(.dark-mode) .downloads-body { background: #e5e7eb !important; border-color: #9ca3af !important; }
+</style>
+
+<style>
+/* REGRA FINAL E ÚNICA — títulos dos cards de download e do acordeão.
+   Colocada por último no arquivo, com !important, para nunca mais
+   ser sobrescrita por nenhuma regra duplicada anterior. */
+body:not(.dark-mode) .download-card-title { color: #000000 !important; }
+body.dark-mode   .download-card-title { color: #ffffff !important; }
+
+body:not(.dark-mode) .downloads-trigger-title { color: #1e40af !important; }
+body.dark-mode   .downloads-trigger-title { color: #ffffff !important; }
+
+/* Tamanho do título do acordeão idêntico em mobile e desktop */
+.downloads-trigger-title { font-size: 1rem !important; }
+
+/* Tamanho e espaçamento dos títulos .info-bar — igual ao candidato.html.
+   Lá isso é feito com style="" inline em cada div (não CSS global), porque
+   o primeiro título usa um valor de margem-topo DIFERENTE dos demais
+   (1rem, não 0). Removi a regra genérica com !important e apliquei
+   style inline nos dois <div class="info-bar"> deste arquivo, nos
+   mesmos valores exatos do candidato.html. Ver HTML. */
+
+/* Cor dos títulos .info-bar: azul escuro no modo claro, azul ciano no modo
+   escuro (mais respiro/contraste em fundo escuro). Pedido explícito do
+   usuário — diferente do candidato.html original, que mantinha o mesmo
+   azul nos dois modos. Aplicado nos dois arquivos (ferramentas-ia.html e
+   candidato.html). */
+.info-bar { color: #1e40af !important; }
+body.dark-mode .info-bar { color: #38bdf8 !important; }
+
+/* BUG REAL: a descrição dos cards de download tinha "color: inherit", puxando a cor
+   de cada ferramenta (por isso parecia azul/ciano). No candidato.html a cor é fixa:
+   preto no claro, cinza-claro (#cbd5e1) no escuro. Igualando aqui, com !important
+   e no fim do arquivo pra vencer qualquer regra antiga. */
+.download-card-desc,
+.downloads-body .download-card-desc { color: #000000 !important; opacity: 1 !important; }
+body.dark-mode .download-card-desc,
+body.dark-mode .downloads-body .download-card-desc { color: #cbd5e1 !important; opacity: 1 !important; }
 </style>
 
 </body>
