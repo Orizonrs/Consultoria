@@ -1352,17 +1352,15 @@ body.dark-mode .btn-secondary {
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
 
-    /* Desktop: remove a transição/entrada animada dos cards (mobile permanece intacto) */
-    @media (min-width: 769px) {
-      .contact-card {
-        opacity: 1 !important;
-        transform: none !important;
-        animation: none !important;
-        transition: none !important;
-      }
-      .contact-card:hover {
-        transform: none !important;
-      }
+    /* Remove a transição/entrada animada dos cards em qualquer tamanho de tela (desktop e mobile) */
+    .contact-card {
+      opacity: 1 !important;
+      transform: none !important;
+      animation: none !important;
+      transition: none !important;
+    }
+    .contact-card:hover {
+      transform: none !important;
     }
 
     /* ═══════════════════════════════════════════
@@ -1575,13 +1573,51 @@ body.dark-mode .btn-secondary {
     body.dark-mode .contact-card--brand h3 { color: var(--accent, var(--primary)) !important; filter: brightness(1.25); }
     .flip-back ul { text-align: left; }
     @media (max-width: 768px) {
-      .flip-card .flip-inner { min-height: 0; transition: transform 0.5s; }
+      .flip-card .flip-inner {
+        display: grid;
+        min-height: 0;
+      }
       #section-comportamento ~ .contact-section .flip-inner { min-height: 0; }
-      .flip-face { position: relative; inset: auto; padding: 2rem; max-height: 70vh; overflow-y: auto; }
-      .flip-back { display: none; }
-      .flip-card.is-flipped .flip-front { display: none; }
-      .flip-card.is-flipped .flip-back { display: flex; transform: none; }
-      .flip-card:hover .flip-inner { transform: none; }
+      .flip-card:hover .flip-inner,
+      .flip-card.is-flipped .flip-inner { transform: none; }
+
+      /* Ambas as faces ocupam a mesma célula do grid, então o card sempre
+         fica do tamanho da face visível — sem cortar conteúdo, com transição real */
+      .flip-face {
+        grid-area: 1 / 1;
+        position: relative;
+        inset: auto;
+        padding: 2rem;
+        max-height: 70vh;
+        overflow-y: auto;
+        backface-visibility: visible;
+        -webkit-backface-visibility: visible;
+        transition: opacity .4s ease, transform .4s cubic-bezier(.4,0,.2,1), visibility 0s linear .4s;
+      }
+      .flip-face.flip-front {
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        transition: opacity .4s ease, transform .4s cubic-bezier(.4,0,.2,1);
+      }
+      .flip-face.flip-back {
+        opacity: 0;
+        transform: scale(.92) rotateX(-8deg);
+        visibility: hidden;
+        transform-origin: 50% 0%;
+      }
+      .flip-card.is-flipped .flip-face.flip-front {
+        opacity: 0;
+        transform: scale(.92) rotateX(8deg);
+        visibility: hidden;
+        transition: opacity .4s ease, transform .4s cubic-bezier(.4,0,.2,1), visibility 0s linear .4s;
+      }
+      .flip-card.is-flipped .flip-face.flip-back {
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        transition: opacity .4s ease .05s, transform .4s cubic-bezier(.4,0,.2,1) .05s;
+      }
     }
 
     .contact-icon {
