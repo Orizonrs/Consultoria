@@ -796,6 +796,11 @@ body:not(.dark-mode) .theme-toggle {
   .info-bar { width:100%;max-width:100%;display:block;margin:-1.6rem auto;font-size:1.5rem;font-weight:800;color:#1e40af;text-align:center;padding:0.3rem 0; }
   #sec-dicas.info-bar { margin:1rem auto -1.6rem; }
   body.dark-mode .info-bar { color:#38bdf8; }
+  .transporte-short { display:none; }
+  @media (max-width: 640px) {
+    .transporte-full { display:none; }
+    .transporte-short { display:inline; }
+  }
 
   .cards-grid { display:grid;grid-template-columns:1fr;gap:1.5rem; }
   @media (min-width:640px) { .cards-grid { grid-template-columns:repeat(2,1fr); }}
@@ -2790,7 +2795,9 @@ body.dark-mode .download-card:hover {
 body.dark-mode .download-card-title { color: #e2e8f0; }
 .download-card-desc {
   font-size: .78rem; opacity: .7; line-height: 1.45; margin-bottom: .5rem;
+  color: #000000;
 }
+body.dark-mode .download-card-desc { color: #ffffff; }
 .download-card-meta { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .download-badge {
   font-size: .65rem; font-weight: 700; padding: .2rem .5rem;
@@ -3219,7 +3226,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <!-- ============================================================ -->
   <!-- SEÇÃO: TRANSPORTE                                            -->
   <!-- ============================================================ -->
-  <div class="info-bar" id="sec-transporte" data-i18n="util-sec-transporte">🚌 Transporte: Horários e Linhas</div>
+  <div class="info-bar" id="sec-transporte" data-i18n="util-sec-transporte"><span class="transporte-full">🚌 Transporte: Horários e Linhas</span><span class="transporte-short">🚌 Ônibus: Horários</span></div>
   <section class="content-section">
     <div class="tip-box">
       💡 Selecione o tipo de transporte abaixo para ver as linhas disponíveis e baixar os horários em PDF. Os PDFs são disponibilizados pelas empresas de transporte, se algum link estiver indisponível, entre em contato com a operadora diretamente.
@@ -3913,18 +3920,7 @@ body:not(.dark-mode) .game-promo-container {
   border: 2.5px solid rgba(0,0,0,0.35) !important;
 }
 
-/* Scan-line sutil no topo da section (efeito HUD) */
-body.dark-mode .content-section::before {
-  content: '';
-  display: block;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,200,255,0.3), transparent);
-  margin-bottom: 0;
-  animation: scanPulse 4s ease-in-out infinite;
-}
-@keyframes scanPulse {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }}
+/* Scan-line removida (dava espaço extra sob os títulos) */
 /* utilidades extra: sn-card, preview-box, transport-box, quick-tip, portal-table */
 body.dark-mode .sn-card {
   background: rgba(0,200,255,0.04) !important;
@@ -4025,7 +4021,7 @@ body:not(.dark-mode) .linha-item:hover {
   background: rgba(37,99,235,0.1) !important;
 }</style>
 
-<div class="info-bar" id="sec-grupos" data-i18n="util-sec-grupos">📲 Grupos & Redes Sociais de Vagas</div>
+<div class="info-bar" id="sec-grupos" data-i18n="util-sec-grupos">📲 Grupos & Redes Sociais</div>
 <section class="content-section">
 
   <div class="tip-box">
@@ -5801,6 +5797,14 @@ let vtRecognition = null;
       
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
+        if (key === 'util-sec-transporte') {
+          const shortMap = { pt: '🚌 Ônibus: Horários', en: '🚌 Buses: Schedules', es: '🚌 Buses: Horarios' };
+          const fullEl = element.querySelector('.transporte-full');
+          const shortEl = element.querySelector('.transporte-short');
+          if (fullEl && translations[lang][key]) fullEl.textContent = translations[lang][key];
+          if (shortEl) shortEl.textContent = shortMap[lang] || shortMap.pt;
+          return;
+        }
         if (translations[lang][key]) {
           element.textContent = translations[lang][key];
         }
@@ -6301,8 +6305,9 @@ body.dark-mode .downloads-body .download-card-title { color: #e2e8f0; }
   opacity: .75;
   line-height: 1.5;
   margin-bottom: .5rem;
-  color: inherit;
+  color: #000000;
 }
+body.dark-mode .downloads-body .download-card-desc { color: #ffffff; }
 
 .downloads-body .download-card-meta {
   display: flex;
