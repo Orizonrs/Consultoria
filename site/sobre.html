@@ -2516,13 +2516,14 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
     /* ── Botão flutuante ── */
     .chatbot-button {
       background: rgba(0,200,255,0.08) !important;
-      border: 2.5px solid rgba(255,255,255,0.35) !important;
+      border: 2.5px solid #00c8ff !important;
       box-shadow: 0 0 18px rgba(0,200,255,0.25), 0 0 40px rgba(0,200,255,0.08) !important;
       border-radius: 12px !important;
       animation: chatPulse 3s ease-in-out infinite !important;
     }
     .chatbot-button:hover {
       background: rgba(0,200,255,0.15) !important;
+      border-color: #33d6ff !important;
       box-shadow: 0 0 30px rgba(0,200,255,0.45), 0 0 60px rgba(0,200,255,0.15) !important;
       transform: scale(1.08) translateY(-2px) !important;
     }
@@ -3077,28 +3078,36 @@ body:not(.dark-mode) .review-card:hover {
   <!-- Canvas do globo (responsivo) -->
   <div id="globe-wrap" style="display:inline-block; width:100%; max-width:460px; aspect-ratio:1/1; position:relative;">
     <canvas id="orizon-globe" style="width:100%; height:100%; display:block; cursor:grab;"></canvas>
+    <!-- Satélite orbitando (decorativo, só desktop) -->
+    <div class="globe-orbit-ring" aria-hidden="true"><span class="globe-satellite">🛰️</span></div>
   </div>
 
-  <!-- País em destaque -->
-  <div id="globe-info" style="margin-top:10px; min-height:22px; font-size:13px; font-weight:600; color:var(--primary);">
-    Passe o mouse sobre um país
-  </div>
+  <!-- Painel: país em destaque + controles (vira coluna lateral no desktop) -->
+  <div id="globe-side-panel">
+    <!-- País em destaque -->
+    <div id="globe-info" style="margin-top:10px; min-height:22px; font-size:13px; font-weight:600; color:var(--primary);">
+      Passe o mouse sobre um país
+    </div>
 
-  <!-- Controles -->
-  <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:10px; flex-wrap:wrap;">
-    <button id="globe-play-btn" onclick="orizonGlobeToggle()" style="
-      font-size:12px; font-weight:600; cursor:pointer;
-      padding:6px 18px; border-radius:50px;
-      background:transparent; border:2px solid var(--primary);
-      color:var(--primary); transition:all 0.2s; font-family:inherit;
-    ">⏸ Pausar</button>
+    <!-- Controles -->
+    <div id="globe-controls-row" style="display:flex; align-items:center; justify-content:center; gap:16px; margin-top:10px; flex-wrap:wrap;">
+      <button id="globe-play-btn" onclick="orizonGlobeToggle()" style="
+        font-size:12px; font-weight:600; cursor:pointer;
+        padding:6px 18px; border-radius:50px;
+        background:transparent; border:2px solid var(--primary);
+        color:var(--primary); transition:all 0.2s; font-family:inherit;
+      ">⏸ Pausar</button>
 
-    <label style="font-size:12px; color: var(--text-light); display:flex; align-items:center; gap:8px;">
-      Velocidade
-      <input type="range" id="globe-speed" min="0.1" max="3" step="0.1" value="1"
-        style="width:90px; accent-color:var(--primary);"
-        oninput="orizonGlobeSpeed(this.value)">
-    </label>
+      <label style="font-size:12px; color: var(--text-light); display:flex; align-items:center; gap:8px;">
+        Velocidade
+        <input type="range" id="globe-speed" min="0.1" max="3" step="0.1" value="1"
+          style="width:90px; accent-color:var(--primary);"
+          oninput="orizonGlobeSpeed(this.value)">
+      </label>
+    </div>
+
+    <!-- Curiosidades (ticker criativo, só desktop) -->
+    <div id="globe-fun-fact" class="globe-fun-fact" aria-live="polite"></div>
   </div>
 </div>
 
@@ -3111,11 +3120,15 @@ body:not(.dark-mode) .review-card:hover {
   .globe-starfield {
     display: none;
   }
+  .globe-orbit-ring,
+  .globe-fun-fact {
+    display: none;
+  }
 
   @media (min-width: 769px) {
     .globe-stage {
       overflow: hidden;
-      padding: 3rem 1rem;
+      padding: 1.25rem 1rem;
       background: radial-gradient(ellipse at 50% 40%, #0c1330 0%, #060a1e 55%, #030510 100%);
       box-shadow: inset 0 0 80px rgba(0,0,0,0.5);
     }
@@ -3131,9 +3144,87 @@ body:not(.dark-mode) .review-card:hover {
       z-index: 0;
       pointer-events: none;
     }
+    #globe-section {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 2.5rem !important;
+      text-align: left !important;
+    }
+    #globe-wrap {
+      max-width: 400px !important;
+      flex: 0 0 auto;
+    }
+    #globe-side-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 4px;
+    }
+    #globe-info {
+      margin-top: 0 !important;
+      text-align: left !important;
+    }
+    #globe-controls-row {
+      justify-content: flex-start !important;
+      margin-top: 14px !important;
+      flex-wrap: nowrap !important;
+    }
     #globe-info { color: #cfe0ff !important; }
     #globe-play-btn { border-color: #6fb3ff !important; color: #cfe0ff !important; }
     #globe-section label { color: #9fb4d9 !important; }
+
+    /* ── Satélite orbitando o globo (decorativo) ── */
+    .globe-orbit-ring {
+      display: block;
+      position: absolute;
+      inset: -16px;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: globeOrbitSpin 16s linear infinite;
+    }
+    .globe-satellite {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
+      filter: drop-shadow(0 0 8px rgba(0,200,255,0.8));
+    }
+    @keyframes globeOrbitSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ── Curiosidades: ticker que troca de frase ── */
+    .globe-fun-fact {
+      display: flex;
+      margin-top: 24px;
+      padding: 10px 16px;
+      max-width: 260px;
+      font-size: 12.5px;
+      line-height: 1.4;
+      color: #cfe0ff;
+      background: rgba(0, 200, 255, 0.06);
+      border: 1px solid rgba(111, 179, 255, 0.35);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .globe-fun-fact.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .globe-fun-fact .fact-icon {
+      font-size: 17px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px rgba(0,200,255,0.6));
+    }
   }
 </style>
 <script>
@@ -3441,6 +3532,37 @@ body:not(.dark-mode) .review-card:hover {
     .catch(()=>{ infoEl.textContent='Erro ao carregar dados do mapa.'; });
 
   loop();
+})();
+</script>
+
+<!-- Ticker de curiosidades ao lado do globo (só desktop, controlado por CSS) -->
+<script>
+(function(){
+  const factEl = document.getElementById('globe-fun-fact');
+  if (!factEl) return;
+
+  const FACTS = [
+    { icon: '🚀', text: 'Alcance de +3 milhões de pessoas em todo o Brasil' },
+    { icon: '⭐', text: 'Avaliação 5.0 dos nossos clientes' },
+    { icon: '📍', text: 'Nascemos em Guaíba, RS, em 2025' },
+    { icon: '🤝', text: 'Atendemos Guaíba, Eldorado do Sul, Porto Alegre e Barra do Ribeiro' },
+    { icon: '🌎', text: 'Gire o globo e passe o mouse para descobrir países' }
+  ];
+
+  let i = 0;
+
+  function render(){
+    const f = FACTS[i];
+    factEl.classList.remove('is-visible');
+    setTimeout(() => {
+      factEl.innerHTML = '<span class="fact-icon">' + f.icon + '</span><span>' + f.text + '</span>';
+      factEl.classList.add('is-visible');
+    }, 350);
+    i = (i + 1) % FACTS.length;
+  }
+
+  render();
+  setInterval(render, 4500);
 })();
 </script>
 <!-- ===== GLOBO INTERATIVO – FIM ===== -->
