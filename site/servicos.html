@@ -6083,16 +6083,34 @@ async function responderComIA(texto) {
     let lastScrollY = window.scrollY;
     let scrollTimeout;
     let navHidden = false;
+    const radarServicosEl = document.getElementById('radar-servicos-container');
 
-    window.addEventListener('scroll', () => {
+    function handleNavScroll() {
       const scrollBtn = document.getElementById("scrollTopBtn");
       if (scrollBtn) scrollBtn.classList.toggle("visible", window.scrollY > 400);
 
       const currentY = window.scrollY;
       const delta = currentY - lastScrollY;
 
+      // FIX: enquanto o bloco do radar de Serviços estiver perto do topo da tela,
+      // força os botões fixos (Voltar/Menu/Topics/Tema) a ficarem escondidos,
+      // pra nunca sobrepor o radar — não depende mais da direção do scroll.
+      let forceHideForRadar = false;
+      if (radarServicosEl) {
+        const rect = radarServicosEl.getBoundingClientRect();
+        if (rect.top < 170 && rect.bottom > 0) {
+          forceHideForRadar = true;
+        }
+      }
+
+      if (forceHideForRadar) {
+        if (!navHidden) {
+          navHidden = true;
+          document.body.classList.add('nav-hidden');
+        }
+      }
       // Scrolling DOWN → hide nav elements
-      if (delta > 4 && currentY > 80) {
+      else if (delta > 4 && currentY > 80) {
         if (!navHidden) {
           navHidden = true;
           document.body.classList.add('nav-hidden');
@@ -6114,7 +6132,10 @@ async function responderComIA(texto) {
       scrollTimeout = setTimeout(() => {
         document.body.classList.remove('scrolling');
       }, 250);
-    });
+    }
+    window.addEventListener('scroll', handleNavScroll);
+    // roda uma vez ao carregar/ao mudar de aba, caso a página já abra com o radar visível
+    setTimeout(handleNavScroll, 50);
 
     let startX = 0;
     let currentX = 0;
