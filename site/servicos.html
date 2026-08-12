@@ -3973,7 +3973,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <section class="content-section" id="sec-cidades-atendidas">
     <h2 class="orizon-section-title" style="text-align:center; margin: 0 0 1.2rem;">Cidades Atendidas</h2>
     <div class="content-container">
-      <!-- MAPA RS -->
+      <!-- MAPA RS, AO VIVO -->
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -3994,21 +3994,84 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
         #mapa-rs { width: 100%; height: 420px; touch-action: pan-y; }
 
+        /* Barra "ao vivo" acima do mapa */
+        .omap-livebar {
+          display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+          gap: 0.6rem; padding: 0.7rem 1rem; margin-bottom: 0.7rem;
+          border-radius: 14px;
+          background: rgba(0,200,255,0.06);
+          border: 1px solid rgba(0,200,255,0.25);
+        }
+        body:not(.dark-mode) .omap-livebar {
+          background: rgba(30,64,175,0.05);
+          border-color: rgba(30,64,175,0.2);
+        }
+        .omap-live-dot {
+          display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+          background: #22c55e; box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+          animation: omapPulseDot 1.6s infinite;
+          margin-right: 7px; flex-shrink: 0;
+        }
+        @keyframes omapPulseDot {
+          0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+          70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+          100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+        }
+        .omap-live-label {
+          font-size: 0.82rem; font-weight: 700; letter-spacing: 0.02em;
+          color: #0ea5e9; display: flex; align-items: center;
+        }
+        body:not(.dark-mode) .omap-live-label { color: #1e40af; }
+        .omap-live-count {
+          font-size: 0.88rem; font-weight: 800; color: inherit; opacity: 0.9;
+        }
+        .omap-live-updated {
+          font-size: 0.7rem; opacity: 0.55; font-weight: 600;
+        }
+
+        /* Marcadores */
         .omap-marker {
           position: relative; display: flex; align-items: center; justify-content: center;
           border-radius: 50%; font-weight: 800; box-shadow: 0 2px 8px rgba(0,0,0,0.35);
           border: 3px solid rgba(255,255,255,0.9);
+          animation: omapMarkerPop 0.45s cubic-bezier(.3,1.5,.4,1) backwards;
+        }
+        .omap-marker::before {
+          content: ""; position: absolute; inset: -10px; border-radius: 50%;
+          border: 2px solid currentColor; opacity: 0; animation: omapRing 2.6s ease-out infinite;
         }
         .omap-marker.omap-top {
           border-color: #fff;
           box-shadow: 0 0 0 4px rgba(245,158,11,0.25), 0 3px 10px rgba(0,0,0,0.4);
+        }
+        .omap-marker.omap-top::before { animation-duration: 1.8s; }
+        @keyframes omapRing {
+          0%   { transform: scale(0.85); opacity: 0.55; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+        @keyframes omapMarkerPop {
+          0%   { transform: scale(0); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
         }
 
         .leaflet-popup-content-wrapper { background: #0d1420; color: #e2e8f0; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); border: 1px solid rgba(0,200,255,0.3); }
         .leaflet-popup-tip { background: #0d1420; }
         body:not(.dark-mode) .leaflet-popup-content-wrapper { background: #fff; color: #111; border-color: rgba(30,64,175,0.22); }
         body:not(.dark-mode) .leaflet-popup-tip { background: #fff; }
+
+        .omap-empty {
+          display: flex; align-items: center; justify-content: center; flex-direction: column;
+          height: 420px; text-align: center; padding: 1.5rem; gap: 0.4rem;
+          color: #e2e8f0; opacity: 0.75; font-size: 0.9rem;
+        }
+        body:not(.dark-mode) .omap-empty { color: #1f2937; }
       </style>
+
+      <div class="omap-livebar">
+        <span class="omap-live-label"><span class="omap-live-dot"></span> Ao vivo, direto da nossa lista de vagas</span>
+        <span class="omap-live-count" id="omapLiveCount">Carregando…</span>
+        <span class="omap-live-updated" id="omapLiveUpdated"></span>
+      </div>
 
       <div class="orizon-map-wrap">
         <div id="mapa-rs"></div>
@@ -4016,27 +4079,153 @@ body.dark-mode .download-free-tag { color: #34d399; }
 
       <script>
       (function() {
-        const cidades = [
-          { nome: 'Porto Alegre',    lat: -30.0346, lng: -51.2177, vagas: 1, },
-          { nome: 'Guaíba',          lat: -30.1131, lng: -51.3247, vagas: 13, },
-          { nome: 'Eldorado do Sul', lat: -30.0844, lng: -51.5578, vagas: 2,   },
-          { nome: 'Canoas',         lat: -29.9177, lng: -51.1833, vagas: 1, },
-          { nome: 'Charqueadas',    lat: -29.9608, lng: -51.6244, vagas: 1, },
-          { nome: 'Triunfo',        lat: -29.9342, lng: -51.7172, vagas: 1, },
-          { nome: 'São Jerônimo',   lat: -30.1494, lng: -51.7242, vagas: 1, },
-          { nome: 'Barra do Ribeiro', lat: -30.2933, lng: -51.3047, vagas: 1, },
-          { nome: 'Viamão',         lat: -30.0811, lng: -51.0233, vagas: 1, },
-          { nome: 'Esteio',          lat: -29.8608, lng: -51.1797, vagas: 1, },
-          { nome: 'Sapucaia do Sul', lat: -29.8244, lng: -51.1469, vagas: 1, },
-          { nome: 'Novo Hamburgo',  lat: -29.6783, lng: -51.1306, vagas: 1, },
-        ];
+        // Coordenadas das cidades da região atendida. Cidades sem vaga no
+        // momento simplesmente não aparecem, então essa lista pode ter mais
+        // cidades do que as que estão visíveis agora.
+        const coordsCidades = {
+          'Guaíba':           { lat: -30.1131, lng: -51.3247 },
+          'Eldorado do Sul':  { lat: -30.0844, lng: -51.5578 },
+          'Porto Alegre':     { lat: -30.0346, lng: -51.2177 },
+          'Canoas':           { lat: -29.9177, lng: -51.1833 },
+          'Charqueadas':      { lat: -29.9608, lng: -51.6244 },
+          'Triunfo':          { lat: -29.9342, lng: -51.7172 },
+          'São Jerônimo':     { lat: -30.1494, lng: -51.7242 },
+          'Barra do Ribeiro': { lat: -30.2933, lng: -51.3047 },
+          'Viamão':           { lat: -30.0811, lng: -51.0233 },
+          'Esteio':           { lat: -29.8608, lng: -51.1797 },
+          'Sapucaia do Sul':  { lat: -29.8244, lng: -51.1469 },
+          'Novo Hamburgo':    { lat: -29.6783, lng: -51.1306 },
+          'Gravataí':         { lat: -29.9442, lng: -50.9928 },
+          'Alvorada':         { lat: -29.9897, lng: -51.0808 },
+          'São Leopoldo':     { lat: -29.7603, lng: -51.1472 },
+        };
+
+        const REFRESH_MS = 5 * 60 * 1000; // reconsulta vagas.html a cada 5 min
+        let map = null;
+        let markersLayer = null;
+
+        function normalizaCidade(dataCity) {
+          // "Guaíba, RS" -> "Guaíba"
+          if (!dataCity) return null;
+          return dataCity.split(',')[0].trim();
+        }
+
+        async function buscarVagasPorCidade() {
+          const resp = await fetch('vagas.html', { cache: 'no-store' });
+          if (!resp.ok) throw new Error('Falha ao buscar vagas.html: ' + resp.status);
+          const html = await resp.text();
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          const cards = doc.querySelectorAll('.vaga-card');
+
+          const contagem = {};
+          cards.forEach(card => {
+            const titulo = card.querySelector('.vaga-title');
+            const tituloTexto = titulo ? titulo.textContent.trim() : '';
+            // Banco de Talentos não é vaga aberta, não entra na contagem
+            if (tituloTexto === 'Banco de Talentos') return;
+
+            const cidade = normalizaCidade(card.getAttribute('data-city'));
+            if (!cidade) return;
+            contagem[cidade] = (contagem[cidade] || 0) + 1;
+          });
+
+          return contagem;
+        }
+
+        function montarCidadesVisiveis(contagem) {
+          return Object.keys(contagem)
+            .filter(nome => contagem[nome] > 0)
+            .map(nome => {
+              const coords = coordsCidades[nome];
+              if (!coords) {
+                console.warn('Orizon mapa: cidade "' + nome + '" sem coordenada cadastrada, ignorada.');
+                return null;
+              }
+              return { nome, vagas: contagem[nome], lat: coords.lat, lng: coords.lng };
+            })
+            .filter(Boolean);
+        }
+
+        function atualizarLivebar(cidades) {
+          const totalVagas = cidades.reduce((s, c) => s + c.vagas, 0);
+          const totalCidades = cidades.length;
+          const elCount = document.getElementById('omapLiveCount');
+          const elUpdated = document.getElementById('omapLiveUpdated');
+          if (elCount) {
+            elCount.textContent = totalCidades > 0
+              ? totalVagas + (totalVagas > 1 ? ' vagas abertas' : ' vaga aberta') + ' em ' + totalCidades + (totalCidades > 1 ? ' cidades' : ' cidade')
+              : 'Nenhuma vaga aberta no momento';
+          }
+          if (elUpdated) {
+            const agora = new Date();
+            elUpdated.textContent = 'Atualizado às ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+          }
+        }
+
+        function renderizarMarcadores(cidades) {
+          if (!map) return;
+
+          if (markersLayer) {
+            map.removeLayer(markersLayer);
+          }
+          markersLayer = L.layerGroup().addTo(map);
+
+          if (cidades.length === 0) return;
+
+          const maxVagas = Math.max(...cidades.map(c => c.vagas));
+          const bounds = [];
+
+          cidades.forEach((c, i) => {
+            const isTop = c.vagas === maxVagas;
+            const size = c.vagas > 20 ? 54 : c.vagas > 10 ? 46 : 36;
+            const color = isTop ? '#f59e0b' : '#0ea5e9';
+            const fontSize = size > 44 ? '1rem' : '0.8rem';
+            const icon = L.divIcon({
+              className: '',
+              html: `<div class="omap-marker${isTop ? ' omap-top' : ''}" style="width:${size}px;height:${size}px;background:${color};color:${color};animation-delay:${i * 70}ms;">
+                       <span style="position:relative;z-index:1;color:#fff;font-size:${fontSize};">${c.vagas}</span>
+                     </div>`,
+              iconSize: [size, size],
+              iconAnchor: [size / 2, size / 2],
+              popupAnchor: [0, -(size / 2 + 6)]
+            });
+
+            L.marker([c.lat, c.lng], { icon })
+              .addTo(markersLayer)
+              .bindPopup(`
+                <div style="text-align:center;padding:4px 8px;min-width:150px;">
+                  <strong style="font-size:1rem;">📍 ${c.nome}</strong><br>
+                  <span style="font-size:0.82rem;opacity:0.85;">🔍 <b>${c.vagas}</b> vaga${c.vagas > 1 ? 's' : ''} aberta${c.vagas > 1 ? 's' : ''}</span>
+                  ${isTop ? '<br><span style="font-size:0.72rem;color:#f59e0b;font-weight:700;">⭐ Maior demanda</span>' : ''}
+                </div>
+              `, { maxWidth: 200 });
+
+            bounds.push([c.lat, c.lng]);
+          });
+        }
+
+        async function atualizarMapa() {
+          try {
+            const contagem = await buscarVagasPorCidade();
+            const cidades = montarCidadesVisiveis(contagem);
+            atualizarLivebar(cidades);
+            renderizarMarcadores(cidades);
+          } catch (err) {
+            console.error('Orizon mapa: erro ao atualizar vagas em tempo real.', err);
+            const elCount = document.getElementById('omapLiveCount');
+            if (elCount) elCount.textContent = 'Não foi possível carregar as vagas agora';
+          }
+        }
 
         function initMap() {
+          const mapEl = document.getElementById('mapa-rs');
+          if (!mapEl) return;
+
           // FIX: em touch/mobile, o arraste (dragging) do mapa "sequestrava" o gesto
           // de rolagem da página inteira — o dedo encostava no mapa pra rolar a tela
           // e o Leaflet interpretava como arrastar o mapa, travando o scroll.
           const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || (window.L && L.Browser && L.Browser.mobile);
-          const map = L.map('mapa-rs', {
+          map = L.map('mapa-rs', {
             center: [-30.0, -51.35],
             zoom: 9,
             scrollWheelZoom: false,
@@ -4051,33 +4240,8 @@ body.dark-mode .download-free-tag { color: #34d399; }
             maxZoom: 14
           }).addTo(map);
 
-          const maxVagas = Math.max(...cidades.map(c => c.vagas));
-
-          cidades.forEach(c => {
-            const isTop = c.vagas === maxVagas;
-            const size = c.vagas > 20 ? 54 : c.vagas > 10 ? 46 : 36;
-            const color = isTop ? '#f59e0b' : '#0ea5e9';
-            const fontSize = size > 44 ? '1rem' : '0.8rem';
-            const icon = L.divIcon({
-              className: '',
-              html: `<div class="omap-marker${isTop ? ' omap-top' : ''}" style="width:${size}px;height:${size}px;background:${color};color:${color};">
-                       <span style="position:relative;z-index:1;color:#fff;font-size:${fontSize};">${c.vagas}</span>
-                     </div>`,
-              iconSize: [size, size],
-              iconAnchor: [size / 2, size / 2],
-              popupAnchor: [0, -(size / 2 + 6)]
-            });
-
-            L.marker([c.lat, c.lng], { icon })
-              .addTo(map)
-              .bindPopup(`
-                <div style="text-align:center;padding:4px 8px;min-width:150px;">
-                  <strong style="font-size:1rem;">📍 ${c.nome}</strong><br>
-                  <span style="font-size:0.82rem;opacity:0.85;">🔍 <b>${c.vagas}</b> vaga${c.vagas > 1 ? 's' : ''} aberta${c.vagas > 1 ? 's' : ''}</span>
-                  ${isTop ? '<br><span style="font-size:0.72rem;color:#f59e0b;font-weight:700;">⭐ Maior demanda</span>' : ''}
-                </div>
-              `, { maxWidth: 200 });
-          });
+          atualizarMapa();
+          setInterval(atualizarMapa, REFRESH_MS);
         }
 
         if (document.readyState === 'loading') {
