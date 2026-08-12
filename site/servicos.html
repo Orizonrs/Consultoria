@@ -6092,14 +6092,14 @@ async function responderComIA(texto) {
       const delta = currentY - lastScrollY;
 
       // Scrolling DOWN → hide nav elements
-      if (delta > 8 && currentY > 80) {
+      if (delta > 4 && currentY > 80) {
         if (!navHidden) {
           navHidden = true;
           document.body.classList.add('nav-hidden');
         }
       }
-      // Scrolling UP → show nav elements
-      else if (delta < -8) {
+      // Scrolling UP → show nav elements (só com rolagem mais decidida, evita "piscar")
+      else if (delta < -35) {
         if (navHidden) {
           navHidden = false;
           document.body.classList.remove('nav-hidden');
@@ -7487,5 +7487,41 @@ body.dark-mode .header-page-title {
   }
 }
 </style>
+  <style>
+    /* ══════════════════════════════════════════════════════════
+       FIX: botões fixos do topo (Voltar/Menu/Topics/Tema/Idioma)
+       ficavam translúcidos (20% opacidade) e deixavam o radar
+       "vazar" por trás, parecendo bug/zoom quando reapareciam
+       sobre a seção de Serviços. Agora ficam sólidos/opacos.
+       ══════════════════════════════════════════════════════════ */
+    .back-button,
+    .menu-toggle,
+    .topics-toggle,
+    .topics-toggle-mobile,
+    .theme-toggle,
+    .voice-translator-toggle {
+      background: rgba(8, 12, 20, 0.94) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.45) !important;
+    }
+    body:not(.dark-mode) .back-button,
+    body:not(.dark-mode) .menu-toggle,
+    body:not(.dark-mode) .topics-toggle,
+    body:not(.dark-mode) .topics-toggle-mobile,
+    body:not(.dark-mode) .theme-toggle,
+    body:not(.dark-mode) .voice-translator-toggle {
+      background: rgba(15, 23, 42, 0.92) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+    }
+    .back-button:hover,
+    .menu-toggle:hover,
+    .topics-toggle:hover,
+    .theme-toggle:hover,
+    .voice-translator-toggle:hover {
+      background: rgba(20, 28, 42, 0.96) !important;
+    }
+  </style>
 </body>
 </html>
