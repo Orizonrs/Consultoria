@@ -16,7 +16,7 @@
   </script>
   
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
 
   <!-- ═══ TÍTULO OTIMIZADO, palavra-chave local na frente ═══ -->
@@ -3992,7 +3992,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
           background: #eef2f7;
         }
 
-        #mapa-rs { width: 100%; height: 420px; }
+        #mapa-rs { width: 100%; height: 420px; touch-action: pan-y; }
 
         .omap-marker {
           position: relative; display: flex; align-items: center; justify-content: center;
@@ -4032,10 +4032,17 @@ body.dark-mode .download-free-tag { color: #34d399; }
         ];
 
         function initMap() {
+          // FIX: em touch/mobile, o arraste (dragging) do mapa "sequestrava" o gesto
+          // de rolagem da página inteira — o dedo encostava no mapa pra rolar a tela
+          // e o Leaflet interpretava como arrastar o mapa, travando o scroll.
+          const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || (window.L && L.Browser && L.Browser.mobile);
           const map = L.map('mapa-rs', {
             center: [-30.0, -51.35],
             zoom: 9,
             scrollWheelZoom: false,
+            touchZoom: false,
+            dragging: !isTouchDevice,
+            tap: true,
             zoomControl: true
           });
 
@@ -7544,5 +7551,39 @@ body.dark-mode .header-page-title {
       background: rgba(20, 28, 42, 0.96) !important;
     }
   </style>
+
+  <script>
+    /* ══════════════════════════════════════════════════════════
+       FIX DEFINITIVO DO "BUG DE ZOOM": o navegador permitia
+       pinça-pra-zoom (pinch-zoom) na página inteira. Ao beliscar
+       o mapa "Cidades Atendidas" (que também responde a pinça pro
+       zoom dele mesmo), o navegador entendia como zoom da PÁGINA
+       INTEIRA e travava tudo zoomado/desalinhado — dando a
+       impressão de sobreposição, elementos gigantes, layout
+       quebrado etc. Isso bloqueia o pinch-zoom nativo da página
+       (o meta viewport já ajuda, isso é reforço pra iOS/Safari
+       que às vezes ignora o meta sozinho).
+       ══════════════════════════════════════════════════════════ */
+    (function () {
+      document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      let lastTouchEnd = 0;
+      document.addEventListener('touchend', function (e) {
+        const now = Date.now();
+        if (now - lastTouchEnd <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEnd = now;
+      }, { passive: false });
+    })();
+  </script>
 </body>
 </html>
