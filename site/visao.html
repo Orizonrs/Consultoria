@@ -1526,6 +1526,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
 
     /* TABLET - 481px a 768px */
     @media (min-width: 481px) and (max-width: 768px) {
+      .reviews-container { align-items: stretch; }
       .reviews-section {
         margin: 2.5rem auto;
         padding: 2rem;
@@ -1566,7 +1567,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
       .reviews-controls {
         position: absolute;
         left: 50%;
-        bottom: .9rem;
+        bottom: 1.3rem;
         transform: translateX(-50%);
         margin-top: 0;
         gap: .5rem;
@@ -1584,6 +1585,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
 
     /* MOBILE - até 480px */
     @media (max-width: 480px) {
+      .reviews-container { align-items: stretch; }
       .reviews-section {
         margin: 2rem auto;
         padding: 1.5rem;
@@ -1643,7 +1645,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
       .reviews-controls {
         position: absolute;
         left: 50%;
-        bottom: .7rem;
+        bottom: 1.1rem;
         transform: translateX(-50%);
         margin-top: 0;
         gap: .4rem;
@@ -4751,10 +4753,25 @@ const reviews = [
       const slider = container.closest('.reviews-slider');
       const offset = currentReviewIndex * -100;
       container.style.transform = `translateX(${offset}%)`;
-      const activeCard = container.children[currentReviewIndex];
-      if (slider && activeCard) {
-        const preciseHeight = Math.ceil(activeCard.getBoundingClientRect().height);
-        slider.style.height = (preciseHeight + 10) + 'px';
+      if (!slider) return;
+
+      if (window.innerWidth <= 768) {
+        // Mobile/tablet: altura fixa baseada no maior comentário, não varia por review
+        let maxHeight = 0;
+        Array.from(container.children).forEach(card => {
+          const h = Math.ceil(card.getBoundingClientRect().height);
+          if (h > maxHeight) maxHeight = h;
+        });
+        if (maxHeight > 0) {
+          slider.style.height = (maxHeight + 10) + 'px';
+        }
+      } else {
+        // Desktop: altura acompanha o card ativo
+        const activeCard = container.children[currentReviewIndex];
+        if (activeCard) {
+          const preciseHeight = Math.ceil(activeCard.getBoundingClientRect().height);
+          slider.style.height = (preciseHeight + 10) + 'px';
+        }
       }
     }
 
