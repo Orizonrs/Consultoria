@@ -3264,6 +3264,18 @@ body:not(.dark-mode) .review-card:hover {
     display: none;
   }
 
+  /* Sol (modo claro) — botão Pausar, "Nosso Sol" e "Velocidade" em branco (mobile e desktop) */
+  body:not(.dark-mode) #globe-play-btn {
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+  }
+  body:not(.dark-mode) #globe-info {
+    color: #ffffff !important;
+  }
+  body:not(.dark-mode) #globe-section label {
+    color: #ffffff !important;
+  }
+
   @media (min-width: 769px) {
     .globe-stage {
       overflow: hidden;
@@ -3313,9 +3325,9 @@ body:not(.dark-mode) .review-card:hover {
     #globe-info { color: #cfe0ff !important; }
     #globe-play-btn { border-color: #6fb3ff !important; color: #cfe0ff !important; }
     #globe-section label { color: #9fb4d9 !important; }
-    body:not(.dark-mode) #globe-info { color: #4a2600 !important; }
-    body:not(.dark-mode) #globe-play-btn { border-color: #7a3d05 !important; color: #5c2e02 !important; }
-    body:not(.dark-mode) #globe-section label { color: #6b3a08 !important; }
+    body:not(.dark-mode) #globe-info { color: #ffffff !important; }
+    body:not(.dark-mode) #globe-play-btn { border-color: #ffffff !important; color: #ffffff !important; }
+    body:not(.dark-mode) #globe-section label { color: #ffffff !important; }
     body:not(.dark-mode) .globe-fun-fact {
       color: #000000;
       background: rgba(255, 255, 255, 0.28);
@@ -3522,6 +3534,8 @@ body:not(.dark-mode) .review-card:hover {
   /* ── Tamanho interno fixo do canvas (alta resolução) ── */
   const CSIZE = 840;
   const R_BASE = 380;
+  const IS_MOBILE_GLOBE = ('ontouchstart' in window && window.innerWidth <= 1024)
+    || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
 
   const canvas = document.getElementById('orizon-globe');
   canvas.width  = CSIZE;
@@ -3675,8 +3689,10 @@ body:not(.dark-mode) .review-card:hover {
      rotação/pausa do planeta, então o fogo nunca "congela". */
   let flameParticles = [];
   let flameClock = 0;
-  const FLAME_MAX_PARTICLES = 480;
-  const FLAME_BINS = 72; // setores ao redor de toda a borda (360° cobertos)
+  /* No mobile reduzimos bastante a densidade de partículas: é o que mais pesa no desenho do
+     Sol a cada frame e causa travamento (lag) em aparelhos mais fracos */
+  const FLAME_MAX_PARTICLES = IS_MOBILE_GLOBE ? 130 : 480;
+  const FLAME_BINS = IS_MOBILE_GLOBE ? 36 : 72; // setores ao redor de toda a borda (360° cobertos)
 
   function spawnFlameParticles(cx, cy, R, ang){
     flameClock++;
@@ -3781,9 +3797,11 @@ body:not(.dark-mode) .review-card:hover {
     const MAXR = CSIZE/2 - 6; // limite seguro para efeitos externos (coroa/raios/proeminências) não baterem na borda quadrada do canvas
     const ang = (rotation[0] || 0) * Math.PI/180; // gira 1:1 com o arrastar/velocidade, igual à Terra
     const t2  = (rotation[0] || 0) * 0.01; // fase lenta e independente, só para tremular
-    const latRad = (rotation[1] || 0) * Math.PI/180;
-    const squashY = Math.max(0.42, Math.cos(latRad)); // achatamento vertical: permite "girar" em todas as direções ao arrastar para cima/baixo
-    const tiltSign = Math.sin(latRad);
+    /* Sol: giro travado só no eixo horizontal — sem inclinar/achatar para cima ou para baixo
+       (isso fica só para a Terra, no modo escuro) */
+    const latRad = 0;
+    const squashY = 1;
+    const tiltSign = 0;
 
     ctx.save();
     ctx.translate(cx, cy);
