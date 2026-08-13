@@ -3216,7 +3216,7 @@ body:not(.dark-mode) .review-card:hover {
 
   <!-- Canvas do globo (responsivo) -->
   <div id="globe-wrap" style="display:inline-block; width:100%; max-width:460px; aspect-ratio:1/1; position:relative;">
-    <canvas id="orizon-globe" style="width:100%; height:100%; display:block; cursor:grab;"></canvas>
+    <canvas id="orizon-globe" style="width:100%; height:100%; display:block; cursor:grab; touch-action: pan-y;"></canvas>
     <!-- Satélite orbitando (decorativo, só desktop) -->
     <div class="globe-orbit-ring" aria-hidden="true"><span class="globe-satellite">🛰️</span><span class="globe-planet"></span></div>
   </div>
@@ -3532,10 +3532,13 @@ body:not(.dark-mode) .review-card:hover {
 <script>
 (function(){
   /* ── Tamanho interno fixo do canvas (alta resolução) ── */
-  const CSIZE = 840;
-  const R_BASE = 380;
   const IS_MOBILE_GLOBE = ('ontouchstart' in window && window.innerWidth <= 1024)
     || /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+  /* No mobile, o canvas é exibido bem menor (~300-350px) mas ainda assim desenhava em
+     resolução de desktop (840px) — cada gradiente/fill custava 3x+ mais pixels à toa.
+     Reduzir a resolução interna no mobile é o que mais ajuda a destravar a animação. */
+  const CSIZE = IS_MOBILE_GLOBE ? 460 : 840;
+  const R_BASE = Math.round(CSIZE * (380/840));
 
   const canvas = document.getElementById('orizon-globe');
   canvas.width  = CSIZE;
@@ -3691,8 +3694,8 @@ body:not(.dark-mode) .review-card:hover {
   let flameClock = 0;
   /* No mobile reduzimos bastante a densidade de partículas: é o que mais pesa no desenho do
      Sol a cada frame e causa travamento (lag) em aparelhos mais fracos */
-  const FLAME_MAX_PARTICLES = IS_MOBILE_GLOBE ? 130 : 480;
-  const FLAME_BINS = IS_MOBILE_GLOBE ? 36 : 72; // setores ao redor de toda a borda (360° cobertos)
+  const FLAME_MAX_PARTICLES = IS_MOBILE_GLOBE ? 70 : 480;
+  const FLAME_BINS = IS_MOBILE_GLOBE ? 24 : 72; // setores ao redor de toda a borda (360° cobertos)
 
   function spawnFlameParticles(cx, cy, R, ang){
     flameClock++;
@@ -3844,12 +3847,14 @@ body:not(.dark-mode) .review-card:hover {
     ctx.beginPath(); ctx.arc(cx,cy,rimR,0,Math.PI*2);
     ctx.fillStyle = rim; ctx.fill();
 
-    /* raios da coroa, curtos o bastante para nunca alcançar a borda do canvas */
+    /* raios da coroa, curtos o bastante para nunca alcançar a borda do canvas
+       (metade dos raios no mobile — economiza gradientes lineares por frame) */
     ctx.save();
     ctx.translate(cx,cy);
     ctx.rotate(ang*0.3);
-    for (let i=0;i<20;i++){
-      const a = i*(Math.PI*2/20);
+    const RAY_COUNT = IS_MOBILE_GLOBE ? 10 : 20;
+    for (let i=0;i<RAY_COUNT;i++){
+      const a = i*(Math.PI*2/RAY_COUNT);
       const flicker = 0.6 + 0.4*Math.sin(t2*3 + i*1.31);
       const len = Math.min(R*(1.1 + 0.28*flicker*(i%2===0?1:0.6)), MAXR);
       const rg = ctx.createLinearGradient(Math.cos(a)*R, Math.sin(a)*R, Math.cos(a)*len, Math.sin(a)*len);
@@ -3894,9 +3899,13 @@ body:not(.dark-mode) .review-card:hover {
       ctx.globalCompositeOperation = 'overlay';
       ctx.globalAlpha = 1;
       ctx.drawImage(sunTexture, -R, -R, R*2, R*2);
-      ctx.globalCompositeOperation = 'soft-light';
-      ctx.globalAlpha = 0.9;
-      ctx.drawImage(sunTexture, -R, -R, R*2, R*2);
+      /* segunda passada (soft-light) só no desktop — no mobile uma passada já basta
+         e evita desenhar a textura duas vezes por frame */
+      if (!IS_MOBILE_GLOBE) {
+        ctx.globalCompositeOperation = 'soft-light';
+        ctx.globalAlpha = 0.9;
+        ctx.drawImage(sunTexture, -R, -R, R*2, R*2);
+      }
       ctx.restore();
     }
 
@@ -4019,9 +4028,20 @@ body:not(.dark-mode) .review-card:hover {
   }
 
   /* ── Loop de animação ── */
-  function loop(){
+  /* No mobile, limitamos a ~30fps (em vez dos ~60fps do desktop): a rotação continua
+     avançando todo frame, só o desenho (a parte pesada) é pulado em frames alternados */
+  let lastDrawTs = 0;
+  const MOBILE_FRAME_MS = 1000/30;
+  function loop(ts){
     if(playing){ rotation[0]+=0.16*speed; projection.rotate(rotation); }
-    draw();
+    if (IS_MOBILE_GLOBE) {
+      if (!lastDrawTs || (ts - lastDrawTs) >= MOBILE_FRAME_MS) {
+        draw();
+        lastDrawTs = ts;
+      }
+    } else {
+      draw();
+    }
     requestAnimationFrame(loop);
   }
 
@@ -4073,26 +4093,34 @@ body:not(.dark-mode) .review-card:hover {
   });
 
   /* ── Touch (mobile) ── */
-  let touchStart=null, rotStartT=null;
+  /* touchDragLock: null = ainda indeciso, true = é um arrasto horizontal (gira o Sol/Terra
+     e trava o scroll), false = é um scroll vertical da página (deixa passar, sem travar) */
+  let touchStart=null, rotStartT=null, touchDragLock=null;
   canvas.addEventListener('touchstart',e=>{
-    e.preventDefault();
     const t=e.touches[0];
     const r=canvas.getBoundingClientRect();
     touchStart=[t.clientX-r.left, t.clientY-r.top];
     rotStartT=[...rotation];
-  },{passive:false});
+    touchDragLock=null;
+  },{passive:true});
   canvas.addEventListener('touchmove',e=>{
-    e.preventDefault();
     if(!touchStart) return;
     const t=e.touches[0];
     const r=canvas.getBoundingClientRect();
     const dx=(t.clientX-r.left)-touchStart[0];
     const dy=(t.clientY-r.top )-touchStart[1];
+    if (touchDragLock===null){
+      if (Math.abs(dx)<6 && Math.abs(dy)<6) return; // aguarda um gesto mais claro
+      touchDragLock = Math.abs(dx) > Math.abs(dy); // horizontal → gira; vertical → deixa rolar a página
+      if (!touchDragLock){ touchStart=null; return; }
+    }
+    if (!touchDragLock) return;
+    e.preventDefault();
     rotation[0]=rotStartT[0]+dx*0.3;
     rotation[1]=Math.max(-90,Math.min(90,rotStartT[1]-dy*0.3));
     projection.rotate(rotation);
   },{passive:false});
-  canvas.addEventListener('touchend',()=>{ touchStart=null; });
+  canvas.addEventListener('touchend',()=>{ touchStart=null; touchDragLock=null; });
 
   /* ── API pública (botões HTML usam isso) ── */
   window.orizonGlobeToggle = function(){
