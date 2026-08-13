@@ -358,7 +358,20 @@ body.dark-mode textarea:focus {
 
 body.dark-mode input::placeholder,
 body.dark-mode textarea::placeholder {
-  color: rgba(93,216,245,0.4) !important;
+  color: rgba(255,255,255,0.55) !important;
+}
+
+body.dark-mode .form-field label {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+body:not(.dark-mode) .form-field label {
+  color: #000000 !important;
+}
+
+body:not(.dark-mode) .form-card-header p {
+  color: #000000 !important;
 }
 
 /* --- STATS / CONTADORES no dark mode --- */
@@ -373,11 +386,11 @@ body.dark-mode .tag {
 }
 
 /* --- LINKS no dark mode --- */
-body.dark-mode a:not(.menu-link):not(.back-button):not(.btn):not([class*="toggle"]) {
+body.dark-mode a:not(.menu-link):not(.back-button):not(.btn):not([class*="toggle"]):not(.faq-banner-btn) {
   color: #5dd8f5;
 }
 
-body.dark-mode a:not(.menu-link):not(.back-button):not(.btn):not([class*="toggle"]):hover {
+body.dark-mode a:not(.menu-link):not(.back-button):not(.btn):not([class*="toggle"]):not(.faq-banner-btn):hover {
   color: #00c8ff;
   text-shadow: 0 0 8px rgba(0,200,255,0.4);
 }
@@ -479,14 +492,14 @@ body.dark-mode .filter-box {
       100% { background-position: 0% 50%; }
     }
     body:not(.dark-mode) .olh-eyebrow {
-      color: rgba(255,255,255,0.70) !important;
+      color: #ffffff !important;
     }
     body:not(.dark-mode) .olh-subtitle {
-      color: rgba(255,255,255,0.80) !important;
+      color: #ffffff !important;
     }
     body:not(.dark-mode) .olh-dot {
-      color: #f1f5f9 !important;
-      text-shadow: 0 0 6px rgba(255,255,255,0.6) !important;
+      color: #ffffff !important;
+      text-shadow: 0 0 6px rgba(255,255,255,0.8) !important;
     }
     body:not(.dark-mode) .olh-line {
       background: linear-gradient(90deg, transparent, rgba(241,245,249,0.75)) !important;
@@ -926,10 +939,27 @@ body.dark-mode .btn-secondary {
       padding: 2.5rem;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
       animation: fadeInUp 1s ease-out 0.5s both;
-      border: 2.5px solid rgba(0,0,0,0.35);
+      border: 1.5px solid #2563eb;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       width: 100%;
+    }
+
+    .contact-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-align: center;
+      margin: 0 0 2rem;
+      letter-spacing: 0.3px;
+    }
+    @media (max-width: 600px) {
+      .contact-title { font-size: 1.2rem; margin-bottom: 1.25rem; }
+    }
+    body.dark-mode .contact-title {
+      text-shadow: 0 0 10px rgba(0,200,255,0.4);
     }
     @media (max-width: 600px) {
       .contact-container { padding: 1rem .75rem; border-radius: 14px; }
@@ -937,7 +967,8 @@ body.dark-mode .btn-secondary {
 
     body.dark-mode .contact-container {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1.5px solid #00c8ff;
+      box-shadow: 0 0 8px rgba(0,200,255,.55), 0 0 16px rgba(0,200,255,.25);
     }
 
 .contact-grid {
@@ -970,6 +1001,10 @@ body.dark-mode .btn-secondary {
       border: 2.5px solid rgba(0,0,0,0.35);
       transition: all 0.3s ease;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 260px;
+      cursor: pointer;
     }
 
     body.dark-mode .contact-card {
@@ -986,6 +1021,81 @@ body.dark-mode .btn-secondary {
     body.dark-mode .contact-card:hover {
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
+
+    .cc-face {
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .contact-card.cc-open .cc-face {
+      transform: translateY(-16px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .cc-hint {
+      display: block;
+      margin-top: 0.75rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--primary);
+      opacity: 0.75;
+    }
+    body.dark-mode .cc-hint { color: #00c8ff; }
+
+    .cc-panel {
+      position: absolute;
+      left: 0; right: 0; top: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.85rem;
+      padding: 1.5rem;
+      background: rgba(37,99,235,0.06);
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    body.dark-mode .cc-panel {
+      background: rgba(0,200,255,0.06);
+    }
+    .contact-card.cc-open .cc-panel {
+      transform: translateY(0);
+    }
+
+    .cc-contact-link {
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      line-height: 1.3;
+    }
+    .cc-link-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    body.dark-mode .cc-link-title { color: #00c8ff; }
+    .cc-contact-link:hover .cc-link-title { text-decoration: underline; }
+    .cc-link-sub {
+      font-size: 0.78rem;
+      color: var(--text-light);
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+    body.dark-mode .cc-link-sub { color: var(--text-dark); }
+
+    .cc-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--primary);
+      opacity: 0.6;
+      cursor: pointer;
+      line-height: 1;
+    }
+    body.dark-mode .cc-close { color: #00c8ff; }
+    .cc-close:hover { opacity: 1; }
 
     .contact-icon {
       font-size: 2.5rem;
@@ -1166,14 +1276,14 @@ body.dark-mode .btn-secondary {
       text-align: center;
     }
 
-    /* Map Section */
+    /* Map Section — sem cor própria, herda o fundo único da página (grid de pontos) */
     .map-section {
       padding: 4rem 2rem;
-      background: white;
+      background: transparent;
     }
 
     body.dark-mode .map-section {
-      background: rgba(255, 255, 255, 0.02);
+      background: transparent;
     }
 
     .map-section h2 {
@@ -1218,12 +1328,8 @@ body.dark-mode .btn-secondary {
     /* Social Media Section */
     .social-section {
       padding: 4rem 2rem;
-      background: linear-gradient(135deg, rgba(79, 114, 20, 0.05), rgba(100, 124, 1, 0.05));
+      background: transparent;
       text-align: center;
-    }
-
-    body.dark-mode .social-section {
-      background: linear-gradient(135deg, rgba(79, 114, 20, 0.1), rgba(100, 124, 1, 0.1));
     }
 
     .social-section h2 {
@@ -1231,6 +1337,17 @@ body.dark-mode .btn-secondary {
       color: var(--primary);
       margin-bottom: 3rem;
       font-weight: 800;
+    }
+
+    /* Padrão oficial de tamanho de título de seção (H2) — Orizon */
+    .orizon-section-title {
+      font-size: 1.4rem !important;
+      font-weight: 800 !important;
+      color: #1e40af;
+    }
+    body.dark-mode .orizon-section-title { color: #00c8ff; }
+    @media (max-width: 640px) {
+      .orizon-section-title { font-size: 1.15rem !important; }
     }
 
     .social-grid {
@@ -1295,6 +1412,176 @@ body.dark-mode .btn-secondary {
       font-weight: 600;
       color: var(--primary);
       font-size: 0.95rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       REDES SOCIAIS — efeito diferenciado (tilt 3D + borda animada
+       em gradiente + spotlight que segue o mouse + ripple no clique)
+       ═══════════════════════════════════════════════════════════ */
+    @property --sc-angle {
+      syntax: '<angle>';
+      inherits: false;
+      initial-value: 0deg;
+    }
+
+    .social-grid-fx {
+      perspective: 1100px;
+    }
+
+    .sc-fx {
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      background: white;
+      border-color: color-mix(in srgb, var(--sc-a1) 30%, rgba(0,0,0,0.25)) !important;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.07),
+                  0 0 0 1px color-mix(in srgb, var(--sc-a1) 10%, transparent);
+      transition: transform 0.12s ease-out, box-shadow 0.35s ease, border-color 0.35s ease;
+      will-change: transform;
+    }
+    /* Modo claro: pegada metalizada/prata escovada, igual ao card Proposta Comercial */
+    body:not(.dark-mode) .sc-fx {
+      background:
+        linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.7) 48%, transparent 62%),
+        linear-gradient(135deg, #c7ccd6 0%, #e8ebf1 18%, #f4f6f9 32%, #d3d8e2 48%, #f4f6f9 64%, #dde1ea 80%, #c7ccd6 100%) !important;
+    }
+    body:not(.dark-mode) .sc-fx .sc-label { color: #262b38; }
+    body:not(.dark-mode) .sc-fx .sc-sub { color: #6b7280; }
+    body:not(.dark-mode) .sc-fx:hover .sc-label { color: var(--sc-a1); }
+    body.dark-mode .sc-fx {
+      background: rgba(255,255,255,0.05);
+      border-color: color-mix(in srgb, var(--sc-a1) 42%, rgba(255,255,255,0.1)) !important;
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35),
+                  0 0 22px -4px color-mix(in srgb, var(--sc-a1) 35%, transparent);
+    }
+    .sc-fx:hover {
+      box-shadow: 0 18px 40px rgba(0,0,0,0.12),
+                  0 0 0 1px color-mix(in srgb, var(--sc-a1) 30%, transparent);
+    }
+    body.dark-mode .sc-fx:hover {
+      box-shadow: 0 18px 44px rgba(0,0,0,0.45),
+                  0 0 32px -2px color-mix(in srgb, var(--sc-a1) 55%, transparent);
+    }
+
+    /* Borda com luz correndo — sempre ativa, em ambos os modos (ângulo controlado via JS) */
+    .sc-fx .sc-border {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: inherit;
+      padding: 2px;
+      background: conic-gradient(from var(--sc-angle, 0deg),
+        transparent 0deg,
+        transparent 300deg,
+        color-mix(in srgb, var(--sc-a1) 55%, white) 330deg,
+        var(--sc-a2) 345deg,
+        color-mix(in srgb, var(--sc-a1) 55%, white) 360deg);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.9;
+      pointer-events: none;
+      filter: drop-shadow(0 0 3px color-mix(in srgb, var(--sc-a1) 65%, transparent));
+      transition: opacity 0.3s ease, filter 0.3s ease;
+    }
+    .sc-fx:hover .sc-border,
+    .sc-fx:focus-visible .sc-border {
+      opacity: 1;
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sc-a1) 85%, transparent));
+    }
+
+    /* Fallback para navegadores sem @property (fica com um brilho estático elegante) */
+    @supports not (background: paint(x)) and (not (color: var(--sc-angle))) {
+      .sc-fx .sc-border { background: linear-gradient(135deg, var(--sc-a1), var(--sc-a2), var(--sc-a3), var(--sc-a4)); opacity: 0.5; }
+      .sc-fx:hover .sc-border { opacity: 0.9; }
+    }
+
+    /* Spotlight que segue o cursor */
+    .sc-fx .sc-spotlight {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 50%),
+        color-mix(in srgb, var(--sc-a1) 25%, transparent), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    .sc-fx:hover .sc-spotlight,
+    .sc-fx:focus-visible .sc-spotlight {
+      opacity: 1;
+    }
+
+    .sc-fx .sc-icon-wrap {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 66px;
+      height: 66px;
+      border-radius: 18px;
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--sc-a1) 20%, transparent),
+        color-mix(in srgb, var(--sc-a3) 20%, transparent));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc-a1) 22%, transparent);
+      transition: transform 0.4s cubic-bezier(.34,1.56,.64,1), background 0.35s ease;
+    }
+    body.dark-mode .sc-fx .sc-icon-wrap {
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--sc-a1) 28%, transparent),
+        color-mix(in srgb, var(--sc-a3) 28%, transparent));
+    }
+    .sc-fx .sc-icon-wrap .social-icon {
+      width: 34px;
+      height: 34px;
+    }
+    .sc-fx:hover .sc-icon-wrap {
+      transform: translateZ(20px) scale(1.12) rotate(-6deg);
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--sc-a1) 32%, transparent),
+        color-mix(in srgb, var(--sc-a3) 32%, transparent));
+    }
+
+    .sc-fx .sc-label,
+    .sc-fx .sc-sub {
+      position: relative;
+      z-index: 2;
+      transition: color 0.3s ease;
+    }
+    .sc-fx .sc-sub {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--muted, #888);
+      margin-top: -0.7rem;
+      letter-spacing: 0.3px;
+      opacity: 0.75;
+    }
+    .sc-fx:hover .sc-label {
+      color: var(--sc-a1);
+    }
+
+    /* Ripple ao clicar */
+    .sc-fx .sc-ripple {
+      position: absolute;
+      z-index: 1;
+      width: 10px;
+      height: 10px;
+      margin: -5px 0 0 -5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--sc-a1), transparent 70%);
+      transform: scale(0);
+      opacity: 0.55;
+      pointer-events: none;
+      animation: sc-ripple-anim 0.65s ease-out forwards;
+    }
+    @keyframes sc-ripple-anim {
+      to { transform: scale(22); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sc-fx, .sc-fx .sc-icon-wrap { transition: none !important; }
     }
 
     /* CHATBOT */
@@ -3025,6 +3312,69 @@ body.dark-mode .contact-card:hover {
   box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,200,255,0.1) !important;
   transform: translateY(-3px);
 }
+
+/* Cards de contato — toque de cor por categoria (modo escuro) */
+body.dark-mode .contact-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: var(--cc-accent, #00c8ff);
+  box-shadow: 0 0 12px var(--cc-accent, #00c8ff);
+  opacity: 0.9;
+}
+body.dark-mode .contact-card .contact-icon {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: var(--cc-accent-tint, rgba(0,200,255,0.12));
+}
+body.dark-mode .contact-card.cc-whatsapp {
+  --cc-accent: #4ade80;
+  --cc-accent-tint: rgba(74,222,128,0.16);
+  background: radial-gradient(circle at 30% 0%, rgba(74,222,128,0.16), rgba(0,200,255,0.04) 65%) !important;
+  border-color: rgba(74,222,128,0.5) !important;
+}
+body.dark-mode .contact-card.cc-whatsapp:hover {
+  border-color: rgba(74,222,128,0.7) !important;
+  background: rgba(74,222,128,0.12) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 24px rgba(74,222,128,0.25) !important;
+}
+body.dark-mode .contact-card.cc-whatsapp .cc-hint,
+body.dark-mode .contact-card.cc-whatsapp .cc-link-title { color: #4ade80; text-shadow: 0 0 8px rgba(74,222,128,0.5); }
+body.dark-mode .contact-card.cc-whatsapp .cc-panel { background: rgba(74,222,128,0.08); }
+
+body.dark-mode .contact-card.cc-email {
+  --cc-accent: #38bdf8;
+  --cc-accent-tint: rgba(56,189,248,0.16);
+  background: radial-gradient(circle at 30% 0%, rgba(56,189,248,0.16), rgba(0,200,255,0.04) 65%) !important;
+  border-color: rgba(56,189,248,0.5) !important;
+}
+body.dark-mode .contact-card.cc-email:hover {
+  border-color: rgba(56,189,248,0.7) !important;
+  background: rgba(56,189,248,0.12) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 24px rgba(56,189,248,0.25) !important;
+}
+body.dark-mode .contact-card.cc-email .cc-hint,
+body.dark-mode .contact-card.cc-email .cc-link-title { color: #38bdf8; text-shadow: 0 0 8px rgba(56,189,248,0.5); }
+body.dark-mode .contact-card.cc-email .cc-panel { background: rgba(56,189,248,0.08); }
+
+body.dark-mode .contact-card.cc-telefone {
+  --cc-accent: #fbbf24;
+  --cc-accent-tint: rgba(251,191,36,0.16);
+  background: radial-gradient(circle at 30% 0%, rgba(251,191,36,0.16), rgba(0,200,255,0.04) 65%) !important;
+  border-color: rgba(251,191,36,0.5) !important;
+}
+body.dark-mode .contact-card.cc-telefone:hover {
+  border-color: rgba(251,191,36,0.7) !important;
+  background: rgba(251,191,36,0.12) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 24px rgba(251,191,36,0.25) !important;
+}
+body.dark-mode .contact-card.cc-telefone .cc-hint,
+body.dark-mode .contact-card.cc-telefone .cc-link-title { color: #fbbf24; text-shadow: 0 0 8px rgba(251,191,36,0.5); }
+body.dark-mode .contact-card.cc-telefone .cc-panel { background: rgba(251,191,36,0.08); }
+
 body:not(.dark-mode) .contact-card {
   background: rgba(255,255,255,0.9) !important;
   border: 2.5px solid rgba(0,0,0,0.35) !important;
@@ -3036,10 +3386,75 @@ body:not(.dark-mode) .contact-card:hover {
   box-shadow: 0 8px 24px rgba(30,64,175,0.15) !important;
   transform: translateY(-3px);
 }
+
+/* Cards de contato — toque de cor por categoria (modo claro) */
+body:not(.dark-mode) .contact-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 5px;
+  background: var(--cc-accent, #1e40af);
+  opacity: 0.9;
+}
+body:not(.dark-mode) .contact-card .contact-icon {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: var(--cc-accent-tint, rgba(30,64,175,0.1));
+}
+body:not(.dark-mode) .contact-card.cc-whatsapp {
+  --cc-accent: #22c55e;
+  --cc-accent-tint: rgba(34,197,94,0.22);
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 48%, transparent 62%),
+    linear-gradient(160deg, #b6e8cb 0%, #e6f7ed 25%, #97d9b5 50%, #e6f7ed 75%, #b6e8cb 100%) !important;
+  border-color: rgba(34,197,94,0.55) !important;
+}
+body:not(.dark-mode) .contact-card.cc-whatsapp:hover {
+  border-color: rgba(34,197,94,0.7) !important;
+  box-shadow: 0 10px 30px rgba(34,197,94,0.32) !important;
+}
+body:not(.dark-mode) .contact-card.cc-whatsapp .cc-hint,
+body:not(.dark-mode) .contact-card.cc-whatsapp .cc-link-title { color: #16a34a; }
+body:not(.dark-mode) .contact-card.cc-whatsapp .cc-panel { background: rgba(34,197,94,0.12); }
+
+body:not(.dark-mode) .contact-card.cc-email {
+  --cc-accent: #2563eb;
+  --cc-accent-tint: rgba(37,99,235,0.22);
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 48%, transparent 62%),
+    linear-gradient(160deg, #b9c9f2 0%, #e6ecfb 25%, #9db3ec 50%, #e6ecfb 75%, #b9c9f2 100%) !important;
+  border-color: rgba(37,99,235,0.55) !important;
+}
+body:not(.dark-mode) .contact-card.cc-email:hover {
+  border-color: rgba(37,99,235,0.7) !important;
+  box-shadow: 0 10px 30px rgba(37,99,235,0.32) !important;
+}
+body:not(.dark-mode) .contact-card.cc-email .cc-hint,
+body:not(.dark-mode) .contact-card.cc-email .cc-link-title { color: #2563eb; }
+body:not(.dark-mode) .contact-card.cc-email .cc-panel { background: rgba(37,99,235,0.12); }
+
+body:not(.dark-mode) .contact-card.cc-telefone {
+  --cc-accent: #d97706;
+  --cc-accent-tint: rgba(217,119,6,0.22);
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 48%, transparent 62%),
+    linear-gradient(160deg, #f2d9a8 0%, #fbf0dc 25%, #ecc37e 50%, #fbf0dc 75%, #f2d9a8 100%) !important;
+  border-color: rgba(217,119,6,0.55) !important;
+}
+body:not(.dark-mode) .contact-card.cc-telefone:hover {
+  border-color: rgba(217,119,6,0.7) !important;
+  box-shadow: 0 10px 30px rgba(217,119,6,0.32) !important;
+}
+body:not(.dark-mode) .contact-card.cc-telefone .cc-hint,
+body:not(.dark-mode) .contact-card.cc-telefone .cc-link-title { color: #b45309; }
+body:not(.dark-mode) .contact-card.cc-telefone .cc-panel { background: rgba(217,119,6,0.12); }
+
 body.dark-mode .form-card {
   background: rgba(0,200,255,0.04) !important;
-  border: 2.5px solid rgba(255,255,255,0.35) !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.08) !important;
+  border: 1.5px solid #00c8ff !important;
+  box-shadow: 0 0 8px rgba(0,200,255,.55), 0 0 16px rgba(0,200,255,.25), 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(0,200,255,0.08) !important;
   transition: all 0.3s ease !important;
   position: relative;
   overflow: hidden;
@@ -3053,22 +3468,230 @@ body.dark-mode .form-card::after {
   pointer-events: none;
 }
 body.dark-mode .form-card:hover {
-  border-color: rgba(255,255,255,0.35) !important;
+  border-color: #00c8ff !important;
   background: rgba(0,200,255,0.08) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,200,255,0.1) !important;
+  box-shadow: 0 0 10px rgba(0,200,255,.65), 0 0 20px rgba(0,200,255,.3), 0 8px 32px rgba(0,0,0,0.4) !important;
   transform: translateY(-3px);
 }
 body:not(.dark-mode) .form-card {
   background: rgba(255,255,255,0.9) !important;
-  border: 2.5px solid rgba(0,0,0,0.35) !important;
+  border: 1.5px solid #2563eb !important;
   box-shadow: 0 4px 16px rgba(30,64,175,0.08), inset 0 1px 0 rgba(255,255,255,0.8) !important;
   transition: all 0.3s ease !important;
 }
 body:not(.dark-mode) .form-card:hover {
-  border-color: rgba(0,0,0,0.35) !important;
+  border-color: #2563eb !important;
   box-shadow: 0 8px 24px rgba(30,64,175,0.15) !important;
   transform: translateY(-3px);
-}</style>
+}
+
+/* Tonalidades de cor nos formulários — modo claro (contraste forte) */
+body:not(.dark-mode) .form-card-email {
+  background: linear-gradient(180deg, rgba(37,99,235,0.22) 0%, rgba(37,99,235,0.08) 35%, rgba(37,99,235,0.06) 65%, rgba(37,99,235,0.16) 100%) !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 22px rgba(37,99,235,0.18), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+}
+body:not(.dark-mode) .form-card-email:hover {
+  background: linear-gradient(180deg, rgba(37,99,235,0.28) 0%, rgba(37,99,235,0.10) 35%, rgba(37,99,235,0.08) 65%, rgba(37,99,235,0.20) 100%) !important;
+  box-shadow: 0 10px 30px rgba(37,99,235,0.28) !important;
+}
+body:not(.dark-mode) .form-card-email .form-card-header {
+  margin: -2rem -2rem 1.5rem;
+  padding: 1.25rem 2rem 1rem;
+  background: linear-gradient(120deg, rgba(37,99,235,0.28), rgba(37,99,235,0.10));
+  border-radius: 20px 20px 0 0;
+  border-bottom: 3px solid #2563eb;
+}
+body:not(.dark-mode) .form-card-email .form-field input,
+body:not(.dark-mode) .form-card-email .form-field textarea {
+  background: rgba(37,99,235,0.05) !important;
+}
+body:not(.dark-mode) .form-card-email .form-field input:focus,
+body:not(.dark-mode) .form-card-email .form-field textarea:focus {
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+}
+
+body:not(.dark-mode) .form-card-whatsapp {
+  background: linear-gradient(180deg, rgba(16,163,74,0.22) 0%, rgba(16,163,74,0.08) 35%, rgba(16,163,74,0.06) 65%, rgba(16,163,74,0.16) 100%) !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 6px 22px rgba(16,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.8) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp:hover {
+  background: linear-gradient(180deg, rgba(16,163,74,0.28) 0%, rgba(16,163,74,0.10) 35%, rgba(16,163,74,0.08) 65%, rgba(16,163,74,0.20) 100%) !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 10px 30px rgba(16,163,74,0.28) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-card-header {
+  margin: -2rem -2rem 1.5rem;
+  padding: 1.25rem 2rem 1rem;
+  background: linear-gradient(120deg, rgba(16,163,74,0.28), rgba(16,163,74,0.10));
+  border-radius: 20px 20px 0 0;
+  border-bottom: 3px solid #16a34a;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-field input,
+body:not(.dark-mode) .form-card-whatsapp .form-field textarea {
+  background: rgba(16,163,74,0.05) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-field input:focus,
+body:not(.dark-mode) .form-card-whatsapp .form-field textarea:focus {
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(16,163,74,0.18) !important;
+}
+
+/* Pegada metalizada nos formulários — modo claro (metal colorido, com mais tom da cor original) */
+body:not(.dark-mode) .form-card-email {
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 48%, transparent 62%),
+    linear-gradient(160deg, #b9c9f2 0%, #e6ecfb 25%, #9db3ec 50%, #e6ecfb 75%, #b9c9f2 100%) !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 6px 20px rgba(37,99,235,0.18), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+}
+body:not(.dark-mode) .form-card-email:hover {
+  box-shadow: 0 10px 28px rgba(37,99,235,0.26) !important;
+}
+body:not(.dark-mode) .form-card-email .form-card-header {
+  background: linear-gradient(120deg, #9db3ec, #e6ecfb) !important;
+  border-bottom: 3px solid #2563eb !important;
+}
+body:not(.dark-mode) .form-card-email .form-field input,
+body:not(.dark-mode) .form-card-email .form-field textarea {
+  background: linear-gradient(160deg, #eef1fb, #dbe3f7) !important;
+  border-color: rgba(37,99,235,0.3) !important;
+}
+body:not(.dark-mode) .form-card-email .form-field input:focus,
+body:not(.dark-mode) .form-card-email .form-field textarea:focus {
+  background: #f5f7fd !important;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.18) !important;
+}
+
+body:not(.dark-mode) .form-card-whatsapp {
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 48%, transparent 62%),
+    linear-gradient(160deg, #b6e8cb 0%, #e6f7ed 25%, #97d9b5 50%, #e6f7ed 75%, #b6e8cb 100%) !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 6px 20px rgba(16,163,74,0.18), inset 0 1px 0 rgba(255,255,255,0.7) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp:hover {
+  box-shadow: 0 10px 28px rgba(16,163,74,0.26) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-card-header {
+  background: linear-gradient(120deg, #97d9b5, #e6f7ed) !important;
+  border-bottom: 3px solid #16a34a !important;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-field input,
+body:not(.dark-mode) .form-card-whatsapp .form-field textarea {
+  background: linear-gradient(160deg, #eef9f1, #dbf0e2) !important;
+  border-color: rgba(16,163,74,0.3) !important;
+}
+body:not(.dark-mode) .form-card-whatsapp .form-field input:focus,
+body:not(.dark-mode) .form-card-whatsapp .form-field textarea:focus {
+  background: #f5fbf6 !important;
+  box-shadow: 0 0 0 3px rgba(16,163,74,0.18) !important;
+}
+@media (max-width: 600px) {
+  body:not(.dark-mode) .form-card-email .form-card-header,
+  body:not(.dark-mode) .form-card-whatsapp .form-card-header {
+    margin: -1.25rem -1rem 1.25rem;
+    padding: 1rem 1rem 0.85rem;
+    border-radius: 14px 14px 0 0;
+  }
+  body.dark-mode .form-card-email .form-card-header,
+  body.dark-mode .form-card-whatsapp .form-card-header {
+    margin: -1.25rem -1rem 1.25rem;
+    padding: 1rem 1rem 0.85rem;
+    border-radius: 14px 14px 0 0;
+  }
+}
+
+/* Tonalidades neon nos formulários — modo escuro */
+body.dark-mode .form-card-email {
+  background: linear-gradient(160deg, rgba(0,170,255,0.16) 0%, rgba(0,170,255,0.03) 35%, rgba(0,200,255,0.04) 100%) !important;
+  border: 1.5px solid #00aaff !important;
+  box-shadow: 0 0 10px rgba(0,170,255,.6), 0 0 22px rgba(0,170,255,.3), 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(0,170,255,0.1) !important;
+}
+body.dark-mode .form-card-email:hover {
+  border-color: #00aaff !important;
+  background: linear-gradient(160deg, rgba(0,170,255,0.22) 0%, rgba(0,170,255,0.05) 35%, rgba(0,200,255,0.06) 100%) !important;
+  box-shadow: 0 0 14px rgba(0,170,255,.75), 0 0 30px rgba(0,170,255,.4), 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+body.dark-mode .form-card-email .form-card-header {
+  margin: -2rem -2rem 1.5rem;
+  padding: 1.25rem 2rem 1rem;
+  background: linear-gradient(120deg, rgba(0,170,255,0.24), rgba(0,170,255,0.04));
+  border-radius: 20px 20px 0 0;
+  border-bottom: 3px solid #00aaff;
+  box-shadow: 0 2px 12px rgba(0,170,255,0.3);
+}
+body.dark-mode .form-card-email .form-card-header h3 {
+  color: #6fd2ff !important;
+  text-shadow: 0 0 10px rgba(0,170,255,0.8), 0 0 20px rgba(0,170,255,0.4) !important;
+}
+body.dark-mode .form-card-email .form-field input,
+body.dark-mode .form-card-email .form-field textarea {
+  background: rgba(0,170,255,0.06) !important;
+  border-color: #00aaff !important;
+}
+body.dark-mode .form-card-email .form-field input:focus,
+body.dark-mode .form-card-email .form-field textarea:focus {
+  border-color: #00aaff !important;
+  box-shadow: 0 0 0 3px rgba(0,170,255,0.25), 0 0 14px rgba(0,170,255,0.45) !important;
+}
+
+body.dark-mode .form-card-whatsapp {
+  background: linear-gradient(160deg, rgba(0,255,150,0.16) 0%, rgba(0,255,150,0.03) 35%, rgba(0,200,255,0.02) 100%) !important;
+  border: 1.5px solid #00ffab !important;
+  box-shadow: 0 0 10px rgba(0,255,171,.6), 0 0 22px rgba(0,255,171,.3), 0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(0,255,171,0.1) !important;
+}
+body.dark-mode .form-card-whatsapp:hover {
+  border-color: #00ffab !important;
+  background: linear-gradient(160deg, rgba(0,255,150,0.22) 0%, rgba(0,255,150,0.05) 35%, rgba(0,200,255,0.03) 100%) !important;
+  box-shadow: 0 0 14px rgba(0,255,171,.75), 0 0 30px rgba(0,255,171,.4), 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+body.dark-mode .form-card-whatsapp .form-card-header {
+  margin: -2rem -2rem 1.5rem;
+  padding: 1.25rem 2rem 1rem;
+  background: linear-gradient(120deg, rgba(0,255,150,0.24), rgba(0,255,150,0.04));
+  border-radius: 20px 20px 0 0;
+  border-bottom: 3px solid #00ffab;
+  box-shadow: 0 2px 12px rgba(0,255,171,0.3);
+}
+body.dark-mode .form-card-whatsapp .form-card-header h3 {
+  color: #6dffce !important;
+  text-shadow: 0 0 10px rgba(0,255,171,0.8), 0 0 20px rgba(0,255,171,0.4) !important;
+}
+body.dark-mode .form-card-whatsapp .form-field input,
+body.dark-mode .form-card-whatsapp .form-field textarea {
+  background: rgba(0,255,150,0.06) !important;
+  border-color: #00ffab !important;
+}
+body.dark-mode .form-card-whatsapp .form-field input:focus,
+body.dark-mode .form-card-whatsapp .form-field textarea:focus {
+  border-color: #00ffab !important;
+  box-shadow: 0 0 0 3px rgba(0,255,171,0.25), 0 0 14px rgba(0,255,171,0.45) !important;
+}
+</style>
+
+<style>
+/* Banner "Sua empresa está contratando?" — legibilidade no modo claro */
+body:not(.dark-mode) .sec-empresas-title {
+  color: #1e40af !important;
+}
+body:not(.dark-mode) .sec-empresas-title span {
+  color: #0f172a !important;
+}
+body:not(.dark-mode) .sec-empresas-subtitle {
+  color: #475569 !important;
+}
+
+<style>
+/* Título acima dos cards de contato — cores por modo */
+body:not(.dark-mode) .contact-title {
+  color: #1e40af !important;
+}
+body.dark-mode .contact-title {
+  color: #00c8ff !important;
+}
 
 
 <style>
@@ -3298,42 +3921,76 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 
   <section class="contact-section" id="sec-contatos">
     <div class="contact-container">
+      <h2 class="contact-title">Escolha a Melhor Forma de Falar Conosco</h2>
       <div class="contact-grid">
     <!-- CONTATO 1 -->
-<div class="contact-card">
-  <div class="contact-icon">
-    <img src="../imagens/iconwhast.png" alt="WhatsApp — Orizon Guaíba RS" loading="eager" style="width:32px; height:32px;">
+<div class="contact-card cc-whatsapp" data-cc tabindex="0" role="button" aria-expanded="false" aria-label="WhatsApp — toque para ver os contatos">
+  <div class="cc-face">
+    <div class="contact-icon">
+      <img src="../imagens/iconwhast.png" alt="WhatsApp — Orizon Guaíba RS" loading="eager" style="width:32px; height:32px;">
+    </div>
+    <h3>WhatsApp</h3>
+    <p>Entre em contato conosco pelo WhatsApp para dúvidas rápidas e atendimento a profissionais e empresas.</p>
+    <span class="cc-hint">Toque para ver os contatos</span>
   </div>
-  <h3>WhatsApp</h3>
-  <p>Entre em contato conosco pelo WhatsApp para dúvidas rápidas e atendimento a profissionais e empresas.</p>
-  <a href="https://wa.me/5551996976579" target="_blank" rel="noopener noreferrer" title="Falar com a Orizon pelo WhatsApp Comercial" class="contact-link">(51) 99697-6579</a><br>
-  <a href="https://wa.me/5551996578263" target="_blank" rel="noopener noreferrer" title="WhatsApp Orizon — atendimento recrutamento Guaíba" class="contact-link">(51) 99657-8263</a>
-  <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.7;">Segunda a sexta, 8h-18h</p>
+  <div class="cc-panel">
+    <button class="cc-close" onclick="event.stopPropagation(); this.closest('.contact-card').classList.remove('cc-open'); this.closest('.contact-card').setAttribute('aria-expanded','false');" aria-label="Fechar">✕</button>
+    <a class="cc-contact-link" href="https://wa.me/5551996976579?text=Ol%C3%A1%21%20Gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Orizon." target="_blank" rel="noopener noreferrer" title="Falar com a Orizon pelo WhatsApp Comercial" onclick="event.stopPropagation()">
+      <span class="cc-link-title">WhatsApp Comercial</span>
+      <span class="cc-link-sub">(51) 99697-6579</span>
+    </a>
+    <a class="cc-contact-link" href="https://wa.me/5551996578263?text=Ol%C3%A1%21%20Gostaria%20de%20saber%20mais%20sobre%20oportunidades%20de%20vagas%20e%20recrutamento." target="_blank" rel="noopener noreferrer" title="WhatsApp Orizon — atendimento recrutamento Guaíba" onclick="event.stopPropagation()">
+      <span class="cc-link-title">WhatsApp Recrutamento</span>
+      <span class="cc-link-sub">(51) 99657-8263</span>
+    </a>
+  </div>
 </div>
 
 <!-- CONTATO 2 -->
-<div class="contact-card">
-  <div class="contact-icon">
-    <img src="../imagens/gmail.png" alt="E-mail — Orizon" loading="lazy" style="width:32px; height:32px;">
+<div class="contact-card cc-email" data-cc tabindex="0" role="button" aria-expanded="false" aria-label="E-mail — toque para ver os contatos">
+  <div class="cc-face">
+    <div class="contact-icon">
+      <img src="../imagens/gmail.png" alt="E-mail — Orizon" loading="lazy" style="width:32px; height:32px;">
+    </div>
+    <h3>E-mail</h3>
+    <p>Envie currículos, dúvidas e sugestões para nossos e-mails.</p>
+    <span class="cc-hint">Toque para ver os contatos</span>
   </div>
-  <h3>E-mail</h3>
-  <p>Envie currículos, dúvidas e sugestões para nossos e-mails.</p>
-  <a href="mailto:adm@orizonrs.com" class="contact-link" title="Enviar e-mail para a Orizon">adm@orizonrs.com</a><br>
-  <a href="mailto:selecao.orizon@gmail.com" class="contact-link" title="E-mail de recrutamento — Orizon">selecao.orizon@gmail.com</a><br>
-  <a href="mailto:orizonrh.consultoria@gmail.com" class="contact-link" title="E-mail de recrutamento — Orizon RH Consultoria">orizonrh.consultoria@gmail.com</a>
-  <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.7;">Resposta o mais breve possível</p>
+  <div class="cc-panel">
+    <button class="cc-close" onclick="event.stopPropagation(); this.closest('.contact-card').classList.remove('cc-open'); this.closest('.contact-card').setAttribute('aria-expanded','false');" aria-label="Fechar">✕</button>
+    <a class="cc-contact-link" href="mailto:adm@orizonrs.com?subject=Contato%20via%20site" title="Enviar e-mail para a Orizon" onclick="event.stopPropagation()">
+      <span class="cc-link-title">E-mail Corporativo</span>
+      <span class="cc-link-sub">adm@orizonrs.com</span>
+    </a>
+    <a class="cc-contact-link" href="mailto:selecao.orizon@gmail.com?subject=Envio%20de%20curr%C3%ADculo%20%2F%20Recrutamento" title="E-mail de recrutamento — Orizon" onclick="event.stopPropagation()">
+      <span class="cc-link-title">E-mail Recrutamento</span>
+      <span class="cc-link-sub">selecao.orizon@gmail.com</span>
+    </a>
+    <a class="cc-contact-link" href="mailto:orizonrh.consultoria@gmail.com?subject=Consultoria%20RH%20-%20Contato" title="E-mail de recrutamento — Orizon RH Consultoria" onclick="event.stopPropagation()">
+      <span class="cc-link-title">E-mail RH Consultoria</span>
+      <span class="cc-link-sub">orizonrh.consultoria@gmail.com</span>
+    </a>
+  </div>
 </div>
 
           
   <!-- CONTATO 3 -->
-<div class="contact-card">
-  <div class="contact-icon">
-    <img src="../imagens/telefone.png" alt="Telefone — Orizon Guaíba RS" loading="lazy" style="width:32px; height:32px;">
+<div class="contact-card cc-telefone" data-cc tabindex="0" role="button" aria-expanded="false" aria-label="Telefone — toque para ver os contatos">
+  <div class="cc-face">
+    <div class="contact-icon">
+      <img src="../imagens/telefone.png" alt="Telefone — Orizon Guaíba RS" loading="lazy" style="width:32px; height:32px;">
+    </div>
+    <h3>Telefone</h3>
+    <p>Ligue para a Orizon e fale direto com nossa equipe.</p>
+    <span class="cc-hint">Toque para ver os contatos</span>
   </div>
-  <h3>Telefone</h3>
-  <p>Ligue para a Orizon e fale direto com nossa equipe.</p>
-  <a href="tel:+5551996976579" class="contact-link" title="Ligar para a Orizon — Comercial">(51) 99697-6579</a>
-  <p style="margin-top: 1rem; font-size: 0.85rem; opacity: 0.7;">Segunda a sexta, 8h-18h</p>
+  <div class="cc-panel">
+    <button class="cc-close" onclick="event.stopPropagation(); this.closest('.contact-card').classList.remove('cc-open'); this.closest('.contact-card').setAttribute('aria-expanded','false');" aria-label="Fechar">✕</button>
+    <a class="cc-contact-link" href="tel:+5551996976579" title="Ligar para a Orizon — Comercial" onclick="event.stopPropagation()">
+      <span class="cc-link-title">Telefone Comercial</span>
+      <span class="cc-link-sub">(51) 99697-6579</span>
+    </a>
+  </div>
 </div>
 
       </div>
@@ -3353,7 +4010,7 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
   <div class="forms-wrapper" id="sec-formularios">
 
     <!-- FORMULÁRIO 1: EMAIL (Formspree) -->
-    <div class="form-card">
+    <div class="form-card form-card-email">
       <div class="form-card-header">
         <img src="../imagens/gmail.png" alt="Formulário de contato por e-mail — Orizon">
         <div>
@@ -3398,7 +4055,7 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
     </div>
 
     <!-- FORMULÁRIO 2: WHATSAPP -->
-    <div class="form-card">
+    <div class="form-card form-card-whatsapp">
       <div class="form-card-header">
         <img src="../imagens/wpp.png" alt="Formulário de contato pelo WhatsApp — Orizon">
         <div>
@@ -3446,13 +4103,13 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 
     <div style="max-width:1200px;margin:0 auto;text-align:center;position:relative;z-index:1;">
       <p style="font-size:0.65rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#2563eb;margin-bottom:0.5rem;">✦ Para Empresas e Parceiros</p>
-      <h2 style="font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;color:#f0f0f0;margin-bottom:0.4rem;">Sua empresa está <span style="color:#ffffff;">contratando?</span></h2>
-      <p style="color:#777;font-size:0.9rem;margin-bottom:3rem;">Arraste o card para ver como podemos ajudar</p>
+      <h2 style="font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;color:#f0f0f0;margin-bottom:0.4rem;" class="sec-empresas-title">Sua empresa está <span style="color:#ffffff;">contratando?</span></h2>
+      <p style="color:#777;font-size:0.9rem;margin-bottom:3rem;" class="sec-empresas-subtitle">Arraste o card para ver como podemos ajudar</p>
 
       <!-- CARD 3D -->
       <div style="perspective:1200px;display:flex;justify-content:center;">
         <div id="orizon-card" style="
-          width:100%;max-width:95%;height:clamp(460px,60vw,460px);position:relative;
+          width:100%;max-width:95%;height:clamp(560px,60vw,560px);position:relative;
           transform-style:preserve-3d;transition:transform 0.08s linear;
           cursor:grab;user-select:none;
         ">
@@ -3470,50 +4127,70 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 
             <div>
               <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1.8rem;">
-                <div style="width:40px;height:40px;border-radius:10px;background:rgba(37,99,235,0.15);border: 2.5px solid rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🏢</div>
+                <div style="width:40px;height:40px;border-radius:10px;background:rgba(37,99,235,0.15);border: 2.5px solid rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:1.2rem;" class="op-icon-box">🏢</div>
                 <div style="text-align:left;">
-                  <div style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:#2563eb;opacity:0.8;">Orizon</div>
-                  <div style="font-size:0.95rem;font-weight:800;color:#f0f0f0;">Proposta Comercial</div>
+                  <div style="font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;color:#2563eb;opacity:0.8;" class="op-eyebrow">Orizon</div>
+                  <div style="font-size:0.95rem;font-weight:800;color:#f0f0f0;" class="op-title">Proposta Comercial</div>
                 </div>
-                <div style="margin-left:auto;font-size:0.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(37,99,235,0.1);border: 2.5px solid rgba(0,0,0,0.35);border-radius:99px;padding:0.25rem 0.7rem;color:#2563eb;">Premium</div>
+                <div style="margin-left:auto;font-size:0.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(37,99,235,0.1);border: 2.5px solid rgba(0,0,0,0.35);border-radius:99px;padding:0.25rem 0.7rem;color:#2563eb;" class="op-badge">Premium</div>
               </div>
 
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.8rem;text-align:left;">
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;">
-                  <div style="font-size:1.3rem;margin-bottom:0.3rem;">🤖</div>
-                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;">IA Avançada</div>
-                  <div style="font-size:0.68rem;color:#666;line-height:1.4;">ATS com Claude, Gemini & Meta AI</div>
+              <div class="op-stats-grid">
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">🤖</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">IA Avançada</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Claude, GPT, Gemini, Grok & Copilot</div>
                 </div>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;">
-                  <div style="font-size:1.3rem;margin-bottom:0.3rem;">🧠</div>
-                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;">Teste DISC</div>
-                  <div style="font-size:0.68rem;color:#666;line-height:1.4;">Perfil comportamental de cada candidato</div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">🧠</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">Perfil Comportamental</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">IPS Ativo, 16 Personalidades & PDA</div>
                 </div>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;">
-                  <div style="font-size:1.3rem;margin-bottom:0.3rem;">📘</div>
-                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;">2.7M Views/tri</div>
-                  <div style="font-size:0.68rem;color:#666;line-height:1.4;">Média no Facebook por trimestre</div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">📘</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">200k Views/mês</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Média no Facebook por mês</div>
                 </div>
-                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;">
-                  <div style="font-size:1.3rem;margin-bottom:0.3rem;">🌐</div>
-                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;">17k+ Pessoas</div>
-                  <div style="font-size:0.68rem;color:#666;line-height:1.4;">LinkedIn, WhatsApp & Instagram</div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">🌐</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">17k+ Pessoas</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">LinkedIn, WhatsApp & Instagram</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">💰</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">Sistema Financeiro</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Controle financeiro completo da empresa</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">🗂️</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">Departamento Pessoal</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Gestão de DP e folha de pagamento</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat op-mobile-hide">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">🖥️</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">Criação de Sites</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Sites profissionais sob medida</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:0.9rem;" class="op-stat op-mobile-hide">
+                  <div style="font-size:1.3rem;margin-bottom:0.5rem;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;" class="op-stat-icon">💬</div>
+                  <div style="font-size:0.75rem;font-weight:700;color:#f0f0f0;margin-bottom:0.2rem;" class="op-stat-title">Chatbot WhatsApp</div>
+                  <div style="font-size:0.68rem;color:#666;line-height:1.4;" class="op-stat-desc">Atendimento automatizado 24h</div>
                 </div>
               </div>
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:1.2rem;">
-              <div style="font-size:0.68rem;color:#444;">Arraste para ver mais →</div>
+              <div style="font-size:0.68rem;color:#444;" class="op-hint">Arraste para ver mais →</div>
               <div style="display:flex;gap:0.4rem;">
-                <div style="width:8px;height:8px;border-radius:50%;background:#2563eb;animation:pulse-dot 1.5s infinite;"></div>
-                <div style="width:8px;height:8px;border-radius:50%;background:rgba(37,99,235,0.3);"></div>
-                <div style="width:8px;height:8px;border-radius:50%;background:rgba(37,99,235,0.3);"></div>
+                <div style="width:8px;height:8px;border-radius:50%;background:#2563eb;animation:pulse-dot 1.5s infinite;" class="op-dot op-dot-active"></div>
+                <div style="width:8px;height:8px;border-radius:50%;background:rgba(37,99,235,0.3);" class="op-dot"></div>
+                <div style="width:8px;height:8px;border-radius:50%;background:rgba(37,99,235,0.3);" class="op-dot"></div>
               </div>
             </div>
           </div>
 
           <!-- VERSO — Terminal -->
-          <div style="
+          <div id="card-verso" style="
             position:absolute;inset:0;backface-visibility:hidden;
             transform:rotateY(180deg);
             background:#0d0d0d;border: 2.5px solid rgba(0,0,0,0.35);border-radius:24px;
@@ -3534,8 +4211,8 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
             </div>
 
             <div style="margin-top:1rem;display:flex;gap:0.6rem;flex-wrap:wrap;">
-              <a href="https://wa.me/5551996976579?text=Olá! Quero saber mais sobre contratar com a Orizon." target="_blank" style="flex:1;min-width:140px;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;text-decoration:none;border-radius:10px;padding:0.7rem;font-size:0.78rem;font-weight:700;text-align:center;font-family:inherit;">💬 WhatsApp agora</a>
-              <a href="mailto:adm@orizonrs.com?subject=Quero contratar com a Orizon" style="flex:1;min-width:140px;background:rgba(37,99,235,0.1);border: 2.5px solid rgba(0,0,0,0.35);color:#2563eb;text-decoration:none;border-radius:10px;padding:0.7rem;font-size:0.78rem;font-weight:700;text-align:center;font-family:inherit;">✉️ Enviar e-mail</a>
+              <a href="https://wa.me/5551996976579?text=Olá! Quero saber mais sobre contratar com a Orizon." target="_blank" style="flex:1;min-width:140px;background:linear-gradient(135deg,#2563eb,#1e40af);color:#fff;text-decoration:none;border-radius:10px;padding:0.7rem;font-size:0.78rem;font-weight:700;text-align:center;font-family:inherit;" class="op-btn op-btn-whatsapp">💬 WhatsApp agora</a>
+              <a href="mailto:adm@orizonrs.com?subject=Quero contratar com a Orizon" style="flex:1;min-width:140px;background:rgba(37,99,235,0.1);border: 2.5px solid rgba(0,0,0,0.35);color:#2563eb;text-decoration:none;border-radius:10px;padding:0.7rem;font-size:0.78rem;font-weight:700;text-align:center;font-family:inherit;" class="op-btn op-btn-email">✉️ Enviar e-mail</a>
             </div>
           </div>
         </div>
@@ -3548,13 +4225,22 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
   body:not(.dark-mode) .sec-empresas { background: #f0f4fa; }
   body:not(.dark-mode) #sec-empresas [style*="rgba(0,200,255,0.03)"] { opacity: 0.5; }
   @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+
+  .op-stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0.8rem; text-align:left; }
+  .op-mobile-hide { display: block; }
+
+  @media(min-width:769px){
+    #orizon-card { height: 420px !important; }
+  }
+  @media(max-width:768px){
+    #orizon-card { height: 640px !important; }
+    .op-stats-grid { grid-template-columns:repeat(2,1fr); }
+  }
   @media(max-width:600px){
-    #orizon-card { height: 520px !important; }
+    #orizon-card { height: 600px !important; }
     #sec-empresas { padding: 2.5rem .75rem !important; }
-    #sec-empresas [style*="grid-template-columns:repeat(auto-fit"] {
-      grid-template-columns: 1fr 1fr !important;
-      gap: .5rem !important;
-    }
+    .op-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:.5rem !important; }
+    .op-mobile-hide { display: none !important; }
     #orizon-card [style*="padding:2.5rem"] { padding: 1.25rem !important; }
     #orizon-card [style*="padding:1.8rem"] { padding: 1rem !important; }
     #orizon-card [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }}</style>
@@ -3575,19 +4261,40 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
       {txt:'✔ Conexão estabelecida', cor:'#2ecc71', delay:1200},
       {txt:'', cor:'', delay:1600},
       {txt:'> Diferenciais:', cor:'#f39c12', delay:1800},
-      {txt:'✦ ATS: Claude + Gemini + Meta AI', cor:'#f0f0f0', delay:2200},
-      {txt:'✦ Teste DISC comportamental', cor:'#f0f0f0', delay:2600},
-      {txt:'✦ 2.7M views/tri no Facebook', cor:'#f0f0f0', delay:3000},
+      {txt:'✦ IA: Claude, GPT, Gemini, Grok & Copilot', cor:'#f0f0f0', delay:2200},
+      {txt:'✦ IPS Ativo, 16 Personalidades & PDA', cor:'#f0f0f0', delay:2600},
+      {txt:'✦ 1M views/mês no Facebook', cor:'#f0f0f0', delay:3000},
+      {txt:'✦ 3M views/trimestre no Facebook', cor:'#f0f0f0', delay:3400},
     ];
     var col2 = [
-      {txt:'✦ 10k conexões no LinkedIn', cor:'#f0f0f0', delay:3400},
-      {txt:'✦ 5k pessoas em grupos WhatsApp', cor:'#f0f0f0', delay:3800},
-      {txt:'✦ 2k seguidores no Instagram', cor:'#f0f0f0', delay:4200},
-      {txt:'', cor:'', delay:4600},
-      {txt:'> STATUS: PRONTO ✔', cor:'#2ecc71', delay:5000},
-      {txt:'> Escolha um canal:', cor:'#00c8ff', delay:5500},
+      {txt:'> Alcance:', cor:'#f39c12', delay:3800},
+      {txt:'✦ 22k pessoas no grupo do Facebook', cor:'#f0f0f0', delay:4200},
+      {txt:'   maior grupo da cidade, alto engajamento', cor:'#888', delay:4400},
+      {txt:'✦ 12k+ conexões no LinkedIn', cor:'#f0f0f0', delay:4800},
+      {txt:'   um dos maiores em engajamento da cidade', cor:'#888', delay:5000},
+      {txt:'✦ 160k views/mês no LinkedIn', cor:'#f0f0f0', delay:5400},
+      {txt:'✦ 5k+ pessoas em grupos WhatsApp', cor:'#f0f0f0', delay:5800},
+      {txt:'✦ 2k+ seguidores no Instagram', cor:'#f0f0f0', delay:6200},
+      {txt:'✦ 40k views/mês no Instagram', cor:'#f0f0f0', delay:6600},
+      {txt:'', cor:'', delay:7000},
+      {txt:'> STATUS: PRONTO ✔', cor:'#2ecc71', delay:7400},
+      {txt:'> Escolha um canal:', cor:'#00c8ff', delay:7900},
     ];
     var linhas = col1.concat(col2);
+
+    // Paleta do terminal ajustada por modo (claro precisa de tons escuros/legíveis)
+    var coresClaras = {
+      '#00c8ff': '#2563eb',
+      '#2ecc71': '#15803d',
+      '#f39c12': '#c2740c',
+      '#f0f0f0': '#12213f',
+      '#888': '#64748b'
+    };
+    function corTerminal(cor){
+      var base = cor || '#00c8ff';
+      var claro = document.body && !document.body.classList.contains('dark-mode');
+      return claro ? (coresClaras[base] || base) : base;
+    }
 
     function rodarTerminal(){
       var c1 = document.getElementById('terminal-col1');
@@ -3600,7 +4307,7 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
           if(!l.txt){c1.innerHTML += '<br>';return;}
           var span = document.createElement('div');
           span.textContent = l.txt;
-          span.style.color = l.cor || '#00c8ff';
+          span.style.color = corTerminal(l.cor);
           span.style.opacity = '0';
           span.style.transform = 'translateX(-6px)';
           span.style.transition = 'all 0.3s ease';
@@ -3614,7 +4321,7 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
           if(!l.txt){c2.innerHTML += '<br>';return;}
           var span = document.createElement('div');
           span.textContent = l.txt;
-          span.style.color = l.cor || '#00c8ff';
+          span.style.color = corTerminal(l.cor);
           span.style.opacity = '0';
           span.style.transform = 'translateX(-6px)';
           span.style.transition = 'all 0.3s ease';
@@ -3734,7 +4441,7 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 
   <!-- Mapa Section -->
   <section class="map-section" id="sec-mapa">
-    <h2>Nos Encontre</h2>
+    <h2 class="orizon-section-title">Nos Encontre</h2>
     <p class="map-subtitle">Estamos localizados em toda região sul do Brasil, com sede em Guaíba - RS</p>
     <div class="map-container">
       <iframe 
@@ -3751,23 +4458,39 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 
   <!-- Social Media Section -->
   <section class="social-section" id="sec-redes">
-    <h2>Siga-nos nas Redes Sociais</h2>
-    <div class="social-grid">
-      <a href="https://www.instagram.com/orizonrs/" target="_blank" class="social-card" title="Instagram">
-        <img src="../imagens/instagram.png" alt="Instagram" class="social-icon">
-        <span>Instagram</span>
+    <h2 class="orizon-section-title">Siga-nos nas Redes Sociais</h2>
+    <div class="social-grid social-grid-fx">
+      <a href="https://www.instagram.com/orizonrs/" target="_blank" rel="noopener noreferrer" class="social-card sc-fx" data-network="instagram" title="Instagram"
+         style="--sc-a1:#f58529;--sc-a2:#dd2a7b;--sc-a3:#8134af;--sc-a4:#515bd4;">
+        <span class="sc-border" aria-hidden="true"></span>
+        <span class="sc-spotlight" aria-hidden="true"></span>
+        <span class="sc-icon-wrap"><img src="../imagens/instagram.png" alt="Instagram" class="social-icon"></span>
+        <span class="sc-label">Instagram</span>
+        <span class="sc-sub">@orizonrs</span>
       </a>
-      <a href="https://www.linkedin.com/company/" target="_blank" class="social-card" title="LinkedIn">
-        <img src="../imagens/linkedin.png" alt="LinkedIn" class="social-icon">
-        <span>LinkedIn</span>
+      <a href="https://www.linkedin.com/company/" target="_blank" rel="noopener noreferrer" class="social-card sc-fx" data-network="linkedin" title="LinkedIn"
+         style="--sc-a1:#0A66C2;--sc-a2:#2c8ce0;--sc-a3:#0A66C2;--sc-a4:#004182;">
+        <span class="sc-border" aria-hidden="true"></span>
+        <span class="sc-spotlight" aria-hidden="true"></span>
+        <span class="sc-icon-wrap"><img src="../imagens/linkedin.png" alt="LinkedIn" class="social-icon"></span>
+        <span class="sc-label">LinkedIn</span>
+        <span class="sc-sub">Orizon</span>
       </a>
-      <a href="https://www.facebook.com/orizonrs" target="_blank" class="social-card" title="Facebook">
-        <img src="../imagens/facebook.png" alt="Facebook" class="social-icon">
-        <span>Facebook</span>
+      <a href="https://www.facebook.com/orizonrs" target="_blank" rel="noopener noreferrer" class="social-card sc-fx" data-network="facebook" title="Facebook"
+         style="--sc-a1:#1877F2;--sc-a2:#42a5f5;--sc-a3:#1877F2;--sc-a4:#0a3d8f;">
+        <span class="sc-border" aria-hidden="true"></span>
+        <span class="sc-spotlight" aria-hidden="true"></span>
+        <span class="sc-icon-wrap"><img src="../imagens/facebook.png" alt="Facebook" class="social-icon"></span>
+        <span class="sc-label">Facebook</span>
+        <span class="sc-sub">orizonrs</span>
       </a>
-      <a href="https://wa.me/5551996976579" target="_blank" class="social-card" title="WhatsApp">
-        <img src="../imagens/wpp5.png" alt="WhatsApp" class="social-icon">
-        <span>WhatsApp</span>
+      <a href="https://wa.me/5551996976579" target="_blank" rel="noopener noreferrer" class="social-card sc-fx" data-network="whatsapp" title="WhatsApp"
+         style="--sc-a1:#25D366;--sc-a2:#4ade80;--sc-a3:#128C7E;--sc-a4:#075E54;">
+        <span class="sc-border" aria-hidden="true"></span>
+        <span class="sc-spotlight" aria-hidden="true"></span>
+        <span class="sc-icon-wrap"><img src="../imagens/wpp5.png" alt="WhatsApp" class="social-icon"></span>
+        <span class="sc-label">WhatsApp</span>
+        <span class="sc-sub">Fale agora</span>
       </a>
     </div>
   </section>
@@ -3777,51 +4500,89 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
  
    
 <!-- Banner FAQ -->
-<section style="
-  background: linear-gradient(135deg, #172a73 0%, #172a73 100%);
-  padding: 3rem 2rem;
-  text-align: center;
-  border-top: 1.5px solid rgba(0,0,0,0.25);
-  border-bottom: 1.5px solid rgba(0,0,0,0.25);
-">
-  <div style="max-width: 700px; margin: 0 auto;">
-    <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">❓</div>
-    <h2 style="font-size: 1.6rem; font-weight: 700; color: #f0f0f0; margin-bottom: 0.6rem;">Ficou com alguma dúvida?</h2>
-    <p style="color: #bfdbfe; font-size: 1rem; margin-bottom: 1.8rem; line-height: 1.6;">
+<section class="faq-banner">
+  <div class="faq-banner-inner">
+    <div class="faq-banner-icon">❓</div>
+    <h2 class="faq-banner-title">Ficou com alguma dúvida?</h2>
+    <p class="faq-banner-text">
       Confira nossas perguntas frequentes — respondemos as dúvidas mais comuns sobre candidaturas, vagas, empresas e privacidade.
     </p>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.8rem; justify-content: center;">
-      <a href="../faq/faq-candidatos.html" style="
-        background: #2563eb; color: #fff; text-decoration: none;
-        padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-        👤 FAQ Profissionais
-      </a>
-      <a href="../faq/faq-vagas.html" style="
-        background: #2563eb; color: #fff; text-decoration: none;
-        padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-        💼 FAQ Vagas
-      </a>
-      <a href="../faq/faq-empresas.html" style="
-        background: #2563eb; color: #fff; text-decoration: none;
-        padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-        🏢 FAQ Empresas
-      </a>
-      <a href="../faq/faq-privacidade.html" style="
-        background: #2563eb; color: #fff; text-decoration: none;
-        padding: 0.7rem 1.4rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
-        transition: background 0.2s;
-      " onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
-        🔒 FAQ Privacidade
-      </a>
+    <div class="faq-banner-links">
+      <a href="../faq/faq-candidatos.html" class="faq-banner-btn">👤 FAQ Profissionais</a>
+      <a href="../faq/faq-vagas.html" class="faq-banner-btn">💼 FAQ Vagas</a>
+      <a href="../faq/faq-empresas.html" class="faq-banner-btn">🏢 FAQ Empresas</a>
+      <a href="../faq/faq-privacidade.html" class="faq-banner-btn">🔒 FAQ Privacidade</a>
     </div>
   </div>
 </section>
+<style>
+  .faq-banner {
+    background: transparent;
+    padding: 3rem 2rem;
+    text-align: center;
+    border-top: 1.5px solid rgba(30,64,175,0.15);
+    border-bottom: 1.5px solid rgba(30,64,175,0.15);
+    transition: border-color 0.3s ease;
+  }
+  body.dark-mode .faq-banner {
+    border-top-color: rgba(0,200,255,0.18);
+    border-bottom-color: rgba(0,200,255,0.18);
+  }
+  .faq-banner-inner { max-width: 700px; margin: 0 auto; }
+  .faq-banner-icon { font-size: 2.2rem; margin-bottom: 0.5rem; }
+  .faq-banner-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: #172a73;
+  }
+  body.dark-mode .faq-banner-title {
+    color: #00c8ff;
+    text-shadow: 0 0 14px rgba(0,200,255,0.35);
+  }
+  .faq-banner-text {
+    color: #33408a;
+    font-size: 1rem;
+    margin-bottom: 1.8rem;
+    line-height: 1.6;
+    opacity: 0.85;
+  }
+  body.dark-mode .faq-banner-text {
+    color: #bfe4ff;
+    opacity: 0.85;
+  }
+  .faq-banner-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    justify-content: center;
+  }
+  .faq-banner-btn {
+    background: #2563eb;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+    display: inline-block;
+  }
+  .faq-banner-btn:hover {
+    background: #1d4fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(37,99,235,0.35);
+  }
+  body.dark-mode .faq-banner-btn {
+    background: #0ea5e9;
+    box-shadow: 0 4px 14px rgba(0,200,255,0.25);
+  }
+  body.dark-mode .faq-banner-btn:hover {
+    background: #0284c7;
+    box-shadow: 0 6px 18px rgba(0,200,255,0.35);
+  }
+</style>
 <!-- /Banner FAQ -->
 
   </main><!-- /main#conteudo-principal -->
@@ -5369,6 +6130,174 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
 body:not(.dark-mode) .header-page-title {
   color: #ffffff !important;
   letter-spacing: 4px;
+}
+
+/* Card "Proposta Comercial" (3D) — borda dos containers, 1,5px, reativa ao modo */
+body.dark-mode #card-frente,
+body.dark-mode #card-verso {
+  border: 1.5px solid #00c8ff !important;
+  box-shadow: 0 0 8px rgba(0,200,255,.55), 0 0 16px rgba(0,200,255,.25), 0 20px 60px rgba(0,0,0,0.5) !important;
+}
+body:not(.dark-mode) #card-frente,
+body:not(.dark-mode) #card-verso {
+  border: 1.5px solid #9aa0ac !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 20px 45px rgba(28,34,48,0.18) !important;
+}
+
+/* Card "Proposta Comercial" — estilo NEON TECH no modo escuro */
+body.dark-mode #card-frente {
+  background: radial-gradient(circle at 15% 0%, rgba(0,200,255,0.10), transparent 45%),
+              linear-gradient(135deg, #050608 0%, #060b16 55%, #050608 100%) !important;
+}
+body.dark-mode .op-icon-box {
+  background: rgba(0,200,255,0.10) !important;
+  border-color: #00c8ff !important;
+  box-shadow: 0 0 10px rgba(0,200,255,0.45), inset 0 0 8px rgba(0,200,255,0.15) !important;
+}
+body.dark-mode .op-eyebrow {
+  color: #00c8ff !important;
+  opacity: 1 !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.6) !important;
+}
+body.dark-mode .op-badge {
+  background: rgba(0,200,255,0.10) !important;
+  border-color: #00c8ff !important;
+  color: #00c8ff !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.6) !important;
+  box-shadow: 0 0 10px rgba(0,200,255,0.35) !important;
+}
+body.dark-mode .op-stat {
+  background: rgba(0,200,255,0.04) !important;
+  border: 1px solid rgba(0,200,255,0.35) !important;
+  box-shadow: 0 0 8px rgba(0,200,255,0.12), inset 0 1px 0 rgba(0,200,255,0.06) !important;
+  transition: all 0.25s ease !important;
+}
+body.dark-mode .op-stat:hover {
+  border-color: #00c8ff !important;
+  box-shadow: 0 0 14px rgba(0,200,255,0.35) !important;
+  transform: translateY(-2px);
+}
+body.dark-mode .op-hint {
+  color: #4fb8e0 !important;
+}
+body.dark-mode .op-dot {
+  background: rgba(0,200,255,0.25) !important;
+}
+body.dark-mode .op-dot-active {
+  background: #00c8ff !important;
+  box-shadow: 0 0 8px rgba(0,200,255,0.8), 0 0 16px rgba(0,200,255,0.4) !important;
+}
+body.dark-mode #card-verso {
+  background: #030405 !important;
+}
+body.dark-mode .op-btn-whatsapp {
+  background: linear-gradient(135deg, rgba(0,255,171,0.16), rgba(0,255,171,0.06)) !important;
+  border: 1.5px solid #00ffab !important;
+  color: #6dffce !important;
+  text-shadow: 0 0 8px rgba(0,255,171,0.5) !important;
+  box-shadow: 0 0 10px rgba(0,255,171,0.3) !important;
+}
+body.dark-mode .op-btn-email {
+  background: rgba(0,200,255,0.08) !important;
+  border-color: #00c8ff !important;
+  color: #00c8ff !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.5) !important;
+  box-shadow: 0 0 10px rgba(0,200,255,0.25) !important;
+}
+
+/* Card "Proposta Comercial" — contraste no modo claro (frente), pegada metalizada */
+body:not(.dark-mode) #card-frente {
+  background:
+    linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.65) 48%, transparent 62%),
+    linear-gradient(135deg, #c7ccd6 0%, #e8ebf1 18%, #f4f6f9 32%, #d3d8e2 48%, #f4f6f9 64%, #dde1ea 80%, #c7ccd6 100%) !important;
+}
+body:not(.dark-mode) .op-title {
+  color: #1c2230 !important;
+}
+body:not(.dark-mode) .op-icon-box {
+  background: linear-gradient(135deg, #eef0f4, #b9bfca) !important;
+  border-color: rgba(28,34,48,0.25) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.8), inset 0 -1px 2px rgba(0,0,0,0.15) !important;
+}
+body:not(.dark-mode) .op-badge {
+  background: linear-gradient(135deg, #fde9b8 0%, #d9a441 45%, #b9822c 55%, #f3d382 100%) !important;
+  border-color: rgba(146,98,20,0.4) !important;
+  color: #5c3d0f !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+body:not(.dark-mode) .op-stat {
+  background: linear-gradient(160deg, #f8f9fb 0%, #e4e7ed 55%, #f0f2f5 100%) !important;
+  border: 1px solid rgba(28,34,48,0.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.7) !important;
+}
+body:not(.dark-mode) .op-stat:hover {
+  border-color: rgba(28,34,48,0.3) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 4px 14px rgba(28,34,48,0.15) !important;
+  transform: translateY(-2px);
+}
+/* ícone de cada mini-card em chip metalizado com um toque de cor por item */
+body:not(.dark-mode) .op-stat-icon {
+  border-radius: 9px;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), inset 0 -1px 2px rgba(0,0,0,0.12);
+}
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(1) .op-stat-icon { background: linear-gradient(150deg, #d7d9fb, #8f93d6); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(2) .op-stat-icon { background: linear-gradient(150deg, #fbd7ea, #d68fb6); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(3) .op-stat-icon { background: linear-gradient(150deg, #cdeafc, #7fb8d6); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(4) .op-stat-icon { background: linear-gradient(150deg, #c9f0e8, #6fb8ab); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(5) .op-stat-icon { background: linear-gradient(150deg, #fbe6b8, #d6a44f); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(6) .op-stat-icon { background: linear-gradient(150deg, #fcdcc0, #d68f5a); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(7) .op-stat-icon { background: linear-gradient(150deg, #e6d9fb, #ab8fd6); }
+body:not(.dark-mode) .op-stats-grid .op-stat:nth-child(8) .op-stat-icon { background: linear-gradient(150deg, #d3f5d6, #7bc286); }
+body:not(.dark-mode) .op-stat-title {
+  color: #1c2230 !important;
+}
+body:not(.dark-mode) .op-stat-desc {
+  color: #5c6270 !important;
+}
+body:not(.dark-mode) .op-hint {
+  color: #8a90a0 !important;
+}
+body:not(.dark-mode) .op-dot {
+  background: rgba(28,34,48,0.22) !important;
+}
+body:not(.dark-mode) .op-dot-active {
+  background: linear-gradient(135deg, #4b5468, #1c2230) !important;
+}
+
+/* Card "Proposta Comercial" — contraste no modo claro (verso/terminal) */
+body:not(.dark-mode) #card-verso {
+  background: linear-gradient(160deg, #eef0f3 0%, #dadde3 55%, #f1f2f5 100%) !important;
+}
+body:not(.dark-mode) #card-verso #terminal-col1,
+body:not(.dark-mode) #card-verso #terminal-col2 {
+  color: #33394a !important;
+}
+body:not(.dark-mode) .op-btn-whatsapp {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  color: #fff !important;
+}
+body:not(.dark-mode) .op-btn-email {
+  background: rgba(37,99,235,0.08) !important;
+  border-color: rgba(37,99,235,0.3) !important;
+  color: #2563eb !important;
+}
+
+/* MODO ESCURO — azul neon com glow forte (ORIZON não entra aqui) */
+body.dark-mode .olh-eyebrow {
+  color: #00c8ff !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.8), 0 0 16px rgba(0,200,255,0.4) !important;
+}
+body.dark-mode .olh-subtitle {
+  color: #00c8ff !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.8), 0 0 16px rgba(0,200,255,0.4) !important;
+}
+body.dark-mode .olh-dot {
+  color: #00c8ff !important;
+  text-shadow: 0 0 10px #00c8ff, 0 0 20px rgba(0,200,255,0.6) !important;
+}
+body.dark-mode .header-page-title {
+  color: #00c8ff !important;
+  text-shadow: 0 0 8px rgba(0,200,255,0.8), 0 0 16px rgba(0,200,255,0.4) !important;
 }</style>
 <style>
 /* Footer: oculta WhatsApp escrito no mobile */
@@ -5466,5 +6395,205 @@ body:not(.dark-mode) .download-card:hover {
 }
 </style>
 
+
+<style>
+/* PADRONIZAÇÃO FINAL DE CORES E ESPAÇAMENTO — igual ao candidato.html */
+.info-bar { color: #1e40af !important; }
+body.dark-mode .info-bar { color: #00c8ff !important; text-shadow: 0 0 10px rgba(0,200,255,0.35); }
+.info-bar { font-size: 1.5rem !important; font-weight: 800 !important; padding: 0.3rem 0 !important; margin: -1.6rem auto !important; }
+</style>
+<script>
+/* ORIZON CONTACT CARDS — abrir/fechar painel por clique/toque (igual mobile e desktop) */
+(function(){
+  function initContactCards(){
+    var cards = document.querySelectorAll('[data-cc]');
+    if (!cards.length) return;
+
+    function closeAll(except){
+      cards.forEach(function(c){
+        if (c !== except){
+          c.classList.remove('cc-open');
+          c.setAttribute('aria-expanded','false');
+        }
+      });
+    }
+
+    cards.forEach(function(card){
+      card.addEventListener('click', function(e){
+        if (e.target.closest('a, button')) return;
+        var willOpen = !card.classList.contains('cc-open');
+        closeAll(card);
+        card.classList.toggle('cc-open', willOpen);
+        card.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      });
+      card.addEventListener('keydown', function(e){
+        if (e.target.closest('a, button')) return;
+        if (e.key === 'Enter' || e.key === ' '){
+          e.preventDefault();
+          card.click();
+        }
+        if (e.key === 'Escape'){
+          card.classList.remove('cc-open');
+          card.setAttribute('aria-expanded','false');
+        }
+      });
+    });
+
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('[data-cc]')) closeAll(null);
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initContactCards);
+  } else {
+    initContactCards();
+  }
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   REDES SOCIAIS — tilt 3D + spotlight (mousemove) + ripple (clique)
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  function initSocialFx(){
+    var cards = document.querySelectorAll('.sc-fx');
+    if (!cards.length) return;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* Luz correndo pela borda — controlada via requestAnimationFrame para
+       garantir movimento suave e consistente em qualquer navegador */
+    if (!reduceMotion){
+      var NORMAL_DURATION = 3200;  // ms para uma volta completa (parado)
+      var HOVER_DURATION = 1400;   // ms para uma volta completa (com mouse em cima)
+      var borders = [];
+      cards.forEach(function(card){
+        var b = card.querySelector('.sc-border');
+        if (b) borders.push({ el: b, card: card });
+      });
+
+      function tickBorders(now){
+        for (var i = 0; i < borders.length; i++){
+          var item = borders[i];
+          var dur = item.card.matches(':hover') ? HOVER_DURATION : NORMAL_DURATION;
+          var angle = ((now % dur) / dur) * 360;
+          item.el.style.setProperty('--sc-angle', angle.toFixed(2) + 'deg');
+        }
+        requestAnimationFrame(tickBorders);
+      }
+      requestAnimationFrame(tickBorders);
+    }
+
+    cards.forEach(function(card){
+      var rafId = null;
+
+      function updateFromPointer(clientX, clientY){
+        var r = card.getBoundingClientRect();
+        var px = (clientX - r.left) / r.width;
+        var py = (clientY - r.top) / r.height;
+        px = Math.min(1, Math.max(0, px));
+        py = Math.min(1, Math.max(0, py));
+
+        card.style.setProperty('--mx', (px * 100) + '%');
+        card.style.setProperty('--my', (py * 100) + '%');
+
+        if (!reduceMotion){
+          var rx = (0.5 - py) * 14;
+          var ry = (px - 0.5) * 14;
+          card.style.transform =
+            'perspective(900px) rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg) translateY(-6px)';
+        }
+      }
+
+      card.addEventListener('pointermove', function(e){
+        if (e.pointerType === 'touch') return;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(function(){ updateFromPointer(e.clientX, e.clientY); });
+      });
+
+      card.addEventListener('pointerleave', function(){
+        if (rafId) cancelAnimationFrame(rafId);
+        card.style.transform = '';
+        card.style.removeProperty('--mx');
+        card.style.removeProperty('--my');
+      });
+
+      card.addEventListener('pointerdown', function(e){
+        var r = card.getBoundingClientRect();
+        var ripple = document.createElement('span');
+        ripple.className = 'sc-ripple';
+        ripple.style.left = ((e.clientX || r.left + r.width/2) - r.left) + 'px';
+        ripple.style.top = ((e.clientY || r.top + r.height/2) - r.top) + 'px';
+        card.appendChild(ripple);
+        ripple.addEventListener('animationend', function(){ ripple.remove(); });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSocialFx);
+  } else {
+    initSocialFx();
+  }
+})();
+</script>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   BORDAS DOS BOTÕES — formulário (1.5px) / chatbot + seta (2.5px)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Botões do formulário: Enviar por E-mail, Enviar pelo WhatsApp, Limpar */
+body.dark-mode .form-buttons .btn-primary,
+body.dark-mode .form-buttons .btn-secondary {
+  border: 1.5px solid #00c8ff !important;
+}
+body:not(.dark-mode) .form-buttons .btn-primary,
+body:not(.dark-mode) .form-buttons .btn-secondary {
+  border: 1.5px solid #1e40af !important;
+}
+body.dark-mode .form-buttons .btn-primary:hover,
+body.dark-mode .form-buttons .btn-secondary:hover {
+  border-color: #00c8ff !important;
+}
+body:not(.dark-mode) .form-buttons .btn-primary:hover,
+body:not(.dark-mode) .form-buttons .btn-secondary:hover {
+  border-color: #1e40af !important;
+}
+
+/* Botão do chatbot e seta de voltar ao topo */
+body.dark-mode .chatbot-button,
+body.dark-mode .scroll-top-btn {
+  border: 2.5px solid #00c8ff !important;
+}
+body:not(.dark-mode) .chatbot-button,
+body:not(.dark-mode) .scroll-top-btn {
+  border: 2.5px solid #1e40af !important;
+}
+body.dark-mode .chatbot-button:hover,
+body.dark-mode .scroll-top-btn:hover {
+  border-color: #00c8ff !important;
+}
+body:not(.dark-mode) .chatbot-button:hover,
+body:not(.dark-mode) .scroll-top-btn:hover {
+  border-color: #1e40af !important;
+}
+/* Bordas internas dos campos do formulário (nome, e-mail, telefone, assunto, mensagem) */
+body.dark-mode .form-field input,
+body.dark-mode .form-field textarea {
+  border: 1.5px solid #00c8ff !important;
+}
+body:not(.dark-mode) .form-field input,
+body:not(.dark-mode) .form-field textarea {
+  border: 1.5px solid #1e40af !important;
+}
+body.dark-mode .form-field input:focus,
+body.dark-mode .form-field textarea:focus {
+  border-color: #00c8ff !important;
+}
+body:not(.dark-mode) .form-field input:focus,
+body:not(.dark-mode) .form-field textarea:focus {
+  border-color: #1e40af !important;
+}
+</style>
 </body>
 </html>
