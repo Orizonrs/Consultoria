@@ -1192,22 +1192,25 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
     }
 
     /* ══════════════════════════════════════════════
-       JUSTIFICAÇÃO GLOBAL — PADRÃO OFICIAL ORIZON (ref. missao.html)
-       parágrafos/blocos largos: justify sempre, sem hífen
-       itens de lista: justify no desktop (não faz diferença, cabem
-       numa linha), left no mobile ≤600px (evita rios de espaço)
+       JUSTIFICAÇÃO GLOBAL — PADRÃO OFICIAL ORIZON (revisão)
+       parágrafos/blocos largos de texto corrido: justify sempre;
+       no mobile (≤600px) hífen automático é OBRIGATÓRIO nesses
+       blocos, para o justify não criar espaços grandes entre
+       palavras (cálculo de quebra de linha correto).
+       Tópicos em lista (bullets) e texto dentro de cards NUNCA
+       são justificados — ficam sempre alinhados à esquerda,
+       em qualquer largura de tela.
     ══════════════════════════════════════════════ */
     .content-container p,
     .highlight-box,
     .highlight-box p,
-    .value-card p,
     #accordionValores p {
       text-align: justify;
       text-align-last: left;
       text-justify: inter-word;
-      hyphens: none !important;
-      -webkit-hyphens: none !important;
-      -ms-hyphens: none !important;
+      hyphens: none;
+      -webkit-hyphens: none;
+      -ms-hyphens: none;
       word-spacing: normal !important;
       letter-spacing: normal !important;
       overflow-wrap: normal;
@@ -1215,29 +1218,31 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
       text-wrap: pretty;
     }
 
+    @media (max-width: 600px) {
+      .content-container p,
+      .highlight-box,
+      .highlight-box p,
+      #accordionValores p {
+        hyphens: auto !important;
+        -webkit-hyphens: auto !important;
+        -ms-hyphens: auto !important;
+        word-spacing: normal !important;
+        letter-spacing: normal !important;
+      }
+    }
+
+    /* Bullets e texto de cards — nunca justificado, sempre à esquerda */
     .content-container li,
     .highlight-list li,
-    #accordionValores li {
-      text-align: justify;
-      text-justify: inter-word;
+    #accordionValores li,
+    .value-card p {
+      text-align: left !important;
+      text-justify: auto;
       hyphens: none !important;
       -webkit-hyphens: none !important;
       -ms-hyphens: none !important;
       word-spacing: normal !important;
       letter-spacing: normal !important;
-    }
-
-    @media (max-width: 600px) {
-      .content-container li,
-      .highlight-list li,
-      #accordionValores li {
-        text-align: left;
-        hyphens: none !important;
-        -webkit-hyphens: none !important;
-        -ms-hyphens: none !important;
-        word-spacing: normal !important;
-        letter-spacing: normal !important;
-      }
     }
 
     .content-container p {
@@ -3490,7 +3495,7 @@ body.dark-mode #acc-v1 .accordion-arrow {
 }
 body.dark-mode #acc-v1 .value-card {
   background: linear-gradient(135deg, rgba(0,229,255,.10), rgba(0,229,255,.02) 60%) !important;
-  border: 1.5px solid rgba(0,229,255,.55) !important;
+  border: 1.5px solid rgba(255,255,255,.45) !important;
   box-shadow: 0 0 6px rgba(0,229,255,.3), 0 0 16px rgba(0,229,255,.18), inset 0 0 10px rgba(0,229,255,.06) !important;
 }
 
@@ -3541,9 +3546,12 @@ body.dark-mode #acc-v2 .accordion-arrow {
   color: rgb(34,255,136) !important;
   text-shadow: 0 0 5px rgba(34,255,136,.6), 0 0 11px rgba(34,255,136,.35) !important;
 }
+body.dark-mode #acc-v2 .accordion-inner h3 {
+  color: #ffffff !important;
+}
 body.dark-mode #acc-v2 .value-card {
   background: linear-gradient(135deg, rgba(34,255,136,.10), rgba(34,255,136,.02) 60%) !important;
-  border: 1.5px solid rgba(34,255,136,.55) !important;
+  border: 1.5px solid rgba(255,255,255,.45) !important;
   box-shadow: 0 0 6px rgba(34,255,136,.3), 0 0 16px rgba(34,255,136,.18), inset 0 0 10px rgba(34,255,136,.06) !important;
 }
 
@@ -3596,7 +3604,7 @@ body.dark-mode #acc-v3 .accordion-arrow {
 }
 body.dark-mode #acc-v3 .value-card {
   background: linear-gradient(135deg, rgba(247,37,133,.10), rgba(247,37,133,.02) 60%) !important;
-  border: 1.5px solid rgba(247,37,133,.55) !important;
+  border: 1.5px solid rgba(255,255,255,.45) !important;
   box-shadow: 0 0 6px rgba(247,37,133,.3), 0 0 16px rgba(247,37,133,.18), inset 0 0 10px rgba(247,37,133,.06) !important;
 }
 
@@ -3887,6 +3895,14 @@ function toggleAccV(id){
     body.dark-mode .valores-drop-list li:nth-child(4)::before { color: #22d3ee; }
 
     /* ── Drop-down diferenciado para a 2ª metade de "Nossos Valores" ── */
+    @media (max-width: 600px) {
+      .valores-content-1 ul.highlight-list:not(.valores-drop-list) li:nth-child(2),
+      .valores-content-1 .valores-drop,
+      .valores-content-1 .valores-drop-toggle {
+        display: none !important;
+      }
+    }
+
     .valores-drop {
       max-height: 0;
       opacity: 0;
