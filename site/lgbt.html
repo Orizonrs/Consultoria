@@ -2706,7 +2706,7 @@ body:not(.dark-mode) .content-container h2::before {
 
 /* H3 tech */
 body.dark-mode .content-container h3 {
-  color: rgba(255, 79, 163,0.8) !important;
+  color: #ffffff !important;
   letter-spacing: 0.5px;
 }
 
@@ -3059,6 +3059,8 @@ body.dark-mode .content-section::before {
           overflow: hidden;
           margin: 0 0 1.5rem 0;
           box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+          background: #05060c;
+          padding-bottom: 1.1rem;
         }
         #lgbtCanvas {
           display: block;
@@ -3090,12 +3092,15 @@ body.dark-mode .content-section::before {
           transition: color .4s ease;
         }
 
-        /* Botão gatilho que abre o seletor */
+        /* Botão gatilho que abre o seletor — fica abaixo do canvas,
+           na área preta sólida, e não mais flutuando por cima da
+           animação colorida (pedido: mais para baixo, no preto). */
         .lgbt-switcher {
-          position: absolute;
-          left: 1rem; right: 1rem; bottom: 1rem;
+          position: relative;
+          left: auto; right: auto; bottom: auto;
           display: flex;
           justify-content: center;
+          margin-top: .85rem;
           z-index: 3;
         }
         .lgbt-trigger {
@@ -3596,6 +3601,7 @@ body.dark-mode .content-section::before {
           font-size: 1.25rem; margin-bottom: .7rem;
           background: rgba(var(--acc-rgb), .14);
           border: 1.5px solid rgba(var(--acc-rgb), .4);
+          align-self: center;
         }
         body.dark-mode .contact-card-icon {
           background: rgba(var(--acc-rgb), .16);
@@ -3738,8 +3744,15 @@ body.dark-mode .content-section::before {
       <script>
         function lgbtToggleReveal(id) {
           const el = document.getElementById(id);
-          const isOpen = el.classList.toggle('open');
-          el.querySelector('.lgbt-reveal-head').setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+          const isOpen = el.classList.contains('open');
+          document.querySelectorAll('.lgbt-reveal.open').forEach(item => {
+            item.classList.remove('open');
+            item.querySelector('.lgbt-reveal-head').setAttribute('aria-expanded', 'false');
+          });
+          if (!isOpen) {
+            el.classList.add('open');
+            el.querySelector('.lgbt-reveal-head').setAttribute('aria-expanded', 'true');
+          }
         }
       </script>
 
@@ -3796,7 +3809,7 @@ body.dark-mode .content-section::before {
   <!-- CONTAINER 5 — "Contato e Suporte" -->
   <section class="content-section lgbt-content-5">
 
-      <p style="margin-top: 2rem; text-align: center; font-weight: 600; color: var(--primary); font-size: 1.1rem;">
+      <p class="orizon-section-title" style="margin-top: 2rem; font-weight: 600; font-size: 1.1rem;">
         <strong>Todos são bem-vindos. Todos são respeitados. Todos importam! 🏳️‍🌈</strong>
       </p>
 
@@ -6089,17 +6102,23 @@ body:not(.dark-mode) #faqLgbt5.open .faq-lgbt-question { background: transparent
 body:not(.dark-mode) #faqLgbt5 .faq-lgbt-arrow { color: rgb(37,99,235) !important; }
 
 
-/* --- Botão flutuante do chatbot (ícone) e seta de "voltar ao topo": borda sólida 2.5px rosa --- */
+/* --- Botão flutuante do chatbot (ícone): borda sólida 2.5px rosa --- */
 body.dark-mode .chatbot-button,
-body:not(.dark-mode) .chatbot-button,
-body.dark-mode .scroll-top-btn,
-body:not(.dark-mode) .scroll-top-btn {
+body:not(.dark-mode) .chatbot-button {
   border: 2.5px solid #ff4fa3 !important;
   box-shadow: 0 0 14px rgba(255,79,163,0.4) !important;
 }
-body.dark-mode .scroll-top-btn,
-body:not(.dark-mode) .scroll-top-btn {
+
+/* --- Seta de "voltar ao topo": rosa no escuro, laranja no claro --- */
+body.dark-mode .scroll-top-btn {
+  border: 2.5px solid #ff4fa3 !important;
+  box-shadow: 0 0 14px rgba(255,79,163,0.4) !important;
   color: #ff4fa3 !important;
+}
+body:not(.dark-mode) .scroll-top-btn {
+  border: 2.5px solid var(--pride-orange, #ff8c00) !important;
+  box-shadow: 0 0 14px rgba(255,140,0,0.4) !important;
+  color: var(--pride-orange, #ff8c00) !important;
 }
 
 /* --- Rodapé: modo claro em tons de laranja (em vez de azul) --- */
