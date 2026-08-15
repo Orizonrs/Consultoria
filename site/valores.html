@@ -3331,7 +3331,7 @@ body:not(.dark-mode) .review-card:hover {
 <span class="olh-line right"></span>
 </div>
 </div>
-<h1 aria-label="Valores da Orizon | Consultoria Administrativa em Guaíba RS" class="header-page-title"><img alt="" class="orizon-title-icon" loading="eager" src="../imagens/icon-coracao.png" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;"/>Valores da Orizon</h1>
+<h1 aria-label="Valores da Orizon | Consultoria Administrativa em Guaíba RS" class="header-page-title">Valores da Orizon</h1>
 </div>
 </header>
 <main aria-label="Valores e cultura da Orizon" role="main">
@@ -6578,5 +6578,147 @@ p:not([style*="center"]) {
   hyphens: inherit;
 }
 </style>
+<style>
+/* ══ BLOCO F — Efeito cascata + revelação de conteúdo em acordeões ══ */
+.accordion-wrap .accordion-item{
+  opacity:0;
+  filter:blur(6px);
+  transform:translateY(26px) scale(.96);
+  transition:opacity .6s ease, filter .6s ease, transform .6s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease, border-color .25s;
+}
+.accordion-wrap .accordion-item.acc-in{
+  opacity:1; filter:blur(0); transform:translateY(0) scale(1);
+}
+.accordion-wrap .accordion-item.acc-just-in{
+  box-shadow:0 0 0 1px rgba(0,200,255,.15), 0 0 24px rgba(0,200,255,.18);
+}
+.accordion-wrap .acc-cursor{
+  display:inline-block;width:2px;height:1em;background:#00c8ff;
+  margin-left:2px;vertical-align:-2px;animation:accCursorBlink 1s step-start infinite;
+}
+@keyframes accCursorBlink{50%{opacity:0}}
+.accordion-wrap .accordion-inner > .acc-fade-block{
+  opacity:0;
+  transform:translateY(8px);
+  transition:opacity .4s ease, transform .4s ease;
+}
+.accordion-wrap .accordion-inner > .acc-fade-block.acc-reveal{
+  opacity:1;
+  transform:translateY(0);
+}
+.accordion-wrap .highlight-list li{
+  opacity:0;
+  transform:translateX(-10px);
+  transition:opacity .35s ease, transform .35s ease;
+}
+.accordion-wrap .highlight-list.acc-reveal li{
+  opacity:1;
+  transform:translateX(0);
+}
+.accordion-wrap .values-grid .value-card{
+  opacity:0;
+  transform:scale(.94);
+  transition:opacity .35s ease, transform .35s ease;
+}
+.accordion-wrap .values-grid.acc-reveal .value-card{
+  opacity:1;
+  transform:scale(1);
+}
+</style>
+<script>
+(function(){
+  function accGrow(item){
+    if(!item.classList.contains('open')) return;
+    const body = item.querySelector('.accordion-body');
+    const inner = item.querySelector('.accordion-inner');
+    if(body && inner) body.style.maxHeight = (inner.scrollHeight + 8) + 'px';
+  }
+  function accType(el, full, onStep){
+    const TARGET_MS = 260, TICK_MS = 16;
+    const totalTicks = Math.max(6, Math.round(TARGET_MS / TICK_MS));
+    const charsPerTick = Math.max(1, Math.ceil(full.length / totalTicks));
+    let idx = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'acc-cursor';
+    (function tick(){
+      if(idx <= full.length){
+        el.textContent = full.slice(0, idx);
+        el.appendChild(cursor);
+        idx += charsPerTick;
+        onStep();
+        setTimeout(tick, TICK_MS);
+      } else {
+        el.textContent = full;
+        onStep();
+      }
+    })();
+  }
+  function accReveal(item){
+    const inner = item.querySelector('.accordion-inner');
+    if(!inner || inner.dataset.accRevealed) return;
+    inner.dataset.accRevealed = '1';
+    let delay = 0;
+    Array.from(inner.children).forEach(el=>{
+      if(el.tagName === 'P' && el.children.length === 0){
+        const full = el.textContent;
+        el.textContent = '';
+        const d = delay;
+        setTimeout(()=> accType(el, full, ()=> accGrow(item)), d);
+        delay += 300;
+      } else {
+        el.classList.add('acc-fade-block');
+        if(el.tagName === 'UL'){
+          el.querySelectorAll('li').forEach((li,i)=>{ li.style.transitionDelay = (i*60)+'ms'; });
+        }
+        if(el.classList.contains('values-grid')){
+          el.querySelectorAll('.value-card').forEach((c,i)=>{ c.style.transitionDelay = (i*55)+'ms'; });
+        }
+        const d = delay;
+        setTimeout(()=>{
+          el.classList.add('acc-reveal');
+          accGrow(item);
+        }, d);
+        delay += el.classList.contains('values-grid') ? 380 : 220;
+      }
+    });
+    const growInterval = setInterval(()=> accGrow(item), 90);
+    setTimeout(()=> clearInterval(growInterval), delay + 700);
+  }
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.accordion-wrap .accordion-btn');
+    if(!btn) return;
+    const item = btn.closest('.accordion-item');
+    if(!item) return;
+    setTimeout(()=>{ if(item.classList.contains('open')) accReveal(item); }, 0);
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.accordion-wrap .accordion-item.open').forEach(item=> accReveal(item));
+  });
+  document.querySelectorAll('.accordion-wrap').forEach(wrap=>{
+    const cards = Array.from(wrap.querySelectorAll(':scope > .accordion-item'));
+    if(!cards.length) return;
+    let played = false;
+    function playCascade(){
+      cards.forEach((c,i)=>{
+        setTimeout(()=>{
+          c.classList.add('acc-in');
+          c.classList.add('acc-just-in');
+          setTimeout(()=> c.classList.remove('acc-just-in'), 450);
+        }, i*110);
+      });
+    }
+    const accIo = new IntersectionObserver((entries)=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting && !played){
+          played = true;
+          playCascade();
+          accIo.disconnect();
+        }
+      });
+    }, { threshold:.15 });
+    accIo.observe(wrap);
+  });
+})();
+</script>
 </body>
 </html>
