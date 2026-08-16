@@ -313,7 +313,7 @@ async function gerarPDF(){
     const rect=(x,y,w,h,r,g,b)=>{doc.setFillColor(r,g,b);doc.rect(x,y,w,h,'F');};
     const line=(x1,y1,x2,y2,r,g,b,w=0.3)=>{doc.setDrawColor(r,g,b);doc.setLineWidth(w);doc.line(x1,y1,x2,y2);};
     const checkY=(n=10)=>{if(y+n>280){doc.addPage();y=20;}};
-    const san=(s)=>String(s||'').replace(/[—–]/g,'-').replace(/[^\\x00-\\xFF]/g,'?');
+    const san=(s)=>String(s||'').replace(/[—–]/g,'-').replace(/[^\x00-\xFF]/g,'?');
     const _o=doc.text.bind(doc);doc.text=(t,...a)=>{if(typeof t==='string')return _o(san(t),...a);if(Array.isArray(t))return _o(t.map(san),...a);return _o(t,...a);};
     rect(0,0,W,46,...INK);rect(0,46,W,1.5,...GOLD);
     ff('helvetica',9,'bold');fc(...GOLD);doc.text('* ORIZON CONSULTORIA',M,14);
@@ -353,6 +353,7 @@ async function gerarPDF(){
     doc.save('Orizon_Servico_Sites.pdf');toast('✅ PDF gerado!','ok');
   }catch(e){toast('Erro: '+e.message,'err');}
 }
+if(new URLSearchParams(location.search).get('pdf')==='1'){window.addEventListener('load',()=>setTimeout(gerarPDF,400));}
 </script>
 </body>
 </html>
