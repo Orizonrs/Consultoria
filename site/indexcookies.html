@@ -196,8 +196,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      overflow-x: hidden;
+      height: 100vh;
+      overflow: hidden;
     }
 
     @keyframes gradientShift {
@@ -235,12 +235,13 @@
   position: relative;
   z-index: 100;
   max-width: 500px;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  height: auto; /* em vez de 100% */
-  min-height: auto; /* remove a altura mínima */
+  height: 100vh;
+  max-height: 100vh;
 }
 
 .cookie-card {
@@ -249,16 +250,16 @@
   padding: 30px 20px;
   max-width: 520px;
   width: 100%;
-  overflow: hidden; 
+  overflow: hidden;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5);
   border: 2.5px solid rgba(0,0,0,0.35);
   backdrop-filter: blur(10px);
-  
-  /* NOVO */
-  transform: scale(0.8); /* diminui 80% do tamanho original */
-  transform-origin: top center; /* mantém centralizado no topo */
-    margin-top: 100px; /* aumenta ou diminui conforme quiser */
 
+  /* A escala é calculada via JS (ver script no fim do body) para que o
+     card inteiro caiba na tela em qualquer resolução, sem gerar scroll. */
+  transform: scale(1);
+  transform-origin: center center;
+  visibility: hidden;
 }
 
 
@@ -451,6 +452,16 @@
     .btn-reject:hover {
       background: rgba(150, 150, 150, 0.4);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    body.dark-mode .btn-reject {
+      background: rgba(0,200,255,0.08);
+      color: #ffffff;
+      border-color: rgba(0,200,255,0.4);
+    }
+    body.dark-mode .btn-reject:hover {
+      background: rgba(0,200,255,0.16);
+      box-shadow: 0 8px 20px rgba(0,200,255,0.15);
     }
 
     /* INFO BOX */
@@ -1161,6 +1172,9 @@ body:not(.dark-mode) .cookie-card:hover {
         <button class="btn btn-customize" onclick="abrirPersonalizacao()">
           ⚙️ PERSONALIZAR MINHAS PREFERÊNCIAS
         </button>
+        <button class="btn btn-reject" onclick="rejeitar()">
+          ➜ ENTRAR NO SITE (somente essenciais)
+        </button>
       </div>
     </div>
   </div>
@@ -1236,7 +1250,7 @@ body:not(.dark-mode) .cookie-card:hover {
         console.log('Erro ao salvar');
       }
       // REDIRECIONA DIRETO PARA cookies.html
-      window.location.href = '/Consultoria/site/cookies.html';
+      window.location.href = 'cookies.html';
     }
 
     // Rejeitar não-essenciais
@@ -1253,7 +1267,7 @@ body:not(.dark-mode) .cookie-card:hover {
         console.log('Erro ao salvar');
       }
       // REDIRECIONA DIRETO PARA cookies.html
-      window.location.href = '/Consultoria/site/cookies.html';
+      window.location.href = 'cookies.html';
     }
 
     // Abrir personalização
@@ -1281,7 +1295,7 @@ body:not(.dark-mode) .cookie-card:hover {
         console.log('Erro ao salvar');
       }
       // REDIRECIONA DIRETO PARA cookies.html
-      window.location.href = '/Consultoria/site/cookies.html';
+      window.location.href = 'cookies.html';
     }
 
     // Fechar modal ao clicar fora
@@ -1291,6 +1305,47 @@ body:not(.dark-mode) .cookie-card:hover {
         fecharPersonalizacao();
       }
     });
+  </script>
+
+  <script>
+    // ═══ AJUSTE AUTOMÁTICO DE ESCALA DO CARD ═══
+    // Garante que o cookie-card sempre caiba inteiro na tela (altura e largura),
+    // sem NUNCA gerar scroll — interno ou da página — em qualquer resolução.
+    (function () {
+      const card = document.querySelector('.cookie-card');
+      if (!card) return;
+
+      function fitCard() {
+        // Reseta a escala pra medir o tamanho "natural" do card
+        card.style.transform = 'scale(1)';
+
+        const margin = 24; // respiro mínimo nas bordas da viewport
+        const availH = window.innerHeight - margin * 2;
+        const availW = window.innerWidth - margin * 2;
+
+        const cardH = card.offsetHeight;
+        const cardW = card.offsetWidth;
+
+        const scale = Math.min(1, availH / cardH, availW / cardW);
+
+        card.style.transform = 'scale(' + scale + ')';
+        card.style.visibility = 'visible';
+      }
+
+      document.addEventListener('DOMContentLoaded', fitCard);
+      window.addEventListener('load', fitCard);
+      window.addEventListener('resize', fitCard);
+      window.addEventListener('orientationchange', fitCard);
+
+      // Reajusta também quando o modal de personalização abre/fecha
+      const modal = document.getElementById('customizeModal');
+      if (modal) {
+        const observer = new MutationObserver(fitCard);
+        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+      }
+
+      fitCard();
+    })();
   </script>
   <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Voltar ao topo">&#9650;</button>
   <script>
