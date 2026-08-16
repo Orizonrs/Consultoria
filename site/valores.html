@@ -3206,6 +3206,185 @@ body:not(.dark-mode) .review-card:hover {
 }</style>
 
 <body>
+<style>
+#orizon-weather-bar{position:relative;z-index:500;display:flex;align-items:center;height:48px;background:#0a0a0a;border-bottom:1px solid rgba(0,200,255,0.25);box-shadow:0 1px 8px rgba(0,200,255,0.08);font-family:Arial,Helvetica,sans-serif;overflow:hidden;}
+#orizon-weather-bar .ow-badge{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;height:32px;background:#f97316;color:#ffffff;font-size:0.66rem;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;padding:0 14px;margin:0 10px 0 12px;border-radius:999px;white-space:nowrap;box-shadow:0 0 10px rgba(249,115,22,0.35);}
+#orizon-weather-bar .ow-badge svg{width:15px;height:15px;flex:0 0 auto;display:block;}
+#orizon-weather-bar .ow-track-wrap{flex:1 1 auto;overflow-x:auto;overflow-y:hidden;position:relative;min-width:0;height:100%;display:flex;align-items:center;cursor:grab;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none;-ms-overflow-style:none;}
+#orizon-weather-bar .ow-track-wrap::-webkit-scrollbar{display:none;}
+#orizon-weather-bar .ow-track-wrap.dragging{cursor:grabbing;}
+#orizon-weather-bar .ow-track{display:flex;align-items:center;height:48px;white-space:nowrap;width:max-content;}
+#orizon-weather-bar .ow-item{display:inline-flex;align-items:center;gap:6px;padding:0 22px;font-size:0.74rem;color:#e5e7eb;}
+#orizon-weather-bar .ow-city{font-weight:800;color:#ffffff;}
+#orizon-weather-bar .ow-uf{color:#00c8ff;font-weight:700;font-size:0.68rem;}
+#orizon-weather-bar .ow-temp{font-weight:800;color:#fb923c;font-size:0.82rem;}
+#orizon-weather-bar .ow-max{color:#f87171;font-weight:700;}
+#orizon-weather-bar .ow-min{color:#38bdf8;font-weight:700;}
+#orizon-weather-bar .ow-desc{color:#9ca3af;}
+#orizon-weather-bar .ow-meta{color:#9ca3af;display:inline-flex;align-items:center;gap:3px;}
+#orizon-weather-bar .ow-sep{color:#374151;}
+@media (max-width:640px){
+  #orizon-weather-bar{height:42px;}
+  #orizon-weather-bar .ow-badge{height:28px;padding:0 8px;font-size:0.6rem;}
+  #orizon-weather-bar .ow-track{height:42px;}
+  #orizon-weather-bar .ow-item{padding:0 14px;font-size:0.66rem;}
+  #orizon-weather-bar .ow-temp{font-size:0.72rem;}
+}
+.top-left-buttons{top:calc(2rem + 48px) !important;}
+.top-right-buttons{top:calc(2rem + 48px) !important;}
+@media (max-width:640px){
+  .top-left-buttons{top:calc(2rem + 42px) !important;}
+  .top-right-buttons{top:calc(2rem + 42px) !important;}
+}
+</style>
+<div id="orizon-weather-bar" role="complementary" aria-label="Previsão do tempo região de Guaíba RS">
+  <div class="ow-badge">
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="5" fill="#ffffff"/>
+      <circle cx="10.3" cy="10.3" r="1.5" fill="#f97316" opacity="0.35"/>
+      <g stroke="#ffffff" stroke-width="1.7" stroke-linecap="round">
+        <path d="M12 2.2v3"/>
+        <path d="M12 18.8v3"/>
+        <path d="M2.2 12h3"/>
+        <path d="M18.8 12h3"/>
+        <path d="M4.9 4.9l2.1 2.1"/>
+        <path d="M17 17l2.1 2.1"/>
+        <path d="M4.9 19.1l2.1-2.1"/>
+        <path d="M17 7l2.1-2.1"/>
+      </g>
+    </svg>
+    Clima
+  </div>
+  <div class="ow-track-wrap" id="ow-track-wrap">
+    <div class="ow-track" id="ow-track">
+      <span class="ow-item">Carregando previsão…</span>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var CITIES = [
+    {name:"Porto Alegre", uf:"RS", lat:-30.0346, lon:-51.2177},
+    {name:"Guaíba", uf:"RS", lat:-30.1133, lon:-51.3247},
+    {name:"Eldorado do Sul", uf:"RS", lat:-30.0827, lon:-51.6183},
+    {name:"Barra do Ribeiro", uf:"RS", lat:-30.2939, lon:-51.3092},
+    {name:"Caxias do Sul", uf:"RS", lat:-29.1634, lon:-51.1797},
+    {name:"Canoas", uf:"RS", lat:-29.9177, lon:-51.1836}
+  ];
+
+  function descFromCode(code){
+    var map = {
+      0:"Céu limpo",1:"Poucas nuvens",2:"Parcialmente nublado",3:"Nublado",
+      45:"Neblina",48:"Neblina",
+      51:"Garoa fraca",53:"Garoa",55:"Garoa forte",
+      61:"Chuva fraca",63:"Chuva",65:"Chuva forte",
+      66:"Chuva gelada",67:"Chuva gelada forte",
+      71:"Neve fraca",73:"Neve",75:"Neve forte",77:"Neve",
+      80:"Pancadas fracas",81:"Pancadas de chuva",82:"Pancadas fortes",
+      85:"Pancadas de neve",86:"Pancadas de neve",
+      95:"Trovoada",96:"Trovoada c/ granizo",99:"Trovoada c/ granizo"
+    };
+    return map[code] || "Tempo variável";
+  }
+
+  function buildItem(c, data){
+    if(!data || !data.current){
+      return '<span class="ow-item"><span class="ow-city">'+c.name+'</span> <span class="ow-uf">/'+c.uf+'</span> <span class="ow-desc">indisponível</span></span><span class="ow-sep">•</span>';
+    }
+    var cur = data.current;
+    var daily = data.daily || {};
+    var max = daily.temperature_2m_max ? Math.round(daily.temperature_2m_max[0]) : Math.round(cur.temperature_2m);
+    var min = daily.temperature_2m_min ? Math.round(daily.temperature_2m_min[0]) : Math.round(cur.temperature_2m);
+    var temp = Math.round(cur.temperature_2m);
+    var wind = Math.round(cur.wind_speed_10m);
+    var hum = Math.round(cur.relative_humidity_2m);
+    var desc = descFromCode(cur.weather_code);
+    return '<span class="ow-item">'
+      + '<span class="ow-city">'+c.name+'</span> <span class="ow-uf">/'+c.uf+'</span>'
+      + ' <span class="ow-temp">'+temp+'°C</span>'
+      + ' <span class="ow-max">↑'+max+'°</span> / <span class="ow-min">↓'+min+'°</span>'
+      + ' <span class="ow-desc">'+desc+'</span>'
+      + ' <span class="ow-meta">💨 '+wind+' km/h</span>'
+      + ' <span class="ow-meta">💧 '+hum+'%</span>'
+      + '</span><span class="ow-sep">•</span>';
+  }
+
+  async function loadOrizonWeather(){
+    var track = document.getElementById('ow-track');
+    if(!track) return;
+    try{
+      var results = await Promise.all(CITIES.map(function(c){
+        var url = "https://api.open-meteo.com/v1/forecast?latitude="+c.lat+"&longitude="+c.lon
+          + "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code"
+          + "&daily=temperature_2m_max,temperature_2m_min&timezone=America%2FSao_Paulo";
+        return fetch(url).then(function(r){ return r.json(); }).catch(function(){ return null; });
+      }));
+      var html = "";
+      CITIES.forEach(function(c, i){ html += buildItem(c, results[i]); });
+      // duplica para o loop automático ficar contínuo
+      track.innerHTML = html + html;
+    }catch(e){
+      track.innerHTML = '<span class="ow-item ow-desc">Previsão indisponível no momento</span>';
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', loadOrizonWeather);
+  } else {
+    loadOrizonWeather();
+  }
+
+  // Arrastar com o mouse (drag-to-scroll). Touch já funciona nativamente via overflow-x:auto.
+  var wrap = document.getElementById('ow-track-wrap');
+  if(wrap){
+    var isDown = false, startX = 0, startScroll = 0;
+    var autoPaused = false;
+    var resumeTimer = null;
+
+    wrap.addEventListener('mousedown', function(e){
+      isDown = true;
+      autoPaused = true;
+      wrap.classList.add('dragging');
+      startX = e.pageX;
+      startScroll = wrap.scrollLeft;
+    });
+    window.addEventListener('mouseup', function(){
+      if(!isDown) return;
+      isDown = false;
+      wrap.classList.remove('dragging');
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(function(){ autoPaused = false; }, 1200);
+    });
+    window.addEventListener('mousemove', function(e){
+      if(!isDown) return;
+      e.preventDefault();
+      var walk = e.pageX - startX;
+      wrap.scrollLeft = startScroll - walk;
+    });
+
+    wrap.addEventListener('touchstart', function(){
+      autoPaused = true;
+      clearTimeout(resumeTimer);
+    }, {passive:true});
+    wrap.addEventListener('touchend', function(){
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(function(){ autoPaused = false; }, 1200);
+    }, {passive:true});
+
+    // rolagem automática lenta e contínua (setInterval simples — não depende de se reagendar sozinho)
+    setInterval(function(){
+      if(autoPaused) return;
+      if(wrap.scrollWidth <= wrap.clientWidth) return;
+      wrap.scrollLeft += 1;
+      var half = wrap.scrollWidth / 2;
+      if(wrap.scrollLeft >= half){
+        wrap.scrollLeft = 0;
+      }
+    }, 70);
+  }
+})();
+</script>
+
 <!-- Botões do lado direito: Tema + Tradutor em Voz -->
 <div class="top-right-buttons" id="topRightButtons">
 <button class="theme-toggle" onclick="toggleTheme()">
@@ -3422,7 +3601,7 @@ body:not(.dark-mode) .review-card:hover {
   </style>
 <!-- CONTAINER 1 — "Nossos Valores" (checklist) -->
 <div class="content-section valores-title-1">
-<h2 class="orizon-section-title"><img alt="" class="orizon-title-icon" loading="lazy" src="../imagens/project-management.png" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;"/>Nossos Valores</h2>
+<h2 class="orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><rect x="3" y="4" width="5.4" height="17" rx="1.3" fill="#99f6e4" stroke="#14b8a6" stroke-width="1.2"/><rect x="9.3" y="4" width="5.4" height="12.5" rx="1.3" fill="#5eead4" stroke="#0d9488" stroke-width="1.2"/><rect x="15.6" y="4" width="5.4" height="8.5" rx="1.3" fill="#2dd4bf" stroke="#0f766e" stroke-width="1.2"/></svg>Nossos Valores</h2>
 </div>
 <section class="content-section valores-content-1">
 <div class="content-container">
@@ -3446,7 +3625,7 @@ body:not(.dark-mode) .review-card:hover {
 </section>
 <!-- CONTAINER 2 — Acordeão: Nossa Cultura / O Que nos Define / Nossos Princípios de Ação -->
 <div class="content-section valores-title-2">
-<h2 class="orizon-section-title"><img alt="" class="orizon-title-icon" loading="lazy" src="../imagens/Zoom-Fit.png" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;"/>Explore Nossos Valores em Detalhes</h2>
+<h2 class="orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_zoom" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs><circle cx="10.6" cy="10.6" r="5.4" fill="#ede9fe" stroke="url(#g_zoom)" stroke-width="2"/><path d="M14.6 14.6 20.4 20.4" stroke="url(#g_zoom)" stroke-width="2.4" stroke-linecap="round"/><path d="M8.2 8.2 6.4 8 6.2 6.2M13 8.2l1.8-.2.2-1.8" stroke="#8b5cf6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>Explore Nossos Valores em Detalhes</h2>
 </div>
 <section class="content-section valores-content-2">
 <div class="content-container accordion-content-container">
@@ -3981,7 +4160,7 @@ function toggleAccV(id){
 <!-- =============================== -->
 <!-- CONTAINER 3 — Joguinho -->
 <div class="content-section valores-title-3">
-<h2 class="orizon-section-title"><img alt="" class="orizon-title-icon" loading="lazy" src="../imagens/icon-crescimento.png" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;"/>Nossos Valores em Ação</h2>
+<h2 class="orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_cresc" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#22c55e"/><stop offset="1" stop-color="#15803d"/></linearGradient></defs><rect x="3.5" y="15" width="3.3" height="6.5" rx="0.8" fill="#86efac"/><rect x="9.4" y="10.5" width="3.3" height="11" rx="0.8" fill="#4ade80"/><rect x="15.3" y="6" width="3.3" height="15.5" rx="0.8" fill="#22c55e"/><path d="M4 9l4.6-3.4 3.3 2.3 5.6-4.9" stroke="url(#g_cresc)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M14 2.7h3.9v3.9" stroke="url(#g_cresc)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>Nossos Valores em Ação</h2>
 </div>
 <section class="game-promo-section game-promo-desktop-only valores-content-3">
 <div class="game-promo-container">
