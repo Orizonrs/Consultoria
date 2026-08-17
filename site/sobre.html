@@ -510,6 +510,14 @@ body.dark-mode .footer-contact-item:hover {
     ]
   }
   </script>
+<style>
+/* PADRÃO OFICIAL — TÍTULOS DE SEÇÃO EM CAIXA ALTA COM EFEITO BICOLOR */
+.orizon-section-title { text-transform: uppercase; }
+.orizon-section-title .ost-w1 { color: #0f172a; }
+.orizon-section-title .ost-w2 { color: #1e40af; }
+body.dark-mode .orizon-section-title .ost-w1 { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 18px rgba(0,200,255,0.35); }
+</style>
 </head>
 <style>
     * {
@@ -675,10 +683,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
 
   .header {
     background: #0d1117;
-    background-image:
-      linear-gradient(rgba(0,200,255,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,200,255,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
+    
     padding: 0; text-align: center; color: white;
     position: relative; overflow: hidden;
     min-height: 220px; display: flex; align-items: center; justify-content: center;
@@ -1653,10 +1658,14 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
       margin-bottom: 0.9rem;
     }
     .footer-brand-logo img {
-      width: 38px;
-      height: 38px;
       object-fit: contain;
       border-radius: 8px;
+    }
+    .footer-logo-desktop { width: 48px; height: 48px; display: inline-block; }
+    .footer-logo-mobile { width: 32px; height: 32px; display: none; }
+    @media (max-width: 860px) {
+      .footer-logo-desktop { display: none; }
+      .footer-logo-mobile { display: inline-block; }
     }
     .footer-brand-name {
       font-size: 1.15rem;
@@ -1751,8 +1760,7 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
 
     /* Linha inferior */
     .footer-bottom {
-      border-top: 1px solid var(--ft-bottom-border);
-      background: var(--ft-bottom-bg, transparent);
+      position: relative;
       padding: 1.1rem 2rem;
       max-width: 1100px;
       margin: 0 auto;
@@ -1761,6 +1769,19 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
       justify-content: space-between;
       gap: 1rem;
       flex-wrap: wrap;
+    }
+    .footer-bottom::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 100vw;
+      margin-left: -50vw;
+      height: 100%;
+      border-top: 1px solid var(--ft-bottom-border);
+      background: var(--ft-bottom-bg, transparent);
+      z-index: -1;
+      pointer-events: none;
     }
     @media (max-width: 560px) {
       .footer-bottom { flex-direction: column; text-align: center; padding: 1rem 1.2rem; }}
@@ -2682,17 +2703,13 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
 
 /* Fundo da página no modo escuro: grade de pontos cyan sutil */
 body.dark-mode {
-  background:
-    radial-gradient(circle at 1px 1px, rgba(0,200,255,0.08) 1px, transparent 0) !important;
-  background-size: 32px 32px !important;
+  
   background-color: #07090f !important;
 }
 
 /* Fundo modo claro: grade suave azul */
 body:not(.dark-mode) {
-  background:
-    radial-gradient(circle at 1px 1px, rgba(30,64,175,0.06) 1px, transparent 0) !important;
-  background-size: 32px 32px !important;
+  
   background-color: #f0f4fa !important;
 }
 
@@ -2941,8 +2958,6 @@ body:not(.dark-mode) .review-card:hover {
 <body>
 <style>
 #orizon-weather-bar{position:relative;z-index:500;display:flex;align-items:center;height:48px;background:#0a0a0a;border-bottom:1px solid rgba(0,200,255,0.25);box-shadow:0 1px 8px rgba(0,200,255,0.08);font-family:Arial,Helvetica,sans-serif;overflow:hidden;}
-#orizon-weather-bar .ow-badge{flex:0 0 auto;display:flex;align-items:center;justify-content:center;gap:6px;height:32px;background:#f97316;color:#ffffff;font-size:0.66rem;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;padding:0 14px;margin:0 10px 0 12px;border-radius:999px;white-space:nowrap;box-shadow:0 0 10px rgba(249,115,22,0.35);}
-#orizon-weather-bar .ow-badge svg{width:15px;height:15px;flex:0 0 auto;display:block;}
 #orizon-weather-bar .ow-track-wrap{flex:1 1 auto;overflow-x:auto;overflow-y:hidden;position:relative;min-width:0;height:100%;display:flex;align-items:center;cursor:grab;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:none;-ms-overflow-style:none;}
 #orizon-weather-bar .ow-track-wrap::-webkit-scrollbar{display:none;}
 #orizon-weather-bar .ow-track-wrap.dragging{cursor:grabbing;}
@@ -2958,7 +2973,6 @@ body:not(.dark-mode) .review-card:hover {
 #orizon-weather-bar .ow-sep{color:#374151;}
 @media (max-width:640px){
   #orizon-weather-bar{height:42px;}
-  #orizon-weather-bar .ow-badge{height:28px;padding:0 8px;font-size:0.6rem;}
   #orizon-weather-bar .ow-track{height:42px;}
   #orizon-weather-bar .ow-item{padding:0 14px;font-size:0.66rem;}
   #orizon-weather-bar .ow-temp{font-size:0.72rem;}
@@ -2971,23 +2985,6 @@ body:not(.dark-mode) .review-card:hover {
 }
 </style>
 <div id="orizon-weather-bar" role="complementary" aria-label="Previsão do tempo região de Guaíba RS">
-  <div class="ow-badge">
-    <svg viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="5" fill="#ffffff"/>
-      <circle cx="10.3" cy="10.3" r="1.5" fill="#f97316" opacity="0.35"/>
-      <g stroke="#ffffff" stroke-width="1.7" stroke-linecap="round">
-        <path d="M12 2.2v3"/>
-        <path d="M12 18.8v3"/>
-        <path d="M2.2 12h3"/>
-        <path d="M18.8 12h3"/>
-        <path d="M4.9 4.9l2.1 2.1"/>
-        <path d="M17 17l2.1 2.1"/>
-        <path d="M4.9 19.1l2.1-2.1"/>
-        <path d="M17 7l2.1-2.1"/>
-      </g>
-    </svg>
-    Clima
-  </div>
   <div class="ow-track-wrap" id="ow-track-wrap">
     <div class="ow-track" id="ow-track">
       <span class="ow-item">Carregando previsão…</span>
@@ -3286,8 +3283,7 @@ body:not(.dark-mode) .review-card:hover {
 <main aria-label="Conteúdo principal | Sobre a Orizon" role="main">
 <!-- Título flutuante (fora do container) -->
 <div class="content-section sobre-intro-title">
-<h2 class="orizon-section-title" id="conexao"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><circle cx="6.5" cy="7" r="2.6" fill="#c084fc"/><circle cx="17.5" cy="7" r="2.6" fill="#00c8ff"/><circle cx="12" cy="18" r="2.6" fill="#f472b6"/><path d="M8.3 8.6 10.7 15.9M15.7 8.6 13.3 15.9M9.1 7h5.8" stroke="#94a3b8" stroke-width="1.4" stroke-linecap="round"/></svg>Orizon: O Ecossistema que Conecta e Transforma
-    </h2>
+<h2 class="orizon-section-title" id="conexao"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><circle cx="6.5" cy="7" r="2.6" fill="#c084fc"/><circle cx="17.5" cy="7" r="2.6" fill="#00c8ff"/><circle cx="12" cy="18" r="2.6" fill="#f472b6"/><path d="M8.3 8.6 10.7 15.9M15.7 8.6 13.3 15.9M9.1 7h5.8" stroke="#94a3b8" stroke-width="1.4" stroke-linecap="round"/></svg><span class="ost-w1">Orizon:</span> <span class="ost-w2">O Ecossistema que Conecta e Transforma</span></h2>
 </div>
 <section class="content-section sobre-intro-content" id="sobre-orizon">
 <div class="content-container">
@@ -3304,8 +3300,7 @@ body:not(.dark-mode) .review-card:hover {
 </section>
 <!-- Título flutuante (fora do container) -->
 <div class="content-section sobre-alcance-title">
-<h2 class="orizon-section-title" id="atuacao"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_globo" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><circle cx="12" cy="12" r="9.4" fill="url(#g_globo)"/><ellipse cx="12" cy="12" rx="3.8" ry="9.4" fill="none" stroke="#e0f7ff" stroke-width="1.1" opacity="0.85"/><path d="M2.9 8.6h18.2M2.9 15.4h18.2" stroke="#e0f7ff" stroke-width="1.1" opacity="0.85"/></svg>Nosso Alcance
-    </h2>
+<h2 class="orizon-section-title" id="atuacao"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_globo" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><circle cx="12" cy="12" r="9.4" fill="url(#g_globo)"/><ellipse cx="12" cy="12" rx="3.8" ry="9.4" fill="none" stroke="#e0f7ff" stroke-width="1.1" opacity="0.85"/><path d="M2.9 8.6h18.2M2.9 15.4h18.2" stroke="#e0f7ff" stroke-width="1.1" opacity="0.85"/></svg><span class="ost-w1">Nosso</span> <span class="ost-w2">Alcance</span></h2>
 </div>
 <section class="content-section sobre-alcance-content">
 <div class="content-container">
@@ -4416,8 +4411,7 @@ body.dark-mode .accordion-item.open .accordion-btn {
   }}</style>
 <!-- Título flutuante (fora do container) -->
 <div class="content-section sobre-accordion-title">
-<h2 class="orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_mag" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><circle cx="10.4" cy="10.4" r="6" fill="#eaf2ff" stroke="url(#g_mag)" stroke-width="2.1"/><path d="M14.8 14.8 20.2 20.2" stroke="url(#g_mag)" stroke-width="2.6" stroke-linecap="round"/><path d="M10.4 7.4v6M7.4 10.4h6" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>Descubra Mais Sobre a Orizon
-    </h2>
+<h2 class="orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_mag" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><circle cx="10.4" cy="10.4" r="6" fill="#eaf2ff" stroke="url(#g_mag)" stroke-width="2.1"/><path d="M14.8 14.8 20.2 20.2" stroke="url(#g_mag)" stroke-width="2.6" stroke-linecap="round"/><path d="M10.4 7.4v6M7.4 10.4h6" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg><span class="ost-w1">Descubra</span> <span class="ost-w2">Mais Sobre a Orizon</span></h2>
 </div>
 <section class="content-section sobre-accordion-content">
 <div class="content-container">
@@ -4670,6 +4664,7 @@ window.addEventListener('resize', () => {
 <!-- Coluna 1: Marca + Redes Sociais -->
 <div class="footer-brand">
 <div class="footer-brand-logo">
+<img class="footer-logo-desktop" src="../imagens/favicon-48x48.png" alt="Orizon Consultoria"><img class="footer-logo-mobile" src="../imagens/favicon-32x32.png" alt="Orizon Consultoria">
 <div class="footer-brand-name">Orizon <span>Consultoria</span></div>
 </div>
 <p class="footer-tagline">Consultoria Administrativa, RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.</p>
@@ -5857,8 +5852,19 @@ Tente novamente em instantes.`));
         const el = document.getElementById(id);
         if (el && t[key]) {
           const icon = el.querySelector(':scope > img, :scope > svg');
-          el.textContent = t[key];
-          if (icon) el.insertBefore(icon, el.firstChild);
+          if (el.classList.contains('orizon-section-title')) {
+            const txt = t[key].trim();
+            const sp = txt.indexOf(' ');
+            const w1 = sp === -1 ? txt : txt.slice(0, sp);
+            const w2 = sp === -1 ? '' : txt.slice(sp + 1);
+            el.textContent = '';
+            if (icon) el.appendChild(icon);
+            const s1 = document.createElement('span'); s1.className = 'ost-w1'; s1.textContent = w1; el.appendChild(s1);
+            if (w2) { el.appendChild(document.createTextNode(' ')); const s2 = document.createElement('span'); s2.className = 'ost-w2'; s2.textContent = w2; el.appendChild(s2); }
+          } else {
+            el.textContent = t[key];
+            if (icon) el.insertBefore(icon, el.firstChild);
+          }
         }
       });
 
@@ -6116,16 +6122,13 @@ body:not(.dark-mode) .chatbot-input-area {
 /* Fundo azul marinho com grid sutil */
 body:not(.dark-mode) .header {
   background: #1e40af !important;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px) !important;
-  background-size: 40px 40px !important;
+  
   border-bottom: 2px solid #f0b429 !important;
 }
 
 /* Brilho dourado sutil no centro */
 body:not(.dark-mode) .header::before {
-  background: radial-gradient(ellipse at center, rgba(240,180,41,0.08) 0%, transparent 65%) !important;
+  
 }
 
 /* Logo: texto branco sólido sem glow neon */
