@@ -3082,6 +3082,9 @@ body.dark-mode .content-section::before {
   }
   #a11y-libras-anchor.a11y-anchor-open{ transform:translateX(0); cursor:default; }
   #a11y-libras-anchor.a11y-anchor-dragging{ transition:none; cursor:grabbing; }
+  @media (max-width:640px){
+    #a11y-libras-anchor{ transform:translateX(-34px); }
+  }
   #a11y-toggle-btn, #libras-toggle-btn{
     position:relative;
     width:50px; height:50px; border-radius:9px;
@@ -3177,8 +3180,9 @@ body.dark-mode .content-section::before {
 
     var OPEN_CLASS = 'a11y-anchor-open';
     var DRAG_CLASS = 'a11y-anchor-dragging';
-    var HIDDEN_X = -25, VISIBLE_X = 0;
-    var dragging = false, moved = false, startX = 0, baseX = HIDDEN_X, suppressClick = false;
+    var VISIBLE_X = 0;
+    function hiddenX(){ return window.matchMedia('(max-width:640px)').matches ? -34 : -25; }
+    var dragging = false, moved = false, startX = 0, baseX = hiddenX(), curHiddenX = hiddenX(), suppressClick = false;
 
     function isOpen(){ return anchor.classList.contains(OPEN_CLASS); }
     function openAnchor(){ anchor.classList.add(OPEN_CLASS); anchor.style.transform = ''; }
@@ -3191,8 +3195,9 @@ body.dark-mode .content-section::before {
     function onPointerDown(e){
       if(e.pointerType === 'mouse' && e.button !== 0) return;
       dragging = true; moved = false;
+      curHiddenX = hiddenX();
       startX = e.clientX;
-      baseX = isOpen() ? VISIBLE_X : HIDDEN_X;
+      baseX = isOpen() ? VISIBLE_X : curHiddenX;
       anchor.classList.add(DRAG_CLASS);
     }
     function onPointerMove(e){
@@ -3201,7 +3206,7 @@ body.dark-mode .content-section::before {
       if(Math.abs(dx) > 4) moved = true;
       var next = baseX + dx;
       if(next > VISIBLE_X) next = VISIBLE_X;
-      if(next < HIDDEN_X) next = HIDDEN_X;
+      if(next < curHiddenX) next = curHiddenX;
       anchor.style.transform = 'translateX(' + next + 'px)';
     }
     function onPointerUp(e){
@@ -3210,7 +3215,7 @@ body.dark-mode .content-section::before {
       anchor.classList.remove(DRAG_CLASS);
       if(moved){
         var dx = e.clientX - startX;
-        var endedOpen = (baseX + dx) > (HIDDEN_X / 2);
+        var endedOpen = (baseX + dx) > (curHiddenX / 2);
         if(endedOpen){ openAnchor(); } else { closeAnchor(); }
         suppressClick = true;
       }
