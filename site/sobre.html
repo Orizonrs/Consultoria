@@ -3274,6 +3274,7 @@ body:not(.dark-mode) .review-card:hover {
 </div>
 </header>
 <!-- ═══ BOTÕES VLIBRAS + ACESSIBILIDADE ═══ -->
+<!-- ═══ BOTÕES VLIBRAS + ACESSIBILIDADE (aba lateral retrátil) ═══ -->
 <div id="a11y-libras-anchor">
   <button id="libras-toggle-btn" title="VLibras: Tradutor de Libras">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -3282,34 +3283,53 @@ body:not(.dark-mode) .review-card:hover {
       <path d="M15 10.5V6.3a1.5 1.5 0 0 1 3 0v8.2c0 3.6-2.5 6.5-6.5 6.5-2.3 0-3.6-.7-4.8-2.2L3.2 14.4c-.6-.8-.4-1.9.4-2.5.7-.5 1.7-.4 2.3.2L8 14.5V8a1.5 1.5 0 0 1 3 0v3.5"/>
     </svg>
   </button>
-  <button id="a11y-toggle-btn" title="Acessibilidade" onclick="document.getElementById('a11y-panel').classList.toggle('open')">
+  <button id="a11y-toggle-btn" title="Acessibilidade">
     <!-- ícone pessoa braços abertos -->
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="4" r="2.2"/><path d="M12 8c-1 0-1.8.6-2.1 1.5L7.5 15H10v7h4v-7h2.5l-2.4-5.5C13.8 8.6 13 8 12 8z"/><path d="M2 9l3.2 1.4L7 7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M22 9l-3.2 1.4L17 7" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
   </button>
-  <div id="a11y-panel">
-    <h4>Acessibilidade</h4>
-    <div class="a11y-row">
-      <button class="a11y-btn" onclick="document.body.classList.remove('a11y-font-xl');document.body.classList.add('a11y-font-lg')">A+</button>
-      <button class="a11y-btn" onclick="document.body.classList.add('a11y-font-xl')">A++</button>
-    </div>
-    <div class="a11y-row">
-      <button class="a11y-btn" onclick="document.body.classList.toggle('a11y-high-contrast')">◐ Contraste</button>
-    </div>
-    <button class="a11y-reset" onclick="document.body.classList.remove('a11y-font-lg','a11y-font-xl','a11y-high-contrast')">↺ Restaurar recursos</button>
+</div>
+<div id="a11y-panel">
+  <h4>Acessibilidade</h4>
+  <div class="a11y-row">
+    <button class="a11y-btn" onclick="document.body.classList.remove('a11y-font-xl');document.body.classList.add('a11y-font-lg')">A+</button>
+    <button class="a11y-btn" onclick="document.body.classList.add('a11y-font-xl')">A++</button>
   </div>
+  <div class="a11y-row">
+    <button class="a11y-btn" onclick="document.body.classList.toggle('a11y-high-contrast')">◐ Contraste</button>
+  </div>
+  <button class="a11y-reset" onclick="document.body.classList.remove('a11y-font-lg','a11y-font-xl','a11y-high-contrast')">↺ Restaurar recursos</button>
 </div>
 
 <style>
-  #a11y-libras-anchor{ position:static; }
-  #a11y-toggle-btn{
-    position:fixed; left:8px; top:294px; z-index:9998;
+  #a11y-libras-anchor{
+    position:fixed; left:0; top:234px; z-index:9998;
+    display:flex; flex-direction:column; gap:8px;
+    transform:translateX(-25px);
+    transition:transform 0.28s cubic-bezier(.22,.8,.32,1);
+    touch-action:pan-y;
+    cursor:grab;
+  }
+  #a11y-libras-anchor.a11y-anchor-open{ transform:translateX(0); cursor:default; }
+  #a11y-libras-anchor.a11y-anchor-dragging{ transition:none; cursor:grabbing; }
+  #a11y-toggle-btn, #libras-toggle-btn{
+    position:relative;
     width:50px; height:50px; border-radius:9px;
     background:#1a5fb4; color:#fff; border:none; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     font-size:22px; box-shadow:0 4px 14px rgba(0,0,0,0.35);
     transition:transform 0.15s;
   }
-  #a11y-toggle-btn:hover{ transform:scale(1.06); }
+  #a11y-toggle-btn:hover, #libras-toggle-btn:hover{ transform:scale(1.06); }
+  #a11y-libras-anchor.a11y-anchor-open #a11y-toggle-btn:hover,
+  #a11y-libras-anchor.a11y-anchor-open #libras-toggle-btn:hover{ transform:scale(1.06); }
+  #a11y-toggle-btn::after, #libras-toggle-btn::after{
+    content:''; position:absolute; right:5px; top:50%; transform:translateY(-50%);
+    width:3px; height:16px; border-radius:2px; pointer-events:none;
+    background:repeating-linear-gradient(to bottom, rgba(255,255,255,0.6) 0 2px, transparent 2px 5px);
+  }
+  #a11y-libras-anchor.a11y-anchor-open #a11y-toggle-btn::after,
+  #a11y-libras-anchor.a11y-anchor-open #libras-toggle-btn::after{ display:none; }
+  #libras-toggle-btn svg{ width:26px; height:26px; }
   #a11y-panel{
     position:fixed; left:8px; top:354px; z-index:9998;
     width:230px; background:#111827; border:1px solid rgba(0,200,255,0.3);
@@ -3337,16 +3357,6 @@ body:not(.dark-mode) .review-card:hover {
   div[vw] div[vw-access-button]{
     display:none !important;
   }
-  #libras-toggle-btn{
-    position:fixed; left:8px; top:234px; z-index:9998;
-    width:50px; height:50px; border-radius:9px;
-    background:#1a5fb4; color:#fff; border:none; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 4px 14px rgba(0,0,0,0.35);
-    transition:transform 0.15s;
-  }
-  #libras-toggle-btn:hover{ transform:scale(1.06); }
-  #libras-toggle-btn svg{ width:26px; height:26px; }
 </style>
 
 <!-- ═══ VLIBRAS — Tradutor de Libras (Governo Federal, gratuito) ═══ -->
@@ -3384,18 +3394,99 @@ body:not(.dark-mode) .review-card:hover {
     });
   })();
 
+  /* ═══ Aba lateral retrátil: os dois botões ficam com metade escondida
+     na borda esquerda da tela. Arrasta/puxa (mouse ou touch) ou toca na
+     parte visível pra revelar. Clicar fora recolhe de novo — e também
+     fecha o painel de acessibilidade se estiver aberto. ═══ */
+  (function(){
+    var anchor = document.getElementById('a11y-libras-anchor');
+    var a11yBtn = document.getElementById('a11y-toggle-btn');
+    var panel = document.getElementById('a11y-panel');
+    if(!anchor) return;
+
+    var OPEN_CLASS = 'a11y-anchor-open';
+    var DRAG_CLASS = 'a11y-anchor-dragging';
+    var HIDDEN_X = -25, VISIBLE_X = 0;
+    var dragging = false, moved = false, startX = 0, baseX = HIDDEN_X, suppressClick = false;
+
+    function isOpen(){ return anchor.classList.contains(OPEN_CLASS); }
+    function openAnchor(){ anchor.classList.add(OPEN_CLASS); anchor.style.transform = ''; }
+    function closeAnchor(){
+      anchor.classList.remove(OPEN_CLASS);
+      anchor.style.transform = '';
+      if(panel) panel.classList.remove('open');
+    }
+
+    function onPointerDown(e){
+      if(e.pointerType === 'mouse' && e.button !== 0) return;
+      dragging = true; moved = false;
+      startX = e.clientX;
+      baseX = isOpen() ? VISIBLE_X : HIDDEN_X;
+      anchor.classList.add(DRAG_CLASS);
+    }
+    function onPointerMove(e){
+      if(!dragging) return;
+      var dx = e.clientX - startX;
+      if(Math.abs(dx) > 4) moved = true;
+      var next = baseX + dx;
+      if(next > VISIBLE_X) next = VISIBLE_X;
+      if(next < HIDDEN_X) next = HIDDEN_X;
+      anchor.style.transform = 'translateX(' + next + 'px)';
+    }
+    function onPointerUp(e){
+      if(!dragging) return;
+      dragging = false;
+      anchor.classList.remove(DRAG_CLASS);
+      if(moved){
+        var dx = e.clientX - startX;
+        var endedOpen = (baseX + dx) > (HIDDEN_X / 2);
+        if(endedOpen){ openAnchor(); } else { closeAnchor(); }
+        suppressClick = true;
+      }
+    }
+
+    anchor.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    // Intercepta o clique antes dos botões internos: com a aba fechada,
+    // o primeiro toque só revela — não aciona VLibras nem o painel.
+    anchor.addEventListener('click', function(e){
+      if(suppressClick){ suppressClick = false; e.preventDefault(); e.stopPropagation(); return; }
+      if(!isOpen()){ e.preventDefault(); e.stopPropagation(); openAnchor(); }
+    }, true);
+
+    if(a11yBtn){
+      a11yBtn.addEventListener('click', function(){
+        if(panel) panel.classList.toggle('open');
+      });
+    }
+
+    // Clique fora recolhe a aba e fecha o painel de acessibilidade
+    document.addEventListener('click', function(e){
+      if(panel && panel.classList.contains('open') && !panel.contains(e.target) && !anchor.contains(e.target)){
+        panel.classList.remove('open');
+      }
+      if(isOpen() && !anchor.contains(e.target) && (!panel || !panel.contains(e.target))){
+        closeAnchor();
+      }
+    });
+  })();
+
+  /* Posiciona os botões (VLibras + Acessibilidade) sempre logo abaixo do
+     header de verdade — mede a altura real renderizada em vez de "chutar"
+     um valor fixo, então funciona certinho em qualquer tela/zoom. */
   (function(){
     function posicionar(){
       var header = document.querySelector('.header');
-      var libras = document.getElementById('libras-toggle-btn');
-      var a11yBtn = document.getElementById('a11y-toggle-btn');
+      var anchor = document.getElementById('a11y-libras-anchor');
       var a11yPanel = document.getElementById('a11y-panel');
       if(!header) return;
       var scrollY = window.scrollY || window.pageYOffset || 0;
       var headerBottom = header.getBoundingClientRect().bottom + scrollY;
       var gap = 12;
-      if(libras) libras.style.top = (headerBottom + gap) + 'px';
-      if(a11yBtn) a11yBtn.style.top = (headerBottom + gap + 60) + 'px';
+      if(anchor) anchor.style.top = (headerBottom + gap) + 'px';
       if(a11yPanel) a11yPanel.style.top = (headerBottom + gap + 120) + 'px';
     }
     posicionar();
