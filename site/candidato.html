@@ -4508,7 +4508,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </div>
 </div>
 </div>
-<div class="contact-card flip-card" style="--accent:#f59e0b; --accent-rgb:245,158,11;" tabindex="0">
+<div class="contact-card flip-card dica-card-extra" style="--accent:#f59e0b; --accent-rgb:245,158,11;" tabindex="0">
 <div class="flip-inner">
 <div class="flip-face flip-front">
 <span class="flip-icon-badge"><span aria-hidden="true" class="flip-icon-svg"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewbox="0 0 48 48"><circle cx="24" cy="25" fill="currentColor" fill-opacity="0.1" r="15"></circle><line x1="24" x2="24" y1="25" y2="15"></line><line x1="24" x2="31" y1="25" y2="29"></line><line x1="18" x2="24" y1="6" y2="10"></line><line x1="30" x2="24" y1="6" y2="10"></line></svg></span></span>
@@ -4521,7 +4521,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </div>
 </div>
 </div>
-<div class="contact-card flip-card" style="--accent:#10b981; --accent-rgb:16,185,129;" tabindex="0">
+<div class="contact-card flip-card dica-card-extra" style="--accent:#10b981; --accent-rgb:16,185,129;" tabindex="0">
 <div class="flip-inner">
 <div class="flip-face flip-front">
 <span class="flip-icon-badge"><span aria-hidden="true" class="flip-icon-svg"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewbox="0 0 48 48"><path d="M24 6l14 5v11c0 10-6 16-14 20-8-4-14-10-14-20V11z" fill="currentColor" fill-opacity="0.12"></path><path d="M18 24l5 5 9-10"></path></svg></span></span>
@@ -4534,7 +4534,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </div>
 </div>
 </div>
-<div class="contact-card flip-card" style="--accent:#e11d48; --accent-rgb:225,29,72;" tabindex="0">
+<div class="contact-card flip-card dica-card-extra" style="--accent:#e11d48; --accent-rgb:225,29,72;" tabindex="0">
 <div class="flip-inner">
 <div class="flip-face flip-front">
 <span class="flip-icon-badge"><span aria-hidden="true" class="flip-icon-svg"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewbox="0 0 48 48"><path d="M24 10L4 18l20 8 20-8-20-8z" fill="currentColor" fill-opacity="0.15"></path><path d="M14 22v9c0 3 5 6 10 6s10-3 10-6v-9"></path><circle cx="44" cy="18" fill="currentColor" r="1.6"></circle><line x1="44" x2="44" y1="20" y2="30"></line></svg></span></span>
@@ -4548,8 +4548,84 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </div>
 </div>
 </div>
+<div class="dicas-ver-mais-wrap" id="dicas-ver-mais-wrap">
+<button aria-controls="dicas-ver-mais-wrap" aria-expanded="false" class="btn btn-primary" id="dicas-ver-mais-btn" onclick="toggleDicasExtra()" type="button">Ver mais dicas ▼</button>
+</div>
+<p class="dicas-swipe-hint">⟷ Arraste para o lado para ver todas as dicas</p>
 </div>
  </section>
+<style>
+    /* ═══════════════════════════════════════════
+       "VER MAIS" (desktop/tablet) e CARROSSEL (mobile)
+       — seção Dicas Profissionais
+    ═══════════════════════════════════════════ */
+    .dicas-profissionais-section .dica-card-extra {
+      display: none;
+    }
+    .dicas-profissionais-section.dicas-expanded .dica-card-extra {
+      display: block;
+    }
+    .dicas-ver-mais-wrap {
+      width: 100%;
+      text-align: center;
+      margin-top: 1.75rem;
+    }
+    .dicas-ver-mais-wrap .btn {
+      margin: 0;
+      padding: 0.85rem 2.2rem;
+      font-size: 0.95rem;
+    }
+    .dicas-swipe-hint {
+      display: none;
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0.6;
+      margin: 0.9rem 0 0;
+    }
+
+    /* Mobile: vira carrossel — 1 card por vez, sem preview do próximo,
+       arrastando lateralmente. Todos os 6 cards ficam visíveis (a extra-
+       ção acontece pelo swipe, então some o botão "Ver mais"). */
+    @media (max-width: 560px) {
+      .dicas-profissionais-section .dica-card-extra {
+        display: block !important;
+      }
+      .dicas-profissionais-section .dicas-ver-mais-wrap {
+        display: none !important;
+      }
+      .dicas-profissionais-section .dicas-swipe-hint {
+        display: block;
+      }
+      .dicas-profissionais-section .contact-grid {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scroll-padding: 0 0.75rem;
+        gap: 1rem;
+        margin: 0 -1rem;
+        padding: 0 1rem 0.5rem;
+      }
+      .dicas-profissionais-section .contact-card {
+        flex: 0 0 100%;
+        max-width: 100%;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+      }
+    }
+  </style>
+<script>
+    function toggleDicasExtra() {
+      var section = document.querySelector('.dicas-profissionais-section');
+      var btn = document.getElementById('dicas-ver-mais-btn');
+      if (!section || !btn) return;
+      var expanded = section.classList.toggle('dicas-expanded');
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      btn.textContent = expanded ? 'Ver menos ▲' : 'Ver mais dicas ▼';
+    }
+  </script>
 <style>
     .social-section {
       padding: 4rem 2rem;
