@@ -2940,7 +2940,7 @@ body.dark-mode .content-split-tags span {
   .content-split.content-split--reverse {
     gap: 1rem;
     margin: 2rem auto;
-    padding: 0 1rem;
+    padding: 0 2rem;
     align-items: center;
   }
   .content-split-media,
@@ -6148,7 +6148,7 @@ body.dark-mode .cc-manage-btn { box-shadow: 0 0 16px rgba(0,200,255,0.3); }
 </div>
 
 <!-- Botão flutuante para reabrir as preferências a qualquer momento -->
-<button type="button" id="cc-manage-btn" class="cc-manage-btn" onclick="ccOpenModal()" title="Gerenciar Consentimento de Cookies" aria-label="Gerenciar Consentimento de Cookies">🍪</button>
+<button type="button" id="cc-manage-btn" class="cc-manage-btn" onclick="ccResetAndOpen()" title="Gerenciar Consentimento de Cookies" aria-label="Gerenciar Consentimento de Cookies">🍪</button>
 
 <script>
 (function () {
@@ -6219,6 +6219,22 @@ body.dark-mode .cc-manage-btn { box-shadow: 0 0 16px rgba(0,200,255,0.3); }
     ccSyncTogglesFromConsent(consent);
     document.getElementById('cc-modal-overlay').classList.add('cc-visible');
     document.body.style.overflow = 'hidden';
+  };
+
+  // Botão flutuante (🍪): apaga a configuração de cookies salva (volta ao
+  // estado "sem consentimento"), dispara a animação de migalhas caindo
+  // automaticamente e reabre o banner/preferências para o usuário escolher de novo.
+  window.ccResetAndOpen = function () {
+    try {
+      localStorage.removeItem(CC_KEY);
+    } catch (e) { /* localStorage indisponível */ }
+
+    ccSyncTogglesFromConsent(null);
+    document.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: null }));
+
+    ccCelebrate(['🍪', '🔄', '✨'], 14);
+    ccCloseModal();
+    ccShowBanner();
   };
 
   window.ccCloseModal = function () {
