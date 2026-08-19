@@ -911,6 +911,92 @@ body:not(.dark-mode) .theme-toggle {
   @media (min-width: 1000px) {
     .cards-grid { grid-template-columns: repeat(3, 1fr); }}
 
+  /* ================= HERO BANNER — FOTO LIMPA, TEXTO REVELADO AO PASSAR/TOCAR ================= */
+  .ia-hero-banner {
+    position: relative;
+    border-radius: 22px;
+    overflow: hidden;
+    min-height: 300px;
+    margin: 0.6rem 0 1.6rem;
+    cursor: pointer;
+  }
+  .ia-hero-banner img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: center;
+    display: block;
+    transition: transform .5s ease;
+  }
+  .ia-hero-banner:hover img { transform: scale(1.06); }
+  .ia-hero-overlay {
+    position: relative; z-index: 1;
+    min-height: 300px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 1.7rem 2.1rem;
+    background: linear-gradient(180deg, rgba(6,10,22,0) 42%, rgba(6,10,22,0.92) 100%);
+    color: #fff;
+  }
+  .ia-hero-title {
+    font-size: 1.1rem; font-weight: 800;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .ia-hero-title strong { color: #ffffff !important; }
+  .ia-hero-text {
+    margin: 0; max-width: 640px;
+    font-size: 0.95rem; line-height: 1.65; color: #e2e8f0;
+    max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height .45s ease, opacity .45s ease, margin-top .45s ease;
+  }
+  .ia-hero-banner:hover .ia-hero-text,
+  .ia-hero-banner.is-open .ia-hero-text {
+    max-height: 220px; opacity: 1; margin-top: 0.55rem;
+  }
+  @media (max-width: 768px) {
+    .ia-hero-banner, .ia-hero-banner img, .ia-hero-overlay { min-height: 260px; }
+    .ia-hero-overlay { padding: 1.3rem 1.3rem 1.4rem; }
+  }
+
+  /* ================= CARDS COM FOTO — "IA no Seu Dia a Dia" ================= */
+  .ia-photo-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0 1rem;
+  }
+  @media (min-width: 640px) {
+    .ia-photo-cards { grid-template-columns: repeat(3, 1fr); }
+  }
+  .ia-photo-card {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    min-height: 220px;
+    cursor: pointer;
+  }
+  .ia-photo-card img {
+    width: 100%; height: 220px; object-fit: cover; display: block;
+    transition: transform .5s ease;
+  }
+  .ia-photo-card:hover img { transform: scale(1.08); }
+  .ia-photo-card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(15,23,42,0) 35%, rgba(15,23,42,0.88) 100%);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 1.1rem 1.2rem;
+    color: #fff;
+  }
+  body.dark-mode .ia-photo-card-overlay h4,
+  .ia-photo-card-overlay h4 { margin: 0 0 0.35rem; font-size: 1.05rem; font-weight: 800; color: #ffffff !important; text-shadow: none !important; }
+  .ia-photo-card-overlay p {
+    margin: 0; font-size: 0.85rem; line-height: 1.4; color: #e2e8f0;
+    max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height .4s ease, opacity .4s ease;
+  }
+  .ia-photo-card.is-open .ia-photo-card-overlay p {
+    max-height: 120px; opacity: 1; margin-top: 0.3rem;
+  }
+  body.dark-mode .ia-photo-card-overlay { background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 100%); }
+
   .card {
     --accent-rgb: 37,99,235;
     background:
@@ -3179,8 +3265,12 @@ body.dark-mode .download-free-tag { color: #34d399; }
 ">🤖 <span class="ost-w1">Inteligência</span> <span class="ost-w2">Artificial</span></div>
 <h2 class="section-title" style="display:none"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_ia" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#00c8ff"/></linearGradient></defs><rect x="7.3" y="7.3" width="9.4" height="9.4" rx="1.8" fill="url(#g_ia)"/><rect x="10.2" y="10.2" width="3.6" height="3.6" rx="0.8" fill="#fff"/><path d="M12 2.4v3M12 18.6v3M2.4 12h3M18.6 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round"/></svg>Ferramentas de IA para Currículo e Entrevista</h2>
 <section class="content-section" id="ferramentas-gratis">
-<div class="tip-box">
-  💡 <strong>Dica Orizon:</strong> Use IA como ferramenta de apoio, não como substituto do pensamento estratégico. Ela agiliza processos, reduz erros e aumenta a produtividade — mas precisa de revisão humana. Na consultoria administrativa, gestão empresarial e recrutamento, a IA potencializa resultados quando usada com critério.
+<div class="ia-hero-banner" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<img alt="Equipe corporativa analisando dados e relatórios com apoio de inteligência artificial" loading="eager" src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&amp;fit=crop&amp;w=1400&amp;q=70"/>
+<div class="ia-hero-overlay">
+<div class="ia-hero-title">💡 <strong>Dica Orizon:</strong></div>
+<p class="ia-hero-text">Use IA como ferramenta de apoio, não como substituto do pensamento estratégico. Ela agiliza processos, reduz erros e aumenta a produtividade — mas precisa de revisão humana. Na consultoria administrativa, gestão empresarial e recrutamento, a IA potencializa resultados quando usada com critério.</p>
+</div>
 </div>
 <div class="cards-grid">
 <div class="card" style="--accent:#10a37f; --accent-rgb:16,163,127;">
@@ -3764,6 +3854,47 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </div>
 </div>
  </section>
+
+<!-- ============================================================ -->
+<!-- BLOCO: IA no seu dia a dia — cards com foto                  -->
+<!-- ============================================================ -->
+<div class="info-bar" style="
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem auto -1.6rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e40af;
+  text-align: center;
+  padding: 0.3rem 0;
+">🚀 <span class="ost-w1">IA no</span> <span class="ost-w2">Seu Dia a Dia</span></div>
+<section class="content-section" id="ia-dia-a-dia">
+<div class="ia-photo-cards">
+<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<img alt="Pessoa revisando currículo e perfil profissional com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
+<div class="ia-photo-card-overlay">
+<h4>Currículo &amp; Carreira</h4>
+<p>Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
+</div>
+</div>
+<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<img alt="Equipe de RH em reunião de recrutamento apoiada por inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
+<div class="ia-photo-card-overlay">
+<h4>RH &amp; Recrutamento</h4>
+<p>Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
+</div>
+</div>
+<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<img alt="Gestor analisando relatórios e produtividade empresarial com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
+<div class="ia-photo-card-overlay">
+<h4>Gestão &amp; Produtividade</h4>
+<p>Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
+</div>
+</div>
+</div>
+</section>
+
 <!-- ============================================================ -->
 <!-- SEÇÃO DE DOWNLOADS — BLOCO 06: IA & PRODUTIVIDADE          -->
 <!-- ============================================================ -->
@@ -4625,8 +4756,8 @@ loadSavedTheme();
         'header-p': 'Use a Inteligência Artificial',
         'infobar-ia': '🤖 Inteligência Artificial',
         'infobar-edicao': '✍️ Produção Textual e Design',
-        'tip-ia': 'Dica Orizon: Use IA como ferramenta de apoio, não como substituto do pensamento estratégico. Ela agiliza processos, reduz erros e aumenta a produtividade — mas precisa de revisão humana. Na consultoria administrativa, gestão empresarial e recrutamento, a IA potencializa resultados quando usada com critério.',
-        'tip-edicao': 'Dica Orizon: Para documentos corporativos formais — contratos, propostas, relatórios — use sempre o Word e converta para PDF antes de enviar. Para apresentações executivas e materiais de comunicação visual, o Canva e o Gamma AI entregam resultado profissional com agilidade.',
+        'tip-ia': 'Use IA como ferramenta de apoio, não como substituto do pensamento estratégico. Ela agiliza processos, reduz erros e aumenta a produtividade — mas precisa de revisão humana. Na consultoria administrativa, gestão empresarial e recrutamento, a IA potencializa resultados quando usada com critério.',
+        'tip-edicao': 'Para documentos corporativos formais — contratos, propostas, relatórios — use sempre o Word e converta para PDF antes de enviar. Para apresentações executivas e materiais de comunicação visual, o Canva e o Gamma AI entregam resultado profissional com agilidade.',
         'h3-chatgpt': 'ChatGPT (OpenAI)',
         'p-chatgpt': 'O mais versátil. Redige contratos, propostas comerciais, relatórios, e-mails corporativos e documentos administrativos em segundos. Automatiza rotinas, organiza processos e responde dúvidas de gestão. Essencial para consultores administrativos, equipes de RH e gestores de pequenas e médias empresas.',
         'link-chatgpt': '→ Acessar ChatGPT',
@@ -4667,8 +4798,8 @@ loadSavedTheme();
         'header-p': 'Use Artificial Intelligence to boost your resume, interviews and career',
         'infobar-ia': '🤖 Artificial Intelligence',
         'infobar-edicao': '✍️ Text Production & Design',
-        'tip-ia': 'Orizon Tip: Use AI as a support tool, not as a substitute for strategic thinking. It speeds up processes, reduces errors and increases productivity — but requires human review. In administrative consulting, business management and recruitment, AI enhances results when used with discernment.',
-        'tip-edicao': 'Orizon Tip: For formal corporate documents — contracts, proposals, reports — always use Word and convert to PDF before sending. For executive presentations and visual communication materials, Canva and Gamma AI deliver professional results with agility.',
+        'tip-ia': 'Use AI as a support tool, not as a substitute for strategic thinking. It speeds up processes, reduces errors and increases productivity — but requires human review. In administrative consulting, business management and recruitment, AI enhances results when used with discernment.',
+        'tip-edicao': 'For formal corporate documents — contracts, proposals, reports — always use Word and convert to PDF before sending. For executive presentations and visual communication materials, Canva and Gamma AI deliver professional results with agility.',
         'h3-chatgpt': 'ChatGPT (OpenAI)',
         'p-chatgpt': 'The most versatile. Drafts contracts, commercial proposals, reports, corporate emails and administrative documents in seconds. Automates routines, organizes processes and answers management questions. Essential for administrative consultants, HR teams and managers of small and medium businesses.',
         'link-chatgpt': '→ Access ChatGPT',
@@ -4709,8 +4840,8 @@ loadSavedTheme();
         'header-p': 'Usa la Inteligencia Artificial para potenciar tu currículum, entrevistas y carrera',
         'infobar-ia': '🤖 Inteligencia Artificial',
         'infobar-edicao': '✍️ Edición para Currículum',
-        'tip-ia': 'Consejo Orizon: Usa IA como herramienta de apoyo, no como sustituto del pensamiento estratégico. Agiliza procesos, reduce errores y aumenta la productividad — pero requiere revisión humana. En consultoría administrativa, gestión empresarial y reclutamiento, la IA potencia resultados cuando se usa con criterio.',
-        'tip-edicao': 'Consejo Orizon: Para documentos corporativos formales — contratos, propuestas, informes — usa siempre Word y conviértelos a PDF antes de enviar. Para presentaciones ejecutivas y materiales de comunicación visual, Canva y Gamma AI entregan resultados profesionales con agilidad.',
+        'tip-ia': 'Usa IA como herramienta de apoyo, no como sustituto del pensamiento estratégico. Agiliza procesos, reduce errores y aumenta la productividad — pero requiere revisión humana. En consultoría administrativa, gestión empresarial y reclutamiento, la IA potencia resultados cuando se usa con criterio.',
+        'tip-edicao': 'Para documentos corporativos formales — contratos, propuestas, informes — usa siempre Word y conviértelos a PDF antes de enviar. Para presentaciones ejecutivas y materiales de comunicación visual, Canva y Gamma AI entregan resultados profesionales con agilidad.',
         'h3-chatgpt': 'ChatGPT (OpenAI)',
         'p-chatgpt': 'El más versátil. Redacta contratos, propuestas comerciales, informes, correos corporativos y documentos administrativos en segundos. Automatiza rutinas, organiza procesos y responde dudas de gestión. Esencial para consultores administrativos, equipos de RR.HH. y gestores de pequeñas y medianas empresas.',
         'link-chatgpt': '→ Acceder a ChatGPT',
@@ -4799,16 +4930,15 @@ loadSavedTheme();
       });
 
       // Tip boxes
-      document.querySelectorAll('.tip-box').forEach((box, i) => {
+      document.querySelectorAll('.tip-box').forEach((box) => {
         const strong = box.querySelector('strong');
         const strongText = strong ? strong.textContent : '';
-        // Rebuild content preserving the strong tag
-        if (i === 0) {
-          box.innerHTML = `💡 <strong>${strongText}</strong> ${t['tip-ia']}`;
-        } else if (i === 1) {
-          box.innerHTML = `💡 <strong>${strongText}</strong> ${t['tip-edicao']}`;
-        }
+        box.innerHTML = `💡 <strong>${strongText}</strong> ${t['tip-edicao']}`;
       });
+
+      // Hero banner (topo da seção Ferramentas de IA)
+      const heroTextEl = document.querySelector('.ia-hero-text');
+      if (heroTextEl) heroTextEl.textContent = t['tip-ia'];
 
       // Cards: h3 → p → link
       document.querySelectorAll('.card').forEach(card => {
