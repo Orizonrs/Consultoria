@@ -973,18 +973,23 @@ body:not(.dark-mode) .theme-toggle {
     min-height: 220px;
     cursor: pointer;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
-    transition: transform .25s ease;
+    outline: none;
   }
-  .ia-photo-card * { -webkit-tap-highlight-color: transparent; }
-  .ia-photo-card:active { transform: scale(0.97); }
+  .ia-photo-card,
+  .ia-photo-card * {
+    -webkit-tap-highlight-color: transparent !important;
+    tap-highlight-color: transparent !important;
+  }
+  .ia-photo-card:focus { outline: none; }
+  .ia-photo-card:focus-visible { outline: 2px solid #00c8ff; outline-offset: 2px; }
   .ia-photo-card img {
     width: 100%; height: 220px; object-fit: cover; display: block;
     transition: transform .5s ease;
-    -webkit-tap-highlight-color: transparent;
     pointer-events: none;
   }
   .ia-photo-card:hover img { transform: scale(1.08); }
@@ -1009,7 +1014,7 @@ body:not(.dark-mode) .theme-toggle {
   .ia-photo-desc-short { display: none; }
   body.dark-mode .ia-photo-card-overlay { background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 100%); }
 
-  /* ---- Mobile: carrossel com preview da próxima foto (em vez de empilhar) ---- */
+  /* ---- Mobile: carrossel com 1 slide por vez (sem mostrar o próximo) ---- */
   @media (max-width: 639px) {
     .ia-photo-cards {
       display: flex;
@@ -1017,15 +1022,17 @@ body:not(.dark-mode) .theme-toggle {
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
-      gap: 0.9rem;
-      margin: 1.3rem -1.1rem 0.6rem;
-      padding: 0.2rem 1.1rem 0.9rem;
+      gap: 0;
+      margin: 1.3rem 0 0.6rem;
+      padding: 0.2rem 0 0.9rem;
       scrollbar-width: none;
     }
     .ia-photo-cards::-webkit-scrollbar { display: none; }
     .ia-photo-card {
-      flex: 0 0 82%;
-      scroll-snap-align: center;
+      flex: 0 0 100%;
+      width: 100%;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
       min-height: 200px;
     }
     .ia-photo-card img { height: 200px; }
@@ -3925,28 +3932,28 @@ body.dark-mode .download-free-tag { color: #34d399; }
 ">🚀 <span class="ost-w1">IA no</span> <span class="ost-w2">Seu Dia a Dia</span></div>
 <section class="content-section" id="ia-dia-a-dia">
 <div class="ia-photo-cards" id="iaPhotoCards">
-<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
+<div class="ia-photo-card" role="button" tabindex="0">
 <img alt="Pessoa revisando currículo e perfil profissional com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Currículo &amp; Carreira</h4>
 <p class="ia-photo-desc-full">Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
-<p class="ia-photo-desc-short">IA para revisar currículo, treinar entrevistas e ajustar o LinkedIn.</p>
+<p class="ia-photo-desc-short">IA revisa currículo, treina entrevistas e ajusta o LinkedIn.</p>
 </div>
 </div>
-<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
+<div class="ia-photo-card" role="button" tabindex="0">
 <img alt="Equipe de RH em reunião de recrutamento apoiada por inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>RH &amp; Recrutamento</h4>
 <p class="ia-photo-desc-full">Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
-<p class="ia-photo-desc-short">IA agiliza triagem e vagas, sem perder o olhar humano na decisão.</p>
+<p class="ia-photo-desc-short">IA agiliza triagem e vagas, sem perder o olhar humano.</p>
 </div>
 </div>
-<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
+<div class="ia-photo-card" role="button" tabindex="0">
 <img alt="Gestor analisando relatórios e produtividade empresarial com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Gestão &amp; Produtividade</h4>
 <p class="ia-photo-desc-full">Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
-<p class="ia-photo-desc-short">IA cuida do repetitivo em relatórios e planilhas — sobra tempo pra estratégia.</p>
+<p class="ia-photo-desc-short">IA cuida do repetitivo — sobra tempo pra estratégia.</p>
 </div>
 </div>
 </div>
@@ -3956,21 +3963,53 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </section>
 <script>
 (function(){
-  function toggleIaPhotoCard(card){
+  var wrap = document.getElementById('iaPhotoCards');
+  if(!wrap) return;
+  var dots = document.getElementById('iaPhotoDots');
+  var dotEls = dots ? dots.querySelectorAll('span') : [];
+
+  function toggleCard(card){
     var wasOpen = card.classList.contains('is-open');
-    var wrap = card.closest('.ia-photo-cards');
     wrap.querySelectorAll('.ia-photo-card.is-open').forEach(function(c){ c.classList.remove('is-open'); });
     if(!wasOpen) card.classList.add('is-open');
   }
-  window.toggleIaPhotoCard = toggleIaPhotoCard;
 
-  var wrap = document.getElementById('iaPhotoCards');
-  var dots = document.getElementById('iaPhotoDots');
-  if(wrap && dots){
-    var dotEls = dots.querySelectorAll('span');
+  /* Toque real (sem confundir com arrastar/rolar o carrossel) */
+  var startX = 0, startY = 0, dragged = false;
+
+  wrap.addEventListener('touchstart', function(e){
+    var t = e.touches[0];
+    startX = t.clientX; startY = t.clientY; dragged = false;
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', function(e){
+    var t = e.touches[0];
+    if (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8) dragged = true;
+  }, { passive: true });
+
+  wrap.addEventListener('touchend', function(e){
+    if (dragged) return;
+    var card = e.target.closest('.ia-photo-card');
+    if (card) toggleCard(card);
+  });
+
+  /* Mouse (desktop) */
+  wrap.addEventListener('click', function(e){
+    if ('ontouchstart' in window) return; /* evita disparo duplicado em telas de toque */
+    var card = e.target.closest('.ia-photo-card');
+    if (card) toggleCard(card);
+  });
+
+  wrap.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var card = e.target.closest('.ia-photo-card');
+    if (card){ e.preventDefault(); toggleCard(card); }
+  });
+
+  if (dotEls.length){
     var ticking = false;
     wrap.addEventListener('scroll', function(){
-      if(ticking) return;
+      if (ticking) return;
       ticking = true;
       requestAnimationFrame(function(){
         var cards = wrap.querySelectorAll('.ia-photo-card');
@@ -3979,7 +4018,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
         cards.forEach(function(c, i){
           var mid = c.offsetLeft + c.offsetWidth / 2;
           var dist = Math.abs(mid - center);
-          if(dist < minDist){ minDist = dist; closest = i; }
+          if (dist < minDist){ minDist = dist; closest = i; }
         });
         dotEls.forEach(function(d, i){ d.classList.toggle('is-active', i === closest); });
         ticking = false;
