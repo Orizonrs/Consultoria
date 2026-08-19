@@ -2846,6 +2846,8 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
   text-decoration: none;
   border-radius: 20px;
   overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: translateZ(0);
 }
 .content-split-media img {
   width: 100%;
@@ -2954,6 +2956,7 @@ body.dark-mode .content-split-tags span {
   .content-split-text { flex: 1 1 58%; min-width: 0; }
   .content-split-media img,
   .content-split-media svg { height: 150px; border-radius: 14px; }
+  .content-split-media a.content-split-link { border-radius: 14px; }
   .content-split-gov-badge { font-size: 0.6rem; padding: 0.2rem 0.5rem; bottom: 8px; right: 8px; }
   .content-split-eyebrow { font-size: 0.68rem; margin-bottom: 0.3rem; }
   .content-split-title { font-size: 1.05rem; margin-bottom: 0.5rem; }
@@ -2967,6 +2970,7 @@ body.dark-mode .content-split-tags span {
   .content-split-media { flex: 0 0 34%; }
   .content-split-media img,
   .content-split-media svg { height: 105px; border-radius: 12px; }
+  .content-split-media a.content-split-link { border-radius: 12px; }
   .content-split-gov-badge { display: none; }
   .content-split-eyebrow { font-size: 0.62rem; }
   .content-split-title { font-size: 0.92rem; }
@@ -3002,6 +3006,17 @@ body.dark-mode .content-split-tags span {
 @media (max-width:640px){
   .top-left-buttons{top:calc(1rem + 42px) !important;}
   .top-right-buttons{top:calc(1rem + 42px) !important;}
+}
+/* Rede de segurança: se algum link de âncora (#section-...) for aberto
+   sem passar pelo JS (ex.: link direto, botão voltar do navegador), o
+   navegador não deve esconder o título atrás dos botões fixos. */
+.topic-tab-btn, .accordion-item, [id^="section-"] {
+  scroll-margin-top: 130px;
+}
+@media (max-width:640px){
+  .topic-tab-btn, .accordion-item, [id^="section-"] {
+    scroll-margin-top: 100px;
+  }
 }
 </style>
 <div id="orizon-weather-bar" role="complementary" aria-label="Previsão do tempo região de Guaíba RS">
@@ -4571,7 +4586,18 @@ Tente novamente em instantes.`));
         activateTopicTab(el);
       }
       setTimeout(() => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Não usamos scrollIntoView puro porque ele ignora os botões fixos
+        // (Voltar/Menu/Topics + tema/tradutor) e o título alvo fica escondido
+        // atrás deles. Medimos a altura real da barra fixa e somamos um
+        // respiro, então funciona certinho em qualquer tela (mobile/desktop).
+        var navEl = document.getElementById('topLeftButtons') || document.getElementById('topRightButtons');
+        var offset = 24;
+        if (navEl) {
+          var rect = navEl.getBoundingClientRect();
+          if (rect.height > 0) offset = rect.bottom + 16;
+        }
+        var targetTop = el.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: targetTop < 0 ? 0 : targetTop, behavior: 'smooth' });
       }, 60);
     }
     document.addEventListener('click', (e) => {
@@ -5449,10 +5475,15 @@ body.dark-mode .btn-outline {
   word-spacing: normal !important;
   letter-spacing: normal !important;
 }
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .content-container p,
   .content-container li,
-  .highlight-list li {
-    text-align: left;
+  .highlight-list li,
+  .highlight-box,
+  .highlight-box p,
+  .value-card p {
+    text-align: left !important;
+    text-align-last: left !important;
     hyphens: none !important;
     -webkit-hyphens: none !important;
     -ms-hyphens: none !important;
@@ -6148,7 +6179,7 @@ body.dark-mode .cc-manage-btn { box-shadow: 0 0 16px rgba(0,200,255,0.3); }
 </div>
 
 <!-- Botão flutuante para reabrir as preferências a qualquer momento -->
-<button type="button" id="cc-manage-btn" class="cc-manage-btn" onclick="ccResetAndOpen()" title="Gerenciar Consentimento de Cookies" aria-label="Gerenciar Consentimento de Cookies">🍪</button>
+<button type="button" id="cc-manage-btn" class="cc-manage-btn" onclick="ccPlayCrumbs()" title="Cookies" aria-label="Cookies">🍪</button>
 
 <script>
 (function () {
@@ -6221,20 +6252,10 @@ body.dark-mode .cc-manage-btn { box-shadow: 0 0 16px rgba(0,200,255,0.3); }
     document.body.style.overflow = 'hidden';
   };
 
-  // Botão flutuante (🍪): apaga a configuração de cookies salva (volta ao
-  // estado "sem consentimento"), dispara a animação de migalhas caindo
-  // automaticamente e reabre o banner/preferências para o usuário escolher de novo.
-  window.ccResetAndOpen = function () {
-    try {
-      localStorage.removeItem(CC_KEY);
-    } catch (e) { /* localStorage indisponível */ }
-
-    ccSyncTogglesFromConsent(null);
-    document.dispatchEvent(new CustomEvent('cookieConsentUpdated', { detail: null }));
-
-    ccCelebrate(['🍪', '🔄', '✨'], 14);
-    ccCloseModal();
-    ccShowBanner();
+  // Botão flutuante (🍪): não abre modal nem banner — só solta a
+  // animação de migalhas caindo da tela, como um "efeito" do clique.
+  window.ccPlayCrumbs = function () {
+    ccCelebrate(['🍪', '✨', '😋'], 18);
   };
 
   window.ccCloseModal = function () {
