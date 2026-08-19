@@ -2817,20 +2817,23 @@ body:not(.dark-mode) .game-promo-container {
    ============================================================ */
 .sobre-intro-title,
 .sobre-alcance-title,
-.sobre-accordion-title {
+.sobre-accordion-title,
+.obn-numeros-title {
   margin-top: 1.5rem !important;
   margin-bottom: 0 !important;
   text-align: center;
 }
 .sobre-intro-title .orizon-section-title,
 .sobre-alcance-title .orizon-section-title,
-.sobre-accordion-title .orizon-section-title {
+.sobre-accordion-title .orizon-section-title,
+.obn-numeros-title .orizon-section-title {
   margin: 0 !important;
   display: block;
 }
 .sobre-intro-content,
 .sobre-alcance-content,
-.sobre-accordion-content {
+.sobre-accordion-content,
+.obn-numeros-content {
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;
 }
@@ -2882,7 +2885,8 @@ body:not(.dark-mode) .sobre-accordion-content .content-container {
    .content-section — sem isso ela aparece colada no título */
 body.dark-mode .sobre-intro-title::before,
 body.dark-mode .sobre-alcance-title::before,
-body.dark-mode .sobre-accordion-title::before {
+body.dark-mode .sobre-accordion-title::before,
+body.dark-mode .obn-numeros-title::before {
   display: none !important;
 }
 
@@ -3519,6 +3523,228 @@ body:not(.dark-mode) .review-card:hover {
       </div>
 </div><!-- fim container 1: introdução -->
 </section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     PLACA DE NÚMEROS — 3 linhas (esteira de estatísticas)
+     Usa a MESMA estrutura .content-section > .content-container
+     dos demais blocos da página, garantindo largura idêntica
+     em desktop e mobile automaticamente (herda as regras já
+     existentes no site, inclusive @media max-width:600px).
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+  /* Card sem padding lateral (as linhas da esteira vão de ponta a ponta),
+     com especificidade maior que a regra mobile ".content-container"
+     já existente no site — por isso a classe extra .obn-flat. */
+  .content-container.obn-flat{
+    padding: 0 !important;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .obn-row{ position:relative; overflow:hidden; border-top:1px solid rgba(0,0,0,0.08); }
+  body.dark-mode .obn-row{ border-top-color: rgba(255,255,255,0.08); }
+  .obn-row:first-child{ border-top:none; }
+  /* fade nas bordas laterais via máscara — funciona com QUALQUER fundo,
+     sem precisar “adivinhar” a cor por trás (evita o efeito colado/sem
+     espaço que aparecia entre os chips e a borda do card) */
+  .obn-row{
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 56px, #000 calc(100% - 56px), transparent);
+  }
+
+  .obn-chip{ display:inline-flex; align-items:center; gap:11px; padding:0 30px; white-space:nowrap; }
+  .obn-chip svg{ width:1.15em; height:1.15em; flex:none; color: var(--accent); }
+  .obn-chip .obn-num{ font-weight:800; color: var(--primary); letter-spacing:.01em; }
+  body.dark-mode .obn-chip .obn-num{ color: var(--accent); }
+  .obn-chip .obn-label{ font-weight:600; text-transform:uppercase; letter-spacing:.05em; font-size:.72em; opacity:.85; }
+  .obn-dot{ width:4px; height:4px; border-radius:50%; background:rgba(0,0,0,0.25); margin:0 8px; flex:none; display:inline-block; vertical-align:middle; }
+  body.dark-mode .obn-dot{ background:rgba(255,255,255,0.25); }
+
+  .obn-row-top, .obn-row-bottom{ height:58px; display:flex; align-items:center; font-size:15px; }
+  .obn-track-r{ display:flex; align-items:center; animation: obnRight 55s linear infinite; will-change:transform; }
+  .obn-track-l{ display:flex; align-items:center; animation: obnLeft 60s linear infinite; will-change:transform; }
+  @keyframes obnRight{ from{ transform:translateX(-50%);} to{ transform:translateX(0%);} }
+  @keyframes obnLeft{ from{ transform:translateX(0%);} to{ transform:translateX(-50%);} }
+
+  .obn-row-mid{
+    height:120px; display:flex;
+    background: radial-gradient(600px 180px at 50% 50%, rgba(37,99,235,0.06), transparent 70%);
+  }
+  body.dark-mode .obn-row-mid{ background: radial-gradient(600px 180px at 50% 50%, rgba(56,189,248,0.08), transparent 70%); }
+  .obn-half{ position:relative; width:50%; height:100%; overflow:hidden; }
+  .obn-half-l{ display:flex; justify-content:flex-end; }
+  .obn-half-r{ display:flex; justify-content:flex-start; }
+  .obn-seam{
+    position:absolute; left:50%; top:16%; bottom:16%; width:1px;
+    background:linear-gradient(180deg, transparent, var(--accent), transparent);
+    z-index:4; opacity:.5;
+  }
+  .obn-slot{ position:absolute; inset:0; display:flex; align-items:center; padding:0 20px; }
+  .obn-half-l .obn-slot{ justify-content:flex-end; }
+  .obn-half-r .obn-slot{ justify-content:flex-start; }
+
+  .obn-mchip{
+    display:inline-flex; align-items:center; gap:14px; padding:12px 26px;
+    border:1.5px solid rgba(0,0,0,0.12); border-radius:12px;
+    background: rgba(37,99,235,0.05);
+    white-space:nowrap; max-width:100%;
+  }
+  body.dark-mode .obn-mchip{ border-color: rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); }
+  .obn-mchip svg{ width:1.6em; height:1.6em; flex:none; color: var(--primary); }
+  body.dark-mode .obn-mchip svg{ color: var(--accent); }
+  .obn-mchip .obn-mnum{ font-weight:800; font-size:1.5em; color: var(--primary); line-height:1; white-space:nowrap; }
+  body.dark-mode .obn-mchip .obn-mnum{ color: var(--accent); }
+  .obn-mchip .obn-mlabel{ font-weight:600; text-transform:uppercase; letter-spacing:.05em; font-size:.7em; line-height:1.25; white-space:nowrap; opacity:.85; }
+
+  @keyframes obnFromL{
+    0%{ transform:translateX(-130%);} 20%{ transform:translateX(0%);} 38%{ transform:translateX(0%);}
+    50%{ transform:translateX(-130%);} 100%{ transform:translateX(-130%);}
+  }
+  @keyframes obnFromR{
+    0%{ transform:translateX(130%);} 20%{ transform:translateX(0%);} 38%{ transform:translateX(0%);}
+    50%{ transform:translateX(130%);} 100%{ transform:translateX(130%);}
+  }
+  .obn-sla{ animation: obnFromL 30s cubic-bezier(.22,.06,.18,1) infinite backwards; animation-delay:0s; }
+  .obn-slb{ animation: obnFromL 30s cubic-bezier(.22,.06,.18,1) infinite backwards; animation-delay:15s; }
+  .obn-sra{ animation: obnFromR 30s cubic-bezier(.22,.06,.18,1) infinite backwards; animation-delay:0s; }
+  .obn-srb{ animation: obnFromR 30s cubic-bezier(.22,.06,.18,1) infinite backwards; animation-delay:15s; }
+
+  /* ═══ MODO CLARO — mesma linguagem visual já usada pelo site no
+     container "Nosso Alcance" (fundo laranja/marrom quente + dourado),
+     em vez do azul/branco padrão. ═══ */
+  body:not(.dark-mode) .obn-numeros-content .content-container{
+    background: linear-gradient(160deg, rgba(120,58,10,0.94), rgba(66,28,4,0.96)) !important;
+    border: 1.5px solid #d97a1a !important;
+    box-shadow:
+      0 0 0 1px rgba(217,122,26,0.18),
+      0 20px 60px rgba(40,16,2,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  }
+  body:not(.dark-mode) .obn-numeros-content .obn-row{ border-top-color: rgba(255,207,107,0.18) !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-chip .obn-num,
+  body:not(.dark-mode) .obn-numeros-content .obn-mchip .obn-mnum{ color:#ffcf6b !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-chip svg,
+  body:not(.dark-mode) .obn-numeros-content .obn-mchip svg{ color:#ff9d3d !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-chip .obn-label,
+  body:not(.dark-mode) .obn-numeros-content .obn-mchip .obn-mlabel{ color:#f3e4d0 !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-dot{ background: rgba(255,207,107,0.3) !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-mchip{ background: rgba(255,255,255,0.05) !important; border-color: rgba(255,207,107,0.25) !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-seam{ background: linear-gradient(180deg, transparent, #ff9d3d, transparent) !important; }
+  body:not(.dark-mode) .obn-numeros-content .obn-row-mid{ background: radial-gradient(600px 180px at 50% 50%, rgba(255,157,61,0.10), transparent 70%) !important; }
+
+  /* ═══ MOBILE — mesmos breakpoints do restante do site ═══ */
+  @media (max-width:768px){
+    .obn-row-top, .obn-row-bottom{ height:48px; font-size:12.5px; }
+    .obn-chip{ padding:0 18px; gap:8px; }
+    .obn-chip svg{ width:1em; height:1em; }
+    .obn-row-mid{ height:102px; }
+    .obn-slot{ padding:0 10px; }
+    .obn-mchip{ padding:9px 16px; gap:10px; border-radius:10px; }
+    .obn-mchip svg{ width:1.3em; height:1.3em; }
+    .obn-mchip .obn-mnum{ font-size:1.15em; }
+    .obn-mchip .obn-mlabel{ font-size:.62em; }
+    .obn-row{ -webkit-mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent, #000 28px, #000 calc(100% - 28px), transparent); }
+  }
+  @media (max-width:480px){
+    .obn-row-top, .obn-row-bottom{ height:42px; font-size:11px; }
+    .obn-chip{ padding:0 12px; gap:6px; }
+    .obn-dot{ margin:0 5px; }
+    .obn-row-mid{ height:92px; }
+    .obn-mchip{ padding:7px 12px; gap:8px; }
+    .obn-mchip svg{ width:1.1em; height:1.1em; }
+    .obn-mchip .obn-mnum{ font-size:1em; }
+    .obn-mchip .obn-mlabel{ font-size:.56em; letter-spacing:.03em; }
+    .obn-track-r{ animation-duration:40s; }
+    .obn-track-l{ animation-duration:44s; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .obn-track-r, .obn-track-l, [class^="obn-sl"], [class^="obn-sr"]{ animation:none !important; }
+  }
+</style>
+
+<!-- Título flutuante (fora do container) — mesmo padrão das demais seções -->
+<div class="content-section obn-numeros-title">
+<h2 class="orizon-section-title" id="numeros"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;" aria-hidden="true" focusable="false"><path d="M4 19V5M4 19h16M8 19V11M12 19V7M16 19v4M20 19V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="ost-w1">Presença</span> <span class="ost-w2">em Números</span></h2>
+</div>
+
+<section class="content-section obn-numeros-content">
+<div class="content-container obn-flat">
+
+  <!-- linha de cima → direita -->
+  <div class="obn-row obn-row-top">
+    <div class="obn-track-r">
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06C2 17.06 5.66 21.2 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22C18.34 21.2 22 17.06 22 12.06z"/></svg><span class="obn-num">1 Mi</span><span class="obn-label">Alcance mensal Facebook</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.72 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.55.55.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43.05 1.06.06 1.4.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.4.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.72 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76a4.9 4.9 0 0 1 1.76-1.15c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.28 2 12 2zm0 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm6.75-.63a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg><span class="obn-num">50 mil</span><span class="obn-label">Alcance mensal Instagram</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57C12.92 12.8 13.54 12.17 14.31 12.17A1.4 1.4 0 0 1 15.71 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"/></svg><span class="obn-num">160 mil</span><span class="obn-label">Alcance mensal LinkedIn</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.48 1.33 5l-1.42 5.18 5.3-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.5 0 9.96-4.46 9.96-9.96S17.54 2 12.04 2zm5.83 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.81-.12-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.55-1.17-2.96 0-1.41.74-2.1 1-2.39.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.42-.07.65.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.14-.3.3-.13.58.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.31 2.35 1.45.29.14.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.39-.24.65-.14.26.1 1.68.79 1.97.93.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg><span class="obn-num">2 mil</span><span class="obn-label">Pessoas ativas WhatsApp</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4M12 2.8a14 14 0 0 1 0 18.4M12 2.8a14 14 0 0 0 0 18.4"/></svg><span class="obn-num">1 mil</span><span class="obn-label">Acessos no site / mês</span></div>
+      <span class="obn-dot"></span>
+      <!-- duplicado p/ loop contínuo -->
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06C2 17.06 5.66 21.2 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22C18.34 21.2 22 17.06 22 12.06z"/></svg><span class="obn-num">1 Mi</span><span class="obn-label">Alcance mensal Facebook</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.72 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.21.6 1.76 1.15.55.55.9 1.1 1.15 1.76.25.64.42 1.37.47 2.43.05 1.06.06 1.4.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.76 4.9 4.9 0 0 1-1.76 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.4.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.76-1.15 4.9 4.9 0 0 1-1.15-1.76c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.72 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.21 1.15-1.76a4.9 4.9 0 0 1 1.76-1.15c.64-.25 1.37-.42 2.43-.47C8.94 2.01 9.28 2 12 2zm0 3.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm6.75-.63a1.13 1.13 0 1 1-2.25 0 1.13 1.13 0 0 1 2.25 0z"/></svg><span class="obn-num">50 mil</span><span class="obn-label">Alcance mensal Instagram</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57C12.92 12.8 13.54 12.17 14.31 12.17A1.4 1.4 0 0 1 15.71 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"/></svg><span class="obn-num">160 mil</span><span class="obn-label">Alcance mensal LinkedIn</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.48 1.33 5l-1.42 5.18 5.3-1.39a9.9 9.9 0 0 0 4.75 1.21h.01c5.5 0 9.96-4.46 9.96-9.96S17.54 2 12.04 2zm5.83 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.81-.12-.42-.13-.95-.31-1.64-.6-2.88-1.24-4.76-4.14-4.9-4.33-.14-.19-1.17-1.55-1.17-2.96 0-1.41.74-2.1 1-2.39.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.17.01.42-.07.65.5.24.58.82 2 .89 2.14.07.14.12.31.02.5-.1.19-.15.31-.29.48-.15.17-.31.38-.44.51-.15.14-.3.3-.13.58.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.31 2.35 1.45.29.14.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.39-.24.65-.14.26.1 1.68.79 1.97.93.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg><span class="obn-num">2 mil</span><span class="obn-label">Pessoas ativas WhatsApp</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9.2"/><path d="M2.8 12h18.4M12 2.8a14 14 0 0 1 0 18.4M12 2.8a14 14 0 0 0 0 18.4"/></svg><span class="obn-num">1 mil</span><span class="obn-label">Acessos no site / mês</span></div>
+      <span class="obn-dot"></span>
+    </div>
+  </div>
+
+  <!-- linha do meio → blocos que se aproximam do centro -->
+  <div class="obn-row-mid">
+    <div class="obn-seam"></div>
+    <div class="obn-half obn-half-l">
+      <div class="obn-slot obn-sla">
+        <div class="obn-mchip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06C2 17.06 5.66 21.2 10.44 22v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.44 2.91h-2.34V22C18.34 21.2 22 17.06 22 12.06z"/></svg><div><div class="obn-mnum">22 mil</div><div class="obn-mlabel">Membros grupo Facebook</div></div></div>
+      </div>
+      <div class="obn-slot obn-slb">
+        <div class="obn-mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.2C5 6 8.13 3 12 3s7 3 7 6.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg><div><div class="obn-mnum">100%</div><div class="obn-mlabel">Atendimento nacional</div></div></div>
+      </div>
+    </div>
+    <div class="obn-half obn-half-r">
+      <div class="obn-slot obn-sra">
+        <div class="obn-mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg><div><div class="obn-mnum">100%</div><div class="obn-mlabel">Transparência no processo</div></div></div>
+      </div>
+      <div class="obn-slot obn-srb">
+        <div class="obn-mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4c0-.5.4-1 1-1h11.2c.8 0 1.2.9.6 1.4L14 9l3.8 4.6c.6.5.2 1.4-.6 1.4H6.4c-.8 0-1.4.6-1.4 1.4V21"/></svg><div><div class="obn-mnum">2025</div><div class="obn-mlabel">Ano de fundação</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- linha de baixo → esquerda -->
+  <div class="obn-row obn-row-bottom">
+    <div class="obn-track-l">
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5.5A2.5 2.5 0 0 1 10.5 3h3A2.5 2.5 0 0 1 16 5.5V7"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span class="obn-num">IA</span><span class="obn-label">Integrada ao recrutamento</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="12" r="2.3"/><path d="M8 7l7.5 4M8 17l7.5-4"/></svg><span class="obn-num">ATS</span><span class="obn-label">Tecnologia própria</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.2C5 6 8.13 3 12 3s7 3 7 6.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg><span class="obn-num">RS</span><span class="obn-label">Guaíba e Região</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg><span class="obn-num">100%</span><span class="obn-label">Processos automatizados</span></div>
+      <span class="obn-dot"></span>
+      <!-- duplicado p/ loop contínuo -->
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M8 7V5.5A2.5 2.5 0 0 1 10.5 3h3A2.5 2.5 0 0 1 16 5.5V7"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span class="obn-num">IA</span><span class="obn-label">Integrada ao recrutamento</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="12" r="2.3"/><path d="M8 7l7.5 4M8 17l7.5-4"/></svg><span class="obn-num">ATS</span><span class="obn-label">Tecnologia própria</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.2C5 6 8.13 3 12 3s7 3 7 6.8C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></svg><span class="obn-num">RS</span><span class="obn-label">Guaíba e Região</span></div>
+      <span class="obn-dot"></span>
+      <div class="obn-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg><span class="obn-num">100%</span><span class="obn-label">Processos automatizados</span></div>
+      <span class="obn-dot"></span>
+    </div>
+  </div>
+
+</div>
+</section>
+<!-- fim placa de números -->
+
 <!-- Título flutuante (fora do container) -->
 <div class="content-section sobre-alcance-title">
 <h2 class="orizon-section-title" id="atuacao"><img alt="Ícone globo" src="../imagens/icons8-planeta-terra-48.png" style="width:1.15em;height:1.15em;object-fit:contain;vertical-align:-0.18em;margin-right:0.35em;"/><span class="ost-w1">Nosso</span> <span class="ost-w2">Alcance</span></h2>
