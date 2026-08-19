@@ -972,10 +972,20 @@ body:not(.dark-mode) .theme-toggle {
     overflow: hidden;
     min-height: 220px;
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: transform .25s ease;
   }
+  .ia-photo-card * { -webkit-tap-highlight-color: transparent; }
+  .ia-photo-card:active { transform: scale(0.97); }
   .ia-photo-card img {
     width: 100%; height: 220px; object-fit: cover; display: block;
     transition: transform .5s ease;
+    -webkit-tap-highlight-color: transparent;
+    pointer-events: none;
   }
   .ia-photo-card:hover img { transform: scale(1.08); }
   .ia-photo-card-overlay {
@@ -984,6 +994,7 @@ body:not(.dark-mode) .theme-toggle {
     display: flex; flex-direction: column; justify-content: flex-end;
     padding: 1.1rem 1.2rem;
     color: #fff;
+    pointer-events: none;
   }
   body.dark-mode .ia-photo-card-overlay h4,
   .ia-photo-card-overlay h4 { margin: 0 0 0.35rem; font-size: 1.05rem; font-weight: 800; color: #ffffff !important; text-shadow: none !important; }
@@ -995,7 +1006,50 @@ body:not(.dark-mode) .theme-toggle {
   .ia-photo-card.is-open .ia-photo-card-overlay p {
     max-height: 120px; opacity: 1; margin-top: 0.3rem;
   }
+  .ia-photo-desc-short { display: none; }
   body.dark-mode .ia-photo-card-overlay { background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 100%); }
+
+  /* ---- Mobile: carrossel com preview da próxima foto (em vez de empilhar) ---- */
+  @media (max-width: 639px) {
+    .ia-photo-cards {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      gap: 0.9rem;
+      margin: 1.3rem -1.1rem 0.6rem;
+      padding: 0.2rem 1.1rem 0.9rem;
+      scrollbar-width: none;
+    }
+    .ia-photo-cards::-webkit-scrollbar { display: none; }
+    .ia-photo-card {
+      flex: 0 0 82%;
+      scroll-snap-align: center;
+      min-height: 200px;
+    }
+    .ia-photo-card img { height: 200px; }
+    .ia-photo-desc-short { display: block; }
+    .ia-photo-desc-full { display: none; }
+    .ia-photo-card.is-open .ia-photo-card-overlay p.ia-photo-desc-short {
+      max-height: 90px; opacity: 1; margin-top: 0.3rem;
+    }
+    .ia-photo-dots {
+      display: flex; justify-content: center; gap: 0.4rem; margin: -0.2rem 0 0.4rem;
+    }
+    .ia-photo-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(148,163,184,0.45);
+      transition: background .25s ease, transform .25s ease;
+    }
+    .ia-photo-dots span.is-active {
+      background: #00c8ff;
+      transform: scale(1.3);
+    }
+  }
+  @media (min-width: 640px) {
+    .ia-photo-dots { display: none; }
+  }
 
   .card {
     --accent-rgb: 37,99,235;
@@ -3870,30 +3924,70 @@ body.dark-mode .download-free-tag { color: #34d399; }
   padding: 0.3rem 0;
 ">🚀 <span class="ost-w1">IA no</span> <span class="ost-w2">Seu Dia a Dia</span></div>
 <section class="content-section" id="ia-dia-a-dia">
-<div class="ia-photo-cards">
-<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<div class="ia-photo-cards" id="iaPhotoCards">
+<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
 <img alt="Pessoa revisando currículo e perfil profissional com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Currículo &amp; Carreira</h4>
-<p>Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
+<p class="ia-photo-desc-full">Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
+<p class="ia-photo-desc-short">IA para revisar currículo, treinar entrevistas e ajustar o LinkedIn.</p>
 </div>
 </div>
-<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
 <img alt="Equipe de RH em reunião de recrutamento apoiada por inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>RH &amp; Recrutamento</h4>
-<p>Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
+<p class="ia-photo-desc-full">Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
+<p class="ia-photo-desc-short">IA agiliza triagem e vagas, sem perder o olhar humano na decisão.</p>
 </div>
 </div>
-<div class="ia-photo-card" onclick="this.classList.toggle('is-open')" role="button" tabindex="0">
+<div class="ia-photo-card" onclick="toggleIaPhotoCard(this)" role="button" tabindex="0">
 <img alt="Gestor analisando relatórios e produtividade empresarial com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Gestão &amp; Produtividade</h4>
-<p>Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
+<p class="ia-photo-desc-full">Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
+<p class="ia-photo-desc-short">IA cuida do repetitivo em relatórios e planilhas — sobra tempo pra estratégia.</p>
 </div>
 </div>
+</div>
+<div class="ia-photo-dots" id="iaPhotoDots">
+<span class="is-active"></span><span></span><span></span>
 </div>
 </section>
+<script>
+(function(){
+  function toggleIaPhotoCard(card){
+    var wasOpen = card.classList.contains('is-open');
+    var wrap = card.closest('.ia-photo-cards');
+    wrap.querySelectorAll('.ia-photo-card.is-open').forEach(function(c){ c.classList.remove('is-open'); });
+    if(!wasOpen) card.classList.add('is-open');
+  }
+  window.toggleIaPhotoCard = toggleIaPhotoCard;
+
+  var wrap = document.getElementById('iaPhotoCards');
+  var dots = document.getElementById('iaPhotoDots');
+  if(wrap && dots){
+    var dotEls = dots.querySelectorAll('span');
+    var ticking = false;
+    wrap.addEventListener('scroll', function(){
+      if(ticking) return;
+      ticking = true;
+      requestAnimationFrame(function(){
+        var cards = wrap.querySelectorAll('.ia-photo-card');
+        var center = wrap.scrollLeft + wrap.clientWidth / 2;
+        var closest = 0, minDist = Infinity;
+        cards.forEach(function(c, i){
+          var mid = c.offsetLeft + c.offsetWidth / 2;
+          var dist = Math.abs(mid - center);
+          if(dist < minDist){ minDist = dist; closest = i; }
+        });
+        dotEls.forEach(function(d, i){ d.classList.toggle('is-active', i === closest); });
+        ticking = false;
+      });
+    }, { passive: true });
+  }
+})();
+</script>
 
 <!-- ============================================================ -->
 <!-- SEÇÃO DE DOWNLOADS — BLOCO 06: IA & PRODUTIVIDADE          -->
