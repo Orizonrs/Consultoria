@@ -4127,7 +4127,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 <div class="topics-dropdown-mobile" id="topicsDropdownMobile">
 <a class="topics-link-mobile" href="#section-conectar" onclick="closeTopicsMobile()">🔗 Conectar Conosco</a>
 <a class="topics-link-mobile" href="#section-dicas" onclick="closeTopicsMobile()">🎯 Dicas para Candidatos</a>
-<a class="topics-link-mobile" href="#section-comportamento" onclick="closeTopicsMobile()">💡 Comportamento</a>
+<a class="topics-link-mobile" href="#section-comportamento-desktop" onclick="closeTopicsMobile()">💡 Comportamento</a>
 <a class="topics-link-mobile" href="#section-baixar" onclick="closeTopicsMobile()">📄 Baixe seu Currículo</a>
 <a class="topics-link-mobile" href="#section-gerador" onclick="closeTopicsMobile()">🚀 Gere seu Currículo</a>
 <a class="topics-link-mobile" href="#section-envio" onclick="closeTopicsMobile()">📧 Envio de Currículo</a>
@@ -4658,7 +4658,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
       .contact-section ul {
         text-align: left !important;
       }}</style>
-<div class="info-bar desktop-only-section" id="section-comportamento-desktop" style="
+<div class="info-bar" id="section-comportamento-desktop" style="
   display: block;
   width: 100%;
   max-width: 100%;
@@ -4669,7 +4669,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   text-align: center;
   padding: 0.3rem 0;
 ">💡 <span class="ost-w1">Comportamento</span></div>
-<section class="contact-section comportamento-live-section desktop-only-section">
+<section class="contact-section comportamento-live-section">
 <div class="comportamento-live-inner">
 <div class="comportamento-live-row">
 <div class="comportamento-live-text">
@@ -4705,14 +4705,13 @@ body.dark-mode .download-free-tag { color: #34d399; }
 </section>
 <style>
     /* ═══════════════════════════════════════════
-       COMPORTAMENTO — versão "editorial" (desktop):
+       COMPORTAMENTO — versão "editorial":
        texto de um lado, imagem do outro, alternando.
-       No mobile essa seção some e os flip-cards
-       de baixo (mobile-only-section) continuam.
+       Universal (desktop e mobile) — a seção antiga
+       de flip-cards (mobile-only-section /
+       comportamento-cards-section) fica sempre oculta,
+       ver regra .legacy-comportamento-hidden mais abaixo.
     ═══════════════════════════════════════════ */
-    @media (max-width: 768px) {
-      .desktop-only-section { display: none !important; }
-    }
     .comportamento-live-section {
       margin-top: 2rem;
       margin-bottom: 3rem;
@@ -4774,14 +4773,64 @@ body.dark-mode .download-free-tag { color: #34d399; }
     .comportamento-live-row:hover .comportamento-live-image img {
       transform: scale(1.02);
     }
+
+    /* Tablet: mantém lado a lado, só reduz respiro */
     @media (max-width: 992px) {
       .comportamento-live-row,
       .comportamento-live-row--reverse {
-        flex-direction: column;
-        gap: 1.25rem;
+        gap: 1.75rem;
         margin-bottom: 2.25rem;
       }
-      .comportamento-live-image img { max-height: none; aspect-ratio: 16 / 9; }
+      .comportamento-live-image img { max-height: 220px; }
+    }
+
+    /* Mobile: continua lado a lado (texto de um lado, imagem
+       do outro), só encolhe proporções pra caber dentro do
+       container — nunca empilha. */
+    @media (max-width: 768px) {
+      .comportamento-live-inner { padding: 0 1.25rem; }
+      .comportamento-live-row,
+      .comportamento-live-row--reverse {
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+      }
+      .comportamento-live-text { flex: 1 1 56%; }
+      .comportamento-live-image { flex: 1 1 44%; }
+      .comportamento-live-tag {
+        font-size: 0.62rem;
+        padding: 0.25rem 0.6rem;
+        margin-bottom: 0.5rem;
+      }
+      .comportamento-live-text h3 {
+        font-size: 0.95rem;
+        margin-bottom: 0.4rem;
+      }
+      .comportamento-live-text p {
+        font-size: 0.75rem;
+        line-height: 1.45;
+      }
+      .comportamento-live-image img {
+        max-height: 140px;
+        aspect-ratio: 3 / 4;
+        border-radius: 10px;
+      }
+    }
+
+    /* Telas bem estreitas: mais um ajuste fino de proporção */
+    @media (max-width: 560px) {
+      .comportamento-live-inner { padding: 0 1rem; }
+      .comportamento-live-text { flex: 1 1 52%; }
+      .comportamento-live-image { flex: 1 1 48%; }
+      .comportamento-live-image img { max-height: 120px; }
+    }
+
+    /* Seção antiga de flip-cards do Comportamento (mobile):
+       mantida no HTML mas sempre oculta, agora que a versão
+       editorial acima é universal. Reverter é só remover esta
+       regra. */
+    #section-comportamento,
+    .comportamento-cards-section {
+      display: none !important;
     }
   </style>
 <div class="info-bar mobile-only-section" id="section-comportamento" style="
