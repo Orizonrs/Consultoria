@@ -4222,9 +4222,6 @@ body.dark-mode .download-free-tag { color: #34d399; }
   <button class="a11y-reset" onclick="document.body.classList.remove('a11y-font-lg','a11y-font-xl','a11y-high-contrast')">↺ Restaurar recursos</button>
 </div>
 
-<!-- Atalho mobile: mãozinha sobre o botão Voltar, abre a aba Libras/Acessibilidade -->
-<button id="a11y-quick-handle" title="Libras e Acessibilidade" type="button">🤚</button>
-
 <style>
   #a11y-libras-anchor{
     position:fixed; left:0; top:234px; z-index:9998;
@@ -4239,30 +4236,6 @@ body.dark-mode .download-free-tag { color: #34d399; }
   @media (max-width:640px){
     #a11y-libras-anchor{ transform:translateX(-42px); }
   }
-  /* ═══ Mãozinha: atalho extra que fica sobre o botão "Voltar" no
-     mobile, já que a aba de Libras/Acessibilidade agora fica quase
-     toda escondida na borda. Some no desktop. ═══ */
-  #a11y-quick-handle{
-    display:none;
-    position:fixed;
-    z-index:1001;
-    width:30px; height:30px; border-radius:50%;
-    background:#1a5fb4; color:#fff; border:2px solid rgba(255,255,255,0.85);
-    align-items:center; justify-content:center;
-    font-size:15px; line-height:1; cursor:pointer;
-    box-shadow:0 3px 10px rgba(0,0,0,0.4);
-    padding:0; transition:transform 0.15s;
-    animation:a11yHandlePulse 2.2s ease-in-out infinite;
-  }
-  #a11y-quick-handle:active{ transform:scale(0.92); }
-  @keyframes a11yHandlePulse{
-    0%,100%{ box-shadow:0 3px 10px rgba(0,0,0,0.4), 0 0 0 0 rgba(26,95,180,0.55); }
-    50%{ box-shadow:0 3px 10px rgba(0,0,0,0.4), 0 0 0 6px rgba(26,95,180,0); }
-  }
-  @media (max-width:640px){
-    #a11y-quick-handle{ display:flex; }
-  }
-  body.a11y-anchor-hand-hidden #a11y-quick-handle{ display:none !important; }
   #a11y-toggle-btn, #libras-toggle-btn{
     position:relative;
     width:50px; height:50px; border-radius:9px;
@@ -4369,7 +4342,6 @@ body.dark-mode .download-free-tag { color: #34d399; }
       anchor.style.transform = '';
       if(panel) panel.classList.remove('open');
     }
-    window.a11yOpenAnchor = openAnchor;
 
     function onPointerDown(e){
       if(e.pointerType === 'mouse' && e.button !== 0) return;
@@ -4448,30 +4420,6 @@ body.dark-mode .download-free-tag { color: #34d399; }
     window.addEventListener('load', posicionar);
     window.addEventListener('resize', posicionar);
     if(document.fonts && document.fonts.ready){ document.fonts.ready.then(posicionar); }
-  })();
-
-  /* Mãozinha: posiciona sobre o canto superior direito do botão
-     "Voltar" (só existe visualmente no mobile, via CSS) e abre a
-     aba de Libras/Acessibilidade ao ser tocada. */
-  (function(){
-    var handle = document.getElementById('a11y-quick-handle');
-    var backBtn = document.querySelector('.back-button');
-    if(!handle || !backBtn) return;
-
-    function posicionarMao(){
-      var r = backBtn.getBoundingClientRect();
-      var scrollY = window.scrollY || window.pageYOffset || 0;
-      var scrollX = window.scrollX || window.pageXOffset || 0;
-      handle.style.top  = (r.top + scrollY - 10) + 'px';
-      handle.style.left = (r.right + scrollX - 14) + 'px';
-    }
-    handle.addEventListener('click', function(){
-      if(window.a11yOpenAnchor) window.a11yOpenAnchor();
-    });
-    posicionarMao();
-    window.addEventListener('load', posicionarMao);
-    window.addEventListener('resize', posicionarMao);
-    if(document.fonts && document.fonts.ready){ document.fonts.ready.then(posicionarMao); }
   })();
 </script>
 
