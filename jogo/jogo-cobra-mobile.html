@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+
+  <!-- ═══ FAVICON ═══ -->
+  <link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png" />
+  <link rel="shortcut icon" href="../imagens/icone.png" type="image/png" />
+  <link rel="apple-touch-icon" href="../imagens/icone.png" />
+  <link rel="manifest" href="../imagens/site.webmanifest" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Jogo da Cobra | Orizon Consultoria</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linear-gradient(135deg,#1e40af,#3b82f6);overflow:hidden;touch-action:none;}
+#wrapper{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:8px;}
+#header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:4px 4px;margin-bottom:4px;}
+#header h1{color:#fff;font-size:0.95rem;font-weight:900;letter-spacing:0.5px;}
+#hud{display:flex;gap:6px;align-items:center;}
+.hud-item{background:rgba(255,255,255,0.15);border-radius:8px;padding:3px 8px;color:#fff;font-size:0.7rem;font-weight:700;}
+.hud-item span{color:#ffd600;}
+#powerupsBar{display:flex;gap:4px;min-height:20px;flex-wrap:wrap;margin-bottom:4px;width:100%;justify-content:center;}
+#canvasWrap{position:relative;flex:1;display:flex;align-items:center;justify-content:center;width:100%;}
+#canvas{border-radius:14px;border:3px solid rgba(255,255,255,0.3);background:#0a1628;box-shadow:0 0 30px rgba(0,0,0,0.5);touch-action:none;}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);border-radius:14px;padding:1rem;}
+.overlay-title{color:#fff;font-size:1.5rem;font-weight:900;margin-bottom:0.5rem;text-align:center;}
+.overlay-sub{color:rgba(255,255,255,0.75);font-size:0.85rem;margin-bottom:1.2rem;text-align:center;}
+.btn{background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;border:none;border-radius:12px;padding:0.7rem 2rem;font-size:0.95rem;font-weight:800;cursor:pointer;}
+#toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#ffd600;padding:5px 14px;border-radius:20px;font-weight:700;font-size:0.8rem;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;z-index:5;}
+#dpad{display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:60px 60px 60px;gap:6px;margin-top:10px;margin-bottom:6px;}
+.dbtn{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.5rem;user-select:none;}
+.dbtn:active{background:rgba(255,255,255,0.35);}
+#dpad .up{grid-column:2;grid-row:1;}
+#dpad .left{grid-column:1;grid-row:2;}
+#dpad .down{grid-column:2;grid-row:3;}
+#dpad .right{grid-column:3;grid-row:2;}
+#footer{color:rgba(255,255,255,0.5);font-size:0.65rem;margin-top:2px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="wrapper">
+  <div id="header">
+    <h1>🐍 Cobra do Emprego</h1>
+    <div id="hud">
+      <div class="hud-item">Pts: <span id="scoreDisplay">0</span></div>
+      <div class="hud-item">🏆<span id="recordDisplay">0</span></div>
+      <div class="hud-item">Nv: <span id="levelDisplay">1</span></div>
+    </div>
+  </div>
+  <div id="powerupsBar"></div>
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <div id="toast"></div>
+    <div id="overlay">
+      <div class="overlay-title">🐍 Cobra do Emprego</div>
+      <div class="overlay-sub">Colete currículos 📄, fuja dos obstáculos.<br>Deslize ou use as setas para mover!</div>
+      <button class="btn" onclick="startGame()">▶ Jogar</button>
+    </div>
+  </div>
+  <div id="dpad">
+    <div class="dbtn up" data-dir="up">▲</div>
+    <div class="dbtn left" data-dir="left">◀</div>
+    <div class="dbtn down" data-dir="down">▼</div>
+    <div class="dbtn right" data-dir="right">▶</div>
+  </div>
+  <div id="footer">Deslize na tela ou use as setas • Orizon Consultoria</div>
+</div>
+<script>
+(function(){
+  const CELL = 20;
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  let COLS, ROWS;
+  let snake, dir, nextDir, food, powerups, score, level, speed, loop, activePowerups, scoreMultiplier, walls;
+  let record = parseInt(localStorage.getItem('cobra_record')||'0');
+  document.getElementById('recordDisplay').textContent = record;
+
+  const FOODS = ['📄','📋','🏆','💼','🎓'];
+  const POWERUP_TYPES = [
+    {tipo:'turbo',   emoji:'⚡', cor:'#ffd600', desc:'Turbo! Mais rápido',  duracao:4000},
+    {tipo:'slow',    emoji:'🐢', cor:'#4ade80', desc:'Lento! Respira...',   duracao:5000},
+    {tipo:'bonus',   emoji:'⭐', cor:'#ff9800', desc:'+5 pontos!',          duracao:0},
+    {tipo:'ghost',   emoji:'👻', cor:'#e040fb', desc:'Fantasma! Atravessa', duracao:4000},
+    {tipo:'dobro',   emoji:'💎', cor:'#00e5ff', desc:'2x pontos!',          duracao:6000},
+    {tipo:'escudo',  emoji:'🛡️', cor:'#f87171', desc:'Escudo extra vida!',  duracao:0},
+  ];
+
+  function resize(){
+    const headerH = document.getElementById('header').offsetHeight;
+    const barH = document.getElementById('powerupsBar').offsetHeight;
+    const dpadH = document.getElementById('dpad').offsetHeight;
+    const footH = document.getElementById('footer').offsetHeight;
+    const maxW = window.innerWidth - 20;
+    const maxH = window.innerHeight - headerH - barH - dpadH - footH - 60;
+    COLS = Math.floor(maxW / CELL);
+    ROWS = Math.floor(maxH / CELL);
+    canvas.width = COLS * CELL;
+    canvas.height = ROWS * CELL;
+  }
+
+  function startGame(){
+    document.getElementById('overlay').style.display='none';
+    resize();
+    snake = [{x:Math.floor(COLS/2), y:Math.floor(ROWS/2)}];
+    dir = {x:1,y:0}; nextDir = {x:1,y:0};
+    food = spawnFood();
+    powerups = [];
+    activePowerups = {};
+    scoreMultiplier = 1;
+    score = 0; level = 1; speed = 200;
+    walls = generateWalls();
+    updateHUD();
+    if(loop) clearInterval(loop);
+    loop = setInterval(tick, speed);
+    schedulePowerUp();
+  }
+
+  function generateWalls(){
+    if(level < 3) return [];
+    const w = [];
+    const count = Math.min((level-2)*2, 10);
+    for(let i=0;i<count;i++){
+      let x,y,valid,tries=0;
+      do{
+        valid=true;
+        x=Math.floor(Math.random()*COLS);
+        y=Math.floor(Math.random()*ROWS);
+        if(Math.abs(x-snake[0].x)<3 && Math.abs(y-snake[0].y)<3) valid=false;
+        if(x===food.x&&y===food.y) valid=false;
+        for(let ww of w) if(ww.x===x&&ww.y===y){valid=false;break;}
+        tries++;
+      }while(!valid&&tries<50);
+      if(valid) w.push({x,y});
+    }
+    return w;
+  }
+
+  function spawnFood(){
+    let x,y,valid,tries=0;
+    do{
+      valid=true;
+      x=Math.floor(Math.random()*COLS);
+      y=Math.floor(Math.random()*ROWS);
+      for(let s of snake) if(s.x===x&&s.y===y){valid=false;break;}
+      tries++;
+    }while(!valid&&tries<100);
+    return {x,y,emoji:FOODS[Math.floor(Math.random()*FOODS.length)]};
+  }
+
+  function schedulePowerUp(){
+    setTimeout(()=>{
+      if(!loop) return;
+      spawnPowerUp();
+      schedulePowerUp();
+    }, 8000+Math.random()*7000);
+  }
+
+  function spawnPowerUp(){
+    if(powerups.length>=3) return;
+    let x,y,valid,tries=0;
+    do{
+      valid=true;
+      x=Math.floor(Math.random()*COLS);
+      y=Math.floor(Math.random()*ROWS);
+      for(let s of snake) if(s.x===x&&s.y===y){valid=false;break;}
+      if(x===food.x&&y===food.y) valid=false;
+      for(let p of powerups) if(p.x===x&&p.y===y){valid=false;break;}
+      for(let w of walls) if(w.x===x&&w.y===y){valid=false;break;}
+      tries++;
+    }while(!valid&&tries<50);
+    if(valid){
+      const tipo = POWERUP_TYPES[Math.floor(Math.random()*POWERUP_TYPES.length)];
+      powerups.push({x,y,tipo,pulse:0,expire:Date.now()+12000});
+    }
+  }
+
+  function tick(){
+    dir = nextDir;
+    const head = {x: snake[0].x+dir.x, y: snake[0].y+dir.y};
+
+    if(activePowerups['ghost']){
+      head.x=(head.x+COLS)%COLS;
+      head.y=(head.y+ROWS)%ROWS;
+    }
+
+    if(!activePowerups['ghost']&&(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS)){
+      return gameOver();
+    }
+    for(let i=1;i<snake.length;i++){
+      if(snake[i].x===head.x&&snake[i].y===head.y){
+        if(activePowerups['escudo']){ delete activePowerups['escudo']; updatePowerupsUI(); showToast('🛡️ Escudo quebrado!'); return; }
+        return gameOver();
+      }
+    }
+    for(let w of walls){
+      if(w.x===head.x&&w.y===head.y){
+        if(activePowerups['ghost']) continue;
+        if(activePowerups['escudo']){ delete activePowerups['escudo']; updatePowerupsUI(); showToast('🛡️ Escudo quebrado!'); return; }
+        return gameOver();
+      }
+    }
+
+    snake.unshift(head);
+
+    if(head.x===food.x&&head.y===food.y){
+      score += 1 * scoreMultiplier;
+      food = spawnFood();
+      if(score % (5*scoreMultiplier) === 0){ level++; increaseSpeed(); walls=generateWalls(); }
+      showToast('📄 +'+scoreMultiplier);
+    } else {
+      snake.pop();
+    }
+
+    for(let i=powerups.length-1;i>=0;i--){
+      const pu=powerups[i];
+      if(pu.x===head.x&&pu.y===head.y){
+        activatePowerUp(pu);
+        powerups.splice(i,1);
+      }
+      if(pu.expire && Date.now()>pu.expire) powerups.splice(i,1);
+    }
+
+    updateHUD();
+    draw();
+  }
+
+  function increaseSpeed(){
+    clearInterval(loop);
+    speed = Math.max(90, speed - 12);
+    loop = setInterval(tick, speed);
+  }
+
+  function activatePowerUp(pu){
+    const tipo = pu.tipo.tipo;
+    showToast(pu.tipo.emoji+' '+pu.tipo.desc);
+    if(activePowerups[tipo]?.timeout) clearTimeout(activePowerups[tipo].timeout);
+    if(tipo==='bonus'){ score+=5*scoreMultiplier; updateHUD(); return; }
+    if(tipo==='escudo'){ activePowerups['escudo']={label:'🛡️'}; updatePowerupsUI(); return; }
+    if(tipo==='turbo'){ clearInterval(loop); loop=setInterval(tick, Math.max(70,speed-60)); }
+    if(tipo==='slow'){  clearInterval(loop); loop=setInterval(tick, speed+80); }
+    if(tipo==='dobro'){ scoreMultiplier=2; }
+    activePowerups[tipo]={
+      expireAt: Date.now()+pu.tipo.duracao,
+      timeout: setTimeout(()=>{
+        if(tipo==='turbo'||tipo==='slow'){ clearInterval(loop); loop=setInterval(tick,speed); }
+        if(tipo==='dobro') scoreMultiplier=1;
+        delete activePowerups[tipo];
+        updatePowerupsUI();
+      }, pu.tipo.duracao)
+    };
+    updatePowerupsUI();
+  }
+
+  function updatePowerupsUI(){
+    const bar = document.getElementById('powerupsBar');
+    bar.innerHTML = Object.entries(activePowerups).map(([tipo,v])=>{
+      const pt = POWERUP_TYPES.find(p=>p.tipo===tipo)||{emoji:'?',cor:'#fff'};
+      const rem = v.expireAt ? Math.max(0,Math.ceil((v.expireAt-Date.now())/1000)) : '∞';
+      return `<span style="background:${pt.cor}22;border:1px solid ${pt.cor};border-radius:8px;padding:2px 6px;font-size:0.68rem;color:${pt.cor};font-weight:700;">${pt.emoji} ${rem}s</span>`;
+    }).join('');
+  }
+
+  function updateHUD(){
+    document.getElementById('scoreDisplay').textContent=score;
+    document.getElementById('levelDisplay').textContent=level;
+    if(score>record){ record=score; localStorage.setItem('cobra_record',record); document.getElementById('recordDisplay').textContent=record; }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.strokeStyle='rgba(255,255,255,0.04)';
+    ctx.lineWidth=0.5;
+    for(let x=0;x<COLS;x++){ ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,canvas.height);ctx.stroke(); }
+    for(let y=0;y<ROWS;y++){ ctx.beginPath();ctx.moveTo(0,y*CELL);ctx.lineTo(canvas.width,y*CELL);ctx.stroke(); }
+
+    for(let w of walls){
+      ctx.fillStyle='#ef4444';
+      ctx.beginPath();
+      roundRect(ctx,w.x*CELL+1,w.y*CELL+1,CELL-2,CELL-2,4);
+      ctx.fill();
+      ctx.font=`${CELL-4}px serif`;
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText('🧱',w.x*CELL+CELL/2,w.y*CELL+CELL/2);
+    }
+
+    ctx.font=`${CELL-2}px serif`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(food.emoji, food.x*CELL+CELL/2, food.y*CELL+CELL/2);
+
+    for(let pu of powerups){
+      pu.pulse=(pu.pulse||0)+0.1;
+      const px=pu.x*CELL+CELL/2, py=pu.y*CELL+CELL/2;
+      const r=CELL*0.4+Math.sin(pu.pulse)*2;
+      ctx.save();
+      ctx.shadowColor=pu.tipo.cor; ctx.shadowBlur=12;
+      ctx.beginPath();ctx.arc(px,py,r,0,Math.PI*2);
+      ctx.fillStyle=pu.tipo.cor+'33'; ctx.fill();
+      ctx.strokeStyle=pu.tipo.cor; ctx.lineWidth=2; ctx.stroke();
+      ctx.restore();
+      ctx.font=`${CELL-4}px serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(pu.tipo.emoji,px,py);
+    }
+
+    for(let i=0;i<snake.length;i++){
+      const s=snake[i];
+      const isHead=i===0;
+      const progress=1-(i/snake.length)*0.6;
+      const ghost=activePowerups['ghost'];
+      ctx.globalAlpha=ghost?0.6:1;
+      ctx.fillStyle=isHead ? '#22c55e' : `rgba(${Math.floor(34+i*2)},${Math.floor(197-i*3)},${Math.floor(94)},${progress})`;
+      ctx.shadowColor=isHead?'#22c55e':'transparent';
+      ctx.shadowBlur=isHead?10:0;
+      ctx.beginPath();
+      roundRect(ctx,s.x*CELL+1,s.y*CELL+1,CELL-2,CELL-2,isHead?6:4);
+      ctx.fill();
+      ctx.shadowBlur=0;
+      if(isHead){
+        ctx.globalAlpha=1;
+        ctx.font=`${CELL-6}px serif`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('😊',s.x*CELL+CELL/2,s.y*CELL+CELL/2);
+      }
+      ctx.globalAlpha=1;
+    }
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+    ctx.closePath();
+  }
+
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.style.opacity='1';
+    clearTimeout(t._t);
+    t._t=setTimeout(()=>t.style.opacity='0',1500);
+  }
+
+  function gameOver(){
+    clearInterval(loop); loop=null;
+    Object.values(activePowerups).forEach(v=>v.timeout&&clearTimeout(v.timeout));
+    const ov=document.getElementById('overlay');
+    ov.innerHTML=`
+      <div class="overlay-title">💼 Game Over!</div>
+      <div class="overlay-sub">Você coletou <strong style="color:#ffd600">${score}</strong> currículos<br>Recorde: <strong style="color:#60a5fa">${record}</strong></div>
+      <button class="btn" onclick="startGame()">▶ Jogar Novamente</button>
+    `;
+    ov.style.display='flex';
+  }
+
+  function setDir(nd){
+    if(nd.x===-dir.x&&nd.y===-dir.y) return;
+    nextDir=nd;
+  }
+
+  // Controles D-pad
+  const DIRMAP = {up:{x:0,y:-1},down:{x:0,y:1},left:{x:-1,y:0},right:{x:1,y:0}};
+  document.querySelectorAll('.dbtn').forEach(btn=>{
+    btn.addEventListener('touchstart',(e)=>{ e.preventDefault(); setDir(DIRMAP[btn.dataset.dir]); },{passive:false});
+    btn.addEventListener('mousedown',(e)=>{ e.preventDefault(); setDir(DIRMAP[btn.dataset.dir]); });
+  });
+
+  // Controles de teclado (caso conectem teclado)
+  document.addEventListener('keydown', (e)=>{
+    const map={ArrowUp:{x:0,y:-1},ArrowDown:{x:0,y:1},ArrowLeft:{x:-1,y:0},ArrowRight:{x:1,y:0}};
+    const nd=map[e.key];
+    if(!nd) return;
+    e.preventDefault();
+    setDir(nd);
+  });
+
+  // Controle por swipe na tela do canvas
+  let touchStartX=0, touchStartY=0;
+  canvas.addEventListener('touchstart',(e)=>{
+    touchStartX=e.touches[0].clientX;
+    touchStartY=e.touches[0].clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',(e)=>{
+    const dx=e.changedTouches[0].clientX-touchStartX;
+    const dy=e.changedTouches[0].clientY-touchStartY;
+    if(Math.abs(dx)<20&&Math.abs(dy)<20) return;
+    if(Math.abs(dx)>Math.abs(dy)){
+      setDir(dx>0?DIRMAP.right:DIRMAP.left);
+    } else {
+      setDir(dy>0?DIRMAP.down:DIRMAP.up);
+    }
+  },{passive:true});
+
+  window.startGame=startGame;
+  resize();
+  window.addEventListener('resize',()=>{ if(loop){ resize(); walls=generateWalls(); } });
+})();
+</script>
+</body>
+</html>
