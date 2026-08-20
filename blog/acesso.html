@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acessando o Mural de Vagas | Orizon</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#14b8a6;--brand-dark:#0e9488;--bg:#0d0f14;--white:#161b24;
+    --text:#e8ecf4;--text-2:#9aa3b8;--text-3:#5a6278;--border:#252c3a;
+    --danger:#f87171;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    line-height:1.6;
+  }
+  .card{
+    background:var(--white);
+    border:1px solid var(--border);
+    border-radius:16px;
+    max-width:440px;
+    width:100%;
+    padding:40px 32px;
+    text-align:center;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  }
+  .logo-mark{
+    width:52px;height:52px;border-radius:14px;background:var(--brand);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 20px;font-size:24px;
+  }
+  h1{
+    font-family:'DM Serif Display',serif;
+    font-weight:400;
+    font-size:22px;
+    margin-bottom:10px;
+  }
+  p{
+    color:var(--text-2);
+    font-size:14.5px;
+    margin-bottom:6px;
+  }
+  .spinner{
+    width:34px;height:34px;
+    border:3px solid var(--border);
+    border-top-color:var(--brand);
+    border-radius:50%;
+    margin:24px auto 8px;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .state{ display:none; }
+  .state.active{ display:block; }
+  .icon{
+    font-size:34px;
+    margin:10px auto 14px;
+  }
+  .icon.error{ color:var(--danger); }
+  .icon.ok{ color:var(--brand); }
+  a.btn, button.btn{
+    display:inline-block;
+    margin-top:18px;
+    background:var(--brand);
+    color:#04211d;
+    font-weight:700;
+    font-size:14px;
+    text-decoration:none;
+    border:none;
+    border-radius:10px;
+    padding:11px 22px;
+    cursor:pointer;
+    transition:background-color .15s;
+  }
+  a.btn:hover, button.btn:hover{ background:var(--brand-dark); }
+  .hint{
+    margin-top:18px;
+    font-size:12.5px;
+    color:var(--text-3);
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo-mark">📋</div>
+
+  <div id="stateLoading" class="state active">
+    <h1>Verificando seu acesso…</h1>
+    <div class="spinner"></div>
+    <p>Só um instante, estamos confirmando o link.</p>
+  </div>
+
+  <div id="stateError" class="state">
+    <div class="icon error">⚠️</div>
+    <h1>Link inválido ou expirado</h1>
+    <p>Esse link de acesso ao mural de vagas não é mais válido.</p>
+    <p>Peça o link atualizado no grupo do WhatsApp.</p>
+    <div class="hint">Se você acabou de receber este link e o erro persistir, avise quem administra o grupo.</div>
+  </div>
+
+  <div id="stateRedirecting" class="state">
+    <div class="icon ok">✅</div>
+    <h1>Acesso confirmado</h1>
+    <p>Te levando para o mural de vagas…</p>
+    <div class="spinner"></div>
+    <a class="btn" id="fallbackLink" href="#" style="display:none;">Clique aqui se não for redirecionado</a>
+  </div>
+</div>
+
+<script>
+  // ══════════════════════════════════════════════════════
+  // CONFIGURAÇÃO — cole aqui as credenciais do seu projeto Supabase
+  // (Project Settings → API → Project URL / anon public key)
+  // ══════════════════════════════════════════════════════
+  const SUPABASE_URL = 'https://igtfiabuknpswwnzitfh.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndGZpYWJ1a25wc3d3bnppdGZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxOTYzMDIsImV4cCI6MjEwMjc3MjMwMn0.saYK1YUH2nb9_rAyUzmnqYqmgEW8LoahPl33efIt1x0';
+  // ══════════════════════════════════════════════════════
+
+  function showState(id) {
+    document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  async function verificarAcesso() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    if (!token) {
+      showState('stateError');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/verificar_token`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          p_token: token,
+          p_navegador: navigator.userAgent
+        })
+      });
+
+      if (!res.ok) throw new Error('Falha na verificação');
+
+      const arquivoDestino = await res.json(); // string com o nome do arquivo, ou null
+
+      if (!arquivoDestino) {
+        showState('stateError');
+        return;
+      }
+
+      showState('stateRedirecting');
+      const fallback = document.getElementById('fallbackLink');
+      fallback.href = arquivoDestino;
+
+      setTimeout(() => {
+        window.location.replace(arquivoDestino);
+        // Caso o navegador bloqueie o redirecionamento automático,
+        // mostra o botão manual depois de um instante.
+        setTimeout(() => { fallback.style.display = 'inline-block'; }, 1500);
+      }, 400);
+
+    } catch (e) {
+      showState('stateError');
+    }
+  }
+
+  verificarAcesso();
+</script>
+
+</body>
+</html>
