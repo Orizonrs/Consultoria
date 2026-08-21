@@ -584,6 +584,19 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 body.dark-mode .info-bar .ost-w1 { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
 body.dark-mode .info-bar .ost-w2 { color: #38bdf8 !important; text-shadow: 0 0 18px rgba(56,189,248,0.35); }
 </style>
+
+<style>
+@media (max-width: 767px) {
+  #info-bar-dica { display: none !important; }
+  #ia-hero-banner-wrap { display: none !important; }
+}
+</style>
+
+<style>
+</style>
+<!-- CSS antigo do flip (quebrado, escondia tudo no desktop) removido -->
+<style>
+</style>
 </head>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -955,6 +968,16 @@ body:not(.dark-mode) .theme-toggle {
        seção anterior. Removendo isso, a margem de 3rem fica igual em
        qualquer tamanho de tela — igual ao candidato.html. */
     .tip-box { margin: 0.6rem 0 !important; }
+
+    /* Vão preto grande em volta do título "Dica Orizon": reduz só a
+       margem de BAIXO de #prompts-ia (acima do título) e a margem de
+       CIMA de #ia-hero-banner-wrap (abaixo do título, antes da foto).
+       Não mexe na margem de BAIXO de #ia-hero-banner-wrap, porque o
+       título seguinte ("Produção Textual e Design") usa margem negativa
+       de -1.6rem calibrada exatamente pra cancelar essa margem de 3rem —
+       reduzir ela de novo quebraria o espaçamento daquele título. */
+    #prompts-ia { margin-bottom: 1rem !important; }
+    #ia-hero-banner-wrap { margin-top: 1rem !important; }
   }
 
   .cards-grid {
@@ -3471,6 +3494,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   color: #1e40af;
   text-align: center;
   padding: 0.3rem 0;
+  transform: translateY(-1.2rem);
 ">📝 <span class="ost-w1">Prompts</span> <span class="ost-w2">Prontos de IA</span></div>
 
 <section class="content-section" id="prompts-ia">
@@ -3749,40 +3773,218 @@ body.dark-mode .download-free-tag { color: #34d399; }
     #prompts-ia .pw-window::after, #prompts-ia .pw-window,
     #prompts-ia .pw-caret, #prompts-ia .pw-dot.green { animation: none; }
   }
+
+  /* ===== FLIP 3D — o container inteiro (título + conteúdo) gira como uma carta ===== */
+  #prompts-ia .pw-flip-scene {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin: 1.5rem auto;
+    perspective: 2200px;
+  }
+  #prompts-ia .pw-flipper {
+    position: relative;
+    width: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.85s cubic-bezier(.4,.15,.2,1), height 0.5s ease;
+  }
+  #prompts-ia .pw-flipper.is-flipped { transform: rotateY(180deg); }
+
+  #prompts-ia .pw-flip-scene .pw-window { margin: 0; }
+  #prompts-ia .pw-face {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  #prompts-ia .pw-face-front { position: relative; }
+  #prompts-ia .pw-face-back {
+    position: absolute;
+    inset: 0;
+    transform: rotateY(180deg);
+  }
+
+  #prompts-ia .pw-face-front, #prompts-ia .pw-face-back { display: flex; flex-direction: column; min-height: 0; }
+  #prompts-ia .pw-face-front .pw-window, #prompts-ia .pw-face-back .pw-window { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  #prompts-ia .pw-face .pw-content { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+  #prompts-ia .pw-face .pw-content .pw-btn { align-self: center; }
+
+  #prompts-ia .pw-content-back {
+    text-align: left;
+    justify-content: flex-start;
+    padding: 22px 26px 20px;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  #prompts-ia .pw-content-back::-webkit-scrollbar { width: 5px; }
+  #prompts-ia .pw-content-back::-webkit-scrollbar-thumb { background: rgba(96,165,250,0.35); border-radius: 3px; }
+  #prompts-ia .pw-back-section {
+    padding-left: 12px;
+    border-left: 2px solid rgba(96,165,250,0.25);
+  }
+  body:not(.dark-mode) #prompts-ia .pw-back-section { border-left-color: rgba(37,99,235,0.22); }
+  #prompts-ia .pw-content-back h2 {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 0.93rem; font-weight: 800; color: var(--pw-accent-2); margin: 0 0 5px;
+    letter-spacing: 0.2px;
+  }
+  #prompts-ia .pw-content-back p { font-size: 0.81rem; line-height: 1.5; color: var(--pw-muted); margin: 0; opacity: 0.92; }
+  #prompts-ia .pw-content-back ul { font-size: 0.81rem; line-height: 1.55; color: var(--pw-muted); padding-left: 1.1rem; margin: 4px 0 0; opacity: 0.92; }
+  #prompts-ia .pw-content-back li + li { margin-top: 2px; }
+  #prompts-ia .flip-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+  #prompts-ia .flip-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(37,99,235,0.10); border: 1px solid rgba(96,165,250,0.18);
+    color: var(--pw-accent-2); border-radius: 999px; padding: 4px 12px 4px 8px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  #prompts-ia .pw-flip-back-hint {
+    margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--pw-border);
+    color: var(--pw-muted); font-size: 11px; font-weight: 600; opacity: 0.75; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  #prompts-ia .pw-flip-back-hint svg { width: 12px; height: 12px; stroke: var(--pw-accent-2); }
+
+  @media (max-width: 900px) {
+    #prompts-ia .pw-content-back { padding: 16px 20px 14px; gap: 8px; }
+    #prompts-ia .pw-content-back h2 { font-size: 0.85rem; }
+    #prompts-ia .pw-content-back p { font-size: 0.76rem; line-height: 1.4; }
+    #prompts-ia .pw-content-back ul { font-size: 0.76rem; line-height: 1.4; }
+    #prompts-ia .flip-badge { font-size: 0.7rem; padding: 3px 10px 3px 7px; }
+    #prompts-ia .pw-back-section { padding-left: 9px; }
+    #prompts-ia .pw-flip-back-hint { padding-top: 6px; font-size: 10px; }
+  }
+
+  #prompts-ia .pw-flip-hint {
+    margin-top: 14px; color: var(--pw-muted); font-size: 12px; font-weight: 600; opacity: 0.85;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  #prompts-ia .pw-flip-hint svg { width: 14px; height: 14px; stroke: var(--pw-accent-2); }
+
+  #prompts-ia .pw-flip-zone {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 48px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--pw-accent-2);
+    font-size: 26px;
+    font-weight: 700;
+    background: linear-gradient(90deg, rgba(37,99,235,0.14), transparent);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border: none;
+    padding: 0;
+  }
+  #prompts-ia .pw-flip-zone:focus-visible { opacity: 1; outline: 2px solid var(--pw-accent-2); outline-offset: -2px; }
+  #prompts-ia .pw-flip-zone-left { left: 0; border-radius: 14px 0 0 14px; }
+  #prompts-ia .pw-flip-zone-right { right: 0; border-radius: 0 14px 14px 0; background: linear-gradient(270deg, rgba(37,99,235,0.14), transparent); }
+  #prompts-ia .pw-flip-scene:hover .pw-flip-zone,
+  #prompts-ia .pw-flip-zone:focus-visible { opacity: 1; }
+  @media (hover: none) {
+    #prompts-ia .pw-flip-zone { opacity: 0.55; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #prompts-ia .pw-flipper { transition: none; }
+  }
 </style>
 
-<div class="pw-window">
-  <canvas class="pw-canvas" id="pwCanvas"></canvas>
-  <div class="pw-spotlight" id="pwSpotlight"></div>
-  <div class="pw-titlebar">
-    <span class="pw-dot red"></span>
-    <span class="pw-dot yellow"></span>
-    <span class="pw-dot green"></span>
-    <span>prompts-ia.txt — gerando...</span>
-  </div>
-  <div class="pw-content">
-    <h1>Prompts de IA para o seu Futuro Profissional</h1>
-    <div class="pw-console">
-      <div class="pw-console-line" id="pwConsoleLine"></div>
-    </div>
-    <p class="pw-sub">Currículo, imagens, vídeos, LinkedIn e entrevistas — prompts prontos pra colar no ChatGPT, Gemini, Copilot e outras IAs.</p>
+<div class="pw-flip-scene" id="pwFlipScene">
+  <div class="pw-flipper" id="pwFlipper">
 
-    <button class="pw-btn" id="pwBtnPrompts" type="button">
-      <span class="pw-btn-shine"></span>
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
-        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
-        <path d="M9 15h6"></path><path d="M9 11h6"></path>
-      </svg>
-      <span>Ver todos os prompts</span>
-    </button>
+    <div class="pw-face pw-face-front"><div class="pw-window">
+      <canvas class="pw-canvas" id="pwCanvas"></canvas>
+      <div class="pw-spotlight" id="pwSpotlight"></div>
+      <div class="pw-titlebar">
+        <span class="pw-dot red"></span>
+        <span class="pw-dot yellow"></span>
+        <span class="pw-dot green"></span>
+        <span>prompts-ia.txt — gerando...</span>
+      </div>
+      <div class="pw-content">
+        <h1>Prompts de IA para o seu Futuro Profissional</h1>
+        <div class="pw-console">
+          <div class="pw-console-line" id="pwConsoleLine"></div>
+        </div>
+        <p class="pw-sub">Currículo, imagens, vídeos, LinkedIn e entrevistas — prompts prontos pra colar no ChatGPT, Gemini, Copilot e outras IAs.</p>
 
-    <div class="pw-hint">Abre em uma nova aba</div>
-  </div>
-</div>
+        <button class="pw-btn" id="pwBtnPrompts" type="button">
+          <span class="pw-btn-shine"></span>
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+            <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
+            <path d="M9 15h6"></path><path d="M9 11h6"></path>
+          </svg>
+          <span>Ver todos os prompts</span>
+        </button>
+
+        <div class="pw-hint">Abre em uma nova aba</div>
+        <div class="pw-flip-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"></path><path d="M3 4v5h5"></path></svg>
+          Clique nas laterais para saber o que é IA
+        </div>
+      </div>
+    </div></div><!-- /pw-face-front -->
+
+    <div class="pw-face pw-face-back"><div class="pw-window">
+      <div class="pw-titlebar">
+        <span class="pw-dot red"></span>
+        <span class="pw-dot yellow"></span>
+        <span class="pw-dot green"></span>
+        <span>o-que-e-ia.txt</span>
+      </div>
+      <div class="pw-content pw-content-back">
+        <div class="pw-back-section">
+          <h2>🤖 O que é Inteligência Artificial?</h2>
+          <p>IA aprende padrões a partir de dados e automatiza tarefas que antes exigiam raciocínio humano.</p>
+          <div class="flip-badges">
+            <span class="flip-badge">💬 ChatGPT</span>
+            <span class="flip-badge">🔍 Gemini</span>
+            <span class="flip-badge">🤝 Copilot</span>
+            <span class="flip-badge">🎨 Canva IA</span>
+          </div>
+        </div>
+        <div class="pw-back-section">
+          <h2>📌 Como usar no trabalho</h2>
+          <ul>
+            <li>Redija e-mails, relatórios e propostas</li>
+            <li>Crie currículos e cartas de apresentação</li>
+            <li>Pesquise e resuma conteúdos rapidamente</li>
+            <li>Gere imagens e materiais visuais</li>
+            <li>Automatize planilhas e análises de dados</li>
+          </ul>
+        </div>
+        <div class="pw-back-section">
+          <h2>⚠️ Use com critério</h2>
+          <p>Sempre revise o que a IA gera. Ela pode errar ou inventar informações.</p>
+        </div>
+        <div class="pw-flip-back-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"></path><path d="M21 4v5h-5"></path></svg>
+          Clique nas laterais para voltar
+        </div>
+      </div>
+    </div></div><!-- /pw-face-back -->
+
+  </div><!-- /pw-flipper -->
+
+  <button type="button" class="pw-flip-zone pw-flip-zone-left" id="pwFlipLeft" aria-label="Virar card"><span aria-hidden="true">‹</span></button>
+  <button type="button" class="pw-flip-zone pw-flip-zone-right" id="pwFlipRight" aria-label="Virar card"><span aria-hidden="true">›</span></button>
+</div><!-- /pw-flip-scene -->
 
 <script>
 (function () {
+  var flipper = document.getElementById("pwFlipper");
+  var flipLeft = document.getElementById("pwFlipLeft");
+  var flipRight = document.getElementById("pwFlipRight");
+  var faceFront = document.querySelector("#prompts-ia .pw-face-front");
+  var faceBack = document.querySelector("#prompts-ia .pw-face-back");
+
+  function toggleFlip() {
+    if (flipper) flipper.classList.toggle("is-flipped");
+  }
+  if (flipLeft) flipLeft.addEventListener("click", toggleFlip);
+  if (flipRight) flipRight.addEventListener("click", toggleFlip);
   var URL_DESTINO_PROMPTS = "https://orizonrs.com/integracao/app.html"; // troque pelo link da página de prompts
   var ABRIR_NOVA_ABA_PROMPTS = true;
 
@@ -3846,7 +4048,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
   // Rede de partículas animada (efeito "constelação neural")
   // -----------------------------------------------------------
   var canvas = document.getElementById("pwCanvas");
-  var win = document.querySelector("#prompts-ia .pw-window");
+  var win = document.querySelector("#prompts-ia .pw-face-front");
 
   if (canvas && win && window.requestAnimationFrame &&
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
