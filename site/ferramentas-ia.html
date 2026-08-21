@@ -583,6 +583,17 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 .info-bar .ost-w2 { color: #1e40af; }
 body.dark-mode .info-bar .ost-w1 { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
 body.dark-mode .info-bar .ost-w2 { color: #38bdf8 !important; text-shadow: 0 0 18px rgba(56,189,248,0.35); }
+/* Isola a camada de renderização deste título: ele fica logo abaixo do
+   card com flip 3D (perspective/rotateY), e em alguns navegadores mobile
+   essa transformação 3D próxima "vaza" na composição e deixa o branco
+   deste texto com aparência esmaecida/acinzentada até o repaint seguinte.
+   Forçar a própria camada de composição (translateZ + isolation) evita
+   que o título herde esse artefato visual. */
+#info-bar-producao {
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
 </style>
 
 <style>
@@ -3784,6 +3795,8 @@ body.dark-mode .download-free-tag { color: #34d399; }
     max-width: 100%;
     margin: 1.5rem auto;
     perspective: 2200px;
+    isolation: isolate;
+    transform: translateZ(0);
   }
   #prompts-ia .pw-flipper {
     position: relative;
@@ -4229,7 +4242,7 @@ body.dark-mode .download-free-tag { color: #34d399; }
 })();
 </script>
 
-<div class="info-bar" style="
+<div class="info-bar" id="info-bar-producao" style="
   display: block;
   width: 100%;
   max-width: 100%;
