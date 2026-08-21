@@ -288,15 +288,28 @@ html,body{width:100%;height:100%;background:#050810;color:#00e5ff;font-family:'S
 
 .logo-ring{
   width:180px;height:180px;border-radius:50%;
-  border:1.5px solid rgba(0,229,255,0.35);
-  box-shadow:0 0 32px rgba(0,229,255,0.2),0 0 80px rgba(0,229,255,0.08),inset 0 0 32px rgba(0,229,255,0.06);
-  overflow:hidden;margin-bottom:1.75rem;
+  box-shadow:0 0 32px rgba(0,229,255,0.2),0 0 80px rgba(0,229,255,0.08);
+  margin-bottom:1.75rem;
   opacity:0;animation:ringIn 0.45s 0.05s ease forwards;
-  position:relative;background:#050d1a;
+  position:relative;background:transparent;
+  perspective:1000px;cursor:pointer;
 }
-.logo-ring::before{content:'';position:absolute;inset:0;border-radius:50%;
+.logo-ring .logo-flip{
+  width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;
+  transition:transform 0.7s cubic-bezier(0.4,0.2,0.2,1);
+}
+.logo-ring.flipped .logo-flip{transform:rotateY(180deg);}
+.logo-ring .logo-face{
+  position:absolute;inset:0;border-radius:50%;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border:1.5px solid rgba(0,229,255,0.35);
+  overflow:hidden;background:#050d1a;
+}
+.logo-ring .logo-face::before{content:'';position:absolute;inset:0;border-radius:50%;
   background:linear-gradient(135deg,rgba(0,229,255,0.08),transparent 60%);z-index:1;}
-.logo-ring img{width:100%;height:100%;object-fit:contain;position:relative;z-index:2;}
+.logo-ring .logo-face img{width:100%;height:100%;object-fit:contain;position:relative;z-index:2;}
+.logo-ring .logo-face.logo-back{transform:rotateY(180deg) scaleX(-1);}
 @keyframes ringIn{from{opacity:0;transform:scale(0.75);}to{opacity:1;transform:scale(1);}}
 
 .eyebrow{font-size:8.5px;letter-spacing:5px;color:rgba(0,229,255,0.4);margin-bottom:1rem;
@@ -420,8 +433,15 @@ html,body{width:100%;height:100%;background:#050810;color:#00e5ff;font-family:'S
 <!-- CONTEÚDO PRINCIPAL -->
 <div class="stage" id="stage">
 
-  <div class="logo-ring">
-    <img src="imagens/logo123.jpg" alt="Orizon Consultoria" onerror="this.style.display='none';this.parentElement.innerHTML+='<span style=\'font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#00e5ff;text-shadow:0 0 18px rgba(0,229,255,0.9);letter-spacing:2px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;\'>ORIZON</span>'"/>
+  <div class="logo-ring" id="logoRing" onclick="this.classList.toggle('flipped')" title="Clique para virar">
+    <div class="logo-flip">
+      <div class="logo-face logo-front">
+        <img src="imagens/logo123.jpg" alt="Orizon Consultoria" onerror="this.style.display='none';this.parentElement.innerHTML+='<span style=\'font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#00e5ff;text-shadow:0 0 18px rgba(0,229,255,0.9);letter-spacing:2px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;\'>ORIZON</span>'"/>
+      </div>
+      <div class="logo-face logo-back">
+        <img src="imagens/logo12345.jpg" alt="Orizon Consultoria (verso)" onerror="this.style.display='none';this.parentElement.innerHTML+='<span style=\'font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#00e5ff;text-shadow:0 0 18px rgba(0,229,255,0.9);letter-spacing:2px;display:flex;align-items:center;justify-content:center;width:100%;height:100%;\'>ORIZON</span>'"/>
+      </div>
+    </div>
   </div>
 
   <div class="eyebrow">// ORIZON CONSULTORIA //</div>
