@@ -109,7 +109,7 @@ body {
     @media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}}
 
     /* ── CAMPOS ── */
-    .field-label{font-size:0.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:0.35rem;}
+    .field-label{font-size:0.68rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:0.35rem;}
     .field-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;}
     .field-input:focus{border-color:var(--accent);}
     .field-input::placeholder{color:var(--muted2);}
@@ -134,7 +134,7 @@ body {
 
     /* ── RESULTADO / DECISÃO ── */
     .decisao-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;}
-    .decisao-btn{border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.8rem 0.5rem;background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;transition:all 0.2s;font-family:inherit;}
+    .decisao-btn{border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.8rem 0.5rem;background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;transition:all 0.2s;font-family:inherit;color:var(--text);}
     .decisao-btn:hover{background:rgba(255,255,255,0.08);}
     .decisao-btn.selected-aprovado{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#2ecc71;}
     .decisao-btn.selected-reserva{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.4);color:#f39c12;}
@@ -181,7 +181,7 @@ body {
     .conf-box{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;}
     .conf-toggle input:checked ~ .conf-box{background:rgba(231,76,60,0.25);border-color:rgba(231,76,60,0.6);}
     .conf-toggle input:checked ~ .conf-box::after{content:'🔒';font-size:8px;line-height:1;}
-    .conf-label-text{font-size:0.6rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--muted);transition:color 0.18s;}
+    .conf-label-text{font-size:0.6rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text);transition:color 0.18s;}
     .conf-toggle:has(input:checked) .conf-label-text{color:#e74c3c;}
     .field-input.is-confidential{color:transparent!important;text-shadow:0 0 8px rgba(231,76,60,0.6);background:rgba(231,76,60,0.07)!important;border-color:rgba(231,76,60,0.4)!important;caret-color:var(--text);letter-spacing:2px;}
     .field-input.is-confidential::placeholder{color:transparent;}
@@ -609,6 +609,10 @@ body {
     <!-- Avaliação por critérios -->
     <label class="field-label" style="margin-bottom:0.8rem;">Avaliação por critério (1 a 10)</label>
     <div id="ratingsWrap"></div>
+    <div style="margin-top:0.9rem;">
+      <label class="field-label">Motivações da avaliação (opcional)</label>
+      <textarea class="field-input field-textarea" id="fMotivacoesRatings" placeholder="Justifique as notas atribuídas: por que critérios específicos receberam notas altas ou baixas..."></textarea>
+    </div>
   </div>
 
   <!-- ── SEÇÃO 6: OBSERVAÇÕES RÁPIDAS ── -->
@@ -679,15 +683,17 @@ body {
       <label for="dataEmissao" style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;">Data de emissão</label>
       <input type="date" id="dataEmissao" style="background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:0.55rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;color-scheme:dark;"/>
     </div>
-    <button class="btn-pdf" onclick="gerarPDFCompleto()">🖨️ Gerar PDF (4 páginas)</button>
-    <button class="btn-save" onclick="diagnosticoConf()" style="background:rgba(255,200,0,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);">🔍 Testar Confidencial</button>
-    <button class="btn-unif" onclick="abrirPDFUnificado()">📄 PDF Unificado (Parecer + DISC)</button>
-    <button class="btn-save" onclick="salvarParecer()">💾 Salvar Parecer</button>
-    <button class="btn-save" onclick="carregarDados()" style="background:rgba(52,152,219,0.12);color:#3498db;border-color:rgba(52,152,219,0.4);" title="Busca novamente no Supabase e preenche o formulário">🔄 Recarregar do Banco</button>
-    <button class="btn-save" onclick="novoParecerVersao()" style="background:rgba(59,130,246,0.08);color:#2ecc71;border-color:rgba(59,130,246,0.25);" title="Cria um novo registro no banco para outra empresa/vaga">➕ Nova Versão</button>
-    <button class="btn-save" onclick="abrirHistorico()" style="background:rgba(167,139,250,0.1);color:#a78bfa;border-color:rgba(167,139,250,0.3);">📂 Histórico</button>
-    <button class="btn-save" onclick="abrirParecerFinal()" style="background:rgba(255,215,0,0.1);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:800;">⭐ Parecer Final</button>
-    <button class="btn-save" onclick="abrirConfigSupabase()" style="background:rgba(255,100,0,0.1);color:#ff6b35;border-color:rgba(255,107,53,0.35);font-size:0.75rem;" title="Configurar chave do Supabase">⚙️ Config Supabase</button>
+    <button class="btn-pdf" onclick="gerarPDFCompleto()">🖨️ Gerar PDF</button>
+    <div style="display:none;">
+      <button class="btn-save" onclick="diagnosticoConf()" style="background:rgba(255,200,0,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);">🔍 Testar Confidencial</button>
+      <button class="btn-unif" onclick="abrirPDFUnificado()">📄 PDF Unificado (Parecer + DISC)</button>
+      <button class="btn-save" onclick="salvarParecer()">💾 Salvar Parecer</button>
+      <button class="btn-save" onclick="carregarDados()" style="background:rgba(52,152,219,0.12);color:#3498db;border-color:rgba(52,152,219,0.4);" title="Busca novamente no Supabase e preenche o formulário">🔄 Recarregar do Banco</button>
+      <button class="btn-save" onclick="novoParecerVersao()" style="background:rgba(59,130,246,0.08);color:#2ecc71;border-color:rgba(59,130,246,0.25);" title="Cria um novo registro no banco para outra empresa/vaga">➕ Nova Versão</button>
+      <button class="btn-save" onclick="abrirHistorico()" style="background:rgba(167,139,250,0.1);color:#a78bfa;border-color:rgba(167,139,250,0.3);">📂 Histórico</button>
+      <button class="btn-save" onclick="abrirParecerFinal()" style="background:rgba(255,215,0,0.1);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:800;">⭐ Parecer Final</button>
+      <button class="btn-save" onclick="abrirConfigSupabase()" style="background:rgba(255,100,0,0.1);color:#ff6b35;border-color:rgba(255,107,53,0.35);font-size:0.75rem;" title="Configurar chave do Supabase">⚙️ Config Supabase</button>
+    </div>
     <span class="save-status" id="saveStatus"></span>
   </div>
   <script>
@@ -1029,7 +1035,7 @@ function renderRatings(){
 }
 
 function setRating(criterio, val){
-  ratingsVal[criterio] = val;
+  ratingsVal[criterio] = (ratingsVal[criterio] === val) ? 0 : val;
   renderRatings();
 }
 
@@ -1145,6 +1151,7 @@ function coletarDados(){
     parecerComp:    document.getElementById('fParecerComportamental').value,
     obsLivre:       document.getElementById('fObsLivre').value,
     ratings:        {...ratingsVal},
+    motivacoesRatings: document.getElementById('fMotivacoesRatings').value,
     obsChecks:      {...obsChecks},
     decisao:        decisaoAtual,
     recomendacao:   recAtual,
@@ -1154,8 +1161,8 @@ function coletarDados(){
 
 function aplicarDados(d){
   if(!d) return;
-  const campos = ['fNome','fMae','fPai','fIdade','fCPF','fRG','fNacionalidade','fCidade','fBairro','fDisponibilidade','fCNH','fPretensao','fAreaAtuacao','fParecerProfissional','fParecerComportamental','fObsLivre'];
-  const chaves = ['nome','mae','pai','idade','cpf','rg','nacionalidade','cidade','bairro','disponibilidade','cnh','pretensao','areaAtuacao','parecerProf','parecerComp','obsLivre'];
+  const campos = ['fNome','fMae','fPai','fIdade','fCPF','fRG','fNacionalidade','fCidade','fBairro','fDisponibilidade','fCNH','fPretensao','fAreaAtuacao','fParecerProfissional','fParecerComportamental','fObsLivre','fMotivacoesRatings'];
+  const chaves = ['nome','mae','pai','idade','cpf','rg','nacionalidade','cidade','bairro','disponibilidade','cnh','pretensao','areaAtuacao','parecerProf','parecerComp','obsLivre','motivacoesRatings'];
   campos.forEach((id,i)=>{
     if(d[chaves[i]]!==undefined){
       let val = d[chaves[i]];
@@ -1508,7 +1515,7 @@ document.addEventListener('input', ()=>{
 function resetFormulario(){
   ['fNome','fMae','fPai','fIdade','fCPF','fRG','fNacionalidade','fCidade','fBairro',
    'fDisponibilidade','fCNH','fPretensao','fAreaAtuacao','fParecerProfissional',
-   'fParecerComportamental','fObsLivre','fRessalvas'].forEach(function(id){
+   'fParecerComportamental','fObsLivre','fRessalvas','fMotivacoesRatings'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -2046,7 +2053,7 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
   <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1e3a5f,#3b82f6,#1e3a5f);"></div>
   <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:20px 20px;"></div>
   <div style="position:relative;z-index:2;text-align:center;">
-    <div style="font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:rgba(59,130,246,0.85);">Documento Confidencial</div>
+    <div style="font-size:11px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#ffffff;">Documento Confidencial</div>
     <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,0.5),transparent);margin:6px auto 0;"></div>
   </div>
 </div>`;
@@ -2213,6 +2220,7 @@ ${st('📝 Observações Adicionais','#555')}
 ${algumRating ? `<div style="margin-bottom:14px;">
 ${st('⭐ Avaliação por Critério (média: ' + mediaRating + '/10)', '#6c3483')}
 ${ratingsHTML}
+${d.motivacoesRatings ? `<div style="margin-top:8px;font-size:11.5px;color:#333;line-height:1.7;background:#f9f9f9;border-radius:5px;padding:9px 13px;text-align:justify;word-wrap:break-word;"><b style="color:#6c3483;">Motivações:</b> ${escP(d.motivacoesRatings)}</div>` : ''}
 </div>` : ''}
 
 ${checksHTML}
@@ -2287,7 +2295,7 @@ ${pg4}
     }
   });
 })();
-</script>
+<\/script>
 
 </body></html>`;
 
@@ -2303,7 +2311,7 @@ ${pg4}
     mostrarToast('Erro ao gerar: ' + e.message, true);
     console.error(e);
   } finally {
-    btn.textContent = '🖨️ Gerar PDF (4 páginas)';
+    btn.textContent = '🖨️ Gerar PDF';
     btn.disabled = false;
   }
 }
@@ -2515,6 +2523,37 @@ function toggleConf(checkbox, fieldId) {
       }
     }
   }catch(e){}
+})();
+</script>
+
+<script>
+(function(){
+  // Verificar sessão já autenticada
+  if(sessionStorage.getItem('orizon_disc_auth') === '1'){
+    document.getElementById('orizon-login-gate').style.display = 'none';
+    document.getElementById('orizon-main-content').style.display = 'block';
+  }
+  window.olgEntrar = function(){
+    const u = (document.getElementById('olg-user').value || '').trim();
+    const p = (document.getElementById('olg-pass').value || '').trim();
+    const err = document.getElementById('olg-err');
+    if(u === 'admin' && p === 'admin'){
+      sessionStorage.setItem('orizon_disc_auth','1');
+      document.getElementById('orizon-login-gate').style.display = 'none';
+      document.getElementById('orizon-main-content').style.display = 'block';
+    } else {
+      err.textContent = 'Usuário ou senha incorretos.';
+      document.getElementById('olg-pass').value = '';
+      document.getElementById('olg-pass').focus();
+    }
+  };
+  // Foco automático no campo usuário
+  window.addEventListener('DOMContentLoaded', function(){
+    const gate = document.getElementById('orizon-login-gate');
+    if(gate && gate.style.display !== 'none'){
+      document.getElementById('olg-user').focus();
+    }
+  });
 })();
 </script>
 </body>
