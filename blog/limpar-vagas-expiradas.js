@@ -22,7 +22,15 @@
 const fs = require("fs");
 const path = require("path");
 
-const ARQUIVO = process.argv[2] || path.join(process.cwd(), "vagas.html");
+// Nome real do arquivo do mural hoje é "mural.html" (não "vagas.html").
+// Se nenhum caminho for passado, tenta mural.html primeiro; se não existir,
+// cai para vagas.html por compatibilidade com versões antigas.
+function resolverArquivoPadrao() {
+  const candidatoMural = path.join(process.cwd(), "mural.html");
+  if (fs.existsSync(candidatoMural)) return candidatoMural;
+  return path.join(process.cwd(), "vagas.html");
+}
+const ARQUIVO = process.argv[2] || resolverArquivoPadrao();
 const ARQUIVAR = process.env.ARQUIVAR !== "0";
 const LOG_PATH = path.join(path.dirname(ARQUIVO), "vagas-removidas.log.jsonl");
 

@@ -1,0 +1,35 @@
+name: Limpar vagas expiradas
+
+# Roda todo dia às 06:00 (horário de Brasília = 09:00 UTC) e também
+# permite disparo manual pela aba "Actions" do GitHub.
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Rodar limpeza de vagas expiradas
+        run: node limpar-vagas-expiradas.js mural.html
+
+      - name: Commitar alterações (só se algo mudou)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- mural.html vagas-removidas.log.jsonl 2>/dev/null; then
+            echo "Nenhuma vaga expirada hoje — nada para commitar."
+          else
+            git add mural.html vagas-removidas.log.jsonl
+            git commit -m "chore: remover vagas expiradas automaticamente"
+            git push
+          fi
