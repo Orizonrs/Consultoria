@@ -3122,6 +3122,11 @@ body.dark-mode .content-section::before {
   body.a11y-font-lg{ font-size:112% !important; }
   body.a11y-font-xl{ font-size:124% !important; }
 
+  /* Host do Shadow DOM do widget real do VLibras (versão atual) */
+  #vlibras-access-wrapper{
+    display:none !important;
+  }
+  /* Fallback para versões antigas do VLibras (sem Shadow DOM) */
   div[vw] div[vw-access-button]{
     display:none !important;
   }
@@ -3146,8 +3151,22 @@ body.dark-mode .content-section::before {
   (function(){
     var meuBotao = document.getElementById('libras-toggle-btn');
     if(!meuBotao) return;
+
+    function pegarBotaoReal(){
+      // Versão atual do VLibras: o botão real vive dentro de um Shadow DOM
+      var wrapper = document.getElementById('vlibras-access-wrapper');
+      if(wrapper && wrapper.shadowRoot){
+        var btn = wrapper.shadowRoot.getElementById('vlibras-button');
+        if(btn) return btn;
+        var anyBtn = wrapper.shadowRoot.querySelector('button');
+        if(anyBtn) return anyBtn;
+      }
+      // Fallback: versão antiga do VLibras (sem Shadow DOM)
+      return document.querySelector('div[vw] div[vw-access-button]');
+    }
+
     meuBotao.addEventListener('click', function(){
-      var real = document.querySelector('div[vw] div[vw-access-button]');
+      var real = pegarBotaoReal();
       if(real){
         real.click();
         return;
@@ -3155,11 +3174,44 @@ body.dark-mode .content-section::before {
       var tentativas = 0;
       var espera = setInterval(function(){
         tentativas++;
-        var r = document.querySelector('div[vw] div[vw-access-button]');
+        var r = pegarBotaoReal();
         if(r){ clearInterval(espera); r.click(); }
         else if(tentativas > 20){ clearInterval(espera); }
       }, 250);
     });
+  })();
+
+  /* ═══ CONTROLE REMOTO: força o wrapper real do VLibras a ficar
+     escondido via JavaScript direto no elemento (inline style com
+     !important), reforçando isso continuamente. Isso vence QUALQUER
+     CSS interno do widget (:host, stylesheet própria, etc.), porque
+     style inline com !important tem prioridade máxima no CSS. ═══ */
+  (function(){
+    function forcarEsconderReal(){
+      var wrapper = document.getElementById('vlibras-access-wrapper');
+      if(wrapper){
+        wrapper.style.setProperty('display', 'none', 'important');
+        wrapper.style.setProperty('visibility', 'hidden', 'important');
+        wrapper.style.setProperty('opacity', '0', 'important');
+        wrapper.style.setProperty('pointer-events', 'none', 'important');
+        wrapper.style.setProperty('position', 'fixed', 'important');
+        wrapper.style.setProperty('left', '-99999px', 'important');
+        wrapper.style.setProperty('top', '-99999px', 'important');
+        wrapper.style.setProperty('width', '0', 'important');
+        wrapper.style.setProperty('height', '0', 'important');
+      }
+      // fallback versão antiga
+      var antigo = document.querySelector('div[vw] div[vw-access-button]');
+      if(antigo){
+        antigo.style.setProperty('display', 'none', 'important');
+      }
+    }
+    forcarEsconderReal();
+    var obsAlvo = document.body;
+    var observer = new MutationObserver(forcarEsconderReal);
+    observer.observe(obsAlvo, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'] });
+    // reforço extra por garantia, mesmo sem mutação detectada
+    setInterval(forcarEsconderReal, 500);
   })();
 
   /* ═══ Aba lateral retrátil: os dois botões ficam com metade escondida
