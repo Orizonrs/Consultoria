@@ -4504,6 +4504,11 @@ body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 
 
   div[vw] div[vw-access-button]{
     display:none !important;
+    visibility:hidden !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    position:absolute !important;
+    left:-9999px !important;
   }
 </style>
 
@@ -4520,6 +4525,30 @@ body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 
     rootPath: 'https://vlibras.gov.br/app',
     position: 'L'
   });
+</script>
+<script>
+  /* O botão oficial do VLibras às vezes reaparece (o próprio script
+     dele redefine o style inline), duplicando visualmente o botão
+     azul de "mão" ao lado do nosso botão customizado. Forçamos a
+     ocultação via JS (que vence o inline do VLibras) e mantemos
+     essa ocultação com um MutationObserver, sempre que o widget
+     mexer no DOM/estilo dele. */
+  (function(){
+    function forceHideRealBtn(){
+      var real = document.querySelector('div[vw] div[vw-access-button]');
+      if(real){
+        real.style.setProperty('display','none','important');
+        real.style.setProperty('visibility','hidden','important');
+        real.style.setProperty('opacity','0','important');
+        real.style.setProperty('pointer-events','none','important');
+        real.style.setProperty('position','absolute','important');
+        real.style.setProperty('left','-9999px','important');
+      }
+    }
+    forceHideRealBtn();
+    var vlibrasHideObs = new MutationObserver(forceHideRealBtn);
+    vlibrasHideObs.observe(document.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['style','class']});
+  })();
 </script>
 
 <script>
