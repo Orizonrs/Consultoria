@@ -2,60 +2,73 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
 <title>Tetris das Vagas | Orizon Consultoria</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linear-gradient(135deg,#1e40af,#3b82f6);overflow:hidden;touch-action:none;}
-#wrapper{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:6px;}
-#header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:2px 4px;margin-bottom:4px;}
-#header h1{color:#fff;font-size:0.85rem;font-weight:900;}
+html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linear-gradient(135deg,#1e40af,#3b82f6);overflow:hidden;touch-action:none;overscroll-behavior:none;}
+#wrapper{
+  width:100%;
+  height:100%;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:6px 6px calc(6px + env(safe-area-inset-bottom));
+}
+#header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:2px 4px;gap:6px;flex:0 0 auto;}
+#headerLeft{display:flex;align-items:center;gap:6px;}
+#headerLeft h1{color:#fff;font-size:0.8rem;font-weight:900;white-space:nowrap;}
+#nextBox{background:rgba(255,255,255,0.14);border-radius:8px;padding:2px 4px;display:flex;align-items:center;gap:3px;}
+#nextBox span{color:#fff;font-size:0.55rem;font-weight:700;opacity:0.75;}
+#nextCanvas{background:#0a1628;border-radius:4px;display:block;}
 #hud{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;}
-.hud-item{background:rgba(255,255,255,0.15);border-radius:8px;padding:2px 6px;color:#fff;font-size:0.62rem;font-weight:700;}
+.hud-item{background:rgba(255,255,255,0.15);border-radius:8px;padding:2px 6px;color:#fff;font-size:0.6rem;font-weight:700;white-space:nowrap;}
 .hud-item span{color:#ffd600;}
-#game-area{display:flex;gap:8px;align-items:flex-start;flex:1;width:100%;justify-content:center;min-height:0;}
-#canvasWrap{position:relative;height:100%;display:flex;align-items:center;}
-#canvas{border-radius:8px;border:3px solid rgba(255,255,255,0.3);background:#0a1628;box-shadow:0 0 30px rgba(0,0,0,0.5);}
-#side{display:flex;flex-direction:column;gap:8px;width:70px;}
-.panel{background:rgba(255,255,255,0.12);border-radius:10px;padding:6px;color:#fff;text-align:center;}
-.panel h3{font-size:0.6rem;margin-bottom:4px;opacity:0.8;}
-#nextCanvas{background:#0a1628;border-radius:6px;width:100%;}
+#canvasWrap{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#canvas{border-radius:10px;border:3px solid rgba(255,255,255,0.3);background:#0a1628;box-shadow:0 0 30px rgba(0,0,0,0.5);display:block;}
 #overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.8);border-radius:8px;text-align:center;padding:1rem;}
 .overlay-title{color:#fff;font-size:1.3rem;font-weight:900;margin-bottom:0.4rem;}
 .overlay-sub{color:rgba(255,255,255,0.75);font-size:0.78rem;margin-bottom:1rem;}
 .btn{background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;border:none;border-radius:12px;padding:0.6rem 1.6rem;font-size:0.9rem;font-weight:800;}
 #toast{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#ffd600;padding:4px 12px;border-radius:20px;font-weight:700;font-size:0.72rem;pointer-events:none;opacity:0;transition:opacity 0.3s;white-space:nowrap;z-index:6;}
-#controls{display:flex;justify-content:center;gap:8px;margin-top:8px;width:100%;}
-.cbtn{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:12px;width:56px;height:52px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;user-select:none;}
+#controls{flex:0 0 auto;display:flex;justify-content:center;gap:6px;margin-top:6px;width:100%;}
+.cbtn{background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:12px;flex:1;max-width:64px;height:52px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem;user-select:none;}
 .cbtn:active{background:rgba(255,255,255,0.35);}
-#footer{color:rgba(255,255,255,0.5);font-size:0.6rem;margin-top:4px;text-align:center;}
+#footer{flex:0 0 auto;color:rgba(255,255,255,0.5);font-size:0.55rem;margin-top:3px;text-align:center;}
 </style>
 </head>
 <body>
 <div id="wrapper">
   <div id="header">
-    <h1>🧱 Tetris</h1>
+    <div id="headerLeft">
+      <h1>🧱 Tetris</h1>
+      <div id="nextBox">
+        <span>Próx</span>
+        <canvas id="nextCanvas" width="32" height="32"></canvas>
+      </div>
+    </div>
     <div id="hud">
       <div class="hud-item">Pts:<span id="scoreDisplay">0</span></div>
       <div class="hud-item">🏆<span id="recordDisplay">0</span></div>
       <div class="hud-item">Nv:<span id="levelDisplay">1</span></div>
     </div>
   </div>
-  <div id="game-area">
-    <div id="canvasWrap">
-      <canvas id="canvas"></canvas>
-      <div id="toast"></div>
-      <div id="overlay">
-        <div class="overlay-title">🧱 Tetris das Vagas</div>
-        <div class="overlay-sub">Monte competências e complete linhas!<br>Use os botões abaixo para jogar.</div>
-        <button class="btn" onclick="startGame()">▶ Jogar</button>
-      </div>
-    </div>
-    <div id="side">
-      <div class="panel">
-        <h3>Próxima</h3>
-        <canvas id="nextCanvas" width="60" height="60"></canvas>
-      </div>
+  <div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <div id="toast"></div>
+    <div id="overlay">
+      <div class="overlay-title">🧱 Tetris das Vagas</div>
+      <div class="overlay-sub">Monte competências e complete linhas!<br>Use os botões abaixo para jogar.</div>
+      <button class="btn" onclick="startGame()">▶ Jogar</button>
     </div>
   </div>
   <div id="controls">
@@ -69,10 +82,11 @@ html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linea
 </div>
 <script>
 (function(){
-  const COLS=10, ROWS=18, CELL=18;
+  const COLS=10, ROWS=18;
+  let CELL=18;
   const canvas=document.getElementById('canvas');
   const ctx=canvas.getContext('2d');
-  canvas.width=COLS*CELL; canvas.height=ROWS*CELL;
+  const canvasWrap=document.getElementById('canvasWrap');
   const nextCanvas=document.getElementById('nextCanvas');
   const nctx=nextCanvas.getContext('2d');
 
@@ -100,8 +114,21 @@ html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linea
     return {type, shape, x:Math.floor(COLS/2)-Math.ceil(shape[0].length/2), y:0};
   }
 
+  function resizeCanvas(){
+    const availH = canvasWrap.clientHeight;
+    const availW = canvasWrap.clientWidth;
+    if(availH<=0||availW<=0) return;
+    const cellByH = Math.floor(availH/ROWS);
+    const cellByW = Math.floor(availW/COLS);
+    CELL = Math.max(10, Math.min(cellByH, cellByW));
+    canvas.width = COLS*CELL;
+    canvas.height = ROWS*CELL;
+    if(board) draw();
+  }
+
   function startGame(){
     document.getElementById('overlay').style.display='none';
+    resizeCanvas();
     board=emptyBoard();
     score=0; level=1; lines=0; speed=900;
     current=randomPiece();
@@ -251,7 +278,7 @@ html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linea
   function drawNext(){
     nctx.clearRect(0,0,nextCanvas.width,nextCanvas.height);
     const shape=next.shape;
-    const cell=12;
+    const cell=8;
     const offX=(nextCanvas.width-shape[0].length*cell)/2;
     const offY=(nextCanvas.height-shape.length*cell)/2;
     for(let r=0;r<shape.length;r++) for(let c=0;c<shape[r].length;c++)
@@ -293,7 +320,11 @@ html,body{width:100%;height:100%;font-family:'Arial',sans-serif;background:linea
   bindBtn('btnRotate', rotatePiece);
   bindBtn('btnDrop', hardDrop);
 
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', ()=>setTimeout(resizeCanvas,150));
+
   window.startGame=startGame;
+  resizeCanvas();
 })();
 </script>
 </body>

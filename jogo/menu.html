@@ -4,67 +4,307 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-
   <!-- ═══ FAVICON ═══ -->
   <link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="../imagens/favicon-192x192.png" />
   <link rel="shortcut icon" href="../imagens/icone.png" type="image/png" />
   <link rel="apple-touch-icon" href="../imagens/icone.png" />
   <link rel="manifest" href="../imagens/site.webmanifest" />
+
 <title>Jogos | Orizon Consultoria</title>
 <meta name="description" content="Escolha um joguinho da Orizon e teste suas habilidades de forma leve e divertida."/>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
 <style>
+:root{
+  --bg-0:#070c1a;
+  --bg-1:#0d1630;
+  --bg-2:#111b3d;
+  --panel:#0f1a38;
+  --gold:#c9a24b;
+  --gold-bright:#e9caa0;
+  --gold-line:rgba(201,162,75,0.28);
+  --blue:#4f8ff7;
+  --ink:#f3efe4;
+  --ink-muted:#9aa4c0;
+  --ink-faint:#6d7796;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;min-height:100%;font-family:'Arial',sans-serif;background:linear-gradient(135deg,#1e40af,#3b82f6);}
-body{display:flex;flex-direction:column;align-items:center;padding:2rem 1rem 3rem;}
-#topo{text-align:center;margin-bottom:2rem;max-width:640px;}
-#topo h1{color:#fff;font-size:1.8rem;font-weight:900;margin-bottom:0.5rem;letter-spacing:0.5px;}
-#topo p{color:rgba(255,255,255,0.8);font-size:0.95rem;}
-#grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:920px;width:100%;}
-.card{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);border-radius:20px;padding:1.6rem 1.4rem;display:flex;flex-direction:column;align-items:center;text-align:center;backdrop-filter:blur(6px);transition:transform 0.2s, box-shadow 0.2s;}
-.card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,0.3);}
-.emoji{font-size:3rem;margin-bottom:0.6rem;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.3));}
-.card h2{color:#fff;font-size:1.15rem;font-weight:800;margin-bottom:0.5rem;}
-.card p{color:rgba(255,255,255,0.78);font-size:0.85rem;line-height:1.4;margin-bottom:1.2rem;min-height:58px;}
-.play-btn{background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;border:none;border-radius:12px;padding:0.65rem 1.8rem;font-size:0.9rem;font-weight:800;text-decoration:none;display:inline-block;transition:all 0.2s;}
-.play-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(37,99,235,0.5);}
-.badge{background:rgba(255,214,0,0.15);border:1px solid #ffd600;color:#ffd600;font-size:0.65rem;font-weight:800;border-radius:20px;padding:2px 10px;margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.5px;}
-#rodape{color:rgba(255,255,255,0.5);font-size:0.75rem;margin-top:2.5rem;text-align:center;}
+html,body{width:100%;min-height:100%;}
+body{
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, #1a2a5c 0%, transparent 55%),
+    radial-gradient(ellipse 90% 50% at 85% 110%, #14204a 0%, transparent 50%),
+    linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+  background-attachment:fixed;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:3.5rem 1.5rem 3rem;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* fine dossier grid texture */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size:42px 42px;
+  pointer-events:none;
+  z-index:0;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, #000 0%, transparent 75%);
+}
+
+/* brass corner frame — signature motif */
+.corner{
+  position:fixed;
+  width:34px;
+  height:34px;
+  border:1px solid var(--gold-line);
+  z-index:5;
+  pointer-events:none;
+  opacity:0.75;
+}
+.corner.tl{top:18px;left:18px;border-right:none;border-bottom:none;}
+.corner.tr{top:18px;right:18px;border-left:none;border-bottom:none;}
+.corner.bl{bottom:18px;left:18px;border-right:none;border-top:none;}
+.corner.br{bottom:18px;right:18px;border-left:none;border-top:none;}
+
+#topo{
+  text-align:center;
+  margin-bottom:3.2rem;
+  max-width:620px;
+  position:relative;
+  z-index:1;
+}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.68rem;
+  font-weight:600;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:var(--gold-bright);
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:1.3rem;
+}
+.eyebrow::before,.eyebrow::after{
+  content:"";
+  width:22px;
+  height:1px;
+  background:var(--gold-line);
+}
+#topo h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:clamp(2.2rem, 5vw, 3.1rem);
+  letter-spacing:0.2px;
+  line-height:1.1;
+  margin-bottom:1.1rem;
+}
+#topo h1 em{
+  font-style:italic;
+  font-weight:500;
+  color:var(--gold-bright);
+}
+#topo p{
+  color:var(--ink-muted);
+  font-size:0.98rem;
+  line-height:1.65;
+  max-width:480px;
+  margin:0 auto;
+}
+.divider{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-top:1.8rem;
+}
+.divider span{width:64px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-line));}
+.divider span.right{background:linear-gradient(90deg,var(--gold-line),transparent);}
+.divider i{width:5px;height:5px;border-radius:50%;background:var(--gold);transform:rotate(45deg);}
+
+#grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(272px,1fr));
+  gap:22px;
+  max-width:960px;
+  width:100%;
+  position:relative;
+  z-index:1;
+}
+
+.card{
+  position:relative;
+  background:linear-gradient(165deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  border:1px solid var(--gold-line);
+  border-radius:6px;
+  padding:2rem 1.7rem 1.8rem;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  backdrop-filter:blur(8px);
+  transition:transform 0.35s cubic-bezier(.2,.8,.2,1), border-color 0.35s, box-shadow 0.35s;
+}
+.card::before{
+  content:"";
+  position:absolute;
+  top:11px; left:11px;
+  width:5px; height:5px;
+  border-radius:50%;
+  background:var(--gold);
+  opacity:0.55;
+}
+.card:hover{
+  transform:translateY(-5px);
+  border-color:var(--gold);
+  box-shadow:0 18px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,162,75,0.15);
+}
+
+.badge{
+  position:absolute;
+  top:16px; right:16px;
+  font-family:'IBM Plex Mono',monospace;
+  background:rgba(201,162,75,0.1);
+  border:1px solid var(--gold-line);
+  color:var(--gold-bright);
+  font-size:0.6rem;
+  font-weight:600;
+  border-radius:20px;
+  padding:3px 10px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.icon-ring{
+  width:68px;
+  height:68px;
+  border-radius:50%;
+  border:1px solid var(--gold-line);
+  background:radial-gradient(circle at 35% 30%, rgba(201,162,75,0.16), transparent 70%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2rem;
+  margin-bottom:1.1rem;
+  transition:border-color 0.35s, box-shadow 0.35s;
+}
+.card:hover .icon-ring{
+  border-color:var(--gold);
+  box-shadow:0 0 24px rgba(201,162,75,0.25);
+}
+
+.card h2{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:1.2rem;
+  margin-bottom:0.6rem;
+  letter-spacing:0.2px;
+}
+.card p{
+  color:var(--ink-muted);
+  font-size:0.86rem;
+  line-height:1.55;
+  margin-bottom:1.6rem;
+  min-height:56px;
+}
+
+.play-btn{
+  border:1px solid var(--gold);
+  color:var(--gold-bright);
+  background:transparent;
+  border-radius:3px;
+  padding:0.65rem 1.9rem;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:0.72rem;
+  font-weight:600;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  text-decoration:none;
+  display:inline-block;
+  transition:all 0.3s;
+}
+.play-btn:hover{
+  background:linear-gradient(135deg,var(--gold),var(--gold-bright));
+  color:#111;
+  box-shadow:0 8px 24px rgba(201,162,75,0.35);
+  transform:translateY(-1px);
+}
+
+#rodape{
+  color:var(--ink-faint);
+  font-size:0.76rem;
+  margin-top:3.4rem;
+  text-align:center;
+  position:relative;
+  z-index:1;
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  letter-spacing:0.2px;
+}
+
+@media (max-width:520px){
+  .corner{width:20px;height:20px;}
+  #topo{margin-bottom:2.4rem;}
+}
 </style>
 </head>
 <body>
+
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
 <div id="topo">
-  <h1>🎮 Joguinhos da Orizon</h1>
-  <p>Escolha um jogo e teste suas habilidades de forma leve e divertida.<br>A versão certa (desktop ou mobile) abre automaticamente pro seu dispositivo.</p>
+  <div class="eyebrow">Orizon Consultoria</div>
+  <h1>Sala de <em>Jogos</em></h1>
+  <p>Três desafios rápidos para destravar a mente entre uma etapa e outra do processo seletivo. A versão certa abre sozinha, no computador ou no celular.</p>
+  <div class="divider"><span></span><i></i><span class="right"></span></div>
 </div>
+
 <div id="grid">
 
   <div class="card">
     <div class="badge">Clássico</div>
-    <div class="emoji">💼</div>
+    <div class="icon-ring">💼</div>
     <h2>Procura de Emprego</h2>
     <p>Colete competências, desvie dos concorrentes e conquiste a vaga dos seus sonhos.</p>
-    <a class="play-btn" href="#" data-desktop="jododesktop.html" data-mobile="jogomobile.html">▶ Jogar</a>
+    <a class="play-btn" href="#" data-desktop="jododesktop.html" data-mobile="jogomobile.html">Jogar</a>
   </div>
 
   <div class="card">
-    <div class="badge">Novo</div>
-    <div class="emoji">🐍</div>
+    <div class="badge">Lançamento</div>
+    <div class="icon-ring">🐍</div>
     <h2>Cobra do Emprego</h2>
     <p>Colete currículos, fuja dos obstáculos e ative power-ups pelo caminho.</p>
-    <a class="play-btn" href="#" data-desktop="jogo-cobra-desktop.html" data-mobile="jogo-cobra-mobile.html">▶ Jogar</a>
+    <a class="play-btn" href="#" data-desktop="jogo-cobra-desktop.html" data-mobile="jogo-cobra-mobile.html">Jogar</a>
   </div>
 
   <div class="card">
-    <div class="badge">Novo</div>
-    <div class="emoji">🧱</div>
+    <div class="badge">Lançamento</div>
+    <div class="icon-ring">🧱</div>
     <h2>Tetris das Vagas</h2>
     <p>Encaixe as peças, complete linhas de currículo e suba de nível.</p>
-    <a class="play-btn" href="#" data-desktop="jogo-tetris-desktop.html" data-mobile="jogo-tetris-mobile.html">▶ Jogar</a>
+    <a class="play-btn" href="#" data-desktop="jogo-tetris-desktop.html" data-mobile="jogo-tetris-mobile.html">Jogar</a>
   </div>
 
 </div>
-<div id="rodape">Orizon Consultoria — aprender também pode ser divertido</div>
+
+<div id="rodape">Orizon Consultoria — o intervalo também faz parte da jornada.</div>
+
 <script>
   // Cada botão abre a versão certa (desktop ou mobile) conforme o dispositivo do usuário
   document.querySelectorAll('.play-btn').forEach(function(btn){
