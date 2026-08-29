@@ -558,9 +558,9 @@ body.dark-mode .acc-chevron { color: #ffffff !important; }
 <style>
 /* ===== Ajustes: container mais largo no desktop ===== */
 @media (min-width: 769px) {
-  .content-section, .contact-section { max-width: 1280px !important; }}
+  .content-section, .contact-section, .downloads-section-wrap { max-width: 1280px !important; }}
 @media (min-width: 1400px) {
-  .content-section, .contact-section { max-width: 1400px !important; }}
+  .content-section, .contact-section, .downloads-section-wrap { max-width: 1400px !important; }}
 
 /* ===== Ajustes: tópicos com números em vez de emoji ===== */
 .topics-link, .topics-link-mobile {
@@ -1150,7 +1150,6 @@ body:not(.dark-mode) .theme-toggle {
   .ia-photo-card {
     position: relative;
     border-radius: 18px;
-    overflow: hidden;
     min-height: 220px;
     cursor: pointer;
     touch-action: manipulation;
@@ -1160,8 +1159,10 @@ body:not(.dark-mode) .theme-toggle {
     -webkit-user-select: none;
     user-select: none;
     outline: none;
-    border: 1px solid rgba(255,255,255,0.7);
+    border: 1.5px solid rgba(100,116,139,0.4);
+    perspective: 1500px;
   }
+  body.dark-mode .ia-photo-card { border: 1.5px solid rgba(148,163,184,0.45); }
   .ia-photo-card,
   .ia-photo-card * {
     -webkit-tap-highlight-color: transparent !important;
@@ -1169,8 +1170,26 @@ body:not(.dark-mode) .theme-toggle {
   }
   .ia-photo-card:focus { outline: none; }
   .ia-photo-card:focus-visible { outline: 2px solid #00c8ff; outline-offset: 2px; }
+
+  /* ---- flip 3D: frente (foto) e verso (texto) ---- */
+  .ia-photo-card-inner {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform .7s cubic-bezier(.4,.15,.2,1);
+  }
+  .ia-photo-card.is-open .ia-photo-card-inner { transform: rotateY(180deg); }
+  .ia-photo-card-face {
+    position: absolute; inset: 0;
+    border-radius: 16.5px;
+    overflow: hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .ia-photo-card-face.ia-photo-card-back { transform: rotateY(180deg); }
+
   .ia-photo-card img {
-    width: 100%; height: 220px; object-fit: cover; display: block;
+    width: 100%; height: 100%; object-fit: cover; display: block;
     transition: transform .5s ease;
     pointer-events: none;
   }
@@ -1185,16 +1204,36 @@ body:not(.dark-mode) .theme-toggle {
   }
   body.dark-mode .ia-photo-card-overlay h4,
   .ia-photo-card-overlay h4 { margin: 0 0 0.35rem; font-size: 1.05rem; font-weight: 800; color: #ffffff !important; text-shadow: none !important; }
-  .ia-photo-card-overlay p {
-    margin: 0; font-size: 0.85rem; line-height: 1.4; color: #e2e8f0;
-    max-height: 0; opacity: 0; overflow: hidden;
-    transition: max-height .4s ease, opacity .4s ease;
-  }
-  .ia-photo-card.is-open .ia-photo-card-overlay p {
-    max-height: 120px; opacity: 1; margin-top: 0.3rem;
-  }
-  .ia-photo-desc-short { display: none; }
   body.dark-mode .ia-photo-card-overlay { background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.92) 100%); }
+
+  .ia-photo-flip-hint {
+    margin-top: 0.35rem;
+    font-size: 0.72rem; font-weight: 700; opacity: 0.85;
+    display: flex; align-items: center; gap: 0.3rem;
+    color: #e2e8f0;
+  }
+  .ia-photo-flip-hint svg { width: 12px; height: 12px; flex: none; }
+
+  /* ---- verso: fundo colorido por categoria + descrição completa ---- */
+  .ia-photo-card-back {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 1.3rem 1.35rem;
+    background: linear-gradient(135deg, rgba(var(--accent-rgb),0.18), #0b1220 65%);
+    color: #f1f5f9;
+  }
+  body:not(.dark-mode) .ia-photo-card-back {
+    background: linear-gradient(135deg, rgba(var(--accent-rgb),0.14), #f8fafc 65%);
+    color: #0f172a;
+  }
+  .ia-photo-card-back h4 {
+    margin: 0 0 0.5rem; font-size: 1.05rem; font-weight: 800;
+    color: rgb(var(--accent-rgb)) !important;
+  }
+  .ia-photo-card-back p {
+    margin: 0; font-size: 0.85rem; line-height: 1.5; opacity: 0.92;
+  }
+  .ia-photo-card-back .ia-photo-flip-hint { color: inherit; opacity: 0.7; }
+  .ia-photo-desc-short { display: none; }
 
   /* ---- Mobile: carrossel com 1 slide por vez (sem mostrar o próximo) ---- */
   @media (max-width: 639px) {
@@ -1216,12 +1255,6 @@ body:not(.dark-mode) .theme-toggle {
       scroll-snap-align: start;
       scroll-snap-stop: always;
       min-height: 200px;
-    }
-    .ia-photo-card img { height: 200px; }
-    .ia-photo-desc-short { display: block; }
-    .ia-photo-desc-full { display: none; }
-    .ia-photo-card.is-open .ia-photo-card-overlay p.ia-photo-desc-short {
-      max-height: 90px; opacity: 1; margin-top: 0.3rem;
     }
     .ia-photo-dots {
       display: flex; justify-content: center; gap: 0.4rem; margin: -0.2rem 0 0.4rem;
@@ -1337,14 +1370,14 @@ body:not(.dark-mode) .theme-toggle {
       background: linear-gradient(115deg, transparent, rgba(0,200,255,0.28), transparent);
     }
     .card.card-in-view::after {
-      animation: shineSweep 15s ease-out infinite;
+      animation: shineSweep 60s ease-out infinite;
       animation-delay: inherit;
     }
     @keyframes shineSweep {
       0%   { left: -60%; opacity: 0; }
-      6%   { opacity: 1; }
-      24%  { opacity: 1; }
-      34%  { left: 130%; opacity: 0; }
+      2%   { opacity: 1; }
+      8%  { opacity: 1; }
+      12%  { left: 130%; opacity: 0; }
       100% { left: 130%; opacity: 0; }
     }
   }
@@ -1368,13 +1401,13 @@ body:not(.dark-mode) .theme-toggle {
       background: linear-gradient(115deg, transparent, rgba(0,200,255,0.28), transparent);
     }
     .card.card-in-view::after {
-      animation: shineSweepDesktop 15s ease-out infinite;
+      animation: shineSweepDesktop 60s ease-out infinite;
     }
     @keyframes shineSweepDesktop {
       0%   { left: -60%; opacity: 0; }
-      3%   { opacity: 1; }
-      12%  { opacity: 1; }
-      17%  { left: 130%; opacity: 0; }
+      1%   { opacity: 1; }
+      4%  { opacity: 1; }
+      6%  { left: 130%; opacity: 0; }
       100% { left: 130%; opacity: 0; }
     }
   }
@@ -4416,28 +4449,52 @@ body.dark-mode .download-free-tag { color: #34d399; }
 ">🚀 <span class="ost-w1">IA no</span> <span class="ost-w2">Seu Dia a Dia</span></div>
 <section class="content-section" id="ia-dia-a-dia">
 <div class="ia-photo-cards" id="iaPhotoCards">
-<div class="ia-photo-card" role="button" tabindex="0">
+<div class="ia-photo-card" role="button" tabindex="0" style="--accent-rgb:37,99,235;">
+<div class="ia-photo-card-inner">
+<div class="ia-photo-card-face ia-photo-card-front">
 <img alt="Pessoa revisando currículo e perfil profissional com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Currículo &amp; Carreira</h4>
-<p class="ia-photo-desc-full">Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
-<p class="ia-photo-desc-short">IA revisa currículo, treina entrevistas e ajusta o LinkedIn.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"></path><path d="M3 4v5h5"></path></svg> Toque para saber mais</span>
 </div>
 </div>
-<div class="ia-photo-card" role="button" tabindex="0">
+<div class="ia-photo-card-face ia-photo-card-back">
+<h4>Currículo &amp; Carreira</h4>
+<p>Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"></path><path d="M21 4v5h-5"></path></svg> Toque para voltar</span>
+</div>
+</div>
+</div>
+<div class="ia-photo-card" role="button" tabindex="0" style="--accent-rgb:168,85,247;">
+<div class="ia-photo-card-inner">
+<div class="ia-photo-card-face ia-photo-card-front">
 <img alt="Equipe de RH em reunião de recrutamento apoiada por inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>RH &amp; Recrutamento</h4>
-<p class="ia-photo-desc-full">Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
-<p class="ia-photo-desc-short">IA agiliza triagem e vagas, sem perder o olhar humano.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"></path><path d="M3 4v5h5"></path></svg> Toque para saber mais</span>
 </div>
 </div>
-<div class="ia-photo-card" role="button" tabindex="0">
+<div class="ia-photo-card-face ia-photo-card-back">
+<h4>RH &amp; Recrutamento</h4>
+<p>Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"></path><path d="M21 4v5h-5"></path></svg> Toque para voltar</span>
+</div>
+</div>
+</div>
+<div class="ia-photo-card" role="button" tabindex="0" style="--accent-rgb:16,185,129;">
+<div class="ia-photo-card-inner">
+<div class="ia-photo-card-face ia-photo-card-front">
 <img alt="Gestor analisando relatórios e produtividade empresarial com apoio de inteligência artificial" loading="lazy" src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&amp;fit=crop&amp;w=700&amp;q=60"/>
 <div class="ia-photo-card-overlay">
 <h4>Gestão &amp; Produtividade</h4>
-<p class="ia-photo-desc-full">Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
-<p class="ia-photo-desc-short">IA cuida do repetitivo — sobra tempo pra estratégia.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"></path><path d="M3 4v5h5"></path></svg> Toque para saber mais</span>
+</div>
+</div>
+<div class="ia-photo-card-face ia-photo-card-back">
+<h4>Gestão &amp; Produtividade</h4>
+<p>Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.</p>
+<span class="ia-photo-flip-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"></path><path d="M21 4v5h-5"></path></svg> Toque para voltar</span>
+</div>
 </div>
 </div>
 </div>
