@@ -529,9 +529,9 @@ select.perfil-inp:focus{background-color:#1e1e1e;border-color:#3b82f6;}
 </div><!-- /page -->
 
 <!-- BARRA FLUTUANTE MOVER EM MASSA -->
-<div id="barraMassa" style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(10,10,10,0.97);border:1px solid rgba(59,130,246,0.5);border-radius:16px;padding:0.75rem 1.2rem;box-shadow:0 8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(59,130,246,0.15);backdrop-filter:blur(16px);align-items:center;gap:1rem;flex-wrap:wrap;min-width:340px;max-width:94vw;">
+<div id="barraMassa" style="display:none;position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;background:rgba(10,10,10,0.97);border:1px solid rgba(59,130,246,0.5);border-radius:16px;padding:0.75rem 1.2rem;box-shadow:0 8px 40px rgba(0,0,0,0.7),0 0 0 1px rgba(59,130,246,0.15);backdrop-filter:blur(16px);align-items:center;gap:1rem;flex-wrap:wrap;min-width:340px;max-width:94vw;transition:border-color 0.2s,box-shadow 0.2s;">
   <div style="display:flex;align-items:center;gap:0.6rem;flex:1;">
-    <div style="width:10px;height:10px;border-radius:50%;background:#3b82f6;animation:_pulseInd 1s ease infinite;flex-shrink:0;"></div>
+    <div id="massaPulseDot" style="width:10px;height:10px;border-radius:50%;background:#3b82f6;animation:_pulseInd 1s ease infinite;flex-shrink:0;"></div>
     <span id="massaContador" style="font-size:0.82rem;font-weight:800;color:#3b82f6;">Nenhum selecionado</span>
   </div>
   <div style="display:flex;gap:0.45rem;flex-wrap:wrap;align-items:center;">
@@ -2363,23 +2363,47 @@ async function confirmarInboxMoverVaga(){
 
 // ═══ MOVER EM MASSA ═══
 let _massaAcaoPendente = null;
+
+// Cor e rótulo de cada ação — usado para colorir a barra, o contador e a seleção dos cards
+function _massaAcaoInfo(acao){
+  const mapa = {
+    vaga:      { cor:'#3b82f6', label:'mover para vaga',        btn:'massaMoverBtn',     verbo:'movido(s) para a vaga' },
+    areacargo: { cor:'#a78bfa', label:'atribuir área/cargo',    btn:'massaAreaCargoBtn', verbo:'atualizado(s)' },
+    banco:     { cor:'#34d399', label:'mover para Banco Geral', btn:'massaBancoBtn',     verbo:'movido(s) para o Banco Geral' },
+    excluir:   { cor:'#e74c3c', label:'excluir',                btn:'massaExcluirBtn',   verbo:'excluído(s)' }
+  };
+  return mapa[acao] || mapa.vaga;
+}
+
 function ativarModoMassa(acao){
   _massaAcaoPendente = acao || 'vaga';
   _massaModoAtivo = true;
   _massaSelecionados = new Set();
   filtrarCands();
+  const info = _massaAcaoInfo(_massaAcaoPendente);
   const barra = document.getElementById('barraMassa');
-  if(barra) barra.style.display = 'flex';
-  // Destaca o botão da ação escolhida
-  const mapa = {vaga:'massaMoverBtn', areacargo:'massaAreaCargoBtn', banco:'massaBancoBtn', excluir:'massaExcluirBtn'};
-  Object.values(mapa).forEach(id=>{ const el=document.getElementById(id); if(el){ el.style.outline='none'; } });
-  const dest = mapa[_massaAcaoPendente];
-  if(dest){ const el=document.getElementById(dest); if(el) el.style.outline='2px solid currentColor'; }
-  mostrarToast('☑️ Modo seleção ativado — clique nos candidatos para selecionar');
+  if(barra){
+    barra.style.display = 'flex';
+    barra.style.borderColor = info.cor+'80';
+    barra.style.boxShadow = `0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px ${info.cor}25`;
+  }
+  const dot = document.getElementById('massaPulseDot');
+  if(dot) dot.style.background = info.cor;
+  const contador = document.getElementById('massaContador');
+  if(contador) contador.style.color = info.cor;
+  // Mostra SOMENTE o botão da ação escolhida — evita clicar na ação errada por engano
+  const todosBtns = ['massaMoverBtn','massaAreaCargoBtn','massaBancoBtn','massaExcluirBtn'];
+  todosBtns.forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display = (id===info.btn) ? 'inline-flex' : 'none'; });
+  _atualizarBarraMassa();
+  const toastMsg = _massaAcaoPendente === 'excluir'
+    ? '🗑️ Modo exclusão ativado — clique nos candidatos que deseja excluir do Supabase'
+    : `☑️ Modo seleção ativado — clique nos candidatos para ${info.label}`;
+  mostrarToast(toastMsg);
 }
 
 function desativarModoMassa(){
   _massaModoAtivo = false;
+  _massaAcaoPendente = null;
   _massaSelecionados = new Set();
   filtrarCands();
   const barra = document.getElementById('barraMassa');
@@ -2391,11 +2415,21 @@ function toggleMassaCand(id){
   if(_massaSelecionados.has(String(id))){ _massaSelecionados.delete(String(id)); }
   else { _massaSelecionados.add(String(id)); }
   _atualizarBarraMassa();
-  // Atualiza visual do card
+  _atualizarCardSelecionado(id);
+}
+
+function _atualizarCardSelecionado(id){
   const el = document.getElementById('massaCard_'+id);
-  if(el){
-    if(_massaSelecionados.has(String(id))){ el.style.borderColor='rgba(59,130,246,0.7)'; el.style.background='rgba(59,130,246,0.06)'; }
-    else { el.style.borderColor=''; el.style.background=''; }
+  if(!el) return;
+  const info = _massaAcaoInfo(_massaAcaoPendente);
+  const sel = _massaSelecionados.has(String(id));
+  el.style.borderColor = sel ? info.cor+'b3' : '';
+  el.style.background  = sel ? info.cor+'0f' : '';
+  const check = document.getElementById('massaCheck_'+id);
+  if(check){
+    check.style.borderColor = sel ? info.cor : 'rgba(255,255,255,0.25)';
+    check.style.background  = sel ? info.cor+'4d' : 'rgba(255,255,255,0.05)';
+    check.textContent = sel ? '✓' : '';
   }
 }
 
@@ -2405,26 +2439,30 @@ function massaSelecionarTodos(){
   wrap.querySelectorAll('[id^="massaCard_"]').forEach(el=>{
     const id = el.id.replace('massaCard_','');
     _massaSelecionados.add(id);
-    el.style.borderColor='rgba(59,130,246,0.7)';
-    el.style.background='rgba(59,130,246,0.06)';
+    _atualizarCardSelecionado(id);
   });
   _atualizarBarraMassa();
 }
 
 function massaDesmarcarTodos(){
+  const idsAntigos = [..._massaSelecionados];
   _massaSelecionados.clear();
+  idsAntigos.forEach(id=>_atualizarCardSelecionado(id));
   document.querySelectorAll('[id^="massaCard_"]').forEach(el=>{ el.style.borderColor=''; el.style.background=''; });
   _atualizarBarraMassa();
 }
 
 function _atualizarBarraMassa(){
   const n = _massaSelecionados.size;
+  const info = _massaAcaoInfo(_massaAcaoPendente);
   const el = document.getElementById('massaContador');
-  if(el) el.textContent = n > 0 ? `${n} selecionado${n!==1?'s':''}` : 'Nenhum selecionado';
-  ['massaMoverBtn','massaAreaCargoBtn','massaBancoBtn','massaExcluirBtn'].forEach(id=>{
-    const btn = document.getElementById(id);
-    if(btn){ btn.disabled = n===0; btn.style.opacity = n===0?'0.4':'1'; }
-  });
+  if(el){
+    el.textContent = n > 0
+      ? `${n} candidato${n!==1?'s':''} selecionado${n!==1?'s':''} para ${info.label}`
+      : `Nenhum selecionado · ação: ${info.label}`;
+  }
+  const btn = document.getElementById(info.btn);
+  if(btn){ btn.disabled = n===0; btn.style.opacity = n===0?'0.4':'1'; }
 }
 
 function abrirModalMoverMassa(){
@@ -3208,10 +3246,15 @@ footBtns += h.recomendacao_doc_url
   }
 
   const _isSel = _massaModoAtivo && _massaSelecionados.has(String(h.id));
+  const _massaInfo = _massaModoAtivo ? _massaAcaoInfo(_massaAcaoPendente) : null;
+  const _massaCor = _massaInfo ? _massaInfo.cor : '#3b82f6';
   const _massaWrap = _massaModoAtivo ? `
-    <div onclick="toggleMassaCand('${esc(h.id)}')" style="position:absolute;top:0.55rem;left:0.55rem;width:22px;height:22px;border-radius:6px;border:2px solid ${_isSel?'#3b82f6':'rgba(255,255,255,0.25)'};background:${_isSel?'rgba(59,130,246,0.3)':'rgba(255,255,255,0.05)'};display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;font-size:0.75rem;transition:all 0.15s;">${_isSel?'✓':''}</div>` : '';
+    <div id="massaCheck_${esc(h.id)}" onclick="event.stopPropagation();toggleMassaCand('${esc(h.id)}')" style="position:absolute;top:0.55rem;left:0.55rem;width:24px;height:24px;border-radius:6px;border:2px solid ${_isSel?_massaCor:'rgba(255,255,255,0.25)'};background:${_isSel?_massaCor+'4d':'rgba(255,255,255,0.05)'};display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:6;font-size:0.85rem;font-weight:900;color:${_massaCor};transition:all 0.15s;">${_isSel?'✓':''}</div>` : '';
+  // Em modo de seleção em massa, qualquer clique no card (inclusive nos elementos internos) alterna a seleção
+  // em vez de abrir o perfil, excluir individualmente ou marcar documentação — evita ações acidentais.
+  const _massaGuard = _massaModoAtivo ? `event.stopPropagation();toggleMassaCand('${esc(h.id)}');return;` : '';
 
-  return `<div class="cand-card${(h.candidato_destaque===true||h.candidato_destaque==='true')?' is-destaque':''}" id="massaCard_${esc(h.id)}" ${_massaModoAtivo?`onclick="toggleMassaCand('${esc(h.id)}')" style="cursor:pointer;${_isSel?'border-color:rgba(59,130,246,0.7);background:rgba(59,130,246,0.06);':''}"`:''}>
+  return `<div class="cand-card${(h.candidato_destaque===true||h.candidato_destaque==='true')?' is-destaque':''}" id="massaCard_${esc(h.id)}" ${_massaModoAtivo?`onclick="toggleMassaCand('${esc(h.id)}')" style="cursor:pointer;${_isSel?`border-color:${_massaCor}b3;background:${_massaCor}0f;`:''}"`:''}>
     ${_massaWrap}
     <div class="card-top-right">
       ${(h.candidato_destaque===true||h.candidato_destaque==='true') ? '<span class="badge-destaque" title="Candidato excepcional identificado pela IA — experiência forte mesmo com preenchimento parcial">⭐ Destaque</span>' : ''}
@@ -3219,15 +3262,15 @@ footBtns += h.recomendacao_doc_url
       ${renderTimerEtapas(h)}
       ${statusDots}
     </div>
-    <button class="cand-del-btn" onclick="confirmarDelCand('${esc(h.id)}','${esc(h.nome||'este candidato')}')" title="Excluir candidato">✕</button>
-    <label class="doc-check-wrap" title="Documentação completa" onclick="event.stopPropagation();toggleDocCompleta('${esc(h.id)}',this)">
+    <button class="cand-del-btn" onclick="${_massaGuard}confirmarDelCand('${esc(h.id)}','${esc(h.nome||'este candidato')}')" title="Excluir candidato">✕</button>
+    <label class="doc-check-wrap" title="Documentação completa" onclick="${_massaGuard}event.stopPropagation();toggleDocCompleta('${esc(h.id)}',this)">
       <div class="doc-check-box${h.doc_completa?' checked':''}"></div>
       <span class="doc-check-lbl">Docs</span>
     </label>
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${(temDiscReal||_temPdaReal)?cor+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||_temPdaReal)?cor+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||_temPdaReal)?cor:'#555'};" onclick="abrirPerfil('${esc(h.id)}')">${(temDiscReal||_temPdaReal)?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${(temDiscReal||_temPdaReal)?cor+'15':'rgba(255,255,255,0.04)'};border-color:${(temDiscReal||_temPdaReal)?cor+'40':'rgba(255,255,255,0.12)'};color:${(temDiscReal||_temPdaReal)?cor:'#555'};" onclick="${_massaGuard}abrirPerfil('${esc(h.id)}')">${(temDiscReal||_temPdaReal)?emoji:'?'}</div>
       <div class="cand-info">
-        <div class="cand-nome" onclick="abrirPerfil('${esc(h.id)}')">${esc(h.nome||'—')}</div>
+        <div class="cand-nome" onclick="${_massaGuard}abrirPerfil('${esc(h.id)}')">${esc(h.nome||'—')}</div>
         <div class="cand-meta">
           <span>📋 ${esc(h.vaga||'—')} &nbsp;·&nbsp; 📅 ${esc(_fmtCadastro(h))}${h.cidade ? ' &nbsp;·&nbsp; 📍 '+esc(h.cidade) : ''}${h.status_contato && h.status_contato!=='respondeu' ? ' &nbsp;·&nbsp; <span style="color:'+({nao_respondeu:'#e74c3c',sem_retorno:'#f39c12',pendencia_docs:'#3498db',pendencia_info:'#a78bfa'}[h.status_contato]||'#888')+';">'+({nao_respondeu:'❌ Não respondeu',sem_retorno:'⏳ Sem retorno',pendencia_docs:'📁 Pend. docs',pendencia_info:'📋 Pend. info'}[h.status_contato]||h.status_contato)+'</span>' : ''}</span>
         </div>
@@ -3235,15 +3278,15 @@ footBtns += h.recomendacao_doc_url
       </div>
     </div>
     <div class="cand-foot">
-      ${ader!=null ? `<div class="ader-big-wrap" onclick="abrirPerfil('${esc(h.id)}')" style="cursor:pointer;margin-bottom:0.1rem;" title="${isAderManual?'Aderência definida manualmente':'Aderência calculada — clique para editar'}">
+      ${ader!=null ? `<div class="ader-big-wrap" onclick="${_massaGuard}abrirPerfil('${esc(h.id)}')" style="cursor:pointer;margin-bottom:0.1rem;" title="${isAderManual?'Aderência definida manualmente':'Aderência calculada — clique para editar'}">
           <div><div class="ader-big-lbl">${isAderManual?'✏️':getModoIcon(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada')} Aderência à vaga</div><div class="ader-big-src">${isAderManual?'Manual':getModoLabelCurto(aderCalc&&aderCalc.modo?aderCalc.modo:'ponderada')}</div></div>
           <div style="text-align:right;"><div class="ader-big-num" style="color:${ader>=80?'#2ecc71':ader>=65?'#3b82f6':ader>=45?'#f39c12':'#e74c3c'};">${ader}<span style="font-size:0.9rem;font-weight:700;opacity:0.7;">%</span></div></div>
         </div>` : ''}
-      ${bars ? `<button class="cand-foot-toggle" onclick="toggleFitBars(this)" title="Mostrar/esconder scores"><span class="ft-chev">▼</span> Scores</button>
+      ${bars ? `<button class="cand-foot-toggle" onclick="${_massaGuard}toggleFitBars(this)" title="Mostrar/esconder scores"><span class="ft-chev">▼</span> Scores</button>
       <div class="cand-foot-body collapsed" style="max-height:0;">
         <div style="padding:0.2rem 0 0.35rem;">${bars}</div>
       </div>` : ''}
-      <button class="cand-foot-toggle" onclick="toggleFootBtns(this)" title="Mostrar/ocultar ações">
+      <button class="cand-foot-toggle" onclick="${_massaGuard}toggleFootBtns(this)" title="Mostrar/ocultar ações">
         <span class="ft-chev">▼</span> Ações
       </button>
       <div class="cand-foot-body collapsed" style="max-height:0;">
