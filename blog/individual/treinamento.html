@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Treinamento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#DCE1E6;
+    --bg-2:#CBD2D9;
+    --paper:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#4B5563;
+    --line:#C9CDD3;
+    --line-soft:#E3E6EA;
+    --stamp:#A6371F;
+    --stamp-soft:#f4e1db;
+    --gold:#8A6D1F;
+    --panel:#EEF0F2;
+    --ok:#2F6B3E;
+    --ok-soft:#DCEEE0;
+    --warn:#8A6D1F;
+    --warn-soft:#F3ECD6;
+    --font-serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, var(--bg-2), transparent 45%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    min-height:100vh;
+  }
+  ::selection{background:var(--stamp-soft);color:var(--stamp);}
+
+  header{
+    padding:22px clamp(16px,4vw,48px) 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .seal{
+    width:44px;height:44px;flex:0 0 auto;border-radius:50%;border:1.5px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);
+    font-size:9px;letter-spacing:0.03em;position:relative;background:var(--paper);
+  }
+  .seal::before{content:"";position:absolute;inset:4px;border:1px dashed var(--ink-soft);border-radius:50%;}
+  .seal span{position:relative;font-weight:600;font-size:13px;font-family:var(--font-serif);}
+  .brand-text .eyebrow{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 3px;
+  }
+  .brand-text h1{
+    font-family:var(--font-serif);font-weight:600;font-size:clamp(19px,2.4vw,24px);margin:0;letter-spacing:-0.01em;
+  }
+  .header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  button{font-family:var(--font-sans);cursor:pointer;border-radius:3px;}
+  .btn{
+    padding:10px 16px;font-size:13.5px;font-weight:600;border:1px solid var(--ink);
+    background:var(--paper);color:var(--ink);transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--stamp);border-color:var(--ink);color:#fff;}
+  .btn.primary:hover{background:#8a2c19;}
+  .btn.ghost{background:transparent;border:1.5px solid #000;color:#000;font-weight:700;}
+  .btn.ghost:hover{background:#000;color:#fff;border-color:#000;}
+  .btn[disabled]{cursor:not-allowed;}
+  .btn[disabled]:hover{background:inherit;}
+  .btn.primary[disabled]{background:#bf7c6a;border-color:#000;color:#fff;}
+  .btn.primary[disabled]:hover{background:#bf7c6a;}
+  .btn.ghost[disabled]{border:1.5px solid #000;color:#000;background:transparent;}
+  .btn.ghost[disabled]:hover{background:transparent;color:#000;border-color:#000;}
+
+  .layout{display:grid;grid-template-columns:minmax(320px,400px) 1fr;gap:0;align-items:start;}
+  @media (max-width:980px){.layout{grid-template-columns:1fr;}}
+
+  .form-panel{
+    border-right:1px solid var(--line);background:var(--paper);
+    max-height:calc(100vh - 84px);display:flex;flex-direction:column;
+  }
+  @media (max-width:980px){.form-panel{border-right:none;border-bottom:1px solid var(--line);max-height:none;}}
+  .form-scroll{padding:clamp(20px,3vw,40px);overflow-y:auto;flex:1 1 auto;min-height:0;}
+  @media (max-width:980px){.form-scroll{overflow-y:visible;}}
+  .section{margin-bottom:26px;}
+  .section-label{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;
+    color:var(--gold);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--ink);
+    display:flex;align-items:center;gap:8px;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+    color:var(--ink-soft);margin-bottom:6px;
+  }
+  .field .sub{font-family:var(--font-mono);font-size:10.5px;font-weight:400;color:#333;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .info{
+    display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+    border-radius:50%;border:1px solid #AEB6C9;font-family:var(--font-mono);font-size:9.5px;
+    color:#333;cursor:help;flex-shrink:0;
+  }
+  input[type=text], input[type=number], input[type=date]{
+    width:100%;padding:10px 12px;border:1px solid var(--ink);border-radius:3px;
+    background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink);
+  }
+  input:focus{outline:2px solid var(--stamp);outline-offset:1px;border-color:var(--stamp);}
+  textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--ink);border-radius:3px;
+    background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink);
+    resize:vertical;min-height:60px;
+  }
+  textarea:focus{outline:2px solid var(--stamp);outline-offset:1px;border-color:var(--stamp);}
+  select{
+    width:100%;padding:10px 12px;border:1px solid var(--ink);border-radius:3px;
+    background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink);
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231B2430' stroke-width='1.6' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  select:focus{outline:2px solid var(--stamp);outline-offset:1px;border-color:var(--stamp);}
+  .hint{font-size:11.5px;color:#000;font-weight:500;margin-top:5px;}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+  .checkbox-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--stamp);cursor:pointer;}
+  .checkbox-row label{font-size:12.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;margin:0;}
+  .warn-banner{
+    display:none;font-family:var(--font-mono);font-size:11.5px;color:var(--stamp);
+    background:var(--stamp-soft);border:1px solid var(--stamp);padding:10px 14px;margin-bottom:18px;border-radius:3px;
+  }
+  .warn-banner.show{display:block;}
+
+  .footer-actions{
+    flex:0 0 auto;
+    background:var(--paper);
+    padding:14px clamp(20px,3vw,40px);display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .footer-actions .btn{flex:1;min-width:130px;text-align:center;}
+
+  .dash-panel{padding:clamp(20px,3vw,40px);}
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:26px;
+  }
+  @media (max-width:640px){.stats-grid{grid-template-columns:1fr;}}
+  .stat-card{
+    background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--stamp);
+    padding:16px 18px;box-shadow:0 1px 2px rgba(20,25,35,.04);
+  }
+  .stat-card.ok{border-left-color:var(--ok);}
+  .stat-card.warn{border-left-color:var(--warn);}
+  .stat-card .eyebrow{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 8px;
+  }
+  .stat-card .value{font-family:var(--font-serif);font-size:2rem;font-weight:700;letter-spacing:-0.01em;}
+
+  .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;}
+  .filters .field{margin-bottom:0;min-width:170px;flex:1 1 170px;}
+
+  .table-wrap{
+    background:var(--paper);border:1px solid var(--line);overflow-x:auto;
+  }
+  table.registro{width:100%;border-collapse:collapse;font-size:13px;min-width:760px;}
+  table.registro th, table.registro td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line-soft);}
+  table.registro th{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);background:var(--panel);
+  }
+  table.registro td{color:#2a3341;}
+  .badge{
+    display:inline-block;padding:3px 9px;border-radius:20px;font-family:var(--font-mono);
+    font-size:10.5px;font-weight:600;letter-spacing:.03em;
+  }
+  .badge.concluido{background:var(--ok-soft);color:var(--ok);}
+  .badge.andamento{background:var(--panel);color:var(--ink-soft);border:1px solid var(--line);}
+  .badge.agendado{background:#E4E9F5;color:#33508A;}
+  .badge.vencido{background:var(--stamp-soft);color:var(--stamp);}
+  .table-empty{padding:30px 14px;text-align:center;font-family:var(--font-mono);font-size:12.5px;color:#333;}
+  table.registro .del{background:none;border:none;color:var(--stamp);cursor:pointer;font-family:var(--font-mono);font-size:15px;padding:0 4px;}
+
+  .storage-note{font-family:var(--font-mono);font-size:10.5px;color:#333;margin-top:14px;}
+
+  footer.foot{text-align:center;padding:18px;font-family:var(--font-mono);font-size:10.5px;color:#333;border-top:1px solid var(--line);}
+
+  @media print{
+    body{background:#fff;}
+    header, .form-panel, .filters, footer.foot{display:none !important;}
+    .layout{display:block;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="seal"><span>CT</span></div>
+    <div class="brand-text">
+      <p class="eyebrow">Ferramentas de RH · Avulso</p>
+      <h1>Controle de Treinamento</h1>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn ghost" id="btnExportCsv" disabled>Exportar CSV</button>
+    <button class="btn ghost" id="btnExportXlsx" disabled>Exportar Excel</button>
+    <button class="btn primary" id="btnPdf" disabled>Baixar Relatório PDF</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="form-panel">
+
+    <div class="form-scroll">
+
+    <div class="warn-banner" id="warnBanner">Preencha o colaborador e o nome do treinamento para adicionar ao controle.</div>
+
+    <div class="section">
+      <p class="section-label">Novo registro</p>
+      <div class="field">
+        <label for="colaborador">Colaborador</label>
+        <input type="text" id="colaborador" placeholder="Ex.: Marcos Vinícius Souza">
+      </div>
+      <div class="field">
+        <label for="treinamento">Treinamento/Curso</label>
+        <input type="text" id="treinamento" placeholder="Ex.: NR-35 Trabalho em Altura">
+      </div>
+      <div class="field">
+        <label for="categoria">Categoria</label>
+        <select id="categoria">
+          <option value="Obrigatório/NR">Obrigatório/NR</option>
+          <option value="Técnico">Técnico</option>
+          <option value="Comportamental">Comportamental</option>
+          <option value="Liderança">Liderança</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="cargaHoraria">Carga horária (h)</label>
+          <input type="number" id="cargaHoraria" placeholder="Ex.: 8" min="0" step="0.5">
+        </div>
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status">
+            <option value="Concluído">Concluído</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Agendado">Agendado</option>
+            <option value="Vencido">Vencido</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dataRealizacao">Data de realização</label>
+          <input type="date" id="dataRealizacao">
+        </div>
+        <div class="field">
+          <label for="dataValidade">Validade <span class="sub">opcional</span></label>
+          <input type="date" id="dataValidade">
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="certificado">
+        <label for="certificado">Certificado emitido</label>
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label for="obs">Observações <span class="sub">opcional</span></label>
+        <textarea id="obs" placeholder="Ex.: Reciclagem obrigatória a cada 2 anos"></textarea>
+      </div>
+    </div>
+
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn ghost" id="btnLimparForm">Limpar campos</button>
+      <button class="btn primary" id="btnAdd">Adicionar registro</button>
+    </div>
+
+  </div>
+
+  <div class="dash-panel">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <p class="eyebrow">Treinamentos registrados</p>
+        <div class="value" id="statTotal">0</div>
+      </div>
+      <div class="stat-card ok">
+        <p class="eyebrow">Horas totais de treinamento</p>
+        <div class="value" id="statHoras">0h</div>
+      </div>
+      <div class="stat-card warn">
+        <p class="eyebrow">Vencendo em 30 dias / vencidos</p>
+        <div class="value" id="statVencendo">0</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="field">
+        <label for="filtroColaborador">Buscar colaborador</label>
+        <input type="text" id="filtroColaborador" placeholder="Nome do colaborador">
+      </div>
+      <div class="field">
+        <label for="filtroStatus">Filtrar por status</label>
+        <select id="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="Concluído">Concluído</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Agendado">Agendado</option>
+          <option value="Vencido">Vencido</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="registro" id="tabelaRegistro">
+        <thead>
+          <tr>
+            <th>Colaborador</th>
+            <th>Treinamento</th>
+            <th>Categoria</th>
+            <th>Carga (h)</th>
+            <th>Realização</th>
+            <th>Validade</th>
+            <th>Status</th>
+            <th>Cert.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tabelaBody"></tbody>
+      </table>
+      <div class="table-empty" id="tabelaEmpty">Nenhum treinamento registrado ainda.</div>
+    </div>
+
+    <p class="storage-note">Os dados ficam salvos apenas neste navegador (localStorage). Nada é enviado para nenhum servidor.</p>
+
+  </div>
+
+</div>
+
+<footer class="foot">Controle de Treinamento · Ferramentas de RH · dados salvos apenas neste navegador</footer>
+
+<script>
+const STORAGE_KEY = "rh-controle-treinamento";
+
+const colaborador = document.getElementById("colaborador");
+const treinamento = document.getElementById("treinamento");
+const categoria = document.getElementById("categoria");
+const cargaHoraria = document.getElementById("cargaHoraria");
+const status = document.getElementById("status");
+const dataRealizacao = document.getElementById("dataRealizacao");
+const dataValidade = document.getElementById("dataValidade");
+const certificado = document.getElementById("certificado");
+const obs = document.getElementById("obs");
+const filtroColaborador = document.getElementById("filtroColaborador");
+const filtroStatus = document.getElementById("filtroStatus");
+
+let registros = [];
+
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) registros = JSON.parse(saved);
+} catch(e) { registros = []; }
+
+function hojeCurto(){ return new Date().toLocaleDateString('pt-BR'); }
+function fmtData(iso){
+  if (!iso) return "—";
+  const [y,m,d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+function badgeClass(s){
+  return {"Concluído":"concluido","Em andamento":"andamento","Agendado":"agendado","Vencido":"vencido"}[s] || "andamento";
+}
+
+function persist(){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(registros)); } catch(e) {}
+}
+
+function checarPreenchido(){
+  const ok = colaborador.value.trim() !== "" && treinamento.value.trim() !== "";
+  document.getElementById("warnBanner").classList.toggle("show", !ok);
+  return ok;
+}
+[colaborador, treinamento].forEach(el => el.addEventListener("input", checarPreenchido));
+
+function limparCampos(){
+  colaborador.value = "";
+  treinamento.value = "";
+  categoria.selectedIndex = 0;
+  cargaHoraria.value = "";
+  status.selectedIndex = 0;
+  dataRealizacao.value = "";
+  dataValidade.value = "";
+  certificado.checked = false;
+  obs.value = "";
+  checarPreenchido();
+}
+
+function adicionarRegistro(){
+  if (!checarPreenchido()) return;
+  registros.push({
+    colaborador: colaborador.value.trim(),
+    treinamento: treinamento.value.trim(),
+    categoria: categoria.value,
+    cargaHoraria: parseFloat(cargaHoraria.value) || 0,
+    status: status.value,
+    dataRealizacao: dataRealizacao.value,
+    dataValidade: dataValidade.value,
+    certificado: certificado.checked,
+    obs: obs.value.trim()
+  });
+  persist();
+  limparCampos();
+  renderTudo();
+}
+
+function diasParaVencer(iso){
+  if (!iso) return null;
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  const alvo = new Date(iso + "T00:00:00");
+  return Math.round((alvo - hoje) / 86400000);
+}
+
+function registrosFiltrados(){
+  const nome = filtroColaborador.value.trim().toLowerCase();
+  const stat = filtroStatus.value;
+  return registros.filter((r,i) => {
+    r._i = i;
+    const okNome = !nome || r.colaborador.toLowerCase().includes(nome);
+    const okStatus = !stat || r.status === stat;
+    return okNome && okStatus;
+  });
+}
+
+function renderStats(){
+  const total = registros.length;
+  const horas = registros.reduce((s,r) => s + (r.cargaHoraria || 0), 0);
+  const vencendo = registros.filter(r => {
+    const d = diasParaVencer(r.dataValidade);
+    return r.status === "Vencido" || (d !== null && d <= 30);
+  }).length;
+
+  document.getElementById("statTotal").textContent = total;
+  document.getElementById("statHoras").textContent = horas % 1 === 0 ? `${horas}h` : `${horas.toFixed(1)}h`;
+  document.getElementById("statVencendo").textContent = vencendo;
+}
+
+function renderTabela(){
+  const lista = registrosFiltrados();
+  const body = document.getElementById("tabelaBody");
+  const empty = document.getElementById("tabelaEmpty");
+  const wrap = document.getElementById("tabelaRegistro");
+
+  const hasItems = lista.length > 0;
+  wrap.style.display = hasItems ? "table" : "none";
+  empty.style.display = hasItems ? "none" : "block";
+  empty.textContent = registros.length === 0
+    ? "Nenhum treinamento registrado ainda."
+    : "Nenhum registro corresponde aos filtros aplicados.";
+
+  body.innerHTML = lista.map(r => `
+    <tr>
+      <td>${r.colaborador}</td>
+      <td>${r.treinamento}</td>
+      <td>${r.categoria}</td>
+      <td>${r.cargaHoraria || "—"}</td>
+      <td>${fmtData(r.dataRealizacao)}</td>
+      <td>${fmtData(r.dataValidade)}</td>
+      <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
+      <td>${r.certificado ? "Sim" : "—"}</td>
+      <td><button class="del" data-i="${r._i}" title="Remover">×</button></td>
+    </tr>`).join("");
+
+  body.querySelectorAll(".del").forEach(btn => {
+    btn.addEventListener("click", () => {
+      registros.splice(parseInt(btn.dataset.i), 1);
+      persist();
+      renderTudo();
+    });
+  });
+}
+
+function renderBotoes(){
+  const hasItems = registros.length > 0;
+  document.getElementById("btnExportCsv").disabled = !hasItems;
+  document.getElementById("btnExportXlsx").disabled = !hasItems;
+  document.getElementById("btnPdf").disabled = !hasItems;
+}
+
+function renderTudo(){
+  renderStats();
+  renderTabela();
+  renderBotoes();
+}
+
+filtroColaborador.addEventListener("input", renderTabela);
+filtroStatus.addEventListener("change", renderTabela);
+
+function exportarCsv(){
+  const header = "Colaborador;Treinamento;Categoria;Carga Horária;Data Realização;Validade;Status;Certificado;Observações\n";
+  const rows = registros.map(r =>
+    `${r.colaborador};${r.treinamento};${r.categoria};${r.cargaHoraria};${fmtData(r.dataRealizacao)};${fmtData(r.dataValidade)};${r.status};${r.certificado ? "Sim" : "Não"};${r.obs || ""}`
+  ).join("\n");
+  const blob = new Blob(["\uFEFF" + header + rows], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "controle-treinamento.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportarExcel(){
+  const data = registros.map(r => ({
+    "Colaborador": r.colaborador,
+    "Treinamento": r.treinamento,
+    "Categoria": r.categoria,
+    "Carga Horária": r.cargaHoraria,
+    "Data Realização": fmtData(r.dataRealizacao),
+    "Validade": fmtData(r.dataValidade),
+    "Status": r.status,
+    "Certificado": r.certificado ? "Sim" : "Não",
+    "Observações": r.obs || ""
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [{wch:24},{wch:28},{wch:16},{wch:12},{wch:14},{wch:12},{wch:14},{wch:11},{wch:30}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Treinamentos");
+  XLSX.writeFile(wb, "controle-treinamento.xlsx");
+}
+
+function gerarPDF(){
+  if (registros.length === 0) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"pt", format:"a4", orientation:"landscape"});
+  const margin = 40;
+  const pageBottom = 555;
+  let y = margin;
+
+  doc.setFont("courier","bold"); doc.setFontSize(9); doc.setTextColor(150,60,40);
+  doc.text("RELATÓRIO DE TREINAMENTOS", margin, y);
+  y += 20;
+  doc.setFont("times","bold"); doc.setFontSize(17); doc.setTextColor(27,36,48);
+  doc.text("Controle de Treinamento", margin, y);
+  y += 16;
+  doc.setFont("courier","normal"); doc.setFontSize(8.5); doc.setTextColor(100,100,100);
+  doc.text(`Gerado em ${hojeCurto()}   |   Total de registros: ${registros.length}`, margin, y);
+  y += 20;
+
+  const cols = [
+    {label:"Colaborador", w:120},
+    {label:"Treinamento", w:150},
+    {label:"Categoria", w:85},
+    {label:"Carga (h)", w:55},
+    {label:"Realização", w:65},
+    {label:"Validade", w:60},
+    {label:"Status", w:70},
+    {label:"Cert.", w:40}
+  ];
+
+  function drawHeaderRow(){
+    doc.setFillColor(238,240,242);
+    doc.rect(margin, y - 12, 762, 18, "F");
+    doc.setFont("courier","bold"); doc.setFontSize(7.5); doc.setTextColor(75,85,99);
+    let x = margin;
+    cols.forEach(c => { doc.text(c.label.toUpperCase(), x + 4, y); x += c.w; });
+    y += 14;
+    doc.setDrawColor(200,200,200);
+    doc.line(margin, y - 8, margin + 762, y - 8);
+  }
+
+  drawHeaderRow();
+  doc.setFont("times","normal"); doc.setFontSize(8.5); doc.setTextColor(40,50,65);
+
+  registros.forEach(r => {
+    if (y > pageBottom){ doc.addPage(); y = margin; drawHeaderRow(); doc.setFont("times","normal"); doc.setFontSize(8.5); doc.setTextColor(40,50,65); }
+    let x = margin;
+    const vals = [
+      r.colaborador, r.treinamento, r.categoria, String(r.cargaHoraria || "—"),
+      fmtData(r.dataRealizacao), fmtData(r.dataValidade), r.status, r.certificado ? "Sim" : "—"
+    ];
+    vals.forEach((v,i) => {
+      const lines = doc.splitTextToSize(v, cols[i].w - 6);
+      doc.text(lines[0] || "", x + 4, y);
+      x += cols[i].w;
+    });
+    y += 16;
+    doc.setDrawColor(225,225,225);
+    doc.line(margin, y - 6, margin + 762, y - 6);
+  });
+
+  const totalHoras = registros.reduce((s,r) => s + (r.cargaHoraria || 0), 0);
+  y += 10;
+  if (y > pageBottom){ doc.addPage(); y = margin; }
+  doc.setFont("courier","bold"); doc.setFontSize(9); doc.setTextColor(27,36,48);
+  doc.text(`Horas totais de treinamento: ${totalHoras % 1 === 0 ? totalHoras : totalHoras.toFixed(1)}h`, margin, y);
+
+  doc.save("relatorio-controle-treinamento.pdf");
+}
+
+document.getElementById("btnAdd").addEventListener("click", adicionarRegistro);
+document.getElementById("btnLimparForm").addEventListener("click", limparCampos);
+document.getElementById("btnExportCsv").addEventListener("click", exportarCsv);
+document.getElementById("btnExportXlsx").addEventListener("click", exportarExcel);
+document.getElementById("btnPdf").addEventListener("click", gerarPDF);
+
+renderTudo();
+</script>
+</body>
+</html>

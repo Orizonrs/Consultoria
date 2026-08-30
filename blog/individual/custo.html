@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Custo por Contratação</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#DCE1E6;
+    --bg-2:#CBD2D9;
+    --paper:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#4B5563;
+    --line:#C9CDD3;
+    --line-soft:#E3E6EA;
+    --stamp:#A6371F;
+    --stamp-soft:#f4e1db;
+    --gold:#8A6D1F;
+    --panel:#EEF0F2;
+    --green:#3E6B4A;
+    --font-serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+    --font-sans:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 8%, var(--bg-2), transparent 45%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font-sans);
+    min-height:100vh;
+  }
+  ::selection{background:var(--stamp-soft);color:var(--stamp);}
+
+  /* ---------- Header ---------- */
+  header{
+    padding:22px clamp(16px,4vw,48px) 18px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:14px;}
+  .seal{
+    width:44px;height:44px;flex:0 0 auto;
+    border-radius:50%;
+    border:1.5px solid var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);
+    font-size:9px;letter-spacing:0.03em;
+    position:relative;
+    background:var(--paper);
+  }
+  .seal::before{
+    content:"";
+    position:absolute;inset:4px;
+    border:1px dashed var(--ink-soft);
+    border-radius:50%;
+  }
+  .seal span{position:relative;font-weight:600;font-size:13px;font-family:var(--font-serif);}
+  .brand-text .eyebrow{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 3px;
+  }
+  .brand-text h1{
+    font-family:var(--font-serif);
+    font-weight:600;
+    font-size:clamp(19px,2.4vw,24px);
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .header-actions{display:flex;gap:10px;flex-wrap:wrap;}
+  button{
+    font-family:var(--font-sans);
+    cursor:pointer;
+    border-radius:3px;
+  }
+  .btn{
+    padding:10px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    border:1px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .btn:hover{background:var(--ink);color:var(--paper);}
+  .btn:active{transform:translateY(1px);}
+  .btn.primary{
+    background:var(--stamp);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .btn.primary:hover{background:#8a2c19;border-color:var(--ink);}
+  .btn.ghost{
+    background:transparent;
+    border:1.5px solid #000;
+    color:#000;
+    font-weight:700;
+  }
+  .btn.ghost:hover{background:#000;color:#fff;border-color:#000;}
+  .btn[disabled]{cursor:not-allowed;}
+  .btn[disabled]:hover{background:inherit;}
+  .btn.primary[disabled]{background:#bf7c6a;border-color:#000;color:#fff;}
+  .btn.primary[disabled]:hover{background:#bf7c6a;}
+  .btn.ghost[disabled]{border:1.5px solid #000;color:#000;background:transparent;}
+  .btn.ghost[disabled]:hover{background:transparent;color:#000;border-color:#000;}
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:minmax(320px,460px) 1fr;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width:920px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  /* ---------- Form panel ---------- */
+  .form-panel{
+    border-right:1px solid var(--line);
+    max-height:calc(100vh - 84px);
+    background:var(--paper);
+    display:flex;flex-direction:column;
+  }
+  .form-scroll{padding:clamp(20px,3vw,40px);overflow-y:auto;flex:1 1 auto;min-height:0;}
+  @media (max-width:920px){
+    .form-panel{border-right:none;border-bottom:1px solid var(--line);max-height:none;}
+    .form-scroll{overflow-y:visible;}
+  }
+  .section{margin-bottom:30px;}
+  .section-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 12px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--ink);
+    display:flex;align-items:center;gap:8px;
+  }
+  .field{margin-bottom:14px;}
+  .field label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .field .sub{font-family:var(--font-mono);font-size:10.5px;font-weight:400;color:#333;}
+  .info{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:14px;height:14px;border-radius:50%;border:1px solid #AEB6C9;
+    font-family:var(--font-mono);font-size:9.5px;color:#333;cursor:help;flex-shrink:0;
+  }
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:520px){.grid-2{grid-template-columns:1fr;}}
+  input[type=text], input[type=number], select{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--ink);
+    border-radius:3px;
+    background:var(--paper);
+    font-family:var(--font-sans);
+    font-size:14px;
+    color:var(--ink);
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus{
+    outline:2px solid var(--stamp);
+    outline-offset:1px;
+    border-color:var(--stamp);
+  }
+  .inputrow{
+    display:flex;align-items:center;
+    border:1px solid var(--ink);border-radius:3px;
+    background:var(--paper);
+    transition:border-color .15s ease, outline .15s ease;
+  }
+  .inputrow.invalid{border-color:var(--stamp);}
+  .inputrow:focus-within{outline:2px solid var(--stamp);outline-offset:1px;}
+  .inputrow .prefix{
+    font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);
+    padding:0 10px;border-right:1px solid var(--line);flex:0 0 auto;
+  }
+  .inputrow input{
+    border:none;background:transparent;padding:10px 12px;
+    font-family:var(--font-mono);font-size:14px;color:var(--ink);width:100%;outline:none;
+  }
+  .error-msg{font-family:var(--font-mono);font-size:10.5px;color:var(--stamp);margin-top:4px;display:none;}
+  .error-msg.show{display:block;}
+  .hint{font-size:11.5px;color:#333;margin-top:5px;}
+  .warn-banner{
+    display:none;font-family:var(--font-mono);font-size:11.5px;color:var(--stamp);
+    background:var(--stamp-soft);border:1px solid var(--stamp);padding:10px 14px;margin-bottom:18px;border-radius:3px;
+  }
+  .warn-banner.show{display:block;}
+
+  .footer-actions{
+    flex:0 0 auto;
+    background:var(--paper);
+    padding:14px clamp(20px,3vw,40px);
+    display:flex;gap:10px;flex-wrap:wrap;
+  }
+  .footer-actions .btn{flex:1;min-width:130px;text-align:center;}
+
+  /* ---------- Preview panel ---------- */
+  .preview-panel{
+    padding:clamp(24px,3.5vw,56px);
+    display:flex;
+    justify-content:center;
+  }
+  .paper-wrap{width:100%;max-width:680px;position:relative;}
+  .paper{
+    background:var(--paper);
+    box-shadow:0 1px 2px rgba(20,25,35,.06), 0 18px 40px -12px rgba(20,25,35,.18);
+    padding:52px 46px 44px;
+    position:relative;
+    min-height:600px;
+    overflow:hidden;
+  }
+  .paper::before{
+    content:"";
+    position:absolute;top:0;left:0;right:0;height:6px;
+    background:repeating-linear-gradient(90deg, transparent 0 10px, var(--line-soft) 10px 11px);
+    opacity:.7;
+  }
+  .doc-watermark{
+    position:absolute;top:46%;left:50%;
+    transform:translate(-50%,-50%) rotate(-18deg);
+    font-family:var(--font-mono);font-size:13px;letter-spacing:.3em;
+    color:rgba(27,36,48,0.045);font-weight:700;white-space:nowrap;
+    pointer-events:none;user-select:none;
+  }
+  .doc-header{
+    display:flex;justify-content:space-between;align-items:flex-start;
+    border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:22px;gap:16px;
+  }
+  .doc-company{
+    font-family:var(--font-mono);font-size:11.5px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  .doc-code{font-family:var(--font-mono);font-size:10.5px;color:#333;text-align:right;line-height:1.5;}
+  .doc-title-eyebrow{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--stamp);margin:0 0 6px;
+  }
+  .doc-title{
+    font-family:var(--font-serif);font-size:26px;font-weight:700;margin:0 0 22px;letter-spacing:-0.01em;
+  }
+  .doc-meta{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:26px;
+    padding:16px 18px;background:var(--panel);border-left:3px solid var(--stamp);
+  }
+  .doc-meta .item dt{
+    font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);margin:0 0 3px;
+  }
+  .doc-meta .item dd{margin:0;font-size:14px;font-weight:600;font-family:var(--font-serif);}
+  .doc-section{margin-bottom:22px;}
+  .doc-section h3{
+    font-family:var(--font-serif);font-size:15px;font-weight:700;margin:0 0 10px;
+    padding-bottom:6px;border-bottom:1px solid var(--ink);
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  }
+  .doc-section h3 .subtotal{font-family:var(--font-mono);font-size:13px;font-weight:600;color:var(--ink-soft);}
+  .doc-placeholder{font-size:13px;color:#333;font-style:italic;}
+
+  .line-item{
+    display:flex;justify-content:space-between;gap:10px;padding:7px 0;
+    border-bottom:1px dashed var(--line-soft);font-size:13.5px;
+  }
+  .line-item .label{color:#2a3341;}
+  .line-item .value{font-family:var(--font-mono);color:var(--ink);font-weight:600;white-space:nowrap;}
+  .line-item.empty .value{color:#555;font-weight:400;}
+
+  .chart-bar{display:flex;width:100%;height:16px;border:1px solid var(--line);overflow:hidden;background:var(--panel);border-radius:2px;}
+  .chart-seg{height:100%;}
+  .chart-seg.tempo{background:var(--gold);}
+  .chart-seg.diretos{background:var(--ink);}
+  .chart-seg.vaga{background:var(--stamp);}
+  .chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);}
+  .chart-legend span{display:inline-flex;align-items:center;gap:5px;}
+  .swatch{width:8px;height:8px;display:inline-block;border-radius:1px;}
+  .swatch.tempo{background:var(--gold);}
+  .swatch.diretos{background:var(--ink);}
+  .swatch.vaga{background:var(--stamp);}
+
+  .total-block{
+    margin:26px 0 6px;padding:22px 24px;background:var(--ink);color:var(--paper);
+    border-radius:2px;position:relative;overflow:hidden;
+  }
+  .total-block .eyebrow{
+    font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--stamp-soft);display:block;margin-bottom:6px;
+  }
+  .total-value{font-family:var(--font-serif);font-size:2rem;font-weight:700;letter-spacing:-0.01em;}
+  .per-hour-note{font-family:var(--font-mono);font-size:11px;color:#555;margin-top:8px;}
+
+  .doc-footer{
+    margin-top:30px;padding-top:14px;border-top:1px solid var(--ink);
+    display:flex;justify-content:space-between;align-items:flex-end;
+    font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);
+  }
+  .stamp-mark{
+    width:92px;height:92px;border:2px solid var(--stamp);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;transform:rotate(-9deg);
+    opacity:.9;position:relative;flex:0 0 auto;
+  }
+  .stamp-mark::before{content:"";position:absolute;inset:6px;border:1px dashed var(--stamp);border-radius:50%;}
+  .stamp-mark .stamp-text{
+    font-family:var(--font-mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--stamp);text-align:center;line-height:1.5;font-weight:600;
+  }
+
+  .preview-toolbar{
+    display:flex;justify-content:space-between;align-items:center;
+    max-width:680px;width:100%;margin:0 auto 14px;
+  }
+  .preview-toolbar .label{
+    font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  /* ---------- History ---------- */
+  .history-panel{
+    padding:clamp(20px,3vw,40px);
+    border-top:1px solid var(--line);
+  }
+  .history-panel .section-label{max-width:1180px;margin-left:auto;margin-right:auto;}
+  .history-inner{max-width:1180px;margin:0 auto;}
+  .history table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12.5px;}
+  .history th, .history td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);}
+  .history th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);}
+  .history td.num{text-align:right;font-weight:600;}
+  .history .del{background:none;border:none;color:var(--stamp);cursor:pointer;font-family:var(--font-mono);font-size:14px;padding:0 4px;}
+  .history-empty{font-family:var(--font-mono);font-size:12px;color:#333;padding:14px 0;}
+  .history-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;}
+
+  footer.foot{text-align:center;padding:18px;font-family:var(--font-mono);font-size:10.5px;color:#333;border-top:1px solid var(--line);}
+
+  @media print{
+    body{background:#fff;}
+    header, .form-panel, .history-panel, .preview-toolbar, footer.foot{display:none !important;}
+    .layout{display:block;}
+    .preview-panel{padding:0;}
+    .paper{box-shadow:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="seal"><span>CC</span></div>
+    <div class="brand-text">
+      <p class="eyebrow">Ferramentas de RH · Avulso</p>
+      <h1>Calculadora de Custo por Contratação</h1>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn ghost" id="btnReset" onclick="resetForm()">Limpar</button>
+    <button class="btn ghost" id="btnSave" onclick="salvarHistorico()" disabled>Salvar no histórico</button>
+    <button class="btn primary" id="btnPdf" onclick="gerarPDF()" disabled>Baixar PDF</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ============ FORM ============ -->
+  <div class="form-panel">
+
+    <div class="form-scroll">
+
+    <div class="warn-banner" id="warnBanner">Preencha ao menos um valor para calcular o custo do processo.</div>
+
+    <div class="section">
+      <p class="section-label">Identificação</p>
+      <div class="grid-2">
+        <div class="field">
+          <label for="vagaNome">Vaga <span class="sub">opcional</span></label>
+          <input type="text" id="vagaNome" placeholder="Ex.: Analista Administrativo Pleno" oninput="render()">
+        </div>
+        <div class="field">
+          <label for="responsavel">Responsável <span class="sub">opcional</span></label>
+          <input type="text" id="responsavel" placeholder="Nome do recrutador" oninput="render()">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-label">Tempo interno</p>
+      <div class="grid-2">
+        <div class="field">
+          <label>Horas do recrutador <span class="info" title="Total de horas dedicadas ao processo: triagem, entrevistas, alinhamentos.">i</span></label>
+          <div class="inputrow"><span class="prefix">h</span><input type="number" min="0" step="0.5" id="horasRecrutador" placeholder="0"></div>
+        </div>
+        <div class="field">
+          <label>Valor da hora (recrutador)</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="valorHoraRecrutador" placeholder="0,00"></div>
+          <div class="error-msg" data-for="valorHoraRecrutador">Valor não pode ser negativo.</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Horas do gestor <span class="info" title="Horas do gestor da área envolvido em entrevistas e decisão final.">i</span></label>
+          <div class="inputrow"><span class="prefix">h</span><input type="number" min="0" step="0.5" id="horasGestor" placeholder="0"></div>
+        </div>
+        <div class="field">
+          <label>Valor da hora (gestor)</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="valorHoraGestor" placeholder="0,00"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-label">Custos diretos do processo</p>
+      <div class="grid-2">
+        <div class="field">
+          <label>Anúncio da vaga</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="anuncio" placeholder="0,00"></div>
+        </div>
+        <div class="field">
+          <label>Testes / avaliações</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="testes" placeholder="0,00"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Deslocamentos</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="deslocamento" placeholder="0,00"></div>
+        </div>
+        <div class="field">
+          <label>Exames admissionais</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="exames" placeholder="0,00"></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Agência / consultoria externa</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="agencia" placeholder="0,00"></div>
+        </div>
+        <div class="field">
+          <label>Outros custos</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="outros" placeholder="0,00"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <p class="section-label">Custo da vaga em aberto <span class="info" title="Produtividade perdida enquanto a posição não é preenchida. Opcional.">i</span></p>
+      <div class="grid-2">
+        <div class="field">
+          <label>Dias em aberto</label>
+          <div class="inputrow"><span class="prefix">dias</span><input type="number" min="0" step="1" id="diasAberto" placeholder="0"></div>
+        </div>
+        <div class="field">
+          <label>Custo estimado por dia</label>
+          <div class="inputrow"><span class="prefix">R$</span><input type="number" min="0" step="0.01" id="custoDiario" placeholder="0,00"></div>
+        </div>
+      </div>
+      <p class="hint">Some ao total, mas fica destacado à parte — é o custo mais fácil de esquecer numa contratação.</p>
+    </div>
+
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn ghost" onclick="salvarHistorico()" id="btnSave2" disabled>Salvar no histórico</button>
+      <button class="btn primary" onclick="gerarPDF()" id="btnPdf2" disabled>Baixar PDF</button>
+    </div>
+
+  </div>
+
+  <!-- ============ PREVIEW ============ -->
+  <div class="preview-panel">
+    <div class="paper-wrap">
+      <div class="preview-toolbar">
+        <span class="label">Pré-visualização</span>
+        <span class="label" id="dateTag"></span>
+      </div>
+      <div class="paper" id="paper">
+        <div class="doc-watermark">CUSTO DE CONTRATAÇÃO · DOCUMENTO INTERNO</div>
+
+        <div class="doc-header">
+          <div class="doc-company">RECIBO DO PROCESSO SELETIVO</div>
+          <div class="doc-code">Doc. RH-CC<br><span id="doc-code-data">—</span></div>
+        </div>
+
+        <p class="doc-title-eyebrow">Calculadora de Custo por Contratação</p>
+        <h2 class="doc-title" id="receiptTitle">Vaga não identificada</h2>
+
+        <dl class="doc-meta">
+          <div class="item"><dt>Responsável</dt><dd id="m-responsavel">—</dd></div>
+          <div class="item"><dt>Data de emissão</dt><dd id="m-data">—</dd></div>
+        </dl>
+
+        <div class="doc-section">
+          <h3>Tempo interno <span class="subtotal" id="sub-tempo"></span></h3>
+          <div id="grupo-tempo"></div>
+        </div>
+
+        <div class="doc-section">
+          <h3>Custos diretos <span class="subtotal" id="sub-diretos"></span></h3>
+          <div id="grupo-diretos"></div>
+        </div>
+
+        <div class="doc-section" id="secao-vaga" style="display:none;">
+          <h3>Vaga em aberto <span class="subtotal" id="sub-vaga"></span></h3>
+          <div id="grupo-vaga"></div>
+        </div>
+
+        <div class="doc-section" id="chartWrap" style="display:none;">
+          <h3>Composição do custo</h3>
+          <div class="chart-bar" id="chartBar"></div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+
+        <div class="total-block">
+          <span class="eyebrow">Custo total do processo</span>
+          <div class="total-value" id="totalValue">R$ 0,00</div>
+          <div class="per-hour-note" id="breakdownNote"></div>
+        </div>
+
+        <div class="doc-footer">
+          <span id="d-responsavel">Elaborado por: —</span>
+          <div class="stamp-mark" id="stamp" style="visibility:hidden;">
+            <div class="stamp-text">Cálculo<br>apurado<br><span id="stamp-data">—</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="history-panel">
+  <div class="history-inner">
+    <p class="section-label">Histórico da sessão <span class="info" title="Guardado apenas nesta sessão do navegador — recarregar a página apaga o histórico.">i</span></p>
+    <div class="history" id="historyContent"><div class="history-empty">Nenhum cálculo salvo ainda.</div></div>
+    <div class="history-actions">
+      <button class="btn ghost" id="btnExportCsv" disabled onclick="exportarCsv()">Exportar CSV</button>
+      <button class="btn ghost" id="btnExportXlsx" disabled onclick="exportarExcel()">Exportar Excel</button>
+      <button class="btn ghost" id="btnClearHistory" disabled onclick="limparHistorico()">Limpar histórico</button>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">Calculadora de Custo por Contratação · Ferramentas de RH · histórico válido apenas para esta sessão do navegador</footer>
+
+<script>
+const costIds = ["valorHoraRecrutador","valorHoraGestor","anuncio","testes","deslocamento","exames","agencia","outros","custoDiario"];
+const hourIds = ["horasRecrutador","horasGestor","diasAberto"];
+const allNumIds = [...costIds, ...hourIds];
+const fields = {};
+allNumIds.forEach(id => fields[id] = document.getElementById(id));
+const vagaNome = document.getElementById("vagaNome");
+const responsavel = document.getElementById("responsavel");
+let history = [];
+
+function num(v){ const n = parseFloat(v); return isNaN(n) || n < 0 ? 0 : n; }
+function brl(n){ return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+function hoje(){ return new Date().toLocaleDateString('pt-BR', {day:'2-digit', month:'long', year:'numeric'}); }
+function hojeCurto(){ return new Date().toLocaleDateString('pt-BR'); }
+
+function validate(){
+  let anyInvalid = false;
+  allNumIds.forEach(id => {
+    const el = fields[id];
+    const row = el.closest(".inputrow");
+    const msg = document.querySelector(`.error-msg[data-for="${id}"]`);
+    const invalid = el.value !== "" && parseFloat(el.value) < 0;
+    if (row) row.classList.toggle("invalid", invalid);
+    if (msg) msg.classList.toggle("show", invalid);
+    if (invalid) anyInvalid = true;
+  });
+  return !anyInvalid;
+}
+
+function compute(){
+  const custoRecrutador = num(fields.horasRecrutador.value) * num(fields.valorHoraRecrutador.value);
+  const custoGestor = num(fields.horasGestor.value) * num(fields.valorHoraGestor.value);
+  const custoVagaAberta = num(fields.diasAberto.value) * num(fields.custoDiario.value);
+  const diretos = [
+    ["Anúncio da vaga", num(fields.anuncio.value)],
+    ["Testes / avaliações", num(fields.testes.value)],
+    ["Deslocamentos", num(fields.deslocamento.value)],
+    ["Exames admissionais", num(fields.exames.value)],
+    ["Agência / consultoria externa", num(fields.agencia.value)],
+    ["Outros custos", num(fields.outros.value)]
+  ];
+  const somaDireta = diretos.reduce((s,[,v]) => s+v, 0);
+  const tempoInterno = custoRecrutador + custoGestor;
+  const total = tempoInterno + somaDireta + custoVagaAberta;
+  return { custoRecrutador, custoGestor, tempoInterno, diretos, somaDireta, custoVagaAberta, total };
+}
+
+function renderGroup(container, items){
+  container.innerHTML = "";
+  items.forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.className = "line-item" + (value === 0 ? " empty" : "");
+    row.innerHTML = `<span class="label">${label}</span><span class="value">${brl(value)}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function render(){
+  const valid = validate();
+  const { custoRecrutador, custoGestor, tempoInterno, diretos, somaDireta, custoVagaAberta, total } = compute();
+
+  renderGroup(document.getElementById("grupo-tempo"), [["Tempo do recrutador", custoRecrutador], ["Tempo do gestor", custoGestor]]);
+  renderGroup(document.getElementById("grupo-diretos"), diretos);
+  document.getElementById("sub-tempo").textContent = tempoInterno > 0 ? brl(tempoInterno) : "";
+  document.getElementById("sub-diretos").textContent = somaDireta > 0 ? brl(somaDireta) : "";
+
+  const temVaga = num(fields.diasAberto.value) > 0 || num(fields.custoDiario.value) > 0;
+  document.getElementById("secao-vaga").style.display = temVaga ? "block" : "none";
+  if (temVaga){
+    renderGroup(document.getElementById("grupo-vaga"), [["Produtividade não realizada", custoVagaAberta]]);
+    document.getElementById("sub-vaga").textContent = custoVagaAberta > 0 ? brl(custoVagaAberta) : "";
+  }
+
+  document.getElementById("totalValue").textContent = brl(total);
+  document.getElementById("receiptTitle").textContent = vagaNome.value.trim() || "Vaga não identificada";
+  document.getElementById("m-responsavel").textContent = responsavel.value.trim() || "—";
+  document.getElementById("m-data").textContent = hoje();
+  document.getElementById("d-responsavel").textContent = responsavel.value.trim() ? `Elaborado por: ${responsavel.value.trim()}` : "Elaborado por: —";
+  document.getElementById("doc-code-data").textContent = hojeCurto();
+
+  const note = document.getElementById("breakdownNote");
+  note.textContent = total > 0
+    ? `Tempo interno: ${brl(tempoInterno)} · Diretos: ${brl(somaDireta)}${custoVagaAberta>0 ? ` · Vaga aberta: ${brl(custoVagaAberta)}` : ""}`
+    : "";
+
+  const chartWrap = document.getElementById("chartWrap");
+  const chartBar = document.getElementById("chartBar");
+  const chartLegend = document.getElementById("chartLegend");
+  if (total > 0){
+    chartWrap.style.display = "block";
+    const pTempo = (tempoInterno/total*100).toFixed(1);
+    const pDiretos = (somaDireta/total*100).toFixed(1);
+    const pVaga = (custoVagaAberta/total*100).toFixed(1);
+    chartBar.innerHTML = `
+      <div class="chart-seg tempo" style="width:${pTempo}%"></div>
+      <div class="chart-seg diretos" style="width:${pDiretos}%"></div>
+      <div class="chart-seg vaga" style="width:${pVaga}%"></div>`;
+    chartLegend.innerHTML = `
+      <span><i class="swatch tempo"></i>Tempo interno ${pTempo}%</span>
+      <span><i class="swatch diretos"></i>Diretos ${pDiretos}%</span>
+      ${custoVagaAberta>0 ? `<span><i class="swatch vaga"></i>Vaga aberta ${pVaga}%</span>` : ""}`;
+  } else {
+    chartWrap.style.display = "none";
+  }
+
+  const stamp = document.getElementById("stamp");
+  stamp.style.visibility = total > 0 ? "visible" : "hidden";
+  document.getElementById("stamp-data").textContent = hojeCurto();
+
+  document.getElementById("warnBanner").classList.toggle("show", total === 0);
+
+  const disable = total === 0 || !valid;
+  ["btnPdf","btnPdf2"].forEach(id => document.getElementById(id).disabled = disable);
+  ["btnSave","btnSave2"].forEach(id => document.getElementById(id).disabled = disable);
+
+  return { valid, total };
+}
+
+[...allNumIds.map(id => fields[id]), vagaNome, responsavel].forEach(el => el.addEventListener("input", render));
+
+function resetForm(){
+  allNumIds.forEach(id => fields[id].value = "");
+  vagaNome.value = "";
+  responsavel.value = "";
+  render();
+}
+
+function buildPdf(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"pt", format:"a4"});
+  const { custoRecrutador, custoGestor, diretos, custoVagaAberta, total } = compute();
+  const margin = 56;
+  let y = margin;
+
+  doc.setFont("courier","normal"); doc.setFontSize(9); doc.setTextColor(140,140,140);
+  doc.text("FERRAMENTAS DE RH · DOCUMENTO INTERNO", margin, y);
+  y += 22;
+
+  doc.setFont("times","bold"); doc.setFontSize(18); doc.setTextColor(27,36,48);
+  doc.text("Recibo do Processo Seletivo", margin, y);
+  y += 20;
+
+  doc.setFont("times","normal"); doc.setFontSize(12); doc.setTextColor(60,60,60);
+  doc.text(vagaNome.value.trim() || "Vaga não identificada", margin, y);
+  if (responsavel.value.trim()){
+    doc.setFontSize(10);
+    doc.text(`Responsável: ${responsavel.value.trim()}`, margin, y + 14);
+    y += 14;
+  }
+  y += 10;
+  doc.setDrawColor(210,210,210);
+  doc.line(margin, y, 539, y);
+  y += 24;
+
+  const items = [
+    ["Tempo do recrutador", custoRecrutador],
+    ["Tempo do gestor", custoGestor],
+    ...diretos
+  ];
+  if (custoVagaAberta > 0) items.push(["Vaga em aberto (produtividade)", custoVagaAberta]);
+
+  doc.setFont("courier","normal"); doc.setFontSize(10.5);
+  items.forEach(([label, value]) => {
+    doc.setTextColor(80,80,80); doc.text(label, margin, y);
+    doc.setTextColor(27,36,48); doc.text(brl(value), 539, y, {align:"right"});
+    y += 10;
+    doc.setDrawColor(230,230,230); doc.line(margin, y-4, 539, y-4);
+    y += 12;
+  });
+
+  y += 10;
+  doc.setFillColor(27,36,48);
+  doc.rect(margin, y, 539-margin, 56, "F");
+  doc.setTextColor(244,225,219); doc.setFontSize(9);
+  doc.text("CUSTO TOTAL DO PROCESSO", margin+16, y+20);
+  doc.setFont("times","bold"); doc.setFontSize(20); doc.setTextColor(255,255,255);
+  doc.text(brl(total), margin+16, y+44);
+
+  y += 90;
+  doc.setFont("courier","normal"); doc.setFontSize(8); doc.setTextColor(160,160,160);
+  doc.text("Gerado em " + hojeCurto(), margin, y);
+
+  return doc;
+}
+
+function gerarPDF(){
+  const { total } = compute();
+  if (total <= 0) return;
+  const doc = buildPdf();
+  const fname = (vagaNome.value.trim() || "processo-seletivo").toLowerCase().replace(/[^a-z0-9]+/g,"-");
+  doc.save(`custo-contratacao-${fname}.pdf`);
+}
+
+function renderHistory(){
+  const content = document.getElementById("historyContent");
+  const hasItems = history.length > 0;
+  document.getElementById("btnExportCsv").disabled = !hasItems;
+  document.getElementById("btnExportXlsx").disabled = !hasItems;
+  document.getElementById("btnClearHistory").disabled = !hasItems;
+  if (!hasItems){
+    content.innerHTML = '<div class="history-empty">Nenhum cálculo salvo ainda.</div>';
+    return;
+  }
+  const rows = history.map((h, i) => `
+    <tr>
+      <td>${h.vaga}</td>
+      <td>${h.responsavel || "—"}</td>
+      <td>${h.data}</td>
+      <td class="num">${brl(h.total)}</td>
+      <td><button class="del" data-i="${i}" title="Remover">×</button></td>
+    </tr>`).join("");
+  content.innerHTML = `
+    <table>
+      <thead><tr><th>Vaga</th><th>Responsável</th><th>Data</th><th style="text-align:right;">Total</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  content.querySelectorAll(".del").forEach(btn => {
+    btn.addEventListener("click", () => {
+      history.splice(parseInt(btn.dataset.i), 1);
+      renderHistory();
+    });
+  });
+}
+
+function salvarHistorico(){
+  const { total } = compute();
+  if (total <= 0) return;
+  history.push({
+    vaga: vagaNome.value.trim() || "Vaga não identificada",
+    responsavel: responsavel.value.trim(),
+    data: hojeCurto(),
+    total
+  });
+  renderHistory();
+}
+
+function limparHistorico(){
+  history = [];
+  renderHistory();
+}
+
+function exportarCsv(){
+  const header = "Vaga;Responsável;Data;Total\n";
+  const rows = history.map(h => `${h.vaga};${h.responsavel};${h.data};${h.total.toFixed(2).replace('.',',')}`).join("\n");
+  const blob = new Blob(["\uFEFF" + header + rows], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "historico-custo-contratacao.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportarExcel(){
+  const data = history.map(h => ({
+    "Vaga": h.vaga,
+    "Responsável": h.responsavel || "—",
+    "Data": h.data,
+    "Total (R$)": h.total
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  ws["!cols"] = [{wch:24},{wch:22},{wch:12},{wch:14}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Histórico");
+  XLSX.writeFile(wb, "historico-custo-contratacao.xlsx");
+}
+
+document.getElementById("dateTag").textContent = hoje();
+render();
+renderHistory();
+</script>
+</body>
+</html>
