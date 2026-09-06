@@ -266,31 +266,7 @@ body {
 </head>
 <body>
 
-<!-- ═══ LOGIN GATE ═══ -->
-<div id="orizon-login-gate" style="position:fixed;inset:0;z-index:99999;background:#000000;display:flex;align-items:center;justify-content:center;padding:1rem;font-family:'Sora',sans-serif;">
-  <div style="background:#000000;border:1px solid rgba(59,130,246,0.3);border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;box-shadow:0 0 60px rgba(59,130,246,0.1);">
-    <div style="font-size:2rem;margin-bottom:0.5rem;">🔐</div>
-    <div style="font-size:0.65rem;font-weight:700;letter-spacing:4px;color:#3b82f6;text-transform:uppercase;margin-bottom:0.4rem;">Orizon · Uso Interno</div>
-    <h2 style="color:#f0f0f0;font-size:1.1rem;font-weight:800;margin:0 0 0.3rem;">Parecer DISC</h2>
-    <p style="color:#6b7280;font-size:0.75rem;margin:0 0 1.8rem;">Acesso restrito. Faça login para continuar.</p>
-    <input id="olg-user" type="text" placeholder="Usuário" autocomplete="username"
-      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:0.65rem 0.9rem;color:#f0f0f0;font-family:inherit;font-size:0.88rem;outline:none;margin-bottom:0.7rem;text-align:center;"
-      onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
-    />
-    <input id="olg-pass" type="password" placeholder="Senha" autocomplete="current-password"
-      style="width:100%;box-sizing:border-box;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:0.65rem 0.9rem;color:#f0f0f0;font-family:inherit;font-size:0.88rem;outline:none;margin-bottom:0.9rem;text-align:center;"
-      onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
-      onkeydown="if(event.key==='Enter') olgEntrar()"
-    />
-    <button onclick="olgEntrar()"
-      style="width:100%;background:linear-gradient(135deg,#1a3a6b,#3b82f6);color:#fff;border:none;border-radius:10px;padding:0.72rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;letter-spacing:1px;">
-      Entrar
-    </button>
-    <div id="olg-err" style="color:#e74c3c;font-size:0.72rem;margin-top:0.7rem;min-height:1rem;"></div>
-  </div>
-</div>
-
-<div id="orizon-main-content" style="display:none;">
+<div id="orizon-main-content">
 
 <div class="orizon-logo-wrap">
   <!-- LOGO HTML/CSS -->
@@ -2526,35 +2502,5 @@ function toggleConf(checkbox, fieldId) {
 })();
 </script>
 
-<script>
-(function(){
-  // Verificar sessão já autenticada
-  if(sessionStorage.getItem('orizon_disc_auth') === '1'){
-    document.getElementById('orizon-login-gate').style.display = 'none';
-    document.getElementById('orizon-main-content').style.display = 'block';
-  }
-  window.olgEntrar = function(){
-    const u = (document.getElementById('olg-user').value || '').trim();
-    const p = (document.getElementById('olg-pass').value || '').trim();
-    const err = document.getElementById('olg-err');
-    if(u === 'admin' && p === 'admin'){
-      sessionStorage.setItem('orizon_disc_auth','1');
-      document.getElementById('orizon-login-gate').style.display = 'none';
-      document.getElementById('orizon-main-content').style.display = 'block';
-    } else {
-      err.textContent = 'Usuário ou senha incorretos.';
-      document.getElementById('olg-pass').value = '';
-      document.getElementById('olg-pass').focus();
-    }
-  };
-  // Foco automático no campo usuário
-  window.addEventListener('DOMContentLoaded', function(){
-    const gate = document.getElementById('orizon-login-gate');
-    if(gate && gate.style.display !== 'none'){
-      document.getElementById('olg-user').focus();
-    }
-  });
-})();
-</script>
 </body>
 </html>
