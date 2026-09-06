@@ -5,7 +5,7 @@
 
 const SUPABASE_URL      = 'https://zxivdljbpdpwijtporff.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
-const LOGIN_URL         = '/Consultoria/contratos/login.html';
+const LOGIN_URL         = '/contratos/login.html';
 
 document.documentElement.style.visibility = 'hidden';
 
