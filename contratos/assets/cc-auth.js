@@ -7,6 +7,8 @@ const SUPABASE_URL      = 'https://zxivdljbpdpwijtporff.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
 const LOGIN_URL         = '/Consultoria/contratos/login.html';
 
+document.documentElement.style.visibility = 'hidden';
+
 window.__ccAuthReady = async function () {
   try {
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -32,6 +34,8 @@ window.__ccAuthReady = async function () {
         window.location.replace(LOGIN_URL);
       }
     });
+
+    document.documentElement.style.visibility = 'visible';
 
     // ── Preenche nome/email no sidebar ──
     const user = session.user;
@@ -59,12 +63,15 @@ window.__ccAuthReady = async function () {
   }
 };
 
-// ── Carrega SDK do Supabase e então roda auth ──
-(function () {
-  if (window.supabase) { window.__ccAuthReady(); return; }
-  const s = document.createElement('script');
-  s.src     = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  s.onload  = () => window.__ccAuthReady();
-  s.onerror = () => { console.error('[cc-auth] SDK não carregou'); window.location.replace(LOGIN_URL); };
-  document.head.appendChild(s);
-})();
+// ── Roda auth assim que o script é lido ──
+// IMPORTANTE: o SDK do Supabase (supabase.min.js) precisa ser carregado
+// via <script> normal e bloqueante, ANTES desta tag, no <head> de cada
+// página protegida — igual já é feito no login.html. Isso evita a
+// "corrida" entre o carregamento dinâmico do SDK e a checagem de sessão,
+// que era a causa do flash pelo login.html ao abrir o index.html.
+if (window.supabase) {
+  window.__ccAuthReady();
+} else {
+  console.error('[cc-auth] SDK do Supabase não encontrado — adicione a tag <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script> no <head>, ANTES do cc-auth.js.');
+  window.location.replace(LOGIN_URL);
+}
