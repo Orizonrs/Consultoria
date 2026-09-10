@@ -120,7 +120,6 @@ header{position:sticky;top:0;z-index:100;background:rgba(13,15,20,.8);backdrop-f
 .vc-eyebrow{display:inline-flex;align-items:center;gap:8px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;}
 .vc-company{display:flex;align-items:center;gap:10px;}
 .vc-company img{object-fit:contain;background:transparent;flex-shrink:0;min-width:0;display:block;}
-.vc-logo-wrap{overflow:hidden;border-radius:8px;background:transparent;flex-shrink:0;display:inline-flex;}
 .vc-company-name{font-weight:700;opacity:.85;}
 .vc-title{font-family:'DM Serif Display',serif;font-weight:400;line-height:1.08;}
 .vc-meta{display:flex;flex-wrap:wrap;}
@@ -883,9 +882,15 @@ function render(){
   var qrOn = document.getElementById('f-qr-toggle').checked;
   var qrLink = val('f-qr-link');
 
-  var logoHtml = (state.logo && visible('logo'))
-    ? '<div class="vc-logo-wrap" style="width:'+logoSize+'px;height:'+logoSize+'px;padding:'+Math.round(f.w*0.012)+'px;box-sizing:border-box;'+posStyle('logo')+'"><img src="'+state.logo+'" style="width:100%;height:100%;"></div>'
-    : '';
+  var logoHtml = '';
+  if(state.logo && visible('logo')){
+    var aspect = state.logoAspect || 1;
+    var boxW = logoSize, boxH = logoSize;
+    var drawW, drawH;
+    if(aspect >= 1){ drawW = boxW; drawH = boxW / aspect; if(drawH > boxH){ drawH = boxH; drawW = boxH * aspect; } }
+    else { drawH = boxH; drawW = boxH * aspect; if(drawW > boxW){ drawW = boxW; drawH = boxW / aspect; } }
+    logoHtml = '<img src="'+state.logo+'" style="width:'+Math.round(drawW)+'px;height:'+Math.round(drawH)+'px;'+posStyle('logo')+'">';
+  }
 
   var qrSize = Math.round(f.w * 0.12 * mult('qr'));
   var qrHtml = '';
@@ -1086,6 +1091,12 @@ document.getElementById('f-logo').addEventListener('change', function(e){
   var reader = new FileReader();
   reader.onload = function(ev){
     state.logo = ev.target.result;
+    var probe = new Image();
+    probe.onload = function(){
+      state.logoAspect = probe.naturalWidth / probe.naturalHeight;
+      render();
+    };
+    probe.src = state.logo;
     document.getElementById('logo-thumb').src = state.logo;
     document.getElementById('logo-thumb-row').style.display = 'flex';
     render();
@@ -1094,6 +1105,7 @@ document.getElementById('f-logo').addEventListener('change', function(e){
 });
 document.getElementById('logo-remove').addEventListener('click', function(){
   state.logo = null;
+  state.logoAspect = null;
   document.getElementById('f-logo').value = '';
   document.getElementById('logo-thumb-row').style.display = 'none';
   render();
