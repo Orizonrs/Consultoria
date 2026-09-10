@@ -323,6 +323,14 @@ footer{text-align:center;padding:40px 24px;color:var(--text);font-weight:700;fon
       <textarea id="f-beneficios"></textarea>
     </div>
     <div class="field">
+      <label>Título do campo extra (opcional, dê o nome que quiser)</label>
+      <input type="text" id="f-extra-titulo" placeholder="Ex: Observações, Horário, Diferenciais...">
+    </div>
+    <div class="field">
+      <label>Conteúdo do campo extra (um item por linha)</label>
+      <textarea id="f-extra-conteudo"></textarea>
+    </div>
+    <div class="field">
       <label>Espaço entre Requisitos e Benefícios</label>
       <input type="number" id="f-block-gap" value="0" step="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border-soft);background:var(--white-2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13.5px;">
       <div class="hint">Em px. Sem limite — positivo ou negativo, o quanto você quiser.</div>
@@ -336,6 +344,10 @@ footer{text-align:center;padding:40px 24px;color:var(--text);font-weight:700;fon
     <div class="field">
       <label>WhatsApp</label>
       <input type="tel" id="f-whats">
+    </div>
+    <div class="field">
+      <label>Endereço físico (opcional, aparece no rodapé)</label>
+      <input type="text" id="f-endereco" placeholder="Ex: Av. Vasco Alves Pereira, 1634 - Colina">
     </div>
     <div class="field">
       <div class="toggle-row">
@@ -877,8 +889,11 @@ function render(){
   var requisitos = lines('f-requisitos');
   var beneficios = lines('f-beneficios');
   var atividades = lines('f-atividades');
+  var extraTitulo = val('f-extra-titulo') || 'Observações';
+  var extraConteudo = lines('f-extra-conteudo');
   var email = val('f-email');
   var whats = val('f-whats');
+  var endereco = val('f-endereco');
   var qrOn = document.getElementById('f-qr-toggle').checked;
   var qrLink = val('f-qr-link');
 
@@ -935,6 +950,7 @@ function render(){
   html += listBlockHtml(atividades, 'Atividades', 'colorAtividadesBullet', 'colorAtividadesTitulo');
   html += listBlockHtml(requisitos, 'Requisitos', 'colorRequisitosBullet', 'colorRequisitosTitulo');
   html += listBlockHtml(beneficios, 'Benefícios', 'colorBeneficiosBullet', 'colorBeneficiosTitulo');
+  html += listBlockHtml(extraConteudo, esc(extraTitulo), 'colorExtraBullet', 'colorExtraTitulo');
   html += '</div>';
 
   if(!state.dividerHidden) html += '<div class="vc-divider" style="height:'+dividerThickness+'px;background:'+dividerColor+';"></div>';
@@ -942,6 +958,7 @@ function render(){
   html += '  <div class="vc-contact" style="font-size:'+contatoSize+'px;gap:'+Math.round(gap*.35)+'px;'+posStyle('contato')+'">';
   if(email && visible('contato')) html += '    <span><img src="'+ICON_EMAIL+'" alt="" style="width:'+Math.round(contatoSize*1.05)+'px;height:'+Math.round(contatoSize*1.05)+'px;margin-right:'+Math.round(contatoSize*.32)+'px;flex-shrink:0;">'+esc(email)+'</span>';
   if(whats && visible('contato')) html += '    <span><img src="'+ICON_WHATS+'" alt="" style="width:'+Math.round(contatoSize*1.05)+'px;height:'+Math.round(contatoSize*1.05)+'px;margin-right:'+Math.round(contatoSize*.32)+'px;flex-shrink:0;">'+esc(whats)+'</span>';
+  if(endereco && visible('contato')) html += '    <span>📍 '+esc(endereco)+'</span>';
   if(visible('footer')) html += '    <span class="vc-brandfoot" style="font-size:'+footerSize+'px;margin-top:'+Math.round(gap*.3)+'px;'+posStyle('footer')+alignStyle('footer')+'">Divulgação Emprego Guaíba e Região</span>';
   html += '  </div>';
   if(qrOn && qrLink && visible('qr')){
@@ -1183,7 +1200,7 @@ function wireDigitMask(inputEl, formatFn, freeTextPattern){
 wireDigitMask(salInput, formatCurrencyBR, /^[R$\s.,\d]*$/);
 wireDigitMask(whatsInput, formatPhoneBR, null);
 
-['f-titulo','f-empresa','f-modelo','f-cidade','f-salario','f-bullet','f-atividades','f-requisitos','f-beneficios','f-email','f-whats','f-qr-link']
+['f-titulo','f-empresa','f-modelo','f-cidade','f-salario','f-bullet','f-atividades','f-requisitos','f-beneficios','f-extra-titulo','f-extra-conteudo','f-email','f-whats','f-endereco','f-qr-link']
   .forEach(function(id){
     document.getElementById(id).addEventListener('input', render);
     document.getElementById(id).addEventListener('change', render);
