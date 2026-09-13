@@ -1576,11 +1576,49 @@ body.dark-mode {
 <div class="menu-content" id="menuContent">
 <div class="menu-section">
 <h3>Bem-Vindo</h3>
+<button type="button" class="submenu-toggle" id="bemVindoToggle" onclick="toggleSubmenu(this)" aria-expanded="false">Sobre<span class="submenu-arrow">▾</span></button>
+<div class="submenu-panel" id="bemVindoPanel">
 <a class="menu-link" href="sobre.html">Sobre</a>
 <a class="menu-link" href="missao.html">Missão</a>
 <a class="menu-link" href="visao.html">Visão</a>
 <a class="menu-link" href="valores.html">Valores</a>
 </div>
+</div>
+<style>
+.submenu-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0.6rem 0.8rem;color:var(--text-light);background:none;border:none;border-radius:7px;margin-bottom:0.28rem;transition:all 0.3s ease;font-weight:700;font-size:0.875rem;font-family:inherit;cursor:pointer;text-align:left;}
+body.dark-mode .submenu-toggle{color:var(--text-dark);}
+.submenu-toggle:hover{background:var(--primary);color:#fff;transform:translateX(8px);}
+.submenu-arrow{font-size:0.7rem;margin-left:0.5rem;transition:transform 0.3s ease;display:inline-block;}
+.submenu-toggle.open .submenu-arrow{transform:rotate(180deg);}
+.submenu-toggle.active-page-parent{background:rgba(30,64,175,0.15);color:var(--primary);}
+body.dark-mode .submenu-toggle.active-page-parent{color:#60a5fa;background:rgba(29,78,216,0.15);}
+.submenu-panel{max-height:0;overflow:hidden;transition:max-height .35s ease;margin-left:.4rem;padding-left:.5rem;border-left:2px solid rgba(255,255,255,.15);}
+.submenu-panel.open{max-height:400px;}
+.submenu-panel .menu-link{font-size:.82rem;padding:.5rem .7rem;}
+</style>
+<script>
+function toggleSubmenu(btn){
+  var panel = btn.nextElementSibling;
+  var isOpen = panel.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+}
+(function(){
+  var bemVindoPages = ["sobre.html","missao.html","visao.html","valores.html"];
+  var pageAtual = (window.location.pathname.split("/").pop() || "index.html").replace("./","");
+  if(bemVindoPages.indexOf(pageAtual) !== -1){
+    var panel = document.getElementById('bemVindoPanel');
+    var toggle = document.getElementById('bemVindoToggle');
+    if(panel && toggle){
+      panel.classList.add('open');
+      toggle.classList.add('open');
+      toggle.classList.add('active-page-parent');
+      toggle.setAttribute('aria-expanded','true');
+    }
+  }
+})();
+</script>
+
 <div class="menu-section">
 <h3>Carreira</h3>
 <a class="menu-link" href="candidato.html">Candidatos</a>
