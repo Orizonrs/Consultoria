@@ -594,6 +594,13 @@ body.dark-mode .topics-link-mobile:hover .topics-num {
 body.dark-mode .info-bar .ost-w1 { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
 body.dark-mode .info-bar .ost-w2 { color: #38bdf8; text-shadow: 0 0 18px rgba(56,189,248,0.35); }
 </style>
+<style>
+/* Borda lateral do menu mobile — desaparece quando o menu vira scroll */
+.menu-content { border-right: 2px solid #000; transition: left 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55), border-color .25s ease; }
+body.dark-mode .menu-content { border-right: 2px solid #00c8ff; box-shadow: 5px 0 30px rgba(0,0,0,0.1), 0 0 14px rgba(0,200,255,.35); }
+.menu-content.has-scroll { border-right-color: transparent !important; }
+body.dark-mode .menu-content.has-scroll { box-shadow: 5px 0 30px rgba(0,0,0,0.1) !important; }
+</style>
 </head>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -7296,5 +7303,29 @@ body.dark-mode .scroll-top-btn:hover {
   background: #0a0a0a !important;
 }
 </style>
+<script>
+(function(){
+  function updateMenuScrollState(){
+    var menu = document.getElementById('menuContent');
+    if(!menu) return;
+    var scrollable = menu.scrollHeight > menu.clientHeight + 1;
+    menu.classList.toggle('has-scroll', scrollable);
+  }
+  function bindMenuScrollWatch(){
+    var menuToggleBtn = document.querySelector('.menu-toggle');
+    if(menuToggleBtn) menuToggleBtn.addEventListener('click', function(){ setTimeout(updateMenuScrollState, 60); });
+    document.querySelectorAll('.submenu-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(){ setTimeout(updateMenuScrollState, 380); });
+    });
+    setTimeout(updateMenuScrollState, 300);
+    window.addEventListener('resize', updateMenuScrollState);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindMenuScrollWatch);
+  } else {
+    bindMenuScrollWatch();
+  }
+})();
+</script>
 </body>
 </html>
