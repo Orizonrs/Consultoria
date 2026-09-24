@@ -199,6 +199,15 @@ body:not(.dark-mode) .prog-step.active { background:#1e40af; color:#fff !importa
 }
 .prog-step.active .step-num{background:rgba(255,255,255,0.2);}
 .prog-step.done .step-num{background:var(--green);color:#fff;}
+/* ── PROGRESS MOBILE (pill com setas — cores do padrão original do site) ── */
+.progress-mob{display:none;align-items:center;justify-content:space-between;gap:0.7rem;background:var(--card);border:1.5px solid var(--rule);border-radius:14px;padding:0.65rem 0.9rem;margin-bottom:1.2rem;}
+.progress-mob-arrow{width:30px;height:30px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:all 0.15s;}
+.progress-mob-arrow:hover:not(:disabled){border-color:var(--gold2);color:var(--gold2);}
+.progress-mob-arrow.next{background:var(--gold-bg);}
+.progress-mob-arrow:disabled{opacity:0.35;cursor:default;}
+.progress-mob-info{flex:1;text-align:center;}
+.progress-mob-n{color:var(--gold);font-size:0.62rem;font-weight:700;letter-spacing:1.5px;font-family:monospace;}
+.progress-mob-label{color:var(--ink);font-size:0.85rem;font-weight:700;margin-top:0.1rem;}
 
 /* ── CARDS / SECTIONS ── */
 .section{
@@ -270,22 +279,9 @@ body:not(.dark-mode) .prog-step.active { background:#1e40af; color:#fff !importa
   .hero-meta{gap:0.6rem;margin-top:1.1rem;}
   .hero-chip{font-size:0.68rem;padding:0.25rem 0.7rem;}
 
-  /* Progress bar — scroll horizontal */
-  .progress-bar{
-    overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    flex-wrap:nowrap;
-    border-radius:8px;
-  }
-  .prog-step{
-    flex:0 0 auto;
-    min-width:72px;
-    padding:0.6rem 0.4rem;
-    font-size:0.65rem;
-    flex-direction:column;
-    gap:0.2rem;
-    text-align:center;
-  }
+  /* Progress bar — troca pelo modelo pill com setas no mobile */
+  .progress-bar{display:none;}
+  .progress-mob{display:flex;}
 
   /* Grids */
   .grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}
@@ -640,7 +636,7 @@ body.dark-mode .sec-icon.teal { background:#0a1e1e; border-color:rgba(20,184,166
 
 /* ── PRINT STYLES ── */
 @media print{
-  .topbar,.progress-bar,.nav-bottom,.btn,.modal-overlay,.toast{display:none!important;}
+  .topbar,.progress-bar,.progress-mob,.nav-bottom,.btn,.modal-overlay,.toast{display:none!important;}
   .section{display:block!important;border:none;box-shadow:none;margin-bottom:0.5rem;}
   .shell{padding:0;max-width:100%;}
   body{background:#fff;}
@@ -682,7 +678,7 @@ body.dark-mode .sec-icon.teal { background:#0a1e1e; border-color:rgba(20,184,166
   <!-- HERO -->
   <div class="hero">
     <div class="hero-eyebrow">Orizon · Recrutamento & Seleção</div>
-    <div class="hero-title">Ficha de <em>Abertura</em> de Vaga</div>
+    <h1 class="hero-title">Ficha de <em>Abertura</em> de Vaga</h1>
     <div class="hero-sub">Preencha todos os campos para cadastrar a vaga com precisão e agilidade no processo seletivo.</div>
     <div class="hero-meta">
       <div class="hero-chip"><div class="dot"></div> Documento confidencial</div>
@@ -699,6 +695,14 @@ body.dark-mode .sec-icon.teal { background:#0a1e1e; border-color:rgba(20,184,166
     <div class="prog-step" onclick="irPara(4)"><div class="step-num">4</div> Perfil</div>
     <div class="prog-step" onclick="irPara(5)"><div class="step-num">5</div> Processo</div>
     <div class="prog-step" onclick="irPara(6)"><div class="step-num">6</div> Finalizar</div>
+  </div>
+  <div class="progress-mob" id="progressMob">
+    <button class="progress-mob-arrow" id="progMobPrev" onclick="navPrev()" aria-label="Etapa anterior" disabled>‹</button>
+    <div class="progress-mob-info">
+      <div class="progress-mob-n" id="progMobN">ETAPA 1 / 6</div>
+      <div class="progress-mob-label" id="progMobLabel">Empresa</div>
+    </div>
+    <button class="progress-mob-arrow next" id="progMobNext" onclick="navNext()" aria-label="Próxima etapa">›</button>
   </div>
 
   <!-- ════ ETAPA 1 — EMPRESA ════ -->
@@ -1322,6 +1326,7 @@ Segue em anexo a Ficha de Abertura de Vaga formalizada pela Orizon, conforme com
 const LOGO_ORIZON_B64 = "data:image/png;base64,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";
 let etapaAtual = 1;
 const TOTAL_ETAPAS = 6;
+const ETAPAS_LABELS_MOB = ['Empresa','Vaga','Benefícios','Perfil','Processo','Finalizar'];
 const hardSkills = [];
 const softSkills = [];
 
@@ -1495,7 +1500,19 @@ function irPara(n){
   etapaAtual = n;
   atualizarProgress();
   atualizarNav();
+  atualizarProgressMob();
   window.scrollTo({top:120,behavior:'smooth'});
+}
+function atualizarProgressMob(){
+  const nEl=document.getElementById('progMobN');
+  const lEl=document.getElementById('progMobLabel');
+  const prevBtn=document.getElementById('progMobPrev');
+  const nextBtn=document.getElementById('progMobNext');
+  if(!nEl) return;
+  nEl.textContent=`ETAPA ${etapaAtual} / ${ETAPAS_LABELS_MOB.length}`;
+  lEl.textContent=ETAPAS_LABELS_MOB[etapaAtual-1]||'';
+  prevBtn.disabled=etapaAtual<=1;
+  nextBtn.disabled=etapaAtual>=ETAPAS_LABELS_MOB.length;
 }
 function navNext(){
   if(etapaAtual < TOTAL_ETAPAS) irPara(etapaAtual+1);
