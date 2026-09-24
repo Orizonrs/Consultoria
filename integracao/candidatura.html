@@ -139,11 +139,31 @@
     ]
   }
   </script>
+  <script>
+    /* Tema (padrão do site): escuro por padrão; "theme" = light ativa o modo claro */
+    try{
+      if (localStorage.getItem('theme') !== 'light') {
+        document.documentElement.classList.add('dark-mode');
+        document.addEventListener('DOMContentLoaded', function(){ document.body.classList.add('dark-mode'); });
+      }
+    }catch(e){
+      document.documentElement.classList.add('dark-mode');
+      document.addEventListener('DOMContentLoaded', function(){ document.body.classList.add('dark-mode'); });
+    }
+    document.documentElement.style.transition = 'none';
+    window.addEventListener('load', function(){ document.documentElement.style.transition = ''; });
+  </script>
+  <style id="theme-reveal-css">
+    ::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal;}
+    ::view-transition-old(root){z-index:1;}::view-transition-new(root){z-index:2;}
+    html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!important;}
+  </style>
   <style>
     /* ══════════════════════════════════════════
        TOKENS — DARK MODE (padrão)
     ══════════════════════════════════════════ */
     :root {
+  --wf:255,255,255; color-scheme:dark;
       --cyan:   #00e5ff;
       --blue:   #2979ff;
       --purple: #7c4dff;
@@ -153,14 +173,14 @@
 
       --bg:        #000000;
       --bg2:       #000000;
-      --card:      rgba(255,255,255,0.032);
+      --card:      rgba(var(--wf),0.032);
       --card-b:    rgba(0,229,255,0.10);
       --border:    rgba(0,229,255,0.13);
       --border2:   rgba(0,229,255,0.28);
       --text:      #e8eaf6;
-      --text2:     rgba(255,255,255,0.78);
-      --muted:     rgba(255,255,255,0.85);
-      --muted2:    rgba(255,255,255,0.48);
+      --text2:     rgba(var(--wf),0.78);
+      --muted:     rgba(var(--wf),0.85);
+      --muted2:    rgba(var(--wf),0.48);
 
       --D: #ff1744; --I: #ffab00; --S: #00e676; --C: #2979ff;
 
@@ -376,7 +396,7 @@
     ══════════════════════════════════════════ */
     .section-card {
       background: var(--card);
-      border: 1.5px solid rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(var(--wf),0.22);
       border-radius: var(--radius-lg);
       padding: 1.8rem;
       margin-bottom: 1.2rem;
@@ -435,7 +455,7 @@
       width: 100%;
       padding: 0.85rem 1.1rem;
       background: var(--card);
-      border: 1.5px solid rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(var(--wf),0.22);
       border-radius: var(--radius-sm);
       color: var(--text);
       font-family: var(--font);
@@ -447,7 +467,7 @@
       border-color: var(--cyan);
       box-shadow: 0 0 0 3px rgba(0,229,255,0.10), var(--glow-cyan);
     }
-    .field input::placeholder { color: rgba(255,255,255,0.32); }
+    .field input::placeholder { color: rgba(var(--wf),0.32); }
     .field-hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; }
     .field-error { font-size: 0.72rem; color: var(--red); margin-top: 0.35rem; display: none; }
     .field.has-error .field-error { display: block; }
@@ -603,7 +623,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+      background: linear-gradient(135deg, rgba(var(--wf),0.12), transparent);
       pointer-events: none;
     }
     .btn-primary:hover {
@@ -666,7 +686,7 @@
     ══════════════════════════════════════════ */
     .disc-type-btn {
       background: var(--card);
-      border: 1.5px solid rgba(255,255,255,0.22);
+      border: 1.5px solid rgba(var(--wf),0.22);
       border-radius: var(--radius);
       padding: 0.7rem 0.6rem;
       cursor: pointer;
@@ -898,7 +918,7 @@
       display: inline-block;
       width: 16px;
       height: 16px;
-      border: 2px solid rgba(255,255,255,0.2);
+      border: 2px solid rgba(var(--wf),0.2);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
@@ -1056,7 +1076,7 @@
     font-family: 'Courier New', monospace;
     font-size: 10px; letter-spacing: 0.38em;
     color: #ffffff; text-transform: uppercase;
-    text-shadow: 0 0 1px #ffffff, 0 0 3px rgba(255,255,255,0.6), 0 0 8px rgba(255,255,255,0.3);
+    text-shadow: 0 0 1px #ffffff, 0 0 3px rgba(var(--wf),0.6), 0 0 8px rgba(var(--wf),0.3);
     font-weight: 700;
   }
   .olh-title {
@@ -1075,11 +1095,11 @@
     font-size: clamp(9px, 1.8vw, 12px);
     letter-spacing: 0.32em; text-transform: uppercase;
     color: #ffffff;
-    text-shadow: 0 0 1px #ffffff, 0 0 3px rgba(255,255,255,0.6), 0 0 8px rgba(255,255,255,0.3);
+    text-shadow: 0 0 1px #ffffff, 0 0 3px rgba(var(--wf),0.6), 0 0 8px rgba(var(--wf),0.3);
     font-weight: 700;
     display: flex; align-items: center; gap: 12px;
   }
-  .olh-dot { font-size: 8px; color: #ffffff; text-shadow: 0 0 1px #ffffff, 0 0 4px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.4); }
+  .olh-dot { font-size: 8px; color: #ffffff; text-shadow: 0 0 1px #ffffff, 0 0 4px rgba(var(--wf),0.6), 0 0 10px rgba(var(--wf),0.4); }
   .olh-divider { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
   .olh-line {
     display: block; width: 72px; height: 1px;
@@ -1119,11 +1139,71 @@
       .orizon-logo-svg.desktop { display: none; }
       .orizon-logo-svg.mobile  { display: block; }
     }
+  
+    /* ══════════════════════════════════════════════
+       MODO CLARO / ESCURO — padrão do site (ferramentas-ia.html)
+    ══════════════════════════════════════════════ */
+    body{transition:background 0.5s ease,color 0.5s ease;}
+    .orizon-logo-wrap{position:relative;}
+    .theme-toggle{position:absolute;top:1.2rem;right:1.5rem;z-index:5;background:rgba(0,0,0,0.2);border:2px solid rgba(255,255,255,0.4);backdrop-filter:blur(10px);padding:0.8rem 1.5rem;border-radius:50px;cursor:pointer;font-size:1rem;color:#fff;font-weight:600;height:50px;min-width:50px;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease;-webkit-tap-highlight-color:transparent;font-family:inherit;}
+    .theme-toggle:hover{background:rgba(255,255,255,0.3);transform:scale(1.05);}
+    html:not(.dark-mode) .theme-toggle{background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.85);color:#ffffff;}
+    html:not(.dark-mode) .theme-toggle:hover{background:rgba(30,64,175,0.75);border-color:#ffffff;box-shadow:0 2px 12px rgba(30,64,175,0.3);}
+    @media(max-width:680px){.theme-toggle{top:0.7rem;right:0.7rem;height:42px;min-width:42px;padding:0.4rem 0.9rem;}}
+
+    html:not(.dark-mode){
+      --wf:15,23,42; color-scheme:light;
+      --bg:#ffffff; --bg2:#ffffff;
+      --card:#ffffff; --card-b:rgba(30,64,175,0.06);
+      --surface:#ffffff; --surface2:rgba(15,23,42,0.03); --surface3:rgba(15,23,42,0.02);
+      --border:rgba(0,0,0,0.22); --border2:rgba(30,64,175,0.40); --border-a:rgba(30,64,175,0.30);
+      --text:#1a1a1a; --text2:#475569; --text-2:#475569; --text-3:#334155;
+      --muted:rgba(26,26,26,0.78); --muted2:rgba(26,26,26,0.5);
+      --cyan:#1e40af; --accent:#2563eb; --blue:#2563eb; --primary:#1e40af;
+      --glow-cyan:0 0 22px rgba(37,99,235,0.15); --glow-blue:0 0 22px rgba(37,99,235,0.15);
+    }
+
+    /* HEADER + LOGO — modo claro: azul corporativo, borda dourada, logo branca sem neon */
+    html:not(.dark-mode) .orizon-logo-wrap{background:#1e40af;border-bottom:2px solid #f0b429;}
+    html:not(.dark-mode) .orizon-logo-wrap::before{background:none;}
+    html:not(.dark-mode) .olh-title{
+      background:linear-gradient(115deg,#94a3b8 0%,#f1f5f9 22%,#cbd5e1 40%,#ffffff 50%,#cbd5e1 60%,#f1f5f9 78%,#94a3b8 100%) !important;
+      background-size:220% 100% !important;
+      -webkit-background-clip:text !important;background-clip:text !important;
+      -webkit-text-fill-color:transparent !important;color:transparent !important;
+      text-shadow:0 1px 10px rgba(0,0,0,0.3) !important;
+      animation:olhShine 5s ease-in-out infinite !important;
+      -webkit-text-stroke:1.5px #000000 !important;paint-order:stroke fill !important;
+    }
+    @keyframes olhShine{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+    html:not(.dark-mode) .olh-eyebrow,
+    html:not(.dark-mode) .olh-subtitle{
+      color:#ffffff !important;background:none !important;-webkit-text-fill-color:#ffffff !important;
+      text-shadow:0 0 1px #ffffff,0 0 6px rgba(255,255,255,0.9),0 0 14px rgba(255,255,255,0.5) !important;font-weight:700 !important;
+    }
+    html:not(.dark-mode) .olh-dot{color:#ffffff !important;text-shadow:0 0 1px #ffffff,0 0 8px #ffffff,0 0 18px rgba(255,255,255,0.7) !important;}
+    html:not(.dark-mode) .olh-line{background:linear-gradient(90deg,transparent,rgba(241,245,249,0.75)) !important;}
+    html:not(.dark-mode) .olh-line.right{background:linear-gradient(90deg,rgba(241,245,249,0.75),transparent) !important;}
+    html:not(.dark-mode) .olh-diamond{background:linear-gradient(135deg,#f8fafc,#cbd5e1) !important;box-shadow:0 0 6px rgba(255,255,255,0.5) !important;}
+
+    /* Textos cinza fixos no inline */
+    html:not(.dark-mode) [style*="color:#bbb"],
+    html:not(.dark-mode) [style*="color:#aaa"],
+    html:not(.dark-mode) [style*="color:#ccc"],
+    html:not(.dark-mode) [style*="color:#888"]{color:var(--text2) !important;}
+    html:not(.dark-mode) [style*="color:#3498db"]{color:#1e40af;}
+    html:not(.dark-mode) [style*="color:#2ecc71"]{color:#15803d;}
+    html:not(.dark-mode) [style*="color:#f39c12"]{color:#b45309;}
+
   </style>
 </head>
 <body>
 
 <div class="orizon-logo-wrap">
+  <button class="theme-toggle" type="button" onclick="toggleTheme()" aria-label="Alternar modo claro/escuro" title="Alternar tema">
+    <span id="themeIcon">🌙</span>
+  </button>
+
       <!-- LOGO HTML/CSS -->
       <div class="orizon-logo-html">
         <div class="olh-eyebrow">// SISTEMA DE GESTÃO //</div>
@@ -1508,12 +1588,7 @@
 <!-- JAVASCRIPT — TEMA                           -->
 <!-- ════════════════════════════════════════════ -->
 <script>
-// ── TEMA FIXO: sempre escuro ───────────────────
-document.documentElement.setAttribute('data-theme', 'dark');
-document.documentElement.classList.add('dark-mode');
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.classList.add('dark-mode');
-});
+// (tema controlado pelo botão do header — padrão do site)
 
 // ── MENU ──────────────────────────────────────
 function toggleMenu() {
@@ -2978,5 +3053,54 @@ document.addEventListener('click', function(e) {
 
 </main>
 
+<script>
+// THEME TOGGLE (padrão do site)
+function toggleTheme() {
+  document.body.classList.toggle('dark-mode');
+  document.documentElement.classList.toggle('dark-mode');
+  var isDarkMode = document.body.classList.contains('dark-mode');
+  var icon = document.getElementById('themeIcon');
+  if (icon) icon.textContent = isDarkMode ? '☀️' : '🌙';
+  try{ localStorage.setItem('theme', isDarkMode ? 'dark' : 'light'); }catch(e){}
+  try{ window.dispatchEvent(new Event('themechange')); }catch(e){}
+}
+function loadSavedTheme() {
+  var saved = null;
+  try{ saved = localStorage.getItem('theme'); }catch(e){}
+  var icon = document.getElementById('themeIcon');
+  if (saved !== 'light') {
+    document.body.classList.add('dark-mode');
+    document.documentElement.classList.add('dark-mode');
+    if (icon) icon.textContent = '☀️';
+  } else {
+    document.body.classList.remove('dark-mode');
+    document.documentElement.classList.remove('dark-mode');
+    if (icon) icon.textContent = '🌙';
+  }
+}
+loadSavedTheme();
+
+/* Efeito circular ao trocar de tema (a partir do botão) */
+(function(){
+  var orig=window.toggleTheme;
+  if(typeof orig!=="function") return;
+  window.toggleTheme=function(){
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var btn=document.querySelector(".theme-toggle");
+    if(!document.startViewTransition||reduce||!btn){return orig.apply(this,arguments);}
+    var args=arguments,ctx=this,r=btn.getBoundingClientRect(),
+        x=r.left+r.width/2,y=r.top+r.height/2,
+        fim=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),
+        root=document.documentElement;
+    root.classList.add("no-trans");
+    var t=document.startViewTransition(function(){orig.apply(ctx,args);});
+    t.ready.then(function(){
+      root.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+fim+"px at "+x+"px "+y+"px)"]},
+        {duration:650,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"});
+    }).catch(function(){});
+    t.finished.finally(function(){root.classList.remove("no-trans");});
+  };
+})();
+</script>
 </body>
 </html>
