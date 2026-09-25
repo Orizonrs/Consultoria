@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<style id="fouc-guard">html{visibility:hidden}</style>
+<script>(function(){
+  function reveal(){
+    var g = document.getElementById("fouc-guard");
+    if (g && g.parentNode) g.parentNode.removeChild(g);
+    document.documentElement.style.setProperty("visibility", "visible", "important");
+  }
+  document.addEventListener("DOMContentLoaded", reveal);
+  setTimeout(reveal, 2000);
+})();</script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -425,6 +436,21 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
       width: 100%; height: 100%;
       z-index: -1;
       background: #050d1a;
+    }
+
+    /* ── PAGE CANVAS BG — mesmo estilo estrelado do Hero, mas fixo
+       atrás de toda a página. Só aparece no modo escuro; no modo
+       claro fica display:none e nada muda. ── */
+    #page-canvas {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -3;
+      background: #050d1a;
+    }
+    body.dark-mode #page-canvas {
+      display: block;
     }
 
     .hero-overlay {
@@ -2559,6 +2585,7 @@ body:not(.dark-mode) .theme-toggle .i-moon{display:block;}
 
 
 <canvas id="hero-canvas"></canvas>
+<canvas id="page-canvas" aria-hidden="true"></canvas>
 
 <div class="acesso-wrap" id="acessoWrap">
   <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()" aria-label="Ativar modo claro" title="Modo claro / escuro">
@@ -3235,8 +3262,10 @@ document.addEventListener('DOMContentLoaded', function(){
   <script>
 
     // ============= HERO CANVAS — TECH BG =============
-    (function() {
-      const canvas = document.getElementById('hero-canvas');
+    // (função reaproveitada para o canvas de página inteira no modo escuro)
+    function initStarfield(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       let W, H, particles, t = 0;
 
@@ -3352,7 +3381,9 @@ document.addEventListener('DOMContentLoaded', function(){
       window.addEventListener('resize', () => { resize(); });
       init();
       frame();
-    })();
+    }
+    initStarfield('hero-canvas');
+    initStarfield('page-canvas');
     
 
     // ============= MENU MOBILE =============
@@ -4388,10 +4419,15 @@ body.dark-mode .feature-more-toggle:hover { background: rgba(0,200,255,0.1); }
     display: flex;
     margin: 2rem auto 0;
     justify-content: center;
-    color: #ffffff;
   }
-  .feature-more-toggle .feature-more-label,
-  .feature-more-toggle .feature-more-icon {
+  body:not(.dark-mode) .feature-more-toggle,
+  body:not(.dark-mode) .feature-more-toggle .feature-more-label,
+  body:not(.dark-mode) .feature-more-toggle .feature-more-icon {
+    color: #000000;
+  }
+  body.dark-mode .feature-more-toggle,
+  body.dark-mode .feature-more-toggle .feature-more-label,
+  body.dark-mode .feature-more-toggle .feature-more-icon {
     color: #ffffff;
   }
 }
