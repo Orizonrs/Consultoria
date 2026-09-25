@@ -68,7 +68,7 @@
 }
 </script>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Dancing+Script:wght@600;700&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
@@ -494,6 +494,47 @@ select option{background:#fff;color:var(--ink);}
 .assin-box:hover{border-color:#60a5fa;background:rgba(59,130,246,0.1);}
 .assin-box svg{width:22px;height:22px;margin-bottom:0.4rem;}
 body.dark-mode .assin-box{color:#c8ccd8;}
+.assin-box.signed{
+  cursor:default;border-style:solid;background:#fff;padding:0.6rem;
+}
+.assin-box.signed img{max-width:100%;max-height:90px;display:block;margin:0 auto;}
+.assin-box.signed .assin-meta{margin-top:0.5rem;font-size:0.72rem;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:0.6rem;flex-wrap:wrap;}
+.assin-box.signed .assin-meta button{
+  background:none;border:1px solid var(--rule);border-radius:6px;
+  padding:0.2rem 0.6rem;font-size:0.7rem;font-weight:700;cursor:pointer;color:var(--ink2);
+}
+.assin-box.signed .assin-meta button:hover{border-color:#60a5fa;color:#3b82f6;}
+
+/* ── MODAL ASSINATURA ── */
+.modal-box-lg{max-width:620px;}
+.sig-tabs{display:flex;gap:0.5rem;margin-bottom:1rem;border-bottom:1px solid var(--rule);}
+.sig-tab-btn{
+  background:none;border:none;cursor:pointer;
+  padding:0.6rem 0.2rem;margin-right:1rem;
+  font-size:0.85rem;font-weight:700;color:var(--ink3);
+  border-bottom:2.5px solid transparent;
+}
+.sig-tab-btn.active{color:#3b82f6;border-bottom-color:#3b82f6;}
+.sig-pane{display:none;}
+.sig-pane.active{display:block;}
+#sigCanvas{
+  width:100%;height:200px;display:block;
+  border:1.5px solid var(--rule);border-radius:10px;
+  background:#ffffff;cursor:crosshair;touch-action:none;
+}
+.sig-hint{font-size:0.72rem;color:var(--ink3);margin-top:0.5rem;}
+.sig-type-preview{
+  width:100%;min-height:110px;border:1.5px solid var(--rule);border-radius:10px;
+  background:#ffffff;color:#0f1117;display:flex;align-items:center;justify-content:center;
+  font-size:2.4rem;padding:0.5rem 1rem;text-align:center;overflow:hidden;word-break:break-word;
+}
+.sig-font-opts{display:flex;gap:0.5rem;margin-top:0.7rem;flex-wrap:wrap;}
+.sig-font-opts button{
+  flex:1;min-width:120px;padding:0.5rem;border-radius:8px;
+  border:1.5px solid var(--rule);background:var(--card,#fff);cursor:pointer;
+  font-size:1.1rem;color:var(--ink);
+}
+.sig-font-opts button.active{border-color:#3b82f6;background:rgba(59,130,246,0.08);color:#3b82f6;}
 
 /* ── NAV BOTTOM ── */
 .nav-bottom{
@@ -1259,10 +1300,10 @@ body.dark-mode .sec-icon.teal { background:#0a1e1e; border-color:rgba(20,184,166
 
       <div style="margin-bottom:1rem;">
         <div class="label" style="margin-bottom:0.5rem;">Assinatura do Responsável pela Empresa</div>
-        <div class="assin-box" onclick="toast('Funcionalidade de assinatura digital disponível na versão Pro','err')">
+        <div class="assin-box" id="assinBox" onclick="abrirModalAssinatura()">
           <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          <div>Clique para assinar digitalmente (versão Pro)</div>
-          <span style="font-size:0.7rem;margin-top:0.2rem;">ou imprima e assine manualmente</span>
+          <div>Clique para assinar digitalmente</div>
+          <span style="font-size:0.7rem;margin-top:0.2rem;">desenhe com o mouse/dedo, digite seu nome, ou imprima e assine manualmente</span>
         </div>
       </div>
 
@@ -1320,6 +1361,45 @@ Segue em anexo a Ficha de Abertura de Vaga formalizada pela Orizon, conforme com
     </div>
     <div style="margin-top:0.6rem;">
       <button class="btn btn-outline" onclick="copiarCorpo()" style="width:100%;justify-content:center;font-size:0.78rem;">📋 Copiar texto do e-mail</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAssinatura">
+  <div class="modal-box modal-box-lg">
+    <button class="modal-close" onclick="fecharModalAssinatura()">✕</button>
+    <h3>Assinatura Digital</h3>
+    <p class="modal-sub">Desenhe com o mouse/dedo ou digite seu nome para gerar uma assinatura.</p>
+
+    <div class="sig-tabs">
+      <button type="button" class="sig-tab-btn active" id="sigTabBtnDesenhar" onclick="mudarAbaAssinatura('desenhar')">✍️ Desenhar</button>
+      <button type="button" class="sig-tab-btn" id="sigTabBtnDigitar" onclick="mudarAbaAssinatura('digitar')">⌨️ Digitar</button>
+    </div>
+
+    <div class="sig-pane active" id="sigPaneDesenhar">
+      <canvas id="sigCanvas"></canvas>
+      <p class="sig-hint">Desenhe sua assinatura acima com o mouse ou o dedo (tela touch).</p>
+      <div style="margin-top:0.7rem;">
+        <button type="button" class="btn btn-outline" onclick="limparCanvasAssinatura()">🗑 Limpar desenho</button>
+      </div>
+    </div>
+
+    <div class="sig-pane" id="sigPaneDigitar">
+      <div class="field" style="margin-bottom:0.6rem;">
+        <label class="label">Nome para assinatura</label>
+        <input type="text" id="sigTextoInput" placeholder="Digite seu nome completo" oninput="atualizarPreviewTexto()"/>
+      </div>
+      <div class="sig-type-preview" id="sigTypePreview" style="font-family:'Dancing Script',cursive;">Sua assinatura</div>
+      <div class="sig-font-opts">
+        <button type="button" class="active" data-font="'Dancing Script',cursive" onclick="escolherFonteAssinatura(this)" style="font-family:'Dancing Script',cursive;">Assinatura</button>
+        <button type="button" data-font="'Great Vibes',cursive" onclick="escolherFonteAssinatura(this)" style="font-family:'Great Vibes',cursive;">Assinatura</button>
+        <button type="button" data-font="'Pacifico',cursive" onclick="escolherFonteAssinatura(this)" style="font-family:'Pacifico',cursive;">Assinatura</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0.6rem;margin-top:1.4rem;">
+      <button class="btn btn-green" onclick="salvarAssinatura()" style="flex:1;justify-content:center;">✔ Salvar Assinatura</button>
+      <button class="btn btn-outline" onclick="fecharModalAssinatura()" style="flex:1;justify-content:center;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1688,6 +1768,8 @@ function coletarDados(){
       consultorExittus: g('consultorExittus'),
       dataAbertura: g('dataAbertura'),
       obsGerais: g('obsGerais'),
+      assinaturaDataUrl: assinaturaDataUrl,
+      assinaturaTipo: assinaturaTipo,
     }
   };
 }
@@ -1902,6 +1984,37 @@ function construirPDF(){
       row1('! OBSERVAÇÕES SIGILOSAS (somente recrutador)',d.processo.obsRecrutador,true);
     }
 
+    // ══ FORMALIZAÇÃO / ASSINATURA ══
+    if(d.finalizacao.consultorExittus||d.finalizacao.dataAbertura||d.finalizacao.obsGerais||d.finalizacao.assinaturaDataUrl){
+      y+=4;
+      secHdr('Formalização', AMBER, AMBER_L);
+      row2('CONSULTOR RESPONSÁVEL',d.finalizacao.consultorExittus,'DATA DE ABERTURA',
+        d.finalizacao.dataAbertura ? new Date(d.finalizacao.dataAbertura+'T12:00').toLocaleDateString('pt-BR') : '-');
+      if(d.finalizacao.obsGerais){ row1('OBSERVAÇÕES GERAIS / ACORDO COMERCIAL',d.finalizacao.obsGerais,true); }
+
+      y+=3; checkY(45);
+      ff('helvetica',7); fc(...INK3);
+      doc.text('ASSINATURA DO RESPONSÁVEL PELA EMPRESA',M,y); y+=4;
+      if(d.finalizacao.assinaturaDataUrl){
+        try{
+          const imgW=70, imgH=28;
+          rrFD(M,y,imgW+6,imgH+6,2,2, 255,255,255, ...RULE, 0.3);
+          doc.addImage(d.finalizacao.assinaturaDataUrl,'PNG',M+3,y+3,imgW,imgH);
+          y+=imgH+10;
+          line(M,y-2,M+imgW+6,y-2,...RULE);
+          ff('helvetica',6.5); fc(...INK3);
+          doc.text('Assinado digitalmente em '+dataStr,M,y+2); y+=8;
+        }catch(e){
+          line(M,y+18,M+80,y+18,...RULE); y+=24;
+        }
+      } else {
+        line(M,y+18,M+80,y+18,...RULE);
+        ff('helvetica',6.5); fc(...INK3);
+        doc.text('(assinatura manual)',M,y+22);
+        y+=28;
+      }
+    }
+
     // ══ RODAPÉ (linha e texto em preto mais forte) ══
     const totalPages=doc.internal.getNumberOfPages();
     for(let p=1;p<=totalPages;p++){
@@ -1931,6 +2044,189 @@ function gerarPDF(evt){
   }
   btn.textContent='⬇ Baixar PDF'; btn.disabled=false;
 }
+
+// ══════════════════════════════════════════
+//  ASSINATURA DIGITAL
+// ══════════════════════════════════════════
+let assinaturaDataUrl = null;   // PNG base64 salvo
+let assinaturaTipo = null;      // 'desenho' | 'texto'
+let assinaturaFonte = "'Dancing Script',cursive";
+let sigCtx=null, sigDrawing=false, sigTemDesenho=false;
+
+function abrirModalAssinatura(){
+  document.getElementById('modalAssinatura').classList.add('show');
+  // Canvas só pode ser preparado depois de visível (precisa medir largura real)
+  requestAnimationFrame(prepararCanvasAssinatura);
+}
+function fecharModalAssinatura(){
+  document.getElementById('modalAssinatura').classList.remove('show');
+}
+function mudarAbaAssinatura(aba){
+  document.getElementById('sigTabBtnDesenhar').classList.toggle('active', aba==='desenhar');
+  document.getElementById('sigTabBtnDigitar').classList.toggle('active', aba==='digitar');
+  document.getElementById('sigPaneDesenhar').classList.toggle('active', aba==='desenhar');
+  document.getElementById('sigPaneDigitar').classList.toggle('active', aba==='digitar');
+  if(aba==='desenhar') requestAnimationFrame(prepararCanvasAssinatura);
+}
+
+// ── Desenho no canvas (mouse + touch) ──
+function prepararCanvasAssinatura(){
+  const canvas = document.getElementById('sigCanvas');
+  if(!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  if(rect.width===0) return;
+  const dpr = window.devicePixelRatio || 1;
+  // Evita re-esticar (perder o desenho) se já preparado nesse tamanho
+  if(canvas.dataset.ready === String(Math.round(rect.width))+'x'+String(Math.round(rect.height))) return;
+  canvas.width = rect.width*dpr;
+  canvas.height = rect.height*dpr;
+  canvas.dataset.ready = String(Math.round(rect.width))+'x'+String(Math.round(rect.height));
+  sigCtx = canvas.getContext('2d');
+  sigCtx.scale(dpr,dpr);
+  sigCtx.lineWidth = 2.4;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+  sigCtx.strokeStyle = '#0f1117';
+  sigTemDesenho = false;
+
+  const pos = (e) => {
+    const r = canvas.getBoundingClientRect();
+    const p = e.touches ? e.touches[0] : e;
+    return { x: p.clientX-r.left, y: p.clientY-r.top };
+  };
+  const start = (e) => {
+    e.preventDefault();
+    sigDrawing = true; sigTemDesenho = true;
+    const {x,y} = pos(e);
+    sigCtx.beginPath();
+    sigCtx.moveTo(x,y);
+  };
+  const move = (e) => {
+    if(!sigDrawing) return;
+    e.preventDefault();
+    const {x,y} = pos(e);
+    sigCtx.lineTo(x,y);
+    sigCtx.stroke();
+  };
+  const end = (e) => { sigDrawing = false; };
+
+  canvas.onmousedown = start;
+  canvas.onmousemove = move;
+  window.addEventListener('mouseup', end);
+  canvas.ontouchstart = start;
+  canvas.ontouchmove = move;
+  canvas.ontouchend = end;
+}
+function limparCanvasAssinatura(){
+  const canvas = document.getElementById('sigCanvas');
+  if(!canvas || !sigCtx) return;
+  const rect = canvas.getBoundingClientRect();
+  sigCtx.clearRect(0,0,rect.width,rect.height);
+  sigTemDesenho = false;
+}
+
+// ── Assinatura digitada ──
+function atualizarPreviewTexto(){
+  const txt = document.getElementById('sigTextoInput').value.trim();
+  const prev = document.getElementById('sigTypePreview');
+  prev.textContent = txt || 'Sua assinatura';
+  prev.style.fontFamily = assinaturaFonte;
+}
+function escolherFonteAssinatura(btn){
+  document.querySelectorAll('.sig-font-opts button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  assinaturaFonte = btn.dataset.font;
+  atualizarPreviewTexto();
+}
+
+// ── Salvar (desenho ou texto -> PNG base64) ──
+function salvarAssinatura(){
+  const abaDesenhar = document.getElementById('sigPaneDesenhar').classList.contains('active');
+
+  if(abaDesenhar){
+    if(!sigTemDesenho){ toast('Desenhe sua assinatura antes de salvar','err'); return; }
+    const canvas = document.getElementById('sigCanvas');
+    assinaturaDataUrl = canvas.toDataURL('image/png');
+    assinaturaTipo = 'desenho';
+  } else {
+    const txt = document.getElementById('sigTextoInput').value.trim();
+    if(!txt){ toast('Digite seu nome antes de salvar','err'); return; }
+    assinaturaDataUrl = renderizarAssinaturaTexto(txt, assinaturaFonte);
+    assinaturaTipo = 'texto';
+  }
+
+  atualizarBoxAssinatura();
+  persistirAssinatura();
+  fecharModalAssinatura();
+  toast('✅ Assinatura salva!','ok');
+}
+
+// Desenha o texto digitado numa fonte cursiva sobre um canvas offscreen
+function renderizarAssinaturaTexto(txt, fonte){
+  const c = document.createElement('canvas');
+  c.width = 900; c.height = 260;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle = '#0f1117';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  let size = 90;
+  ctx.font = size+'px '+fonte;
+  while(ctx.measureText(txt).width > c.width-60 && size>24){
+    size -= 4;
+    ctx.font = size+'px '+fonte;
+  }
+  ctx.fillText(txt, c.width/2, c.height/2);
+  return c.toDataURL('image/png');
+}
+
+function atualizarBoxAssinatura(){
+  const box = document.getElementById('assinBox');
+  if(!assinaturaDataUrl){
+    box.classList.remove('signed');
+    box.onclick = abrirModalAssinatura;
+    box.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <div>Clique para assinar digitalmente</div>
+      <span style="font-size:0.7rem;margin-top:0.2rem;">desenhe com o mouse/dedo, digite seu nome, ou imprima e assine manualmente</span>`;
+    return;
+  }
+  box.classList.add('signed');
+  box.onclick = null;
+  box.innerHTML = `
+    <img src="${assinaturaDataUrl}" alt="Assinatura"/>
+    <div class="assin-meta">
+      <span>✔ Assinado digitalmente</span>
+      <button type="button" onclick="event.stopPropagation();abrirModalAssinatura()">✏️ Refazer</button>
+      <button type="button" onclick="event.stopPropagation();removerAssinatura()">🗑 Remover</button>
+    </div>`;
+}
+function removerAssinatura(){
+  assinaturaDataUrl = null; assinaturaTipo = null;
+  atualizarBoxAssinatura();
+  persistirAssinatura();
+  toast('Assinatura removida','ok');
+}
+function persistirAssinatura(){
+  try{
+    if(assinaturaDataUrl){
+      localStorage.setItem('orizon_assinatura_v1', JSON.stringify({dataUrl:assinaturaDataUrl, tipo:assinaturaTipo}));
+    } else {
+      localStorage.removeItem('orizon_assinatura_v1');
+    }
+  }catch(e){}
+}
+function restaurarAssinatura(){
+  try{
+    const saved = localStorage.getItem('orizon_assinatura_v1');
+    if(!saved) return;
+    const data = JSON.parse(saved);
+    assinaturaDataUrl = data.dataUrl; assinaturaTipo = data.tipo;
+    atualizarBoxAssinatura();
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', restaurarAssinatura);
 
 // ══════════════════════════════════════════
 //  E-MAIL
