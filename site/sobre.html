@@ -1480,8 +1480,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
 
     /* ESTILO BASE - garante que a imagem sempre aparece */
 
-    /* MOBILE - 768px ou menos */
-    @media (max-width: 768px) {}
 
     /* MOBILE PEQUENO - 480px ou menos */
     @media (max-width: 480px) {
@@ -1501,9 +1499,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
       .header h1.header-page-title {
         font-size: 0.68rem !important;
       }
-
-      .menu-toggle {
-        }
 
       .chatbot-window {
         width: 90vw;
@@ -1720,7 +1715,6 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -6179,6 +6173,21 @@ Tente novamente em instantes.`));
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -6186,25 +6195,53 @@ Tente novamente em instantes.`));
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma: texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
+        // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6629,7 +6666,7 @@ Tente novamente em instantes.`));
     ];
 
     function applyTranslations(lang) {
-      const t = TRANSLATIONS[lang] || TRANSLATIONS['pt'];
+      const t = Object.assign({}, TRANSLATIONS['pt'], TRANSLATIONS[lang] || {});
 
       // Header
       const h1 = document.querySelector('.header h1');
@@ -6705,19 +6742,446 @@ Tente novamente em instantes.`));
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // Dicionario de traducoes literais (pre-escritas), conferido antes de
+    // chamar a API MyMemory. Cobre o texto coletado por vtCollectPageNodes()
+    // que fica fora do Sistema 1 (data-i18n). Ver SISTEMAS-DE-TRADUCAO-ORIZON.txt.
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      'Carregando previsão…': { en: 'Loading forecast…', es: 'Cargando previsión…' },
+      'Voltar': { en: 'Back', es: 'Volver' },
+      'Menu': { en: 'Menu', es: 'Menú' },
+      'Topics': { en: 'Topics', es: 'Topics' },
+      'O Horizonte que Transforma': { en: 'The Horizon that Transforms', es: 'El Horizonte que Transforma' },
+      'Nosso Alcance': { en: 'Our Reach', es: 'Nuestro Alcance' },
+      'Como a Orizon Surgiu': { en: 'How Orizon Came to Be', es: 'Cómo Surgió Orizon' },
+      'Nossa Metodologia': { en: 'Our Methodology', es: 'Nuestra Metodología' },
+      'O que nos Diferencia': { en: 'What Sets Us Apart', es: 'Qué Nos Diferencia' },
+      'Nosso Compromisso': { en: 'Our Commitment', es: 'Nuestro Compromiso' },
+      'Bem-Vindo': { en: 'Welcome', es: 'Bienvenido' },
+      'Sobre': { en: 'About', es: 'Acerca de' },
+      '▾': { en: '▾', es: '▾' },
+      'Missão': { en: 'Mission', es: 'Misión' },
+      'Visão': { en: 'Vision', es: 'Visión' },
+      'Valores': { en: 'Values', es: 'Valores' },
+      'Candidatos': { en: 'Candidates', es: 'Candidatos' },
+      'Vídeos': { en: 'Videos', es: 'Vídeos' },
+      'Vagas': { en: 'Jobs', es: 'Empleos' },
+      'Ferramentas IA': { en: 'AI Tools', es: 'Herramientas IA' },
+      'Utilidades': { en: 'Utilities', es: 'Utilidades' },
+      'Mapa de Carreiras': { en: 'Career Map', es: 'Mapa de Carreras' },
+      'Atendimento': { en: 'Support', es: 'Atención' },
+      'Serviços': { en: 'Services', es: 'Servicios' },
+      'Contato': { en: 'Contact', es: 'Contacto' },
+      'Informações': { en: 'Information', es: 'Información' },
+      'Privacidade': { en: 'Privacy', es: 'Privacidad' },
+      'LGBT+': { en: 'LGBT+', es: 'LGBT+' },
+      'Privacidade & LGPD': { en: 'Privacy & LGPD', es: 'Privacidad y LGPD' },
+      'Cookies': { en: 'Cookies', es: 'Cookies' },
+      'Loja de Sistemas': { en: 'Systems Store', es: 'Tienda de Sistemas' },
+      'Teste de Perfil': { en: 'Profile Test', es: 'Test de Perfil' },
+      '// Sistema de Gestão //': { en: '// Management System //', es: '// Sistema de Gestión //' },
+      'ORIZON': { en: 'ORIZON', es: 'ORIZON' },
+      'Administração': { en: 'Administration', es: 'Administración' },
+      '◆': { en: '◆', es: '◆' },
+      'Gestão': { en: 'Management', es: 'Gestión' },
+      'Sobre a Orizon': { en: 'About Orizon', es: 'Sobre Orizon' },
+      'A Orizon é': { en: 'Orizon is', es: 'Orizon es' },
+      'agência de RH': { en: 'an HR agency', es: 'una agencia de RRHH' },
+      'e': { en: 'and', es: 'y' },
+      'consultoria de RH': { en: 'an HR consulting firm', es: 'una consultoría de RRHH' },
+      'em Guaíba, Eldorado do Sul, Porto Alegre e Barra do Ribeiro, com': { en: 'in Guaíba, Eldorado do Sul, Porto Alegre and Barra do Ribeiro, with', es: 'en Guaíba, Eldorado do Sul, Porto Alegre y Barra do Ribeiro, con' },
+      'consultoria administrativa': { en: 'administrative consulting', es: 'consultoría administrativa' },
+      'consultoria financeira': { en: 'financial consulting', es: 'consultoría financiera' },
+      'consultoria de logística': { en: 'logistics consulting', es: 'consultoría de logística' },
+      'completas. Oferecemos': { en: 'complete. We also offer', es: 'completas. Ofrecemos' },
+      'apoio administrativo': { en: 'administrative support', es: 'apoyo administrativo' },
+      'digitação': { en: 'data entry', es: 'digitación' },
+      'e digitalização de documentos, além de desenvolver e vender': { en: 'and document digitization, in addition to developing and selling', es: 'y digitalización de documentos, además de desarrollar y vender' },
+      'sistemas e softwares de gestão': { en: 'management systems and software', es: 'sistemas y software de gestión' },
+      ': sistema de RH, sistema para agências de recrutamento e seleção, sistema de controle de compras, sistema de controle financeiro e sistema de controle de logística.': { en: ': an HR system, a system for recruitment and staffing agencies, a purchasing control system, a financial control system, and a logistics control system.', es: ': sistema de RRHH, sistema para agencias de reclutamiento y selección, sistema de control de compras, sistema de control financiero y sistema de control de logística.' },
+      'Acessibilidade': { en: 'Accessibility', es: 'Accesibilidad' },
+      'A+': { en: 'A+', es: 'A+' },
+      'A++': { en: 'A++', es: 'A++' },
+      '◐ Contraste': { en: '◐ Contrast', es: '◐ Contraste' },
+      '↺ Restaurar recursos': { en: '↺ Reset features', es: '↺ Restaurar funciones' },
+      'Orizon:': { en: 'Orizon:', es: 'Orizon:' },
+      'Orizon significa horizonte, e é exatamente isso que nos define. Somos mais do que uma con­sult­oria: somos um ecossistema vivo de conhecimento, apoio e transformação para prof­issi­onais, empresas e a sociedade como um todo. Nascemos da vivência humana, da escuta ativa da comu­ni­dade e da convicção de que o conhecimento, a con­sult­oria admi­nistr­ativa e o suporte estra­tég­ico precisam ser acessíveis a todos, não só a quem pode pagar caro por eles.': { en: 'Orizon means horizon, and that is exactly what defines us. We are more than a consulting firm: we are a living ecosystem of knowledge, support and transformation for professionals, companies and society as a whole. We were born from human experience, from actively listening to the community, and from the conviction that knowledge, administrative consulting and strategic support need to be accessible to everyone, not only to those who can pay a high price for them.', es: 'Orizon significa horizonte, y eso es exactamente lo que nos define. Somos más que una consultoría: somos un ecosistema vivo de conocimiento, apoyo y transformación para profesionales, empresas y la sociedad en su conjunto. Nacimos de la vivencia humana, de la escucha activa de la comunidad y de la convicción de que el conocimiento, la consultoría administrativa y el soporte estratégico deben ser accesibles para todos, no solo para quien puede pagar caro por ellos.' },
+      '🎯 Nossa Essência:': { en: '🎯 Our Essence:', es: '🎯 Nuestra Esencia:' },
+      'Con­sult­oria admi­nistr­ativa e de RH com propósito. Blog educativo gratuito. Palestras e treinamentos. Mentoria de carreira. Criação de sites. Suporte org­aniza­cio­nal. Uma rede inteligente: a ponte entre o conhecimento e o resultado.': { en: 'Administrative and HR consulting with purpose. Free educational blog. Talks and training. Career mentoring. Website creation. Organizational support. An intelligent network: the bridge between knowledge and results.', es: 'Consultoría administrativa y de RRHH con propósito. Blog educativo gratuito. Charlas y capacitaciones. Mentoría de carrera. Creación de sitios web. Soporte organizacional. Una red inteligente: el puente entre el conocimiento y el resultado.' },
+      '🤝 Projetos Sociais:': { en: '🤝 Social Projects:', es: '🤝 Proyectos Sociales:' },
+      'Redes sociais ativas com conteúdo educativo e engajamento da comu­ni­dade. Grupos de empregos e mural de vagas para conectar prof­issi­onais a opor­tuni­dades reais. Blog de educação gratuito e aberto a todos. Uma rede cola­bor­ativa que aproxima quem busca crescer de quem pode ajudar.': { en: 'Active social media with educational content and community engagement. Job groups and a job board connecting professionals to real opportunities. A free educational blog open to everyone. A collaborative network that brings together those looking to grow and those who can help.', es: 'Redes sociales activas con contenido educativo y participación de la comunidad. Grupos de empleo y mural de vacantes para conectar profesionales con oportunidades reales. Blog educativo gratuito y abierto a todos. Una red colaborativa que acerca a quienes buscan crecer con quienes pueden ayudar.' },
+      'Presença': { en: 'Presence', es: 'Presencia' },
+      'em Números': { en: 'in Numbers', es: 'en Números' },
+      '1,5 Mi': { en: '1.5M', es: '1,5 M' },
+      'Alcance mensal Facebook': { en: 'Monthly Facebook reach', es: 'Alcance mensual en Facebook' },
+      '500 mil': { en: '500K', es: '500 mil' },
+      'Visualizações mensais Instagram': { en: 'Monthly Instagram views', es: 'Visualizaciones mensuales en Instagram' },
+      '160 mil': { en: '160K', es: '160 mil' },
+      'Alcance mensal LinkedIn': { en: 'Monthly LinkedIn reach', es: 'Alcance mensual en LinkedIn' },
+      '2 mil': { en: '2K', es: '2 mil' },
+      'Pessoas ativas WhatsApp': { en: 'Active people on WhatsApp', es: 'Personas activas en WhatsApp' },
+      '1 mil': { en: '1K', es: '1 mil' },
+      'Acessos no site / mês': { en: 'Site visits / month', es: 'Accesos al sitio / mes' },
+      '22 mil': { en: '22K', es: '22 mil' },
+      'Membros grupo Facebook': { en: 'Facebook group members', es: 'Miembros del grupo de Facebook' },
+      'Atendimento nacional': { en: 'Nationwide service', es: 'Atención nacional' },
+      'Transparência Total': { en: 'Total Transparency', es: 'Transparencia Total' },
+      'Ano de fundação': { en: 'Founding year', es: 'Año de fundación' },
+      'IA': { en: 'AI', es: 'IA' },
+      'Integrada ao recrutamento': { en: 'Integrated into recruitment', es: 'Integrada al reclutamiento' },
+      'ATS': { en: 'ATS', es: 'ATS' },
+      'Tecnologia própria': { en: 'Proprietary technology', es: 'Tecnología propia' },
+      'RS': { en: 'RS', es: 'RS' },
+      'Guaíba e Região': { en: 'Guaíba and Region', es: 'Guaíba y Región' },
+      'Processos automatizados': { en: 'Automated processes', es: 'Procesos automatizados' },
+      'Nosso': { en: 'Our', es: 'Nuestro' },
+      'Alcance': { en: 'Reach', es: 'Alcance' },
+      'Nascemos no Rio Grande do Sul, mas nosso ecossistema digital de con­sult­oria, blog e conteúdo alcança toda nossa comu­ni­dade. Atendemos empresas, prof­issi­onais e comunidades em toda região. Explore o mapa abaixo:': { en: 'We were born in Rio Grande do Sul, but our digital ecosystem of consulting, blog and content reaches our entire community. We serve companies, professionals and communities across the region. Explore the map below:', es: 'Nacimos en Rio Grande do Sul, pero nuestro ecosistema digital de consultoría, blog y contenido alcanza a toda nuestra comunidad. Atendemos empresas, profesionales y comunidades en toda la región. Explora el mapa a continuación:' },
+      '🛰️': { en: '🛰️', es: '🛰️' },
+      'Passe o mouse sobre um país': { en: 'Hover over a country', es: 'Pasa el mouse sobre un país' },
+      '⏸ Pausar': { en: '⏸ Pause', es: '⏸ Pausar' },
+      'Velocidade': { en: 'Speed', es: 'Velocidad' },
+      'Descubra': { en: 'Discover', es: 'Descubre' },
+      'Mais Sobre a Orizon': { en: 'More About Orizon', es: 'Más Sobre Orizon' },
+      '▼': { en: '▼', es: '▼' },
+      'Em 2022, iniciamos a faculdade com uma pergunta em mente: o que poderíamos fazer que realmente importasse para a nossa comu­ni­dade? Quem viveu a realidade de buscar rec­oloc­ação, de gerir um negócio sem apoio ou de navegar num mercado cada vez mais complexo sabe o peso dessas incertezas: as dúvidas, as vagas de empregos falsas, golpes de "venda" de vagas com aplicação de cursos que prometem tudo e entregam nada.': { en: 'In 2022, we started college with one question in mind: what could we do that would truly matter to our community? Anyone who has lived the reality of looking for a new job, running a business without support, or navigating an increasingly complex market knows the weight of that uncertainty: the doubts, the fake job postings, the "job for sale" scams with paid courses that promise everything and deliver nothing.', es: 'En 2022, comenzamos la facultad con una pregunta en mente: ¿qué podríamos hacer que realmente importara para nuestra comunidad? Quien haya vivido la realidad de buscar una recolocación, de gestionar un negocio sin apoyo o de navegar en un mercado cada vez más complejo conoce el peso de esas incertidumbres: las dudas, las vacantes falsas, las estafas de "venta" de empleos con cursos pagos que prometen todo y no entregan nada.' },
+      'Foi então que surgiu a ideia de criar um espaço diferente, um grupo no Facebook voltado para a comu­ni­dade, inicialmente como um projeto de TCC, onde seu conteúdo é sem falsidade, com trans­parê­ncia e ética como pilares. O grupo cresceu tanto que hoje é o mais populoso da cidade, com': { en: 'That\'s when the idea came up to create a different kind of space: a Facebook group for the community, initially conceived as a senior thesis project, built on content free of falsehood, with transparency and ethics as pillars. The group grew so much that today it is the most populous in the city, with', es: 'Fue entonces que surgió la idea de crear un espacio diferente, un grupo de Facebook dirigido a la comunidad, inicialmente como un proyecto de tesis de grado, cuyo contenido es sin falsedad, con transparencia y ética como pilares. El grupo creció tanto que hoy es el más populoso de la ciudad, con' },
+      '22 mil pessoas': { en: '22 thousand people', es: '22 mil personas' },
+      'e alcance mensal de': { en: 'and a monthly reach of', es: 'y un alcance mensual de' },
+      '1 milhão de pessoas': { en: '1 million people', es: '1 millón de personas' },
+      '. Mas o grupo foi só o começo, a visão sempre foi mais ampla.': { en: '. But the group was only the beginning — the vision was always bigger.', es: '. Pero el grupo fue solo el comienzo, la visión siempre fue más amplia.' },
+      'Atuando em empresas de diferentes segmentos e também em agências de emprego em Guaíba, além da experi­ência com empre­gabi­lidade comunitária, acumulamos não apenas experi­ência prática em recr­utam­ento, gestão de pessoas e suporte org­aniza­cio­nal, mas também conhecimento na identifi­cação de nichos de recr­utam­ento, seus respectivos grupos e suas dinâ­micas. Com o tempo, essa experi­ência trouxe uma convicção: era hora de fundar algo próprio, um ecossistema completo de con­sult­oria admi­nistr­ativa, RH, blog, criação de conteúdo, desen­volvi­mento de sites, palestras e desen­volvi­mento humano. Assim, em 2025, nasceu oficialmente a': { en: 'Working with companies across different sectors, as well as with employment agencies in Guaíba, in addition to hands-on experience with community employability, we built up not only practical experience in recruitment, people management and organizational support, but also knowledge in identifying recruitment niches, their respective groups and dynamics. Over time, this experience led to a conviction: it was time to found something of our own — a complete ecosystem of administrative consulting, HR, blogging, content creation, website development, talks and human development. And so, 2025 marked the official birth of', es: 'Trabajando en empresas de distintos segmentos y también en agencias de empleo en Guaíba, además de la experiencia con la empleabilidad comunitaria, acumulamos no solo experiencia práctica en reclutamiento, gestión de personas y soporte organizacional, sino también conocimiento en la identificación de nichos de reclutamiento, sus respectivos grupos y sus dinámicas. Con el tiempo, esa experiencia trajo una convicción: era hora de fundar algo propio, un ecosistema completo de consultoría administrativa, RRHH, blog, creación de contenido, desarrollo de sitios web, charlas y desarrollo humano. Así, en 2025, nació oficialmente' },
+      'Orizon RH & Gestão': { en: 'Orizon RH & Gestão', es: 'Orizon RH & Gestão' },
+      'Por Que o Nome Orizon?': { en: 'Why the Name Orizon?', es: '¿Por Qué el Nombre Orizon?' },
+      'Orizon significa': { en: 'Orizon means', es: 'Orizon significa' },
+      'horizonte': { en: 'horizon', es: 'horizonte' },
+      '. O nome carrega tudo que somos: o horizonte que sempre se expande, a visão de futuro, o ponto onde tecno­logia, gestão e humanidade se encontram, e a certeza de que sempre há mais a alcançar.': { en: '. The name carries everything we are: the horizon that keeps expanding, the vision of the future, the point where technology, management and humanity meet, and the certainty that there is always more to reach.', es: '. El nombre lleva todo lo que somos: el horizonte que siempre se expande, la visión de futuro, el punto donde la tecnología, la gestión y la humanidad se encuentran, y la certeza de que siempre hay más por alcanzar.' },
+      'Ele engloba tecno­logia e humanização, processo e pessoa, resultado e caminho. Não é apenas uma marca: é uma declaração de propósito: como o horizonte, a Orizon representa o que está à frente, o que ainda está por alcançar, sempre em movimento junto com quem atende.': { en: 'It brings together technology and humanization, process and people, results and the path to get there. It\'s not just a brand: it\'s a statement of purpose — like the horizon, Orizon represents what lies ahead, what has yet to be reached, always moving forward together with those it serves.', es: 'Reúne tecnología y humanización, proceso y persona, resultado y camino. No es solo una marca: es una declaración de propósito: como el horizonte, Orizon representa lo que está por delante, lo que aún queda por alcanzar, siempre en movimiento junto a quienes atiende.' },
+      'Facebook: 22 mil Membros': { en: 'Facebook: 22 Thousand Members', es: 'Facebook: 22 Mil Miembros' },
+      'O grupo mais populoso da cidade, construído com trans­parê­ncia, ética e conteúdo de valor.': { en: 'The most populous group in the city, built with transparency, ethics and valuable content.', es: 'El grupo más populoso de la ciudad, construido con transparencia, ética y contenido de valor.' },
+      'Facebook: 3 Mi de Alcance': { en: 'Facebook: 3M Reach', es: 'Facebook: 3 M de Alcance' },
+      'Alcance trimestral de 3 milhões de pessoas em nossas redes e canais.': { en: 'Quarterly reach of 3 million people across our networks and channels.', es: 'Alcance trimestral de 3 millones de personas en nuestras redes y canales.' },
+      'Instagram: 500 mil Visualizações': { en: 'Instagram: 500K Views', es: 'Instagram: 500 Mil de Visualizaciones' },
+      'Média de 500 mil visualizações mensais através do nosso Instagram.': { en: 'Average of 500 thousand monthly views through our Instagram.', es: 'Promedio de 500 mil visualizaciones mensuales a través de nuestro Instagram.' },
+      'LinkedIn: 160 mil Alcance': { en: 'LinkedIn: 160K Reach', es: 'LinkedIn: 160 Mil de Alcance' },
+      'Média de 160 mil pessoas alcançadas mensalmente através do nosso LinkedIn.': { en: 'Average of 160 thousand people reached monthly through our LinkedIn.', es: 'Promedio de 160 mil personas alcanzadas mensualmente a través de nuestro LinkedIn.' },
+      'WhatsApp: 2 mil Pessoas': { en: 'WhatsApp: 2K People', es: 'WhatsApp: 2 Mil Personas' },
+      'Base ativa de 2 mil pessoas em contato direto via WhatsApp.': { en: 'Active base of 2 thousand people in direct contact via WhatsApp.', es: 'Base activa de 2 mil personas en contacto directo vía WhatsApp.' },
+      'Site: 1 mil Acessos/mês': { en: 'Website: 1K Visits/month', es: 'Sitio Web: 1 Mil Visitas/mes' },
+      'Média de mil acessos mensais no site, com público formado majoritariamente por recrutadores e empresas em busca de talentos.': { en: 'Average of a thousand monthly site visits, with an audience made up mostly of recruiters and companies looking for talent.', es: 'Promedio de mil visitas mensuales al sitio, con un público formado mayoritariamente por reclutadores y empresas en busca de talento.' },
+      'Fundada em 2025': { en: 'Founded in 2025', es: 'Fundada en 2025' },
+      'Resultado de anos de experi­ência prática no mercado da região sul.': { en: 'The result of years of hands-on experience in the market of southern Brazil.', es: 'Resultado de años de experiencia práctica en el mercado de la región sur.' },
+      'Entregas Ágeis': { en: 'Agile Delivery', es: 'Entregas Ágiles' },
+      'Projetos de con­sult­oria, recr­utam­ento e sites entregues com agilidade e qualidade.': { en: 'Consulting, recruitment and website projects delivered with agility and quality.', es: 'Proyectos de consultoría, reclutamiento y sitios web entregados con agilidad y calidad.' },
+      '100% Trans­parê­ncia': { en: '100% Transparency', es: '100% Transparencia' },
+      'Zero promessas vazias. Ética e clareza em cada projeto, processo e entrega.': { en: 'Zero empty promises. Ethics and clarity in every project, process and delivery.', es: 'Cero promesas vacías. Ética y claridad en cada proyecto, proceso y entrega.' },
+      'Abrangência Nacional': { en: 'National Coverage', es: 'Cobertura Nacional' },
+      'Sediados em Guaíba – RS, atendemos em todo o Brasil.': { en: 'Headquartered in Guaíba – RS, we serve clients throughout Brazil.', es: 'Con sede en Guaíba – RS, atendemos en todo Brasil.' },
+      'Nossa Estrutura Tecnológica': { en: 'Our Technological Structure', es: 'Nuestra Estructura Tecnológica' },
+      'Desen­volv­emos um ecossistema próprio de sistemas e soluções digitais, utilizando Python, JavaScript, SQL, infra­estr­utura em nuvem e inte­gração com diferentes tecno­logias de intel­igê­ncia artificial, incluindo GPT, Gemini e Grok. Nossa estrutura reúne painéis admi­nistr­ativos e módulos espec­ial­iza­dos para gestão financeira, recursos humanos, departamento pessoal, contabilidade, con­sult­oria, criação de websites, documentos e auto­mações.': { en: 'We have developed our own ecosystem of systems and digital solutions, using Python, JavaScript, SQL, cloud infrastructure and integration with various artificial intelligence technologies, including GPT, Gemini and Grok. Our structure brings together administrative dashboards and specialized modules for financial management, human resources, personnel department, accounting, consulting, website creation, documents and automations.', es: 'Desarrollamos un ecosistema propio de sistemas y soluciones digitales, utilizando Python, JavaScript, SQL, infraestructura en la nube e integración con diferentes tecnologías de inteligencia artificial, incluyendo GPT, Gemini y Grok. Nuestra estructura reúne paneles administrativos y módulos especializados para gestión financiera, recursos humanos, departamento de personal, contabilidad, consultoría, creación de sitios web, documentos y automatizaciones.' },
+      'Também contamos com um ATS (Applicant Tracking System) próprio, desenvolvido para apoiar todo o processo de recr­utam­ento e seleção, com intel­igê­ncia artificial, análise de dados, triagem de candidatos, pareceres técnicos e comportamentais, aplicação de testes e suporte à tomada de decisão. A estrutura é complementada por ferr­amentas de automação, chatbots, geração de documentos e cartas, além de soluções person­ali­zadas para diferentes necessidades administrativas e org­aniza­cio­nais.': { en: 'We also have our own ATS (Applicant Tracking System), built to support the entire recruitment and selection process, with artificial intelligence, data analysis, candidate screening, technical and behavioral assessments, test administration and decision-making support. This structure is complemented by automation tools, chatbots, document and letter generation, plus customized solutions for different administrative and organizational needs.', es: 'También contamos con un ATS (Applicant Tracking System) propio, desarrollado para apoyar todo el proceso de reclutamiento y selección, con inteligencia artificial, análisis de datos, selección de candidatos, informes técnicos y conductuales, aplicación de pruebas y apoyo a la toma de decisiones. La estructura se complementa con herramientas de automatización, chatbots, generación de documentos y cartas, además de soluciones personalizadas para diferentes necesidades administrativas y organizacionales.' },
+      'Mais do que ferr­amentas isoladas, cons­tru­ímos uma infra­estr­utura tecnológica integrada para tornar processos admi­nistr­ativos, con­sult­ivos e de recr­utam­ento mais ágeis, inteligentes, precisos e humanos.': { en: 'More than just standalone tools, we have built an integrated technological infrastructure to make administrative, consulting and recruitment processes more agile, intelligent, precise and human.', es: 'Más que herramientas aisladas, construimos una infraestructura tecnológica integrada para hacer que los procesos administrativos, consultivos y de reclutamiento sean más ágiles, inteligentes, precisos y humanos.' },
+      'Nossa Met­odo­lo­gia': { en: 'Our Methodology', es: 'Nuestra Metodología' },
+      'Toda met­odo­lo­gia tem uma origem, e a nossa nasceu da prática. Ao longo de anos de atuação em empresas de diferentes portes e segmentos, do chão de fábrica à sala da diretoria, cons­tru­ímos uma visão própria sobre recr­utam­ento e seleção. Partimos de ferr­amentas consolidadas no mercado, como entrevistas por comp­et­ências e a met­odo­lo­gia STAR, mas vamos além delas.': { en: 'Every methodology has an origin, and ours was born from practice. Over years of working with companies of different sizes and sectors, from the factory floor to the boardroom, we built our own view of recruitment and selection. We start from tools well established in the market, such as competency-based interviews and the STAR methodology, but we go beyond them.', es: 'Toda metodología tiene un origen, y la nuestra nació de la práctica. A lo largo de años de actuación en empresas de diferentes tamaños y segmentos, desde el piso de fábrica hasta la sala de directorio, construimos una visión propia sobre reclutamiento y selección. Partimos de herramientas consolidadas en el mercado, como las entrevistas por competencias y la metodología STAR, pero vamos más allá de ellas.' },
+      'Nosso diferencial está na forma como investigamos cada trajetória prof­issi­onal: por meio de histórias, evidências, números e resultados. Buscamos compreender não apenas o que o candidato fez, mas como agiu, quais problemas enfrentou, quais decisões tomou e qual impacto gerou. É uma abordagem técnica e criteriosa, complementada por uma análise com­port­ame­ntal que considera o contexto, a pressão, as responsabilidades e a cultura de cada organ­izaç­ão.': { en: 'Our edge lies in how we investigate each professional trajectory: through stories, evidence, numbers and results. We seek to understand not just what the candidate did, but how they acted, what problems they faced, what decisions they made and what impact they generated. It\'s a technical and rigorous approach, complemented by a behavioral analysis that considers the context, the pressure, the responsibilities and the culture of each organization.', es: 'Nuestro diferencial está en la forma en que investigamos cada trayectoria profesional: a través de historias, evidencias, números y resultados. Buscamos comprender no solo lo que el candidato hizo, sino cómo actuó, qué problemas enfrentó, qué decisiones tomó y qué impacto generó. Es un enfoque técnico y riguroso, complementado por un análisis conductual que considera el contexto, la presión, las responsabilidades y la cultura de cada organización.' },
+      'Essa experi­ência, construída na operação, no estra­tég­ico e no chão de fábrica, orienta a atuação dos nossos recrutadores e sustenta a qualidade das nossas entregas. Não buscamos apenas prof­issi­onais que apresentem o com­port­ame­nto esperado: buscamos pessoas capazes de compreender desafios, tomar decisões e gerar resultados. Em essência, essa é a premissa que orienta nosso trabalho:': { en: 'This experience, built at the operational, strategic and factory-floor level, guides how our recruiters work and underpins the quality of what we deliver. We don\'t just look for professionals who show the expected behavior: we look for people capable of understanding challenges, making decisions and generating results. In essence, this is the premise that guides our work:', es: 'Esa experiencia, construida en la operación, en lo estratégico y en el piso de fábrica, orienta la actuación de nuestros reclutadores y sostiene la calidad de nuestras entregas. No buscamos solo profesionales que presenten el comportamiento esperado: buscamos personas capaces de comprender desafíos, tomar decisiones y generar resultados. En esencia, esa es la premisa que orienta nuestro trabajo:' },
+      'contratamos pessoas para resolver problemas.': { en: 'we hire people to solve problems.', es: 'contratamos personas para resolver problemas.' },
+      'Origem Comunitária:': { en: 'Community Origin:', es: 'Origen Comunitario:' },
+      'Nascemos de dentro da comu­ni­dade, entendemos suas dores reais': { en: 'We were born from within the community, we understand its real pain points', es: 'Nacimos desde dentro de la comunidad, entendemos sus dolores reales' },
+      'Ética como fundamento:': { en: 'Ethics as a Foundation:', es: 'Ética como fundamento:' },
+      'Trans­parê­ncia em cada etapa, sem exceção': { en: 'Transparency at every stage, without exception', es: 'Transparencia en cada etapa, sin excepción' },
+      'Tecno­logia Própria:': { en: 'Proprietary Technology:', es: 'Tecnología Propia:' },
+      'Sistemas internos para processos mais ágeis e precisos': { en: 'In-house systems for more agile and precise processes', es: 'Sistemas internos para procesos más ágiles y precisos' },
+      'Atendimento Humanizado:': { en: 'Humanized Service:', es: 'Atención Humanizada:' },
+      'Cada prof­issi­onal, empresa e parceiro tratados como únicos': { en: 'Every professional, company and partner treated as unique', es: 'Cada profesional, empresa y socio tratados como únicos' },
+      'Rede Consolidada:': { en: 'Established Network:', es: 'Red Consolidada:' },
+      '22 mil membros e 3 milhões de alcance trimestral': { en: '22 thousand members and 3 million quarterly reach', es: '22 mil miembros y 3 millones de alcance trimestral' },
+      'Com Prof­issi­onais e Pessoas:': { en: 'With Professionals and People:', es: 'Con Profesionales y Personas:' },
+      'Conteúdo educativo gratuito e de qualidade no blog': { en: 'Free, quality educational content on the blog', es: 'Contenido educativo gratuito y de calidad en el blog' },
+      'Mentoria e orie­ntação de carreira com respeito e prof­issi­onal­ismo': { en: 'Career mentoring and guidance with respect and professionalism', es: 'Mentoría y orientación de carrera con respeto y profesionalismo' },
+      'Trans­parê­ncia sobre processos, mercado e opor­tuni­dades': { en: 'Transparency about processes, the market and opportunities', es: 'Transparencia sobre procesos, mercado y oportunidades' },
+      'Feedback detalhado e construtivo sempre': { en: 'Detailed, constructive feedback, always', es: 'Feedback detallado y constructivo siempre' },
+      'Com Empresas:': { en: 'With Companies:', es: 'Con Empresas:' },
+      'Con­sult­oria admi­nistr­ativa séria, diag­nós­tico real e entrega de valor': { en: 'Serious administrative consulting, real diagnosis and value delivery', es: 'Consultoría administrativa seria, diagnóstico real y entrega de valor' },
+      'Recr­utam­ento estra­tég­ico com análise com­port­ame­ntal quando necessário': { en: 'Strategic recruitment with behavioral analysis when necessary', es: 'Reclutamiento estratégico con análisis conductual cuando sea necesario' },
+      'Palestras, treinamentos e criação de sites com qualidade e agilidade': { en: 'Talks, training and website creation with quality and agility', es: 'Charlas, capacitaciones y creación de sitios web con calidad y agilidad' },
+      'Suporte admi­nistr­ativo e org­aniza­cio­nal durante todo o processo': { en: 'Administrative and organizational support throughout the entire process', es: 'Soporte administrativo y organizacional durante todo el proceso' },
+      'Com a Comu­ni­dade:': { en: 'With the Community:', es: 'Con la Comunidad:' },
+      'Contribuição para o desen­volvi­mento econômico regional': { en: 'Contribution to regional economic development', es: 'Contribución al desarrollo económico regional' },
+      'Respon­sabi­lidade social, diversidade e respeito': { en: 'Social responsibility, diversity and respect', es: 'Responsabilidad social, diversidad y respeto' },
+      'Conformidade e Respon­sabi­lidade': { en: 'Compliance and Responsibility', es: 'Cumplimiento y Responsabilidad' },
+      'Conformidade com LGPD: Lei Geral de Proteção de Dados': { en: 'Compliance with LGPD: Brazil\'s General Data Protection Law', es: 'Cumplimiento de la LGPD: Ley General de Protección de Datos de Brasil' },
+      'Cumprimento das leis trabalhistas brasileiras': { en: 'Compliance with Brazilian labor laws', es: 'Cumplimiento de las leyes laborales brasileñas' },
+      'Política de Não Discriminação e Inclusão': { en: 'Non-Discrimination and Inclusion Policy', es: 'Política de No Discriminación e Inclusión' },
+      'Práticas de Sustentabilidade': { en: 'Sustainability Practices', es: 'Prácticas de Sostenibilidad' },
+      'Código de Ética Prof­issi­onal': { en: 'Professional Code of Ethics', es: 'Código de Ética Profesional' },
+      'Orizon: onde o horizonte do conhecimento, da consultoria e da conexão vira resultado real. 🚀': { en: 'Orizon: where the horizon of knowledge, consulting and connection becomes real results. 🚀', es: 'Orizon: donde el horizonte del conocimiento, la consultoría y la conexión se convierte en resultados reales. 🚀' },
+      'Fale Conosco': { en: 'Talk to Us', es: 'Habla con Nosotros' },
+      '❓': { en: '❓', es: '❓' },
+      'Ficou com alguma dúvida?': { en: 'Got a question?', es: '¿Te quedó alguna duda?' },
+      'Confira nossas perguntas frequentes: respondemos as dúvidas mais comuns sobre candidaturas, vagas, empresas e privacidade.': { en: 'Check out our frequently asked questions: we answer the most common questions about applications, jobs, companies and privacy.', es: 'Consulta nuestras preguntas frecuentes: respondemos las dudas más comunes sobre candidaturas, vacantes, empresas y privacidad.' },
+      '👤 FAQ Candidatos': { en: '👤 FAQ Candidates', es: '👤 FAQ Candidatos' },
+      '💼 FAQ Vagas': { en: '💼 FAQ Jobs', es: '💼 FAQ Empleos' },
+      '🏢 FAQ Empresas': { en: '🏢 FAQ Companies', es: '🏢 FAQ Empresas' },
+      '🔒 FAQ Privacidade': { en: '🔒 FAQ Privacy', es: '🔒 FAQ Privacidad' },
+      'Orizon': { en: 'Orizon', es: 'Orizon' },
+      'Consultoria': { en: 'Consultoria', es: 'Consultoria' },
+      'Consultoria Administrativa, RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.': { en: 'Administrative, HR and Management Consulting: Knowledge, strategy and humanity for companies and people.', es: 'Consultoría Administrativa, RRHH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas.' },
+      'Navegação': { en: 'Navigation', es: 'Navegación' },
+      'Vagas & Oportunidades': { en: 'Jobs & Opportunities', es: 'Empleos y Oportunidades' },
+      'Sobre nós': { en: 'About us', es: 'Sobre nosotros' },
+      'Comercial': { en: 'Sales', es: 'Comercial' },
+      'Recrutamento': { en: 'Recruitment', es: 'Reclutamiento' },
+      'WhatsApp': { en: 'WhatsApp', es: 'WhatsApp' },
+      'Atendimento IA': { en: 'AI Support', es: 'Atención IA' },
+      '♥': { en: '♥', es: '♥' },
+      'Feito com propósito | Rio Grande do Sul, Brasil': { en: 'Made with purpose | Rio Grande do Sul, Brazil', es: 'Hecho con propósito | Rio Grande do Sul, Brasil' },
+      '▲': { en: '▲', es: '▲' },
+      'Assistente Orizon': { en: 'Orizon Assistant', es: 'Asistente Orizon' },
+      'Modo IA': { en: 'AI Mode', es: 'Modo IA' },
+      'ON': { en: 'ON', es: 'ON' },
+      '✕': { en: '✕', es: '✕' },
+      '➤': { en: '➤', es: '➤' }
+    };
+
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      const trimmed = text.trim();
+      const literalEntry = literalTranslations[trimmed];
+      if (literalEntry && literalEntry[to]) {
+        const leading = text.slice(0, text.length - text.trimStart().length);
+        const trailing = text.slice(text.trimEnd().length);
+        return leading + literalEntry[to] + trailing;
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS.pt) ? TRANSLATIONS.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()), aplica o
+    // mesmo .trim() que vtTranslateOne() usa nesta pagina antes de
+    // consultar o dicionario, e compara com as chaves de literalTranslations.
+    // Nao corrige nada sozinho -- so avisa no console, mesmo espirito do
+    // checkI18nSync(). Ver o comentario logo acima de "const literalTranslations"
+    // para o passo a passo de como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue.trim()); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslations(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslations(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
     </script>
 <script>
 (function(){
@@ -6917,11 +7381,6 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
-body:not(.dark-mode) .header::before {
-  
-}
-
 /* Logo: texto branco sólido sem glow neon */
 body:not(.dark-mode) .orizon-logo-svg text {
   fill: #ffffff !important;
@@ -7022,9 +7481,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
     margin-right: 0 !important;
     margin-bottom: 0 !important;
   }}</style>
-<style>
-/* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}</style>
 <script>
 /* ORIZON EMAIL CLICK */
 (function(){
@@ -7829,7 +8285,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

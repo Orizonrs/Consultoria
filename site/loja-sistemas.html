@@ -5769,6 +5769,21 @@ setInterval(nextSlide, 4000);
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -5776,25 +5791,53 @@ setInterval(nextSlide, 4000);
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma: texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
+        // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6226,7 +6269,7 @@ setInterval(nextSlide, 4000);
     };
 
     function applyTranslationsMissao(lang) {
-      const t = TRANSLATIONS_MISSAO[lang] || TRANSLATIONS_MISSAO['pt'];
+      const t = Object.assign({}, TRANSLATIONS_MISSAO['pt'], TRANSLATIONS_MISSAO[lang] || {});
 
       // Header da loja não deve ser sobrescrito por este bloco (pertence à página Missão, não à loja)
 
@@ -6325,19 +6368,464 @@ setInterval(nextSlide, 4000);
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS_MISSAO.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // literalTranslations: traducoes literais escritas a mao (pt -> en/es)
+    // para o conteudo desta pagina que fica fora do Sistema 1 (data-i18n).
+    // vtTranslateOne confere aqui primeiro; so cai pra API MyMemory se o
+    // texto nao estiver neste dicionario. Chave = texto EXATO do no (com
+    // os mesmos espacos/quebras de linha nas pontas do texto original).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      'Carregando previsão…': { en: 'Loading forecast…', es: 'Cargando pronóstico…' },
+      'Voltar': { en: 'Back', es: 'Volver' },
+      'Menu': { en: 'Menu', es: 'Menú' },
+      'Topics': { en: 'Topics', es: 'Topics' },
+      ' Como funciona a loja': { en: ' How the store works', es: ' Cómo funciona la tienda' },
+      ' Catálogo de sistemas': { en: ' System catalog', es: ' Catálogo de sistemas' },
+      ' Fale conosco': { en: ' Contact us', es: ' Hable con nosotros' },
+      'Bem-Vindo': { en: 'Welcome', es: 'Bienvenido' },
+      'Sobre': { en: 'About', es: 'Sobre' },
+      '▾': { en: '▾', es: '▾' },
+      'Missão': { en: 'Mission', es: 'Misión' },
+      'Visão': { en: 'Vision', es: 'Visión' },
+      'Valores': { en: 'Values', es: 'Valores' },
+      'Candidatos': { en: 'Candidates', es: 'Candidatos' },
+      'Vídeos': { en: 'Videos', es: 'Videos' },
+      'Vagas': { en: 'Jobs', es: 'Vacantes' },
+      'Ferramentas IA': { en: 'AI Tools', es: 'Herramientas IA' },
+      'Utilidades': { en: 'Utilities', es: 'Utilidades' },
+      'Mapa de Carreiras': { en: 'Career Map', es: 'Mapa de Carreras' },
+      'Atendimento': { en: 'Support', es: 'Atención' },
+      'Serviços': { en: 'Services', es: 'Servicios' },
+      'Contato': { en: 'Contact', es: 'Contacto' },
+      'Informações': { en: 'Information', es: 'Información' },
+      'Privacidade': { en: 'Privacy', es: 'Privacidad' },
+      'LGBT+': { en: 'LGBT+', es: 'LGBT+' },
+      'Privacidade & LGPD': { en: 'Privacy & LGPD', es: 'Privacidad y LGPD' },
+      'Cookies': { en: 'Cookies', es: 'Cookies' },
+      'Loja de Sistemas': { en: 'Systems Store', es: 'Tienda de Sistemas' },
+      'Teste de Perfil': { en: 'Profile Test', es: 'Test de Perfil' },
+      '// Sistema de Gestão //': { en: '// Management System //', es: '// Sistema de Gestión //' },
+      'ORIZON': { en: 'ORIZON', es: 'ORIZON' },
+      '\n          Administração\n          ': { en: '\n          Administration\n          ', es: '\n          Administración\n          ' },
+      '◆': { en: '◆', es: '◆' },
+      '\n          Gestão\n        ': { en: '\n          Management\n        ', es: '\n          Gestión\n        ' },
+      'Acessibilidade': { en: 'Accessibility', es: 'Accesibilidad' },
+      'A+': { en: 'A+', es: 'A+' },
+      'A++': { en: 'A++', es: 'A++' },
+      '◐ Contraste': { en: '◐ Contrast', es: '◐ Contraste' },
+      '↺ Restaurar recursos': { en: '↺ Reset features', es: '↺ Restaurar funciones' },
+      'Sistemas': { en: 'Systems', es: 'Sistemas' },
+      'prontos para o seu negócio': { en: 'ready for your business', es: 'listos para tu negocio' },
+      'Baixe, compre ou use online os sistemas que a Orizon já usa no dia a dia: ': { en: 'Download, buy or use online the systems Orizon already uses every day: ', es: 'Descarga, compra o usa en línea los sistemas que Orizon ya usa en su día a día: ' },
+      'financeiro, ponto, RH e recrutamento': { en: 'finance, time tracking, HR and recruitment', es: 'finanzas, control horario, RRHH y reclutamiento' },
+      '. Filtre por categoria ou busque pelo nome do sistema.': { en: '. Filter by category or search by system name.', es: '. Filtra por categoría o busca por el nombre del sistema.' },
+      'Todos': { en: 'All', es: 'Todos' },
+      'Financeiro': { en: 'Finance', es: 'Finanzas' },
+      'Ponto': { en: 'Time Tracking', es: 'Control Horario' },
+      'RH': { en: 'HR', es: 'RRHH' },
+      'Recrutamento': { en: 'Recruitment', es: 'Reclutamiento' },
+      'Testes': { en: 'Tests', es: 'Tests' },
+      'Ferramentas': { en: 'Tools', es: 'Herramientas' },
+      'Agência': { en: 'Agency', es: 'Agencia' },
+      'Compras': { en: 'Purchasing', es: 'Compras' },
+      'Logística': { en: 'Logistics', es: 'Logística' },
+      '12 sistemas disponíveis': { en: '12 systems available', es: '12 sistemas disponibles' },
+      'Solicitar': { en: 'Request', es: 'Solicitar' },
+      'Orçamento': { en: 'Quote', es: 'Presupuesto' },
+      'Somente versão paga': { en: 'Paid version only', es: 'Solo versión de pago' },
+      'Sistema de Agência e RH': { en: 'Agency & HR System', es: 'Sistema de Agencia y RRHH' },
+      'Gestão completa para agências e consultorias': { en: 'Complete management for agencies and consultancies', es: 'Gestión completa para agencias y consultorías' },
+      'Sistema desktop completo pra quem administra uma agência ou consultoria: CRM de prospecção, contratos, financeiro (contas a pagar/receber, despesas fixas, balanço), RH (candidatos, recrutadores, estagiários, CLT) e tarefas, tudo integrado num só painel.': { en: 'Full desktop system for anyone running an agency or consultancy: prospecting CRM, contracts, finance (accounts payable/receivable, fixed expenses, balance sheet), HR (candidates, recruiters, interns, employees) and tasks, all integrated in a single dashboard.', es: 'Sistema de escritorio completo para quien administra una agencia o consultoría: CRM de prospección, contratos, finanzas (cuentas por pagar/cobrar, gastos fijos, balance), RRHH (candidatos, reclutadores, pasantes, empleados) y tareas, todo integrado en un solo panel.' },
+      'Solicitar orçamento': { en: 'Request a quote', es: 'Solicitar presupuesto' },
+      'WhatsApp': { en: 'WhatsApp', es: 'WhatsApp' },
+      'E-mail': { en: 'Email', es: 'Correo electrónico' },
+      'Baixar': { en: 'Download', es: 'Descargar' },
+      'Baixar PDFs (ficha técnica e manual)': { en: 'Download PDFs (data sheet and manual)', es: 'Descargar PDFs (ficha técnica y manual)' },
+      'Ficha técnica – abrir online': { en: 'Data sheet – open online', es: 'Ficha técnica – abrir en línea' },
+      'Ficha técnica – baixar': { en: 'Data sheet – download', es: 'Ficha técnica – descargar' },
+      'Manual do usuário – abrir online': { en: 'User manual – open online', es: 'Manual del usuario – abrir en línea' },
+      'Manual do usuário – baixar': { en: 'User manual – download', es: 'Manual del usuario – descargar' },
+      'Abrir mais': { en: 'See more', es: 'Ver más' },
+      'CRM de prospecção de clientes': { en: 'Customer prospecting CRM', es: 'CRM de prospección de clientes' },
+      'Contratos e propostas': { en: 'Contracts and proposals', es: 'Contratos y propuestas' },
+      'Financeiro: contas a pagar/receber, despesas fixas e balanço': { en: 'Finance: accounts payable/receivable, fixed expenses and balance sheet', es: 'Finanzas: cuentas por pagar/cobrar, gastos fijos y balance' },
+      'RH: candidatos, recrutadores e estagiários (CLT)': { en: 'HR: candidates, recruiters and interns (employees)', es: 'RRHH: candidatos, reclutadores y pasantes (empleados)' },
+      'Tarefas e follow-ups': { en: 'Tasks and follow-ups', es: 'Tareas y seguimientos' },
+      'Sistema de RH': { en: 'HR System', es: 'Sistema de RRHH' },
+      'Gestão de colaboradores': { en: 'Employee management', es: 'Gestión de colaboradores' },
+      'Aplicativo desktop completo para gestão de pessoas, com funcionalidades de integração, controle de funcionários, treinamentos, desenvolvimento, onboarding, geração de cards de vagas e muito mais.': { en: 'Full desktop application for people management, with features for onboarding, employee control, training, development, job-post card generation and much more.', es: 'Aplicación de escritorio completa para gestión de personas, con funciones de integración, control de empleados, capacitaciones, desarrollo, incorporación, generación de tarjetas de vacantes y mucho más.' },
+      'Cadastro e controle de colaboradores': { en: 'Employee registration and control', es: 'Registro y control de colaboradores' },
+      'Treinamentos e desenvolvimento': { en: 'Training and development', es: 'Capacitación y desarrollo' },
+      'Onboarding de novos funcionários': { en: 'Onboarding of new employees', es: 'Incorporación de nuevos empleados' },
+      'Geração de cards de vagas': { en: 'Job-post card generation', es: 'Generación de tarjetas de vacantes' },
+      'Integração com outros sistemas': { en: 'Integration with other systems', es: 'Integración con otros sistemas' },
+      'Nível médio': { en: 'Intermediate level', es: 'Nivel medio' },
+      'Controle Financeiro': { en: 'Financial Control', es: 'Control Financiero' },
+      'Pagamentos e contratos': { en: 'Payments and contracts', es: 'Pagos y contratos' },
+      'Organize pagamentos, contratos e fornecedores num só lugar, com controle separado para estagiários e colaboradores CLT.': { en: 'Organize payments, contracts and suppliers in one place, with separate tracking for interns and regular employees.', es: 'Organiza pagos, contratos y proveedores en un solo lugar, con control separado para pasantes y colaboradores con contrato fijo.' },
+      'Contas a pagar e a receber': { en: 'Accounts payable and receivable', es: 'Cuentas por pagar y por cobrar' },
+      'Contratos com fornecedores': { en: 'Contracts with suppliers', es: 'Contratos con proveedores' },
+      'Controle separado: estagiários x CLT': { en: 'Separate tracking: interns vs. employees', es: 'Control separado: pasantes vs. empleados fijos' },
+      'Despesas fixas': { en: 'Fixed expenses', es: 'Gastos fijos' },
+      'Premium': { en: 'Premium', es: 'Premium' },
+      'Controle Financeiro Premium': { en: 'Premium Financial Control', es: 'Control Financiero Premium' },
+      'Versão avançada e completa': { en: 'Advanced, complete version', es: 'Versión avanzada y completa' },
+      'A versão mais completa do Controle Financeiro, com todos os módulos liberados pra quem precisa do controle financeiro mais robusto com mais módulos.': { en: 'The most complete version of Financial Control, with all modules unlocked for those who need a more robust financial control with more modules.', es: 'La versión más completa del Control Financiero, con todos los módulos habilitados para quien necesita un control financiero más robusto con más módulos.' },
+      'Todos os módulos do Controle Financeiro': { en: 'All Financial Control modules', es: 'Todos los módulos del Control Financiero' },
+      'Relatórios financeiros avançados': { en: 'Advanced financial reports', es: 'Informes financieros avanzados' },
+      'Controle robusto de contratos e fornecedores': { en: 'Robust contract and supplier control', es: 'Control robusto de contratos y proveedores' },
+      'Módulos extras liberados na versão premium': { en: 'Extra modules unlocked in the premium version', es: 'Módulos extra habilitados en la versión premium' },
+      'Departamento Pessoal': { en: 'Personnel Department', es: 'Departamento de Personal' },
+      'Controle de ponto e RH': { en: 'Time tracking and HR control', es: 'Control horario y de RRHH' },
+      'Ponto eletrônico com folha, banco de horas e calendário, pensado para quem cuida da gestão de ponto da equipe.': { en: 'Electronic time clock with payroll, time bank and calendar, designed for whoever manages the team\'s time tracking.', es: 'Control horario electrónico con nómina, banco de horas y calendario, pensado para quien gestiona el control horario del equipo.' },
+      'Ponto eletrônico completo': { en: 'Complete electronic time clock', es: 'Control horario electrónico completo' },
+      'Folha de pagamento': { en: 'Payroll', es: 'Nómina' },
+      'Banco de horas': { en: 'Time bank', es: 'Banco de horas' },
+      'Calendário de equipe': { en: 'Team calendar', es: 'Calendario de equipo' },
+      'Use no navegador ou baixe': { en: 'Use in the browser or download', es: 'Úsalo en el navegador o descárgalo' },
+      'Bater Ponto (colaborador)': { en: 'Clock In (employee)', es: 'Fichar (colaborador)' },
+      'App do colaborador': { en: 'Employee app', es: 'App del colaborador' },
+      'Companheiro do Ponto Certo: o colaborador registra o ponto pelo celular ou navegador, sincronizado direto com a gestão.': { en: 'Companion app to Ponto Certo: the employee clocks in from their phone or browser, synced directly with management.', es: 'Compañero de Ponto Certo: el colaborador ficha desde el celular o el navegador, sincronizado directamente con la gestión.' },
+      'Baixar PDF com os módulos': { en: 'Download PDF with the modules', es: 'Descargar PDF con los módulos' },
+      'Registro de ponto pelo celular': { en: 'Clock-in from the phone', es: 'Fichaje desde el celular' },
+      'Registro de ponto pelo navegador': { en: 'Clock-in from the browser', es: 'Fichaje desde el navegador' },
+      'Sincronização direta com o Ponto Certo': { en: 'Direct sync with Ponto Certo', es: 'Sincronización directa con Ponto Certo' },
+      'Sistema de Compras': { en: 'Purchasing System', es: 'Sistema de Compras' },
+      'Do pedido à ordem de compra': { en: 'From request to purchase order', es: 'Del pedido a la orden de compra' },
+      'Sistema desktop para o setor de compras: solicitações, cotações com mapa comparativo, ordens de compra com aprovação, recebimento de mercadorias, fornecedores e contratos, tudo num só painel.': { en: 'Desktop system for the purchasing department: requests, quotes with a comparison chart, purchase orders with approval, goods receiving, suppliers and contracts, all in a single dashboard.', es: 'Sistema de escritorio para el sector de compras: solicitudes, cotizaciones con cuadro comparativo, órdenes de compra con aprobación, recepción de mercadería, proveedores y contratos, todo en un solo panel.' },
+      'Solicitações de compra': { en: 'Purchase requests', es: 'Solicitudes de compra' },
+      'Cotações e mapa comparativo': { en: 'Quotes and comparison chart', es: 'Cotizaciones y cuadro comparativo' },
+      'Ordens de compra e aprovações': { en: 'Purchase orders and approvals', es: 'Órdenes de compra y aprobaciones' },
+      'Recebimentos': { en: 'Receiving', es: 'Recepciones' },
+      'Cadastro e avaliação de fornecedores': { en: 'Supplier registration and evaluation', es: 'Registro y evaluación de proveedores' },
+      'Contratos': { en: 'Contracts', es: 'Contratos' },
+      'Registro de ocorrências': { en: 'Incident log', es: 'Registro de incidencias' },
+      'Sistema de Logística': { en: 'Logistics System', es: 'Sistema de Logística' },
+      'Estoque, expedição e entregas': { en: 'Inventory, shipping and deliveries', es: 'Inventario, expedición y entregas' },
+      'Sistema desktop para organizar a logística da sua empresa: controle de estoque, expedição, transportadoras e acompanhamento de entregas em um só lugar.': { en: 'Desktop system to organize your company\'s logistics: inventory control, shipping, carriers and delivery tracking in one place.', es: 'Sistema de escritorio para organizar la logística de tu empresa: control de inventario, expedición, transportistas y seguimiento de entregas en un solo lugar.' },
+      'Controle de estoque': { en: 'Inventory control', es: 'Control de inventario' },
+      'Entradas e saídas de mercadorias': { en: 'Goods received and shipped', es: 'Entradas y salidas de mercadería' },
+      'Expedição e romaneios': { en: 'Shipping and packing lists', es: 'Expedición y listas de empaque' },
+      'Transportadoras': { en: 'Carriers', es: 'Transportistas' },
+      'Acompanhamento de entregas': { en: 'Delivery tracking', es: 'Seguimiento de entregas' },
+      'Ecossistema de Entrevistas': { en: 'Interview Ecosystem', es: 'Ecosistema de Entrevistas' },
+      'Da entrevista ao parecer': { en: 'From interview to assessment', es: 'De la entrevista al informe' },
+      'Sistema para conduzir entrevistas de seleção de forma estruturada: monte formulários, use a biblioteca de perguntas, compare candidatos e registre o parecer da entrevista em um só lugar.': { en: 'System for running selection interviews in a structured way: build forms, use the question library, compare candidates and record the interview assessment all in one place.', es: 'Sistema para realizar entrevistas de selección de forma estructurada: crea formularios, usa la biblioteca de preguntas, compara candidatos y registra el informe de la entrevista en un solo lugar.' },
+      'Construtor de formulário de entrevista': { en: 'Interview form builder', es: 'Constructor de formularios de entrevista' },
+      'Biblioteca de perguntas': { en: 'Question library', es: 'Biblioteca de preguntas' },
+      'Comparação de candidatos': { en: 'Candidate comparison', es: 'Comparación de candidatos' },
+      'Modelos de vaga e de formulário': { en: 'Job and form templates', es: 'Plantillas de vacante y de formulario' },
+      'Parecer da entrevista (DISC)': { en: 'Interview assessment (DISC)', es: 'Informe de la entrevista (DISC)' },
+      'Use online ou baixe': { en: 'Use online or download', es: 'Úsalo en línea o descárgalo' },
+      'Ferramentas de RH': { en: 'HR Tools', es: 'Herramientas de RRHH' },
+      'Geradores e calculadoras': { en: 'Generators and calculators', es: 'Generadores y calculadoras' },
+      'Descrição de cargo, cálculo de turnover, parecer de entrevista e outras ferramentas rápidas para o dia a dia de RH.': { en: 'Job description, turnover calculation, interview assessment and other quick tools for everyday HR work.', es: 'Descripción de puesto, cálculo de rotación, informe de entrevista y otras herramientas rápidas para el día a día de RRHH.' },
+      'Usar online': { en: 'Use online', es: 'Usar en línea' },
+      'Abrir online': { en: 'Open online', es: 'Abrir en línea' },
+      'Descrição de cargo': { en: 'Job description', es: 'Descripción de puesto' },
+      'Cálculo de turnover': { en: 'Turnover calculation', es: 'Cálculo de rotación' },
+      'Parecer de entrevista': { en: 'Interview assessment', es: 'Informe de entrevista' },
+      'Outras ferramentas rápidas de RH': { en: 'Other quick HR tools', es: 'Otras herramientas rápidas de RRHH' },
+      'Sistema': { en: 'System', es: 'Sistema' },
+      'Gratuito': { en: 'Free', es: 'Gratuito' },
+      'Use online': { en: 'Use online', es: 'Úsalo en línea' },
+      'Gerador de Card de Vaga': { en: 'Job Post Card Generator', es: 'Generador de Tarjeta de Vacante' },
+      'Imagem para redes sociais': { en: 'Image for social media', es: 'Imagen para redes sociales' },
+      'Crie em poucos cliques a imagem de divulgação de uma vaga, pronta para postar no Instagram ou Facebook.': { en: 'Create a job promo image in just a few clicks, ready to post on Instagram or Facebook.', es: 'Crea en pocos clics la imagen de difusión de una vacante, lista para publicar en Instagram o Facebook.' },
+      'Criação de imagem de divulgação': { en: 'Promo image creation', es: 'Creación de imagen de difusión' },
+      'Pronto para Instagram': { en: 'Ready for Instagram', es: 'Listo para Instagram' },
+      'Pronto para Facebook': { en: 'Ready for Facebook', es: 'Listo para Facebook' },
+      'Testes Psicométricos': { en: 'Psychometric Tests', es: 'Tests Psicométricos' },
+      'Perfil comportamental': { en: 'Behavioral profile', es: 'Perfil conductual' },
+      'Big Five, DISC, Eneagrama e outros testes de perfil comportamental para apoiar decisões de contratação.': { en: 'Big Five, DISC, Enneagram and other behavioral profile tests to support hiring decisions.', es: 'Big Five, DISC, Eneagrama y otros tests de perfil conductual para apoyar decisiones de contratación.' },
+      'Teste DISC': { en: 'DISC Test', es: 'Test DISC' },
+      'Big Five': { en: 'Big Five', es: 'Big Five' },
+      'Eneagrama': { en: 'Enneagram', es: 'Eneagrama' },
+      'Outros testes de perfil comportamental': { en: 'Other behavioral profile tests', es: 'Otros tests de perfil conductual' },
+      'Nenhum sistema encontrado. Tente outro termo ou categoria.': { en: 'No system found. Try another term or category.', es: 'Ningún sistema encontrado. Prueba otro término o categoría.' },
+      'PRODUÇÃO': { en: 'PRODUCTION', es: 'PRODUCCIÓN' },
+      'TEXTUAL DOS SISTEMAS': { en: 'TEXT FOR THE SYSTEMS', es: 'TEXTUAL DE LOS SISTEMAS' },
+      'Cuidamos da parte escrita de cada sistema da loja: descrições, manuais, textos de divulgação e revisão técnica, para que cada software seja fácil de entender e usar desde o primeiro clique.': { en: 'We take care of the written side of every system in the store: descriptions, manuals, promotional copy and technical review, so every piece of software is easy to understand and use from the very first click.', es: 'Nos ocupamos de la parte escrita de cada sistema de la tienda: descripciones, manuales, textos de difusión y revisión técnica, para que cada software sea fácil de entender y usar desde el primer clic.' },
+      'Um sistema sem descrição é um enigma. Nós escrevemos a resposta antes que a pergunta apareça.': { en: 'A system without a description is a riddle. We write the answer before the question even comes up.', es: 'Un sistema sin descripción es un enigma. Escribimos la respuesta antes de que aparezca la pregunta.' },
+      'Descrições e Fichas Técnicas dos Sistemas': { en: 'System Descriptions and Data Sheets', es: 'Descripciones y Fichas Técnicas de los Sistemas' },
+      'Escrevemos a descrição de cada sistema da loja: o que ele faz, para quem serve e por que resolve o problema do cliente, em linguagem simples e direta.': { en: 'We write the description of every system in the store: what it does, who it\'s for and why it solves the customer\'s problem, in simple, direct language.', es: 'Escribimos la descripción de cada sistema de la tienda: qué hace, para quién sirve y por qué resuelve el problema del cliente, en un lenguaje simple y directo.' },
+      'Descrição de funcionalidades e diferenciais': { en: 'Description of features and key advantages', es: 'Descripción de funcionalidades y diferenciales' },
+      'Fichas técnicas e comparativos entre sistemas': { en: 'Data sheets and system comparisons', es: 'Fichas técnicas y comparativos entre sistemas' },
+      'Textos otimizados para busca (SEO)': { en: 'Search-optimized copy (SEO)', es: 'Textos optimizados para búsqueda (SEO)' },
+      'Fichas comparativas entre os sistemas da loja': { en: 'Comparison sheets between the store\'s systems', es: 'Fichas comparativas entre los sistemas de la tienda' },
+      'Suporte que não dorme, não tira férias e nunca deixa o cliente esperando: um bom manual.': { en: 'Support that never sleeps, never takes a vacation and never keeps the customer waiting: a good manual.', es: 'Soporte que no duerme, no se toma vacaciones y nunca deja esperando al cliente: un buen manual.' },
+      'Documentação e Manuais de Uso': { en: 'Documentation and User Manuals', es: 'Documentación y Manuales de Uso' },
+      'Criamos os manuais e guias passo a passo que ajudam o cliente a instalar, configurar e usar cada sistema sem depender de suporte a toda hora.': { en: 'We create the manuals and step-by-step guides that help the customer install, configure and use each system without relying on support all the time.', es: 'Creamos los manuales y guías paso a paso que ayudan al cliente a instalar, configurar y usar cada sistema sin depender del soporte todo el tiempo.' },
+      'Manual de instalação e primeiros passos': { en: 'Installation manual and first steps', es: 'Manual de instalación y primeros pasos' },
+      'Guias de uso das principais telas': { en: 'Usage guides for the main screens', es: 'Guías de uso de las principales pantallas' },
+      'Perguntas frequentes (FAQ) do sistema': { en: 'System frequently asked questions (FAQ)', es: 'Preguntas frecuentes (FAQ) del sistema' },
+      'Materiais de apoio para novos usuários dos sistemas': { en: 'Support materials for new system users', es: 'Materiales de apoyo para nuevos usuarios de los sistemas' },
+      'Todo grande sistema merece uma grande primeira impressão. A nossa caneta escreve a sua.': { en: 'Every great system deserves a great first impression. Our pen writes yours.', es: 'Todo gran sistema merece una gran primera impresión. Nuestra pluma escribe la tuya.' },
+      'Textos de Divulgação e Apresentação': { en: 'Promotional and Presentation Copy', es: 'Textos de Difusión y Presentación' },
+      'Escrevemos os textos que apresentam o sistema ao mercado: página de vendas, posts de lançamento e mensagens para atrair quem realmente precisa da solução.': { en: 'We write the copy that introduces the system to the market: sales pages, launch posts and messages to attract whoever really needs the solution.', es: 'Escribimos los textos que presentan el sistema al mercado: página de ventas, publicaciones de lanzamiento y mensajes para atraer a quien realmente necesita la solución.' },
+      'Textos de lançamento e apresentação': { en: 'Launch and presentation copy', es: 'Textos de lanzamiento y presentación' },
+      'Posts e anúncios sobre os sistemas': { en: 'Posts and ads about the systems', es: 'Publicaciones y anuncios sobre los sistemas' },
+      'Roteiros de demonstração comercial': { en: 'Sales demo scripts', es: 'Guiones de demostración comercial' },
+      'Argumentos de venda destacando os diferenciais dos sistemas': { en: 'Sales pitches highlighting the systems\' key advantages', es: 'Argumentos de venta que destacan los diferenciales de los sistemas' },
+      'Um clique certo começa com uma palavra certa. Revisamos até a vírgula que muda tudo.': { en: 'The right click starts with the right word. We review down to the comma that changes everything.', es: 'Un clic certero empieza con la palabra certera. Revisamos hasta la coma que lo cambia todo.' },
+      'Revisão e Padronização de Textos Técnicos': { en: 'Review and Standardization of Technical Copy', es: 'Revisión y Estandarización de Textos Técnicos' },
+      'Revisamos os textos que aparecem dentro do próprio sistema — telas, mensagens de erro, botões e avisos — para que tudo fique claro e consistente para quem usa.': { en: 'We review the copy that appears inside the system itself — screens, error messages, buttons and alerts — so everything is clear and consistent for whoever uses it.', es: 'Revisamos los textos que aparecen dentro del propio sistema — pantallas, mensajes de error, botones y avisos — para que todo quede claro y consistente para quien lo usa.' },
+      'Revisão de textos de telas e menus': { en: 'Review of screen and menu copy', es: 'Revisión de textos de pantallas y menús' },
+      'Padronização de termos e linguagem': { en: 'Standardization of terms and language', es: 'Estandarización de términos y lenguaje' },
+      'Revisão de mensagens de erro e avisos': { en: 'Review of error messages and alerts', es: 'Revisión de mensajes de error y avisos' },
+      'Padrão de escrita alinhado à identidade de cada sistema': { en: 'Writing style aligned with each system\'s identity', es: 'Estándar de redacción alineado a la identidad de cada sistema' },
+      'Não achou o sistema ideal? Fale conosco': { en: 'Didn\'t find the right system? Talk to us', es: '¿No encontraste el sistema ideal? Habla con nosotros' },
+      'Orizon ': { en: 'Orizon ', es: 'Orizon ' },
+      'Consultoria': { en: 'Consultoria', es: 'Consultoria' },
+      'Consultoria Administrativa, RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.': { en: 'We connect talent to real opportunities. Human, agile and efficient recruitment.', es: 'Conectamos talentos con oportunidades reales. Reclutamiento humano, ágil y eficiente.' },
+      'Navegação': { en: 'Navigation', es: 'Navegación' },
+      'Vagas & Oportunidades': { en: 'Jobs & Opportunities', es: 'Vacantes y Oportunidades' },
+      'Sobre nós': { en: 'About us', es: 'Sobre nosotros' },
+      'Comercial': { en: 'Sales', es: 'Comercial' },
+      'Atendimento IA': { en: 'AI Support', es: 'Atención con IA' },
+      '♥': { en: '♥', es: '♥' },
+      ' Feito com propósito | Rio Grande do Sul, Brasil': { en: ' Made with purpose | Rio Grande do Sul, Brazil', es: ' Hecho con propósito | Rio Grande do Sul, Brasil' },
+      '▲': { en: '▲', es: '▲' },
+      'Assistente Orizon': { en: 'Orizon Assistant', es: 'Asistente Orizon' },
+      'Modo IA': { en: 'AI Mode', es: 'Modo IA' },
+      'ON': { en: 'ON', es: 'ON' },
+      '✕': { en: '✕', es: '✕' },
+      '➤': { en: '➤', es: '➤' },
+    };
+
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      if (literalTranslations.hasOwnProperty(text) && literalTranslations[text].hasOwnProperty(to)) {
+        return literalTranslations[text][to];
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS_MISSAO !== 'undefined' && TRANSLATIONS_MISSAO.pt) ? TRANSLATIONS_MISSAO.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS_MISSAO.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS_MISSAO.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslationsMissao(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslationsMissao(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 </script>
 <script>
 (function(){

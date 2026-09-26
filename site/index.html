@@ -1721,7 +1721,6 @@ body:not(.dark-mode) .acesso-item-ico svg[style*="fbbf24"] {
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -2499,8 +2498,6 @@ body.dark-mode .feature-card:hover {
   border-color: rgba(255,255,255,0.35) !important;
   background: rgba(0,200,255,0.08) !important;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 25px rgba(0,200,255,0.1) !important;
-}
-body:not(.dark-mode) .feature-card {
 }
 body:not(.dark-mode) .feature-card:hover {
   border-color: rgba(0,0,0,0.35) !important;
@@ -3974,7 +3971,7 @@ document.addEventListener('click', function(event) {
     };
 
     function applyTranslations(lang) {
-      const t = translations[lang] || translations['pt'];
+      const t = Object.assign({}, translations['pt'], translations[lang] || {});
 
       // Apply all data-i18n elements
       document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -3992,16 +3989,172 @@ document.addEventListener('click', function(event) {
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslations(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslations(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
@@ -4018,9 +4171,6 @@ body:not(.dark-mode) .header {
   
   border-bottom: 2px solid #000000 !important;
   border-top: 2px solid #000000 !important;
-}
-body:not(.dark-mode) .header::before {
-  
 }
 body:not(.dark-mode) .nexus-logo-svg text {
   fill: #ffffff !important;
@@ -5173,7 +5323,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

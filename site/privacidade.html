@@ -763,9 +763,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
     
 
     /* IMAGEM FUNDO.PNG - EXATAMENTE COMO PADRÃO */
-
-  @media (min-width: 1024px) {}
-    @media (max-width: 768px) {}
     @media (max-width: 480px) {
       .header-content {
         position: relative;
@@ -2530,7 +2527,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -5977,6 +5973,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -5984,26 +5995,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma: texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6313,28 +6351,1013 @@ let vtRecognition = null;
       }
     };
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // ================================================================
+    // TRADUCOES LITERAIS (pre-escritas) - pt/en/es de todo o texto da
+    // pagina que fica fora do Sistema 1 (data-i18n). Escrito a mao em
+    // 26/09/2026. vtTranslateOne confere aqui primeiro; so cai pra API
+    // MyMemory se o texto nao estiver neste dicionario (conteudo novo
+    // ainda nao coberto manualmente).
+    // ================================================================
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+  "Carregando previsão…": {
+    "en": "Loading forecast…",
+    "es": "Cargando pronóstico…"
+  },
+  "Voltar": {
+    "en": "Back",
+    "es": "Volver"
+  },
+  "Menu": {
+    "en": "Menu",
+    "es": "Menú"
+  },
+  "Topics": {
+    "en": "Topics",
+    "es": "Topics"
+  },
+  " Introdução": {
+    "en": " Introduction",
+    "es": " Introducción"
+  },
+  " Informações Coletadas": {
+    "en": " Information Collected",
+    "es": " Información Recopilada"
+  },
+  " Como Usamos": {
+    "en": " How We Use It",
+    "es": " Cómo la Usamos"
+  },
+  " Seus Direitos (LGPD)": {
+    "en": " Your Rights (LGPD)",
+    "es": " Sus Derechos (LGPD)"
+  },
+  " Segurança dos Dados": {
+    "en": " Data Security",
+    "es": " Seguridad de los Datos"
+  },
+  " Cookies": {
+    "en": " Cookies",
+    "es": " Cookies"
+  },
+  " Obrigações da Orizon": {
+    "en": " Orizon's Obligations",
+    "es": " Obligaciones de Orizon"
+  },
+  "Bem-Vindo": {
+    "en": "Welcome",
+    "es": "Bienvenido"
+  },
+  "Sobre": {
+    "en": "About",
+    "es": "Sobre"
+  },
+  "▾": {
+    "en": "▾",
+    "es": "▾"
+  },
+  "Missão": {
+    "en": "Mission",
+    "es": "Misión"
+  },
+  "Visão": {
+    "en": "Vision",
+    "es": "Visión"
+  },
+  "Valores": {
+    "en": "Values",
+    "es": "Valores"
+  },
+  "Candidatos": {
+    "en": "Candidates",
+    "es": "Candidatos"
+  },
+  "Vídeos": {
+    "en": "Videos",
+    "es": "Videos"
+  },
+  "Vagas": {
+    "en": "Jobs",
+    "es": "Empleos"
+  },
+  "Ferramentas IA": {
+    "en": "AI Tools",
+    "es": "Herramientas IA"
+  },
+  "Utilidades": {
+    "en": "Utilities",
+    "es": "Utilidades"
+  },
+  "Mapa de Carreiras": {
+    "en": "Career Map",
+    "es": "Mapa de Carreras"
+  },
+  "Atendimento": {
+    "en": "Support",
+    "es": "Atención"
+  },
+  "Serviços": {
+    "en": "Services",
+    "es": "Servicios"
+  },
+  "Contato": {
+    "en": "Contact",
+    "es": "Contacto"
+  },
+  "Informações": {
+    "en": "Information",
+    "es": "Información"
+  },
+  "Privacidade": {
+    "en": "Privacy",
+    "es": "Privacidad"
+  },
+  "LGBT+": {
+    "en": "LGBT+",
+    "es": "LGBT+"
+  },
+  "Privacidade & LGPD": {
+    "en": "Privacy & LGPD",
+    "es": "Privacidad y LGPD"
+  },
+  "Cookies": {
+    "en": "Cookies",
+    "es": "Cookies"
+  },
+  "Loja de Sistemas": {
+    "en": "Systems Store",
+    "es": "Tienda de Sistemas"
+  },
+  "Teste de Perfil": {
+    "en": "Profile Test",
+    "es": "Test de Perfil"
+  },
+  "// Sistema de Gestão //": {
+    "en": "// Management System //",
+    "es": "// Sistema de Gestión //"
+  },
+  "ORIZON": {
+    "en": "ORIZON",
+    "es": "ORIZON"
+  },
+  "\n          Administração\n          ": {
+    "en": "\n          Administration\n          ",
+    "es": "\n          Administración\n          "
+  },
+  "◆": {
+    "en": "◆",
+    "es": "◆"
+  },
+  "\n          Gestão\n        ": {
+    "en": "\n          Management\n        ",
+    "es": "\n          Gestión\n        "
+  },
+  "Privacidade e LGPD": {
+    "en": "Privacy and LGPD",
+    "es": "Privacidad y LGPD"
+  },
+  "Acessibilidade": {
+    "en": "Accessibility",
+    "es": "Accesibilidad"
+  },
+  "A+": {
+    "en": "A+",
+    "es": "A+"
+  },
+  "A++": {
+    "en": "A++",
+    "es": "A++"
+  },
+  "◐ Contraste": {
+    "en": "◐ Contrast",
+    "es": "◐ Contraste"
+  },
+  "↺ Restaurar recursos": {
+    "en": "↺ Reset features",
+    "es": "↺ Restablecer funciones"
+  },
+  "Compromisso": {
+    "en": "Commitment",
+    "es": "Compromiso"
+  },
+  "com a Segurança": {
+    "en": "to Security",
+    "es": "con la Seguridad"
+  },
+  "Proteção Contínua": {
+    "en": "Continuous Protection",
+    "es": "Protección Continua"
+  },
+  "Sua": {
+    "en": "Your",
+    "es": "Su"
+  },
+  "Privacidade, Sempre Trancada": {
+    "en": "Privacy, Always Locked",
+    "es": "Privacidad, Siempre Bajo Llave"
+  },
+  "Assim como esse cadeado, seus dados pessoais na ": {
+    "en": "Just like this lock, your personal data at ",
+    "es": "Al igual que este candado, sus datos personales en "
+  },
+  "Orizon": {
+    "en": "Orizon",
+    "es": "Orizon"
+  },
+  " nunca ficam expostos. Cada informação que você compartilha — do currículo ao contato — é criptografada, monitorada e protegida em conformidade com a ": {
+    "en": " are never exposed. Every piece of information you share — from your résumé to your contact details — is encrypted, monitored and protected in compliance with the ",
+    "es": " nunca quedan expuestos. Cada información que usted comparte — desde el currículum hasta el contacto — está cifrada, monitoreada y protegida de acuerdo con la "
+  },
+  "LGPD": {
+    "en": "LGPD",
+    "es": "LGPD"
+  },
+  ", do primeiro clique até o fim do processo seletivo.": {
+    "en": ", from the first click to the end of the selection process.",
+    "es": ", desde el primer clic hasta el final del proceso de selección."
+  },
+  " Criptografia de ponta a ponta nos dados sensíveis": {
+    "en": " End-to-end encryption on sensitive data",
+    "es": " Cifrado de extremo a extremo en datos sensibles"
+  },
+  " Acesso restrito apenas a pessoas autorizadas": {
+    "en": " Access restricted to authorized personnel only",
+    "es": " Acceso restringido solo a personas autorizadas"
+  },
+  " Conformidade total com a Lei Geral de Proteção de Dados": {
+    "en": " Full compliance with Brazil's General Data Protection Law",
+    "es": " Cumplimiento total con la Ley General de Protección de Datos"
+  },
+  "Nossa": {
+    "en": "Our",
+    "es": "Nuestra"
+  },
+  "Política Completa": {
+    "en": "Full Policy",
+    "es": "Política Completa"
+  },
+  "Privacidade, Detalhada": {
+    "en": "Privacy, Explained in Detail",
+    "es": "Privacidad, Detallada"
+  },
+  "🔐 Seus dados protegidos há": {
+    "en": "🔐 Your data has been protected for",
+    "es": "🔐 Sus datos están protegidos desde hace"
+  },
+  "dias desde nossa fundação em 2025": {
+    "en": "days since our founding in 2025",
+    "es": "días desde nuestra fundación en 2025"
+  },
+  " dados protegidos": {
+    "en": " data protected",
+    "es": " datos protegidos"
+  },
+  " conformidade LGPD": {
+    "en": " LGPD compliance",
+    "es": " cumplimiento LGPD"
+  },
+  " vazamentos": {
+    "en": " leaks",
+    "es": " filtraciones"
+  },
+  "👆 Toque em cada card para ver os detalhes": {
+    "en": "👆 Tap each card to see the details",
+    "es": "👆 Toque cada tarjeta para ver los detalles"
+  },
+  "Introdução": {
+    "en": "Introduction",
+    "es": "Introducción"
+  },
+  "Como protegemos você": {
+    "en": "How we protect you",
+    "es": "Cómo lo protegemos a usted"
+  },
+  "A ": {
+    "en": "",
+    "es": ""
+  },
+  " protege sua privacidade em total conformidade com a ": {
+    "en": " protects your privacy in full compliance with the ",
+    "es": " protege su privacidad en total conformidad con la "
+  },
+  ", com clareza sobre coleta, uso e proteção dos seus dados.": {
+    "en": ", with clarity about the collection, use, and protection of your data.",
+    "es": ", con claridad sobre la recopilación, el uso y la protección de sus datos."
+  },
+  "⚠️ Nunca vendemos seus dados a terceiros sem consentimento.": {
+    "en": "⚠️ We never sell your data to third parties without consent.",
+    "es": "⚠️ Nunca vendemos sus datos a terceros sin consentimiento."
+  },
+  "Informações Coletadas": {
+    "en": "Information Collected",
+    "es": "Información Recopilada"
+  },
+  "Transparência total sobre seus dados": {
+    "en": "Full transparency about your data",
+    "es": "Transparencia total sobre sus datos"
+  },
+  "📝 Fornecidos por você:": {
+    "en": "📝 Provided by you:",
+    "es": "📝 Proporcionados por usted:"
+  },
+  " nome, e-mail, telefone, endereço e currículo.": {
+    "en": " name, email, phone number, address and résumé.",
+    "es": " nombre, correo electrónico, teléfono, dirección y currículum."
+  },
+  "🤖 Automáticos:": {
+    "en": "🤖 Automatic:",
+    "es": "🤖 Automáticos:"
+  },
+  " navegador, IP, cookies e tipo de dispositivo.": {
+    "en": " browser, IP address, cookies and device type.",
+    "es": " navegador, IP, cookies y tipo de dispositivo."
+  },
+  "Como Usamos": {
+    "en": "How We Use It",
+    "es": "Cómo la Usamos"
+  },
+  "Finalidade de cada dado coletado": {
+    "en": "Purpose of each piece of data collected",
+    "es": "Finalidad de cada dato recopilado"
+  },
+  "Processar candidaturas e seleções": {
+    "en": "Process applications and selections",
+    "es": "Procesar candidaturas y selecciones"
+  },
+  "Notificar sobre vagas relevantes": {
+    "en": "Notify you about relevant job openings",
+    "es": "Notificar sobre vacantes relevantes"
+  },
+  "Cumprir obrigações legais": {
+    "en": "Comply with legal obligations",
+    "es": "Cumplir obligaciones legales"
+  },
+  "Detectar e prevenir fraudes": {
+    "en": "Detect and prevent fraud",
+    "es": "Detectar y prevenir fraudes"
+  },
+  "Segurança": {
+    "en": "Security",
+    "es": "Seguridad"
+  },
+  "Medidas técnicas de proteção": {
+    "en": "Technical protection measures",
+    "es": "Medidas técnicas de protección"
+  },
+  "Criptografia em trânsito (SSL/TLS)": {
+    "en": "Encryption in transit (SSL/TLS)",
+    "es": "Cifrado en tránsito (SSL/TLS)"
+  },
+  "Acesso restrito a pessoal autorizado": {
+    "en": "Access restricted to authorized personnel",
+    "es": "Acceso restringido a personal autorizado"
+  },
+  "Auditorias e backups regulares": {
+    "en": "Regular audits and backups",
+    "es": "Auditorías y copias de seguridad periódicas"
+  },
+  "⚠️ Nenhuma transmissão online é 100% segura.": {
+    "en": "⚠️ No online transmission is 100% secure.",
+    "es": "⚠️ Ninguna transmisión en línea es 100% segura."
+  },
+  "O que armazenamos no navegador": {
+    "en": "What we store in your browser",
+    "es": "Qué almacenamos en el navegador"
+  },
+  "✅": {
+    "en": "✅",
+    "es": "✅"
+  },
+  "Essenciais": {
+    "en": "Essential",
+    "es": "Esenciales"
+  },
+  "⚙️": {
+    "en": "⚙️",
+    "es": "⚙️"
+  },
+  "Preferência": {
+    "en": "Preference",
+    "es": "Preferencia"
+  },
+  "📊": {
+    "en": "📊",
+    "es": "📊"
+  },
+  "Analytics": {
+    "en": "Analytics",
+    "es": "Analytics"
+  },
+  "📢": {
+    "en": "📢",
+    "es": "📢"
+  },
+  "Marketing": {
+    "en": "Marketing",
+    "es": "Marketing"
+  },
+  "Gerencie nas configurações do navegador. ": {
+    "en": "Manage this in your browser settings. ",
+    "es": "Adminístrelo en la configuración del navegador. "
+  },
+  "Política de cookies →": {
+    "en": "Cookie policy →",
+    "es": "Política de cookies →"
+  },
+  "Fale com o DPO": {
+    "en": "Talk to the DPO",
+    "es": "Hable con el DPO"
+  },
+  "Encarregado de Proteção de Dados": {
+    "en": "Data Protection Officer",
+    "es": "Encargado de Protección de Datos"
+  },
+  "6. Fale com o DPO": {
+    "en": "6. Talk to the DPO",
+    "es": "6. Hable con el DPO"
+  },
+  "Fale com nosso Encarregado de Proteção de Dados:": {
+    "en": "Talk to our Data Protection Officer:",
+    "es": "Hable con nuestro Encargado de Protección de Datos:"
+  },
+  "📧 E-mail": {
+    "en": "📧 Email",
+    "es": "📧 Correo electrónico"
+  },
+  "💬 WhatsApp": {
+    "en": "💬 WhatsApp",
+    "es": "💬 WhatsApp"
+  },
+  "Atualizado:": {
+    "en": "Updated:",
+    "es": "Actualizado:"
+  },
+  " Janeiro de 2026": {
+    "en": " January 2026",
+    "es": " Enero de 2026"
+  },
+  "Direitos": {
+    "en": "Rights",
+    "es": "Derechos"
+  },
+  "do Titular dos Dados": {
+    "en": "of the Data Subject",
+    "es": "del Titular de los Datos"
+  },
+  "Lei nº 13.709/2018": {
+    "en": "Law No. 13.709/2018",
+    "es": "Ley n.º 13.709/2018"
+  },
+  "Seus": {
+    "en": "Your",
+    "es": "Sus"
+  },
+  "Direitos sob a LGPD": {
+    "en": "Rights under the LGPD",
+    "es": "Derechos bajo la LGPD"
+  },
+  "Clique em cada direito para saber mais": {
+    "en": "Click each right to learn more",
+    "es": "Haga clic en cada derecho para saber más"
+  },
+  "👆 Toque para revelar cada direito": {
+    "en": "👆 Tap to reveal each right",
+    "es": "👆 Toque para revelar cada derecho"
+  },
+  "📌": {
+    "en": "📌",
+    "es": "📌"
+  },
+  "Acesso": {
+    "en": "Access",
+    "es": "Acceso"
+  },
+  "Direito de Acesso": {
+    "en": "Right of Access",
+    "es": "Derecho de Acceso"
+  },
+  "Solicite confirmação e acesso a todos os seus dados pessoais armazenados pela Orizon.": {
+    "en": "Request confirmation of, and access to, all your personal data stored by Orizon.",
+    "es": "Solicite confirmación y acceso a todos sus datos personales almacenados por Orizon."
+  },
+  "✏️": {
+    "en": "✏️",
+    "es": "✏️"
+  },
+  "Retificação": {
+    "en": "Rectification",
+    "es": "Rectificación"
+  },
+  "Direito de Retificação": {
+    "en": "Right to Rectification",
+    "es": "Derecho de Rectificación"
+  },
+  "Corrija dados incompletos, inexatos ou desatualizados a qualquer momento.": {
+    "en": "Correct incomplete, inaccurate or outdated data at any time.",
+    "es": "Corrija datos incompletos, inexactos o desactualizados en cualquier momento."
+  },
+  "🗑️": {
+    "en": "🗑️",
+    "es": "🗑️"
+  },
+  "Exclusão": {
+    "en": "Deletion",
+    "es": "Eliminación"
+  },
+  "Direito ao Esquecimento": {
+    "en": "Right to Be Forgotten",
+    "es": "Derecho al Olvido"
+  },
+  "Solicite o apagamento dos seus dados, sem precisar justificar o pedido.": {
+    "en": "Request the deletion of your data, without needing to justify the request.",
+    "es": "Solicite la eliminación de sus datos, sin necesidad de justificar la solicitud."
+  },
+  "📤": {
+    "en": "📤",
+    "es": "📤"
+  },
+  "Portabilidade": {
+    "en": "Portability",
+    "es": "Portabilidad"
+  },
+  "Direito à Portabilidade": {
+    "en": "Right to Portability",
+    "es": "Derecho a la Portabilidad"
+  },
+  "Receba seus dados em formato estruturado para transferir a outro serviço.": {
+    "en": "Receive your data in a structured format to transfer it to another service.",
+    "es": "Reciba sus datos en formato estructurado para transferirlos a otro servicio."
+  },
+  "🚫": {
+    "en": "🚫",
+    "es": "🚫"
+  },
+  "Oposição": {
+    "en": "Objection",
+    "es": "Oposición"
+  },
+  "Direito de Oposição": {
+    "en": "Right to Object",
+    "es": "Derecho de Oposición"
+  },
+  "Recuse marketing direto e conteste decisões automatizadas que te afetem.": {
+    "en": "Refuse direct marketing and challenge automated decisions that affect you.",
+    "es": "Rechace el marketing directo y cuestione las decisiones automatizadas que le afecten."
+  },
+  "🔍": {
+    "en": "🔍",
+    "es": "🔍"
+  },
+  "Revisão": {
+    "en": "Review",
+    "es": "Revisión"
+  },
+  "Direito de Revisão": {
+    "en": "Right to Review",
+    "es": "Derecho de Revisión"
+  },
+  "Solicite revisão humana de qualquer decisão tomada automaticamente sobre você.": {
+    "en": "Request a human review of any decision made automatically about you.",
+    "es": "Solicite una revisión humana de cualquier decisión tomada automáticamente sobre usted."
+  },
+  "📜": {
+    "en": "📜",
+    "es": "📜"
+  },
+  "Obrigações da Orizon": {
+    "en": "Orizon's Obligations",
+    "es": "Obligaciones de Orizon"
+  },
+  "O que nos comprometemos a fazer": {
+    "en": "What we commit to doing",
+    "es": "Lo que nos comprometemos a hacer"
+  },
+  "✅ Consentimento prévio": {
+    "en": "✅ Prior consent",
+    "es": "✅ Consentimiento previo"
+  },
+  "✅ Criptografia ponta-a-ponta": {
+    "en": "✅ End-to-end encryption",
+    "es": "✅ Cifrado de extremo a extremo"
+  },
+  "✅ Acesso controlado": {
+    "en": "✅ Controlled access",
+    "es": "✅ Acceso controlado"
+  },
+  "✅ Aviso de incidentes em 72h": {
+    "en": "✅ Incident notice within 72h",
+    "es": "✅ Aviso de incidentes en 72h"
+  },
+  "✅ DPO designado": {
+    "en": "✅ Designated DPO",
+    "es": "✅ DPO designado"
+  },
+  "✅ Avaliação de impacto (AIPD)": {
+    "en": "✅ Impact assessment (DPIA)",
+    "es": "✅ Evaluación de impacto (EIPD)"
+  },
+  "✅ Contratos com processadores": {
+    "en": "✅ Contracts with data processors",
+    "es": "✅ Contratos con encargados del tratamiento"
+  },
+  "✅ Auditoria periódica": {
+    "en": "✅ Periodic audits",
+    "es": "✅ Auditoría periódica"
+  },
+  "Fale Conosco": {
+    "en": "Contact Us",
+    "es": "Hable con Nosotros"
+  },
+  "Materiais para Download": {
+    "en": "Downloadable Materials",
+    "es": "Materiales para Descargar"
+  },
+  " Jurídico & Compliance": {
+    "en": " Legal & Compliance",
+    "es": " Legal y Compliance"
+  },
+  "4 arquivos": {
+    "en": "4 files",
+    "es": "4 archivos"
+  },
+  "▼": {
+    "en": "▼",
+    "es": "▼"
+  },
+  "Política de Privacidade LGPD": {
+    "en": "LGPD Privacy Policy",
+    "es": "Política de Privacidad LGPD"
+  },
+  "Modelo completo de política de privacidade alinhado à Lei 13.709/18 — pronto para publicar no seu site ou app.": {
+    "en": "Complete privacy policy template aligned with Law 13.709/18 — ready to publish on your website or app.",
+    "es": "Modelo completo de política de privacidad alineado con la Ley 13.709/18 — listo para publicar en su sitio web o app."
+  },
+  "Word .docx": {
+    "en": "Word .docx",
+    "es": "Word .docx"
+  },
+  "✓ Gratuito": {
+    "en": "✓ Free",
+    "es": "✓ Gratuito"
+  },
+  "⬇": {
+    "en": "⬇",
+    "es": "⬇"
+  },
+  "Termos de Uso": {
+    "en": "Terms of Use",
+    "es": "Términos de Uso"
+  },
+  "Documento que regula a relação entre empresa e cliente/usuário — direitos, obrigações e limitações de responsabilidade.": {
+    "en": "Document that governs the relationship between company and client/user — rights, obligations and limitations of liability.",
+    "es": "Documento que regula la relación entre empresa y cliente/usuario — derechos, obligaciones y limitaciones de responsabilidad."
+  },
+  "Checklist de Conformidade LGPD": {
+    "en": "LGPD Compliance Checklist",
+    "es": "Lista de Verificación de Cumplimiento LGPD"
+  },
+  "Diagnóstico completo para verificar se sua empresa está adequada à LGPD — com pontos de ação prioritários.": {
+    "en": "Complete diagnostic to check whether your company complies with the LGPD — with priority action items.",
+    "es": "Diagnóstico completo para verificar si su empresa cumple con la LGPD — con puntos de acción prioritarios."
+  },
+  "Registro de Incidentes LGPD": {
+    "en": "LGPD Incident Log",
+    "es": "Registro de Incidentes LGPD"
+  },
+  "Planilha de controle obrigatório para documentar vazamentos e incidentes de dados conforme exige a ANPD.": {
+    "en": "Mandatory control spreadsheet to document data leaks and incidents as required by the ANPD.",
+    "es": "Planilla de control obligatorio para documentar filtraciones e incidentes de datos según lo exige la ANPD."
+  },
+  "Excel .xlsx": {
+    "en": "Excel .xlsx",
+    "es": "Excel .xlsx"
+  },
+  "Orizon ": {
+    "en": "Orizon ",
+    "es": "Orizon "
+  },
+  "Consultoria": {
+    "en": "Consulting",
+    "es": "Consultoría"
+  },
+  "Consultoria Administrativa, RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.": {
+    "en": "Administrative, HR and Management Consulting: Knowledge, strategy and humanity for companies and people.",
+    "es": "Consultoría Administrativa, RRHH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas."
+  },
+  "Navegação": {
+    "en": "Navigation",
+    "es": "Navegación"
+  },
+  "Vagas & Oportunidades": {
+    "en": "Jobs & Opportunities",
+    "es": "Empleos y Oportunidades"
+  },
+  "Sobre nós": {
+    "en": "About Us",
+    "es": "Sobre Nosotros"
+  },
+  "Comercial": {
+    "en": "Business",
+    "es": "Comercial"
+  },
+  "Recrutamento": {
+    "en": "Recruitment",
+    "es": "Reclutamiento"
+  },
+  "WhatsApp": {
+    "en": "WhatsApp",
+    "es": "WhatsApp"
+  },
+  "Atendimento IA": {
+    "en": "AI Support",
+    "es": "Atención IA"
+  },
+  "♥": {
+    "en": "♥",
+    "es": "♥"
+  },
+  " Feito com propósito | Rio Grande do Sul, Brasil": {
+    "en": " Made with purpose | Rio Grande do Sul, Brazil",
+    "es": " Hecho con propósito | Rio Grande do Sul, Brasil"
+  },
+  "▲": {
+    "en": "▲",
+    "es": "▲"
+  },
+  "Assistente Orizon": {
+    "en": "Orizon Assistant",
+    "es": "Asistente Orizon"
+  },
+  "Modo IA": {
+    "en": "AI Mode",
+    "es": "Modo IA"
+  },
+  "ON": {
+    "en": "ON",
+    "es": "ON"
+  },
+  "✕": {
+    "en": "✕",
+    "es": "✕"
+  },
+  "➤": {
+    "en": "➤",
+    "es": "➤"
+  }
+};
+
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      // 1) traducao literal pre-escrita (sem API, sem gastar cota) --
+      // as chaves do dicionario sao o texto EXATO do no (com os mesmos
+      // espacos/quebras de linha ao redor), entao a comparacao e' direta,
+      // sem trim, pra nao alterar espacamento visual da pagina.
+      if (Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+        const entry = literalTranslations[text];
+        if (entry && Object.prototype.hasOwnProperty.call(entry, to)) {
+          return entry[to];
+        }
+      }
+      // 2) cai pra API MyMemory (Sistema 3 original) se o texto nao
+      // estiver no dicionario acima (conteudo novo ainda nao coberto).
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) { selector.value = savedLang; }
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        if (translations[lang][key]) {
+        if (t[key]) {
           const icon = element.querySelector(':scope > img, :scope > svg');
-          element.textContent = translations[lang][key];
+          element.textContent = t[key];
           if (icon) element.insertBefore(icon, element.firstChild);
         }
       });
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 
     // === BARRA DE PROGRESSO DE LEITURA ===
     window.addEventListener('scroll', function() {
@@ -6600,11 +7623,6 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
-body:not(.dark-mode) .header::before {
-  
-}
-
 /* Logo: texto branco sólido sem glow neon */
 body:not(.dark-mode) .orizon-logo-svg text {
   fill: #ffffff !important;
@@ -6630,9 +7648,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
 /* Subtítulo da página (ex: "Candidatos") */
 </style>
 <style>
-/* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}
-
 /* ============================================================
    SEÇÃO DE DOWNLOADS — JURÍDICO & COMPLIANCE
    ============================================================ */
@@ -7801,7 +8816,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

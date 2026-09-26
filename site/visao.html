@@ -2031,10 +2031,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
         text-align: center;
       }}
 
-    @media (max-width: 768px) {}
-
-    @media (max-width: 480px) {}
-
     @media (max-width: 768px) {
       
 
@@ -2257,7 +2253,6 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -6137,6 +6132,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -6144,26 +6154,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6461,25 +6498,948 @@ let vtRecognition = null;
       }
     };
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    // [i18n] Traduções literais pré-escritas (pt->en/es) para o texto
+    // fora do Sistema 1 (fora de [data-i18n]). Verificadas por vtTranslateOne
+    // antes de chamar a API MyMemory: elimina delay de rede e gasto de cota
+    // para todo o conteúdo já coberto aqui; texto novo/ainda não traduzido
+    // continua caindo no caminho da API como fallback.
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+          "Carregando previsão…": {
+                "en": "Loading forecast…",
+                "es": "Cargando previsión…"
+          },
+          "Voltar": {
+                "en": "Back",
+                "es": "Volver"
+          },
+          "Menu": {
+                "en": "Menu",
+                "es": "Menú"
+          },
+          "Topics": {
+                "en": "Topics",
+                "es": "Topics"
+          },
+          " Nossa Visão: Um Ecossistema Vivo": {
+                "en": " Our Vision: A Living Ecosystem",
+                "es": " Nuestra Visión: Un Ecosistema Vivo"
+          },
+          " Antecipando o Futuro": {
+                "en": " Anticipating the Future",
+                "es": " Anticipando el Futuro"
+          },
+          " Constante Evolução": {
+                "en": " Constant Evolution",
+                "es": " Evolución Constante"
+          },
+          " Transformação Humanizada": {
+                "en": " Humanized Transformation",
+                "es": " Transformación Humanizada"
+          },
+          " Elo Estratégico": {
+                "en": " Strategic Link",
+                "es": " Eslabón Estratégico"
+          },
+          " Objetivos Estratégicos": {
+                "en": " Strategic Objectives",
+                "es": " Objetivos Estratégicos"
+          },
+          " Compromisso com Todas as Partes": {
+                "en": " Commitment to All Parties",
+                "es": " Compromiso con Todas las Partes"
+          },
+          "Bem-Vindo": {
+                "en": "Welcome",
+                "es": "Bienvenido"
+          },
+          "Sobre": {
+                "en": "About",
+                "es": "Sobre"
+          },
+          "▾": {
+                "en": "▾",
+                "es": "▾"
+          },
+          "Missão": {
+                "en": "Mission",
+                "es": "Misión"
+          },
+          "Visão": {
+                "en": "Vision",
+                "es": "Visión"
+          },
+          "Valores": {
+                "en": "Values",
+                "es": "Valores"
+          },
+          "Candidatos": {
+                "en": "Candidates",
+                "es": "Candidatos"
+          },
+          "Vídeos": {
+                "en": "Videos",
+                "es": "Vídeos"
+          },
+          "Vagas": {
+                "en": "Jobs",
+                "es": "Empleos"
+          },
+          "Ferramentas IA": {
+                "en": "AI Tools",
+                "es": "Herramientas IA"
+          },
+          "Utilidades": {
+                "en": "Utilities",
+                "es": "Utilidades"
+          },
+          "Mapa de Carreiras": {
+                "en": "Career Map",
+                "es": "Mapa de Carreras"
+          },
+          "Atendimento": {
+                "en": "Support",
+                "es": "Atención"
+          },
+          "Serviços": {
+                "en": "Services",
+                "es": "Servicios"
+          },
+          "Contato": {
+                "en": "Contact",
+                "es": "Contacto"
+          },
+          "Informações": {
+                "en": "Information",
+                "es": "Información"
+          },
+          "Privacidade": {
+                "en": "Privacy",
+                "es": "Privacidad"
+          },
+          "LGBT+": {
+                "en": "LGBT+",
+                "es": "LGBT+"
+          },
+          "Privacidade & LGPD": {
+                "en": "Privacy & LGPD",
+                "es": "Privacidad y LGPD"
+          },
+          "Cookies": {
+                "en": "Cookies",
+                "es": "Cookies"
+          },
+          "Loja de Sistemas": {
+                "en": "Systems Store",
+                "es": "Tienda de Sistemas"
+          },
+          "Teste de Perfil": {
+                "en": "Profile Test",
+                "es": "Test de Perfil"
+          },
+          "// Sistema de Gestão //": {
+                "en": "// Management System //",
+                "es": "// Sistema de Gestión //"
+          },
+          "ORIZON": {
+                "en": "ORIZON",
+                "es": "ORIZON"
+          },
+          "\n          Administração\n          ": {
+                "en": "\n          Administration\n          ",
+                "es": "\n          Administración\n          "
+          },
+          "◆": {
+                "en": "◆",
+                "es": "◆"
+          },
+          "\n          Gestão\n        ": {
+                "en": "\n          Management\n        ",
+                "es": "\n          Gestión\n        "
+          },
+          "Nossa Visão": {
+                "en": "Our Vision",
+                "es": "Nuestra Visión"
+          },
+          "Acessibilidade": {
+                "en": "Accessibility",
+                "es": "Accesibilidad"
+          },
+          "A+": {
+                "en": "A+",
+                "es": "A+"
+          },
+          "A++": {
+                "en": "A++",
+                "es": "A++"
+          },
+          "◐ Contraste": {
+                "en": "◐ Contrast",
+                "es": "◐ Contraste"
+          },
+          "↺ Restaurar recursos": {
+                "en": "↺ Restore defaults",
+                "es": "↺ Restaurar recursos"
+          },
+          "\n        Muitas empresas têm uma visão estática, crescer, faturar, ganhar mercado. A nossa nasce de outro lugar. Começamos do zero, com as mãos e um propósito e seguimos feitos do povo, para o povo.\n      ": {
+                "en": "\n        Many companies have a static vision: grow, earn revenue, win market share. Ours is born from a different place. We started from zero, with our hands and a purpose, and we remain made by the people, for the people.\n      ",
+                "es": "\n        Muchas empresas tienen una visión estática: crecer, facturar, ganar mercado. La nuestra nace de otro lugar. Comenzamos desde cero, con las manos y un propósito, y seguimos hechos por el pueblo, para el pueblo.\n      "
+          },
+          "RH": {
+                "en": "HR",
+                "es": "RH"
+          },
+          "Consul­": {
+                "en": "Consult­",
+                "es": "Consul­"
+          },
+          "toria": {
+                "en": "ing",
+                "es": "toría"
+          },
+          "Blog": {
+                "en": "Blog",
+                "es": "Blog"
+          },
+          "Mentoria": {
+                "en": "Mentoring",
+                "es": "Mentoría"
+          },
+          "Tecno­": {
+                "en": "Techno­",
+                "es": "Tecno­"
+          },
+          "logia": {
+                "en": "logy",
+                "es": "logía"
+          },
+          "ecossistema": {
+                "en": "ecosystem",
+                "es": "ecosistema"
+          },
+          "◄ arraste para o lado ►": {
+                "en": "◄ swipe sideways ►",
+                "es": "◄ desliza hacia el lado ►"
+          },
+          "Guaíba": {
+                "en": "Guaíba",
+                "es": "Guaíba"
+          },
+          "toque para ver mais": {
+                "en": "tap to see more",
+                "es": "toca para ver más"
+          },
+          "Onde tudo começou: raízes comunitárias e atendimento próximo, pessoa a pessoa.": {
+                "en": "Where it all began: community roots and close, person-to-person service.",
+                "es": "Donde todo comenzó: raíces comunitarias y atención cercana, persona a persona."
+          },
+          "Rio Grande do Sul": {
+                "en": "Rio Grande do Sul",
+                "es": "Rio Grande do Sul"
+          },
+          "Expansão regional: consultoria e RH levados a mais cidades e empresas gaúchas.": {
+                "en": "Regional expansion: consulting and HR brought to more cities and companies across the state.",
+                "es": "Expansión regional: consultoría y RH llevados a más ciudades y empresas gaúchas."
+          },
+          "Região Sul": {
+                "en": "Southern Region",
+                "es": "Región Sur"
+          },
+          "Passo a passo, sem pular etapas: consolidar parcerias no Sul do Brasil com o mesmo cuidado de sempre.": {
+                "en": "Step by step, without skipping stages: consolidating partnerships across Southern Brazil with the same care as always.",
+                "es": "Paso a paso, sin saltar etapas: consolidando alianzas en el Sur de Brasil con el mismo cuidado de siempre."
+          },
+          "Explore": {
+                "en": "Explore",
+                "es": "Explora"
+          },
+          "Nossa Visão em Detalhes": {
+                "en": "Our Vision in Detail",
+                "es": "Nuestra Visión en Detalle"
+          },
+          "▼": {
+                "en": "▼",
+                "es": "▼"
+          },
+          "O mercado de trabalho não espera. O recru­tamento de 2026 já é dife­rente do de 2025, e o de 2027 será dife­rente do de hoje. Quem não antecipa essas mudanças fica para trás.": {
+                "en": "The job market doesn't wait. Recruitment in 2026 is already different from 2025, and 2027 will be different from today. Those who don't anticipate these changes get left behind.",
+                "es": "El mercado laboral no espera. El reclutamiento de 2026 ya es diferente al de 2025, y el de 2027 será diferente al de hoy. Quien no anticipa estos cambios se queda atrás."
+          },
+          "Nossa visão é estar sempre um passo à frente: entender tendên­cias antes que virem padrão, adotar tecno­logias antes que virem obriga­ção, e preparar pessoas antes que o mercado as exija prontas.": {
+                "en": "Our vision is to always be one step ahead: understanding trends before they become the standard, adopting technologies before they become mandatory, and preparing people before the market demands they're ready.",
+                "es": "Nuestra visión es estar siempre un paso adelante: entender tendencias antes de que se vuelvan estándar, adoptar tecnologías antes de que se vuelvan obligatorias, y preparar personas antes de que el mercado las exija listas."
+          },
+          " Cons­tante Evolução": {
+                "en": " Constant Evolution",
+                "es": " Evolución Constante"
+          },
+          "A Orizon não é uma consul­toria que ficou pronta. Somos um orga­nismo vivo, em cons­tante aprendi­zado, atualiza­ção e melhoria. Cada processo nos ensina algo; cada feedback nos torna melhores.": {
+                "en": "Orizon isn't a consultancy that's finished. We are a living organism, in constant learning, updating and improvement. Every process teaches us something; every piece of feedback makes us better.",
+                "es": "Orizon no es una consultoría terminada. Somos un organismo vivo, en constante aprendizaje, actualización y mejora. Cada proceso nos enseña algo; cada feedback nos hace mejores."
+          },
+          "Unimos dados e sensibili­dade humana, sistemas próprios e escuta ativa, tecno­logia e empatia. Inova­ção sem humani­dade é fria, e humani­dade sem inova­ção fica obsoleta.": {
+                "en": "We combine data and human sensitivity, our own systems and active listening, technology and empathy. Innovation without humanity is cold, and humanity without innovation becomes obsolete.",
+                "es": "Unimos datos y sensibilidad humana, sistemas propios y escucha activa, tecnología y empatía. La innovación sin humanidad es fría, y la humanidad sin innovación queda obsoleta."
+          },
+          " Tecno­logia": {
+                "en": " Technology",
+                "es": " Tecnología"
+          },
+          "Ferra­mentas inova­doras e IA para otimizar proces­sos.": {
+                "en": "Innovative tools and AI to optimize processes.",
+                "es": "Herramientas innovadoras e IA para optimizar procesos."
+          },
+          " Dados": {
+                "en": " Data",
+                "es": " Datos"
+          },
+          "Análise inteli­gente para decisões mais precisas.": {
+                "en": "Intelligent analysis for more precise decisions.",
+                "es": "Análisis inteligente para decisiones más precisas."
+          },
+          " Humani­dade": {
+                "en": " Humanity",
+                "es": " Humanidad"
+          },
+          "Toque humano mantido em cada inte­ração.": {
+                "en": "The human touch kept in every interaction.",
+                "es": "El toque humano mantenido en cada interacción."
+          },
+          " Transparên­cia": {
+                "en": " Transparency",
+                "es": " Transparencia"
+          },
+          "Comunica­ção clara em todas as fases.": {
+                "en": "Clear communication at every stage.",
+                "es": "Comunicación clara en todas las etapas."
+          },
+          "A tecno­logia chegou para ficar, e nós abra­çamos isso. Mas nossa dife­rença está em não deixar que a eficiên­cia apague a humani­dade. Cada candi­dato deve sair sentindo que foi visto de verdade.": {
+                "en": "Technology is here to stay, and we embrace it. But our difference lies in not letting efficiency erase humanity. Every candidate should leave feeling truly seen.",
+                "es": "La tecnología llegó para quedarse, y nosotros la abrazamos. Pero nuestra diferencia está en no dejar que la eficiencia borre la humanidad. Cada candidato debe salir sintiendo que fue visto de verdad."
+          },
+          "Respei­tar a individuali­dade de cada candi­dato": {
+                "en": "Respecting the individuality of each candidate",
+                "es": "Respetar la individualidad de cada candidato"
+          },
+          "Compre­ender as necessi­dades especí­ficas de cada empresa": {
+                "en": "Understanding the specific needs of each company",
+                "es": "Comprender las necesidades específicas de cada empresa"
+          },
+          "Criar conexões autên­ticas entre pessoas e orga­nizações": {
+                "en": "Creating authentic connections between people and organizations",
+                "es": "Crear conexiones auténticas entre personas y organizaciones"
+          },
+          "Oferecer feedback constru­tivo e suporte contí­nuo": {
+                "en": "Offering constructive feedback and continuous support",
+                "es": "Ofrecer feedback constructivo y apoyo continuo"
+          },
+          "Valori­zar a digni­dade em todos os proces­sos": {
+                "en": "Valuing dignity in every process",
+                "es": "Valorar la dignidad en todos los procesos"
+          },
+          " Elo Estraté­gico": {
+                "en": " Strategic Link",
+                "es": " Eslabón Estratégico"
+          },
+          "Nossa visão é ser o elo que faz sentido: conec­tando não só candi­dato e empresa, mas unindo comuni­dade, tecno­logia, propó­sito e resul­tado em um só movi­mento.": {
+                "en": "Our vision is to be the link that makes sense: connecting not just candidate and company, but uniting community, technology, purpose and results in a single movement.",
+                "es": "Nuestra visión es ser el eslabón que tiene sentido: conectando no solo candidato y empresa, sino uniendo comunidad, tecnología, propósito y resultado en un solo movimiento."
+          },
+          "Conectar talentos com oportuni­dades alinhadas aos valores": {
+                "en": "Connecting talent with opportunities aligned to values",
+                "es": "Conectar talentos con oportunidades alineadas a los valores"
+          },
+          "Orientar empresas em suas estraté­gias de recru­tamento": {
+                "en": "Guiding companies in their recruitment strategies",
+                "es": "Orientar a las empresas en sus estrategias de reclutamiento"
+          },
+          "Promover equidade e inclusão no mercado de trabalho": {
+                "en": "Promoting equity and inclusion in the job market",
+                "es": "Promover equidad e inclusión en el mercado laboral"
+          },
+          "Contri­buir para sustentabili­dade organiza­cional": {
+                "en": "Contributing to organizational sustainability",
+                "es": "Contribuir a la sostenibilidad organizacional"
+          },
+          "Gerar impacto social positivo": {
+                "en": "Generating positive social impact",
+                "es": "Generar impacto social positivo"
+          },
+          " Excelên­cia Contínua": {
+                "en": " Continuous Excellence",
+                "es": " Excelencia Continua"
+          },
+          "Mais alto padrão de quali­dade em todos os serviços.": {
+                "en": "The highest quality standard in all our services.",
+                "es": "El más alto estándar de calidad en todos los servicios."
+          },
+          " Relaciona­mentos Dura­douros": {
+                "en": " Lasting Relationships",
+                "es": " Relaciones Duraderas"
+          },
+          "Parce­rias baseadas em confi­ança e resul­tados.": {
+                "en": "Partnerships based on trust and results.",
+                "es": "Alianzas basadas en confianza y resultados."
+          },
+          " Cres­cimento Susten­tável": {
+                "en": " Sustainable Growth",
+                "es": " Crecimiento Sostenible"
+          },
+          "Expansão nacional mantendo valores e quali­dade.": {
+                "en": "National expansion while maintaining values and quality.",
+                "es": "Expansión nacional manteniendo valores y calidad."
+          },
+          " Inova­ção Tecnoló­gica": {
+                "en": " Technological Innovation",
+                "es": " Innovación Tecnológica"
+          },
+          "Novas tecno­logias para potenciali­zar resul­tados.": {
+                "en": "New technologies to boost results.",
+                "es": "Nuevas tecnologías para potenciar resultados."
+          },
+          " Impacto Social": {
+                "en": " Social Impact",
+                "es": " Impacto Social"
+          },
+          "Mercado de trabalho mais ético e inclu­sivo.": {
+                "en": "A more ethical and inclusive job market.",
+                "es": "Un mercado laboral más ético e inclusivo."
+          },
+          " Desenvolvi­mento de Pessoas": {
+                "en": " People Development",
+                "es": " Desarrollo de Personas"
+          },
+          "Cres­cimento profissio­nal e pessoal de todos.": {
+                "en": "Professional and personal growth for everyone.",
+                "es": "Crecimiento profesional y personal de todos."
+          },
+          " Para os Candi­datos:": {
+                "en": " For Candidates:",
+                "es": " Para los Candidatos:"
+          },
+          " Oportuni­dades reais, respeito à digni­dade e suporte em cada etapa. Você não é um número: é uma pessoa com uma história que merece ser ouvida.": {
+                "en": " Real opportunities, respect for dignity and support at every stage. You are not a number: you are a person with a story that deserves to be heard.",
+                "es": " Oportunidades reales, respeto a la dignidad y apoyo en cada etapa. No eres un número: eres una persona con una historia que merece ser escuchada."
+          },
+          " Para as Empresas:": {
+                "en": " For Companies:",
+                "es": " Para las Empresas:"
+          },
+          " Talentos alinha­dos à sua cultura e ao seu futuro. Não entre­gamos currí­culos: entre­gamos pessoas prepa­radas para contri­buir.": {
+                "en": " Talent aligned with your culture and your future. We don't deliver resumes: we deliver people ready to contribute.",
+                "es": " Talentos alineados a su cultura y a su futuro. No entregamos currículums: entregamos personas preparadas para contribuir."
+          },
+          " Para a Socie­dade:": {
+                "en": " For Society:",
+                "es": " Para la Sociedad:"
+          },
+          " Contribui­ção para um mercado mais ético, mais inclu­sivo e mais justo. Uma comuni­dade com boas oportuni­dades cresce junta.": {
+                "en": " Contribution to a more ethical, more inclusive and fairer market. A community with good opportunities grows together.",
+                "es": " Contribución a un mercado más ético, más inclusivo y más justo. Una comunidad con buenas oportunidades crece junta."
+          },
+          " Nossa Visão em Perspectiva:": {
+                "en": " Our Vision in Perspective:",
+                "es": " Nuestra Visión en Perspectiva:"
+          },
+          " Nascemos do povo e para o povo, e essa raiz não muda com o cres­cimento, ela se fortalece. Juntos, a gente chega lá. 🚀✨\n        ": {
+                "en": " We are born from the people and for the people, and that root does not change with growth, it grows stronger. Together, we get there. 🚀✨\n        ",
+                "es": " Nacimos del pueblo y para el pueblo, y esa raíz no cambia con el crecimiento, se fortalece. Juntos, llegamos allá. 🚀✨\n        "
+          },
+          "Avaliações": {
+                "en": "Reviews",
+                "es": "Reseñas"
+          },
+          "de Clientes": {
+                "en": "from Clients",
+                "es": "de Clientes"
+          },
+          "❮": {
+                "en": "❮",
+                "es": "❮"
+          },
+          "❯": {
+                "en": "❯",
+                "es": "❯"
+          },
+          "Nossa": {
+                "en": "Our",
+                "es": "Nuestra"
+          },
+          "Visão em Movimento": {
+                "en": "Vision in Motion",
+                "es": "Visión en Movimiento"
+          },
+          "Orizon · Visão de Futuro": {
+                "en": "Orizon · Vision for the Future",
+                "es": "Orizon · Visión de Futuro"
+          },
+          "Crescimento ": {
+                "en": "Growth ",
+                "es": "Crecimiento "
+          },
+          "real": {
+                "en": "real",
+                "es": "real"
+          },
+          " começa pelas raízes": {
+                "en": " starts from the roots",
+                "es": " comienza por las raíces"
+          },
+          "Nascemos do povo, para o povo. Nossa visão não é estática: é um ecossistema vivo de consultoria administrativa, RH, blog educativo e desenvolvimento humano, de Guaíba ao Brasil inteiro.": {
+                "en": "We are born from the people, for the people. Our vision is not static: it is a living ecosystem of administrative consulting, HR, educational blog and human development, from Guaíba to all of Brazil.",
+                "es": "Nacemos del pueblo, para el pueblo. Nuestra visión no es estática: es un ecosistema vivo de consultoría administrativa, RH, blog educativo y desarrollo humano, desde Guaíba hasta todo Brasil."
+          },
+          "Nossa visão em uma frase": {
+                "en": "Our vision in one sentence",
+                "es": "Nuestra visión en una frase"
+          },
+          "Ser o principal ecossistema de consultoria, RH e conhecimento do RS, porque nosso sucesso só é real se as pessoas ao nosso redor também crescem.": {
+                "en": "To be the leading ecosystem of consulting, HR and knowledge in RS, because our success is only real if the people around us also grow.",
+                "es": "Ser el principal ecosistema de consultoría, RH y conocimiento de RS, porque nuestro éxito solo es real si las personas a nuestro alrededor también crecen."
+          },
+          "Antecipando o futuro": {
+                "en": "Anticipating the future",
+                "es": "Anticipando el futuro"
+          },
+          "O mercado não espera, ": {
+                "en": "The market doesn't wait, ",
+                "es": "El mercado no espera, "
+          },
+          "nós também não": {
+                "en": "neither do we",
+                "es": "nosotros tampoco"
+          },
+          "O mercado de trabalho, a gestão de pessoas e a consultoria administrativa mudam em velocidade acelerada. Quem não antecipa as mudanças fica para trás. Nossa visão é estar sempre um passo à frente, levando nossos clientes e comunidade junto.": {
+                "en": "The job market, people management and administrative consulting change at accelerated speed. Those who don't anticipate change get left behind. Our vision is to always be one step ahead, bringing our clients and community along.",
+                "es": "El mercado laboral, la gestión de personas y la consultoría administrativa cambian a una velocidad acelerada. Quien no anticipa los cambios se queda atrás. Nuestra visión es estar siempre un paso adelante, llevando a nuestros clientes y comunidad con nosotros."
+          },
+          "Visão de longo prazo": {
+                "en": "Long-term vision",
+                "es": "Visión a largo plazo"
+          },
+          "Preparamos empresas, gestores e profissionais para o que ainda está por vir": {
+                "en": "We prepare companies, managers and professionals for what is yet to come",
+                "es": "Preparamos empresas, gestores y profesionales para lo que está por venir"
+          },
+          "Inteligência de dados": {
+                "en": "Data intelligence",
+                "es": "Inteligencia de datos"
+          },
+          "Análise de tendências para decisões mais precisas": {
+                "en": "Trend analysis for more precise decisions",
+                "es": "Análisis de tendencias para decisiones más precisas"
+          },
+          "Ecossistema adaptável": {
+                "en": "Adaptable ecosystem",
+                "es": "Ecosistema adaptable"
+          },
+          "Blog, consultoria, palestras e recrutamento integrados num único lugar": {
+                "en": "Blog, consulting, talks and recruitment integrated in one place",
+                "es": "Blog, consultoría, charlas y reclutamiento integrados en un solo lugar"
+          },
+          "Constante evolução": {
+                "en": "Constant evolution",
+                "es": "Evolución constante"
+          },
+          "Os ": {
+                "en": "The ",
+                "es": "Los "
+          },
+          "4 pilares": {
+                "en": "4 pillars",
+                "es": "4 pilares"
+          },
+          " que nos mantêm à frente": {
+                "en": " that keep us ahead",
+                "es": " que nos mantienen adelante"
+          },
+          "Somos um organismo vivo, em constante aprendizado. Cada empresa atendida, cada conteúdo publicado, cada profissional orientado nos torna melhores e mais úteis para a sociedade.": {
+                "en": "We are a living organism, in constant learning. Every company served, every piece of content published, every professional guided makes us better and more useful to society.",
+                "es": "Somos un organismo vivo, en constante aprendizaje. Cada empresa atendida, cada contenido publicado, cada profesional orientado nos hace mejores y más útiles para la sociedad."
+          },
+          "Tecnologia": {
+                "en": "Technology",
+                "es": "Tecnología"
+          },
+          "Dados": {
+                "en": "Data",
+                "es": "Datos"
+          },
+          "Humanidade": {
+                "en": "Humanity",
+                "es": "Humanidad"
+          },
+          "Transparência": {
+                "en": "Transparency",
+                "es": "Transparencia"
+          },
+          "Compromisso com todas as partes": {
+                "en": "Commitment to all parties",
+                "es": "Compromiso con todas las partes"
+          },
+          "Para candidatos, empresas ": {
+                "en": "For candidates, companies ",
+                "es": "Para candidatos, empresas "
+          },
+          "e a sociedade": {
+                "en": "and society",
+                "es": "y la sociedad"
+          },
+          "Profissionais": {
+                "en": "Professionals",
+                "es": "Profesionales"
+          },
+          "Blog, mentoria e conteúdo gratuito para quem quer crescer na carreira": {
+                "en": "Blog, mentoring and free content for those who want to grow their career",
+                "es": "Blog, mentoría y contenido gratuito para quienes quieren crecer en su carrera"
+          },
+          "Empresas": {
+                "en": "Companies",
+                "es": "Empresas"
+          },
+          "Consultoria administrativa, recrutamento estratégico e suporte organizacional": {
+                "en": "Administrative consulting, strategic recruitment and organizational support",
+                "es": "Consultoría administrativa, reclutamiento estratégico y apoyo organizacional"
+          },
+          "Sociedade": {
+                "en": "Society",
+                "es": "Sociedad"
+          },
+          "Mercado mais ético, inclusivo e sustentável para todos": {
+                "en": "A more ethical, inclusive and sustainable market for everyone",
+                "es": "Un mercado más ético, inclusivo y sostenible para todos"
+          },
+          "Juntos, construímos o ecossistema de RH e gestão mais humano do Brasil 🚀": {
+                "en": "Together, we are building the most human HR and management ecosystem in Brazil 🚀",
+                "es": "Juntos, construimos el ecosistema de RH y gestión más humano de Brasil 🚀"
+          },
+          "Você, profissional, empresa ou comunidade: é parte dessa jornada.": {
+                "en": "You, professional, company or community: are part of this journey.",
+                "es": "Tú, profesional, empresa o comunidad: eres parte de este viaje."
+          },
+          "Continuar →": {
+                "en": "Continue →",
+                "es": "Continuar →"
+          },
+          "Fale Conosco": {
+                "en": "Talk to Us",
+                "es": "Habla con Nosotros"
+          },
+          "Orizon ": {
+                "en": "Orizon ",
+                "es": "Orizon "
+          },
+          "Consultoria": {
+                "en": "Consulting",
+                "es": "Consultoría"
+          },
+          "Consultoria + RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.": {
+                "en": "Consulting + HR and Management: Knowledge, strategy and humanity for companies and people.",
+                "es": "Consultoría + RH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas."
+          },
+          "Navegação": {
+                "en": "Navigation",
+                "es": "Navegación"
+          },
+          "Vagas & Oportunidades": {
+                "en": "Jobs & Opportunities",
+                "es": "Empleos y Oportunidades"
+          },
+          "Sobre nós": {
+                "en": "About Us",
+                "es": "Sobre Nosotros"
+          },
+          "Comercial": {
+                "en": "Business",
+                "es": "Comercial"
+          },
+          "Recrutamento": {
+                "en": "Recruitment",
+                "es": "Reclutamiento"
+          },
+          "WhatsApp": {
+                "en": "WhatsApp",
+                "es": "WhatsApp"
+          },
+          "Atendimento IA": {
+                "en": "AI Support",
+                "es": "Atención IA"
+          },
+          "♥": {
+                "en": "♥",
+                "es": "♥"
+          },
+          " Feito com propósito, Rio Grande do Sul, Brasil": {
+                "en": " Made with purpose, Rio Grande do Sul, Brazil",
+                "es": " Hecho con propósito, Rio Grande do Sul, Brasil"
+          },
+          "▲": {
+                "en": "▲",
+                "es": "▲"
+          },
+          "Orizon": {
+                "en": "Orizon",
+                "es": "Orizon"
+          },
+          "Assistente Orizon": {
+                "en": "Orizon Assistant",
+                "es": "Asistente Orizon"
+          },
+          "Modo IA": {
+                "en": "AI Mode",
+                "es": "Modo IA"
+          },
+          "ON": {
+                "en": "ON",
+                "es": "ON"
+          },
+          "✕": {
+                "en": "✕",
+                "es": "✕"
+          },
+          "➤": {
+                "en": "➤",
+                "es": "➤"
+          }
+    };
+
+    async function vtTranslateOne(text, to) {
+      const lit = literalTranslations[text];
+      if (lit && lit[to]) return lit[to];
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) {
         selector.value = savedLang;
       }
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        if (translations[lang][key]) {
+        if (t[key]) {
           const icon = element.querySelector(':scope > img, :scope > svg');
           if (element.classList.contains('orizon-section-title')) {
-            const txt = translations[lang][key].trim();
+            const txt = t[key].trim();
             const sp = txt.indexOf(' ');
             const w1 = sp === -1 ? txt : txt.slice(0, sp);
             const w2 = sp === -1 ? '' : txt.slice(sp + 1);
@@ -6497,16 +7457,18 @@ let vtRecognition = null;
               element.appendChild(s2);
             }
           } else {
-            element.textContent = translations[lang][key];
+            element.textContent = t[key];
             if (icon) element.insertBefore(icon, element.firstChild);
           }
         }
       });
       
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 
 </script>
 <script>
@@ -6814,7 +7776,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
   }}</style>
 <style>
 /* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}
 </style>
 <style>
 /* Avaliações: oculta setas + bolinhas de navegação apenas no mobile */
@@ -7323,6 +8284,7 @@ body:not(.dark-mode) .olh-title {
   text-shadow: 0 1px 10px rgba(0,0,0,0.3) !important;
   animation: olhShine 5s ease-in-out infinite !important;
   -webkit-text-stroke: 1.5px #000000 !important;
+  text-stroke: 1.5px #000000 !important;
   paint-order: stroke fill !important;
 }
 @keyframes olhShine {

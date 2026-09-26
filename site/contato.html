@@ -1515,6 +1515,7 @@ body.dark-mode .btn-secondary {
         var(--sc-a2) 345deg,
         color-mix(in srgb, var(--sc-a1) 55%, white) 360deg);
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
       opacity: 0.9;
@@ -2308,7 +2309,6 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -4050,8 +4050,8 @@ html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!i
 <details class="vt-settings">
 <summary>⚙️ Configurações de voz</summary>
 <div class="vt-settings-body">
-<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById(\'vtRateVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
-<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById(\'vtPitchVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
+<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById('vtRateVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
+<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById('vtPitchVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
 <label>Voz
             <select id="vtVoiceSelect" style="margin-left:4px;font-size:0.8rem;border-radius:8px;border: 2.5px solid rgba(0,0,0,0.35);padding:2px 6px;"></select>
 </label>
@@ -6023,6 +6023,21 @@ loadSavedTheme();
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -6030,25 +6045,53 @@ loadSavedTheme();
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
+        // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6424,7 +6467,7 @@ loadSavedTheme();
     };
 
     function applyTranslations(lang) {
-      const t = TRANSLATIONS_CONT[lang] || TRANSLATIONS_CONT['pt'];
+      const t = Object.assign({}, TRANSLATIONS_CONT['pt'], TRANSLATIONS_CONT[lang] || {});
 
       // Header
       const h1 = document.querySelector('.header h1');
@@ -6535,19 +6578,384 @@ loadSavedTheme();
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS_CONT.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // === SISTEMA 3 (redundancia) - TRADUCOES LITERAIS PRE-ESCRITAS ===
+    // Escritas a mao (pt -> en/es) para o conteudo desta pagina que fica
+    // fora do Sistema 1 (data-i18n). Usadas por vtTranslateOne antes de
+    // chamar a API MyMemory: elimina delay de rede e gasto de cota para
+    // o texto ja coberto aqui. Chave = texto original em pt, exato (com
+    // os mesmos espacos/quebras de linha do texto no HTML).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando previsión…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Topics" },
+      " Contatos": { en: " Contacts", es: " Contactos" },
+      " Formulários": { en: " Forms", es: " Formularios" },
+      " Localização": { en: " Location", es: " Ubicación" },
+      " Redes Sociais": { en: " Social Media", es: " Redes Sociales" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Vídeos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "\n          Administração\n          ": { en: "\n          Administration\n          ", es: "\n          Administración\n          " },
+      "◆": { en: "◆", es: "◆" },
+      "\n          Gestão\n        ": { en: "\n          Management\n        ", es: "\n          Gestión\n        " },
+      "Fale Conosco": { en: "Contact Us", es: "Contáctenos" },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Reset settings", es: "↺ Restablecer ajustes" },
+      "Escolha a Melhor Forma de Falar Conosco": { en: "Choose the Best Way to Reach Us", es: "Elija la Mejor Forma de Contactarnos" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Entre em contato conosco pelo WhatsApp para dúvidas rápidas e atendimento a profissionais e empresas.": { en: "Contact us via WhatsApp for quick questions and support for professionals and companies.", es: "Contáctenos por WhatsApp para preguntas rápidas y atención a profesionales y empresas." },
+      "Toque para ver os contatos": { en: "Tap to see the contacts", es: "Toque para ver los contactos" },
+      "✕": { en: "✕", es: "✕" },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "E-mail": { en: "E-mail", es: "E-mail" },
+      "Envie currículos, dúvidas e sugestões para nossos e-mails.": { en: "Send resumes, questions and suggestions to our emails.", es: "Envíe currículums, preguntas y sugerencias a nuestros correos." },
+      "Administrativo": { en: "Administrative", es: "Administrativo" },
+      "adm@orizonrs.com": { en: "adm@orizonrs.com", es: "adm@orizonrs.com" },
+      "selecao.orizon@gmail.com": { en: "selecao.orizon@gmail.com", es: "selecao.orizon@gmail.com" },
+      "Telefone": { en: "Phone", es: "Teléfono" },
+      "Ligue para a Orizon e fale direto com nossa equipe.": { en: "Call Orizon and speak directly with our team.", es: "Llame a Orizon y hable directamente con nuestro equipo." },
+      "\n    Localização: ": { en: "\n    Location: ", es: "\n    Ubicación: " },
+      "Guaíba": { en: "Guaíba", es: "Guaíba" },
+      "RS": { en: "RS", es: "RS" },
+      "Enviar por E-mail": { en: "Send by E-mail", es: "Enviar por E-mail" },
+      "Resposta o mais breve possível": { en: "Response as soon as possible", es: "Respuesta lo antes posible" },
+      "Nome Completo": { en: "Full Name", es: "Nombre Completo" },
+      "Assunto": { en: "Subject", es: "Asunto" },
+      "Mensagem": { en: "Message", es: "Mensaje" },
+      "\n  Enviar por E-mail\n": { en: "\n  Send by E-mail\n", es: "\n  Enviar por E-mail\n" },
+      "\n  Limpar\n": { en: "\n  Clear\n", es: "\n  Limpiar\n" },
+      "Enviar pelo WhatsApp": { en: "Send via WhatsApp", es: "Enviar por WhatsApp" },
+      "Segunda a sexta, 8h–18h": { en: "Monday to Friday, 8am–6pm", es: "Lunes a viernes, 8h–18h" },
+      " Enviar pelo WhatsApp": { en: " Send via WhatsApp", es: " Enviar por WhatsApp" },
+      "Limpar": { en: "Clear", es: "Limpiar" },
+      "✦ Para Empresas e Parceiros": { en: "✦ For Companies and Partners", es: "✦ Para Empresas y Socios" },
+      "Sua empresa está": { en: "Is your company", es: "¿Su empresa está" },
+      "contratando?": { en: "hiring?", es: "contratando?" },
+      "Arraste o card para ver como podemos ajudar": { en: "Drag the card to see how we can help", es: "Arrastre la tarjeta para ver cómo podemos ayudar" },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "Proposta Comercial": { en: "Business Proposal", es: "Propuesta Comercial" },
+      "Premium": { en: "Premium", es: "Premium" },
+      "IA Avançada": { en: "Advanced AI", es: "IA Avanzada" },
+      "Claude, GPT, Gemini, Grok & Copilot": { en: "Claude, GPT, Gemini, Grok & Copilot", es: "Claude, GPT, Gemini, Grok & Copilot" },
+      "Perfil Comportamental": { en: "Behavioral Profile", es: "Perfil Conductual" },
+      "IPS Ativo, 16 Personalidades & PDA": { en: "Active IPS, 16 Personalities & PDA", es: "IPS Activo, 16 Personalidades & PDA" },
+      "200k Views/mês": { en: "200k Views/month", es: "200k Vistas/mes" },
+      "Média no Facebook por mês": { en: "Average on Facebook per month", es: "Promedio en Facebook por mes" },
+      "17k+ Pessoas": { en: "17k+ People", es: "17k+ Personas" },
+      "LinkedIn, WhatsApp & Instagram": { en: "LinkedIn, WhatsApp & Instagram", es: "LinkedIn, WhatsApp & Instagram" },
+      "Sistema Financeiro": { en: "Financial System", es: "Sistema Financiero" },
+      "Controle financeiro completo da empresa": { en: "Complete financial control for your company", es: "Control financiero completo de la empresa" },
+      "Departamento Pessoal": { en: "Human Resources Department", es: "Departamento de Personal" },
+      "Gestão de DP e folha de pagamento": { en: "HR and payroll management", es: "Gestión de personal y nómina" },
+      "Criação de Sites": { en: "Website Creation", es: "Creación de Sitios Web" },
+      "Sites profissionais sob medida": { en: "Custom professional websites", es: "Sitios web profesionales a medida" },
+      "Chatbot WhatsApp": { en: "Chatbot WhatsApp", es: "Chatbot WhatsApp" },
+      "Atendimento automatizado 24h": { en: "24h automated support", es: "Atención automatizada 24h" },
+      "Arraste para ver mais →": { en: "Drag to see more →", es: "Arrastre para ver más →" },
+      "orizon-terminal — bash": { en: "orizon-terminal — bash", es: "orizon-terminal — bash" },
+      "💬 WhatsApp agora": { en: "💬 WhatsApp now", es: "💬 WhatsApp ahora" },
+      "✉️ Enviar e-mail": { en: "✉️ Send email", es: "✉️ Enviar correo" },
+      "Para empresas": { en: "For companies", es: "Para empresas" },
+      "Cadastre suas vagas": { en: "Post your job openings", es: "Publique sus vacantes" },
+      "Nos": { en: "Find", es: "Encuéntrenos" },
+      "Encontre": { en: "Us", es: "aquí" },
+      "Estamos localizados em toda região sul do Brasil, com sede em Guaíba - RS": { en: "We are located throughout southern Brazil, headquartered in Guaíba - RS", es: "Estamos ubicados en toda la región sur de Brasil, con sede en Guaíba - RS" },
+      "Siga-nos": { en: "Follow us", es: "Síguenos" },
+      "nas Redes Sociais": { en: "on Social Media", es: "en las Redes Sociales" },
+      "Instagram": { en: "Instagram", es: "Instagram" },
+      "@orizonrs": { en: "@orizonrs", es: "@orizonrs" },
+      "LinkedIn": { en: "LinkedIn", es: "LinkedIn" },
+      "Facebook": { en: "Facebook", es: "Facebook" },
+      "orizonrs": { en: "orizonrs", es: "orizonrs" },
+      "Fale agora": { en: "Contact now", es: "Contactar ahora" },
+      "❓": { en: "❓", es: "❓" },
+      "Ficou com alguma dúvida?": { en: "Have a question?", es: "¿Tiene alguna duda?" },
+      "\n      Confira nossas perguntas frequentes — respondemos as dúvidas mais comuns sobre candidaturas, vagas, empresas e privacidade.\n    ": { en: "\n      Check out our frequently asked questions — we answer the most common questions about applications, jobs, companies and privacy.\n    ", es: "\n      Consulte nuestras preguntas frecuentes — respondemos las dudas más comunes sobre candidaturas, empleos, empresas y privacidad.\n    " },
+      "\n        👤 FAQ Profissionais\n      ": { en: "\n        👤 Professional FAQ\n      ", es: "\n        👤 FAQ Profesionales\n      " },
+      "\n        💼 FAQ Vagas\n      ": { en: "\n        💼 Jobs FAQ\n      ", es: "\n        💼 FAQ Empleos\n      " },
+      "\n        🏢 FAQ Empresas\n      ": { en: "\n        🏢 Companies FAQ\n      ", es: "\n        🏢 FAQ Empresas\n      " },
+      "\n        🔒 FAQ Privacidade\n      ": { en: "\n        🔒 Privacy FAQ\n      ", es: "\n        🔒 FAQ Privacidad\n      " },
+      "Orizon ": { en: "Orizon ", es: "Orizon " },
+      "Consultoria": { en: "Consultoria", es: "Consultoria" },
+      "Consultoria + RH & Gestão — Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR & Management — Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RH & Gestión — Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Vagas & Oportunidades": { en: "Jobs & Opportunities", es: "Empleos y Oportunidades" },
+      "Sobre nós": { en: "About us", es: "Sobre nosotros" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "© 2026 ": { en: "© 2026 ", es: "© 2026 " },
+      "Orizon Consultoria e Gestão": { en: "Orizon Consultoria e Gestão", es: "Orizon Consultoria e Gestão" },
+      ". Todos os direitos reservados.": { en: ". All rights reserved.", es: ". Todos los derechos reservados." },
+      "♥": { en: "♥", es: "♥" },
+      " Feito com propósito — Rio Grande do Sul, Brasil": { en: " Made with purpose — Rio Grande do Sul, Brazil", es: " Hecho con propósito — Rio Grande do Sul, Brasil" },
+      "▲": { en: "▲", es: "▲" },
+      "Assistente Orizon": { en: "Orizon Assistant", es: "Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ON" },
+      "➤": { en: "➤", es: "➤" }
+    };
+
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      // Prioridade 1: traducao literal pre-escrita (sem chamar a API)
+      const lit = literalTranslations[text];
+      if (lit && lit[to]) return lit[to];
+      // Prioridade 2: cache local de traducoes ja feitas pela API antes
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      // Prioridade 3: API MyMemory em tempo real (so pra texto novo/nao mapeado)
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS_CONT !== 'undefined' && TRANSLATIONS_CONT.pt) ? TRANSLATIONS_CONT.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS_CONT.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS_CONT.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslations(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslations(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 </script>
 <script>
 (function(){
@@ -6933,7 +7341,7 @@ body:not(.dark-mode) .op-btn-email {
 </style>
 <style>
 /* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}</style>
+</style>
 <script>
 /* ORIZON EMAIL CLICK */
 (function(){
@@ -7379,6 +7787,7 @@ body:not(.dark-mode) .olh-title {
   text-shadow: 0 1px 10px rgba(0,0,0,0.3) !important;
   animation: olhShine 5s ease-in-out infinite !important;
   -webkit-text-stroke: 1.5px #000000 !important;
+  text-stroke: 1.5px #000000 !important;
   paint-order: stroke fill !important;
 }
 @keyframes olhShine {

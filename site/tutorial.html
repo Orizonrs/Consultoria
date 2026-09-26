@@ -964,17 +964,16 @@ body.dark-mode {
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
-    .footer-brand-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      margin-bottom: 0.9rem;
-    }
-    .footer-brand-logo img {
-      object-fit: contain;
-      border-radius: 8px;
-    }
+   .footer-brand-logo {
+     display: flex;
+     align-items: center;
+     gap: 0.7rem;
+     margin-bottom: 0.9rem;
+}
+   .footer-brand-logo img {
+     object-fit: contain;
+     border-radius: 8px;
+}
     .footer-logo-desktop { width: 48px; height: 48px; display: inline-block; }
     .footer-logo-mobile { width: 32px; height: 32px; display: none; }
     @media (max-width: 860px) {
@@ -4741,6 +4740,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -4748,26 +4762,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma: texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -5181,7 +5222,7 @@ let vtRecognition = null;
     };
 
     function applyTranslationsTutorial(lang) {
-      const t = TRANSLATIONS_TUTORIAL[lang] || TRANSLATIONS_TUTORIAL['pt'];
+      const t = Object.assign({}, TRANSLATIONS_TUTORIAL['pt'], TRANSLATIONS_TUTORIAL[lang] || {});
 
       // Intro eyebrow (🎥 Série de vídeos)
       const eyebrow = document.querySelector('.tv-intro-eyebrow');
@@ -5232,19 +5273,342 @@ let vtRecognition = null;
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS_TUTORIAL.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // Dicionario de traducoes literais (pre-escritas), conferido antes de
+    // chamar a API MyMemory. Cobre o texto coletado por vtCollectPageNodes()
+    // que fica fora do Sistema 1 (data-i18n). Ver SISTEMAS-DE-TRADUCAO-ORIZON.txt.
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      'Carregando previsão…': { en: 'Loading forecast…', es: 'Cargando previsión…' },
+      'Voltar': { en: 'Back', es: 'Volver' },
+      'Menu': { en: 'Menu', es: 'Menú' },
+      'Topics': { en: 'Topics', es: 'Topics' },
+      'Informações de contato': { en: 'Contact information', es: 'Información de contacto' },
+      'Resumo profissional': { en: 'Professional summary', es: 'Resumen profesional' },
+      'Experiências profissionais': { en: 'Professional experience', es: 'Experiencia profesional' },
+      'Revisão completa': { en: 'Full review', es: 'Revisión completa' },
+      'Jovem Aprendiz': { en: 'Young Apprentice', es: 'Joven Aprendiz' },
+      'Bem-Vindo': { en: 'Welcome', es: 'Bienvenido' },
+      'Sobre': { en: 'About', es: 'Acerca de' },
+      '▾': { en: '▾', es: '▾' },
+      'Missão': { en: 'Mission', es: 'Misión' },
+      'Visão': { en: 'Vision', es: 'Visión' },
+      'Valores': { en: 'Values', es: 'Valores' },
+      'Candidatos': { en: 'Candidates', es: 'Candidatos' },
+      'Vídeos': { en: 'Videos', es: 'Vídeos' },
+      'Vagas': { en: 'Jobs', es: 'Empleos' },
+      'Ferramentas IA': { en: 'AI Tools', es: 'Herramientas IA' },
+      'Utilidades': { en: 'Utilities', es: 'Utilidades' },
+      'Mapa de Carreiras': { en: 'Career Map', es: 'Mapa de Carreras' },
+      'Atendimento': { en: 'Support', es: 'Atención' },
+      'Serviços': { en: 'Services', es: 'Servicios' },
+      'Contato': { en: 'Contact', es: 'Contacto' },
+      'Informações': { en: 'Information', es: 'Información' },
+      'Privacidade': { en: 'Privacy', es: 'Privacidad' },
+      'LGBT+': { en: 'LGBT+', es: 'LGBT+' },
+      'Privacidade & LGPD': { en: 'Privacy & LGPD', es: 'Privacidad y LGPD' },
+      'Cookies': { en: 'Cookies', es: 'Cookies' },
+      'Loja de Sistemas': { en: 'Systems Store', es: 'Tienda de Sistemas' },
+      'Teste de Perfil': { en: 'Profile Test', es: 'Test de Perfil' },
+      '// Sistema de Gestão //': { en: '// Management System //', es: '// Sistema de Gestión //' },
+      'ORIZON': { en: 'ORIZON', es: 'ORIZON' },
+      'Administração': { en: 'Administration', es: 'Administración' },
+      '◆': { en: '◆', es: '◆' },
+      'Gestão': { en: 'Management', es: 'Gestión' },
+      'Tutoriais e Vídeos': { en: 'Tutorials and Videos', es: 'Tutoriales y Vídeos' },
+      'Acessibilidade': { en: 'Accessibility', es: 'Accesibilidad' },
+      'A+': { en: 'A+', es: 'A+' },
+      'A++': { en: 'A++', es: 'A++' },
+      '◐ Contraste': { en: '◐ Contrast', es: '◐ Contraste' },
+      '↺ Restaurar recursos': { en: '↺ Reset features', es: '↺ Restaurar funciones' },
+      'Série de vídeos · ao vivo': { en: 'Video series · live', es: 'Serie de vídeos · en vivo' },
+      'Tutoriais de Currículo & Carreira': { en: 'Resume & Career Tutorials', es: 'Tutoriales de Currículum y Carrera' },
+      'Aprenda passo a passo como montar um currículo profissional que se destaca nos processos seletivos.': { en: 'Learn step by step how to build a professional resume that stands out in hiring processes.', es: 'Aprende paso a paso cómo armar un currículum profesional que se destaque en los procesos de selección.' },
+      '5 CENAS': { en: '5 SCENES', es: '5 ESCENAS' },
+      '100% GRATUITO': { en: '100% FREE', es: '100% GRATUITO' },
+      'DIRETO AO PONTO': { en: 'STRAIGHT TO THE POINT', es: 'DIRECTO AL PUNTO' },
+      'Cena 01': { en: 'Scene 01', es: 'Escena 01' },
+      'Currículo': { en: 'Resume', es: 'Currículum' },
+      'O que colocar no topo do currículo: nome, contatos, cidade, e o que evitar para não parecer amador.': { en: 'What to put at the top of the resume: name, contacts, city, and what to avoid to not look amateurish.', es: 'Qué poner en la parte superior del currículum: nombre, contactos, ciudad, y qué evitar para no parecer amateur.' },
+      '#EXT-001': { en: '#EXT-001', es: '#EXT-001' },
+      '📌 Essencial para iniciantes': { en: '📌 Essential for beginners', es: '📌 Esencial para principiantes' },
+      'Cena 02': { en: 'Scene 02', es: 'Escena 02' },
+      'O que colocar no resumo profissional?': { en: 'What to put in the professional summary?', es: '¿Qué poner en el resumen profesional?' },
+      'Como escrever um resumo que prende o recrutador nos primeiros 6 segundos. Exemplos reais inclusos.': { en: 'How to write a summary that hooks the recruiter in the first 6 seconds. Real examples included.', es: 'Cómo escribir un resumen que enganche al reclutador en los primeros 6 segundos. Ejemplos reales incluidos.' },
+      '#EXT-002': { en: '#EXT-002', es: '#EXT-002' },
+      '✍️ Seção mais importante': { en: '✍️ Most important section', es: '✍️ Sección más importante' },
+      'Cena 03': { en: 'Scene 03', es: 'Escena 03' },
+      'Como descrever experiências profissionais?': { en: 'How to describe professional experience?', es: '¿Cómo describir experiencias profesionales?' },
+      'Verbos de ação, números reais e formatação correta para cada cargo que você exerceu.': { en: 'Action verbs, real numbers and correct formatting for each position you held.', es: 'Verbos de acción, números reales y formato correcto para cada cargo que ejerciste.' },
+      '#EXT-003': { en: '#EXT-003', es: '#EXT-003' },
+      '🏆 Use verbos de ação': { en: '🏆 Use action verbs', es: '🏆 Usa verbos de acción' },
+      'Cena 04': { en: 'Scene 04', es: 'Escena 04' },
+      'Revisão completa do currículo': { en: 'Complete resume review', es: 'Revisión completa del currículum' },
+      'Revisão geral de todos os módulos, ideal para assistir antes de enviar o currículo para uma vaga.': { en: 'General review of all modules, ideal to watch before sending your resume for a job.', es: 'Revisión general de todos los módulos, ideal para ver antes de enviar el currículum a una vacante.' },
+      '#EXT-004': { en: '#EXT-004', es: '#EXT-004' },
+      '🔁 Assista antes de enviar': { en: '🔁 Watch before sending', es: '🔁 Míralo antes de enviar' },
+      'Cena 05': { en: 'Scene 05', es: 'Escena 05' },
+      'Currículo para Jovem Aprendiz': { en: 'Resume for Young Apprentice', es: 'Currículum para Joven Aprendiz' },
+      'Como criar um currículo completo e profissional mesmo sem nenhuma experiência anterior.': { en: 'How to create a complete and professional resume even with no previous experience.', es: 'Cómo crear un currículum completo y profesional aunque no tengas experiencia previa.' },
+      '#EXT-005': { en: '#EXT-005', es: '#EXT-005' },
+      '🌱 Primeiro emprego': { en: '🌱 First job', es: '🌱 Primer empleo' },
+      '✕': { en: '✕', es: '✕' },
+      'Orizon': { en: 'Orizon', es: 'Orizon' },
+      'Consultoria': { en: 'Consultoria', es: 'Consultoria' },
+      'Consultoria Administrativa, RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.': { en: 'Administrative, HR and Management Consulting: Knowledge, strategy and humanity for companies and people.', es: 'Consultoría Administrativa, RRHH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas.' },
+      'Navegação': { en: 'Navigation', es: 'Navegación' },
+      'Vagas & Oportunidades': { en: 'Jobs & Opportunities', es: 'Empleos y Oportunidades' },
+      'Sobre nós': { en: 'About us', es: 'Sobre nosotros' },
+      'Comercial': { en: 'Sales', es: 'Comercial' },
+      'Recrutamento': { en: 'Recruitment', es: 'Reclutamiento' },
+      'WhatsApp': { en: 'WhatsApp', es: 'WhatsApp' },
+      'Atendimento IA': { en: 'AI Support', es: 'Atención IA' },
+      '♥': { en: '♥', es: '♥' },
+      'Feito com propósito | Rio Grande do Sul, Brasil': { en: 'Made with purpose | Rio Grande do Sul, Brazil', es: 'Hecho con propósito | Rio Grande do Sul, Brasil' },
+      '▲': { en: '▲', es: '▲' },
+      'Assistente Orizon': { en: 'Orizon Assistant', es: 'Asistente Orizon' },
+      'Modo IA': { en: 'AI Mode', es: 'Modo IA' },
+      'ON': { en: 'ON', es: 'ON' },
+      '➤': { en: '➤', es: '➤' }
+    };
+
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      const trimmed = text.trim();
+      const literalEntry = literalTranslations[trimmed];
+      if (literalEntry && literalEntry[to]) {
+        const leading = text.slice(0, text.length - text.trimStart().length);
+        const trailing = text.slice(text.trimEnd().length);
+        return leading + literalEntry[to] + trailing;
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS_TUTORIAL !== 'undefined' && TRANSLATIONS_TUTORIAL.pt) ? TRANSLATIONS_TUTORIAL.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS_TUTORIAL.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS_TUTORIAL.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()), aplica o
+    // mesmo .trim() que vtTranslateOne() usa nesta pagina antes de
+    // consultar o dicionario, e compara com as chaves de literalTranslations.
+    // Nao corrige nada sozinho -- so avisa no console, mesmo espirito do
+    // checkI18nSync(). Ver o comentario logo acima de "const literalTranslations"
+    // para o passo a passo de como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue.trim()); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslationsTutorial(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslationsTutorial(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 </script>
 <script>
 (function(){
@@ -5446,7 +5810,11 @@ body:not(.dark-mode) .header {
 
 /* Brilho dourado sutil no centro */
 body:not(.dark-mode) .header::before {
-  
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(250,204,21,0.15), transparent 70%);
+  pointer-events: none;
 }
 
 /* Logo: texto branco sólido sem glow neon */
@@ -5764,7 +6132,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

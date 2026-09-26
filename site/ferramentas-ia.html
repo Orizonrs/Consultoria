@@ -1125,7 +1125,6 @@ body:not(.dark-mode) .theme-toggle {
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -1134,7 +1133,6 @@ body:not(.dark-mode) .theme-toggle {
   }
   .ia-hero-banner, .ia-hero-banner * {
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
   }
   .ia-hero-banner:focus { outline: none; }
   .ia-hero-banner:focus-visible { outline: 2px solid #00c8ff; outline-offset: 2px; }
@@ -1200,7 +1198,6 @@ body:not(.dark-mode) .theme-toggle {
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
@@ -1212,7 +1209,6 @@ body:not(.dark-mode) .theme-toggle {
   .ia-photo-card,
   .ia-photo-card * {
     -webkit-tap-highlight-color: transparent !important;
-    tap-highlight-color: transparent !important;
   }
   .ia-photo-card:focus { outline: none; }
   .ia-photo-card:focus-visible { outline: 2px solid #00c8ff; outline-offset: 2px; }
@@ -1802,7 +1798,6 @@ body:not(.dark-mode) .theme-toggle {
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -3244,8 +3239,8 @@ body.dark-mode .download-free-tag { color: #34d399; }
 <details class="vt-settings">
 <summary>⚙️ Configurações de voz</summary>
 <div class="vt-settings-body">
-<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById(\'vtRateVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
-<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById(\'vtPitchVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
+<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById('vtRateVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
+<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById('vtPitchVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
 <label>Voz
             <select id="vtVoiceSelect" style="margin-left:4px;font-size:0.8rem;border-radius:8px;border: 2.5px solid rgba(0,0,0,0.35);padding:2px 6px;"></select>
 </label>
@@ -3906,6 +3901,7 @@ document.addEventListener('DOMContentLoaded', function(){
     padding: 2px;
     background: conic-gradient(from var(--pw-angle,0deg), transparent 0 40%, var(--pw-cyan) 55%, var(--pw-accent-2) 68%, var(--pw-purple) 80%, transparent 100%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     animation: pwRotateBorder 5s linear infinite;
@@ -4033,6 +4029,7 @@ document.addEventListener('DOMContentLoaded', function(){
     background: conic-gradient(from var(--pw-btn-angle,0deg),
       var(--pw-cyan), var(--pw-accent-2), var(--pw-purple), var(--pw-cyan));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor; mask-composite: exclude;
     z-index: -1;
     animation: pwRotateBorderBtn 3.2s linear infinite;
@@ -5311,6 +5308,21 @@ loadSavedTheme();
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -5318,25 +5330,53 @@ loadSavedTheme();
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
+        // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -5749,7 +5789,7 @@ loadSavedTheme();
     };
 
     function applyTranslations(lang) {
-      const t = TRANSLATIONS_FIA[lang] || TRANSLATIONS_FIA['pt'];
+      const t = Object.assign({}, TRANSLATIONS_FIA['pt'], TRANSLATIONS_FIA[lang] || {});
 
       // Header
       const h1 = document.querySelector('.header h1');
@@ -5834,19 +5874,411 @@ loadSavedTheme();
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS_FIA.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // Traducoes literais escritas a mao (pt -> en/es), verificadas antes de
+    // chamar a API MyMemory. Chave = texto original em pt, exato (sem trim).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando previsión…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Topics" },
+      " Ferramentas Gratuitas": { en: " Free Tools", es: " Herramientas Gratuitas" },
+      " Design e Apresentações": { en: " Design and Presentations", es: " Diseño y Presentaciones" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Vídeos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "\n          Administração\n          ": { en: "\n          Administration\n          ", es: "\n          Administración\n          " },
+      "◆": { en: "◆", es: "◆" },
+      "\n          Gestão\n        ": { en: "\n          Management\n        ", es: "\n          Gestión\n        " },
+      "Ferramentas de Inteligência Artificial": { en: "Artificial Intelligence Tools", es: "Herramientas de Inteligencia Artificial" },
+      "\n  Ferramentas de ": { en: "\n  Tools for ", es: "\n  Herramientas de " },
+      "Inteligência Artificial": { en: "Artificial Intelligence", es: "Inteligencia Artificial" },
+      " aplicadas à ": { en: " applied to ", es: " aplicadas a la " },
+      "agência de RH": { en: "HR agency", es: "agencia de RRHH" },
+      "consultoria administrativa": { en: "administrative consulting", es: "consultoría administrativa" },
+      "consultoria financeira": { en: "financial consulting", es: "consultoría financiera" },
+      " e ": { en: " and ", es: " y " },
+      "consultoria de logística": { en: "logistics consulting", es: "consultoría de logística" },
+      " em Guaíba, Eldorado do Sul, Porto Alegre e Barra do Ribeiro. ChatGPT, Gemini, Claude e Copilot aplicados a recrutamento e seleção, produção textual, programação, criação de sites e aos ": { en: " in Guaíba, Eldorado do Sul, Porto Alegre and Barra do Ribeiro. ChatGPT, Gemini, Claude and Copilot applied to recruitment and selection, text production, programming, website creation and to the ", es: " en Guaíba, Eldorado do Sul, Porto Alegre y Barra do Ribeiro. ChatGPT, Gemini, Claude y Copilot aplicados a reclutamiento y selección, producción textual, programación, creación de sitios web y a los " },
+      "sistemas de gestão": { en: "management systems", es: "sistemas de gestión" },
+      " (RH, compras, financeiro e logística) desenvolvidos pela Orizon.\n": { en: " (HR, purchasing, finance and logistics) developed by Orizon.\n", es: " (RRHH, compras, finanzas y logística) desarrollados por Orizon.\n" },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Restore defaults", es: "↺ Restaurar valores" },
+      "🤖 ": { en: "🤖 ", es: "🤖 " },
+      "Inteligência": { en: "Intelligence", es: "Inteligencia" },
+      "Artificial": { en: "Artificial", es: "Artificial" },
+      "Ferramentas de IA para Currículo e Entrevista": { en: "AI Tools for Resume and Interview", es: "Herramientas de IA para Currículum y Entrevista" },
+      "Gratuito": { en: "Free", es: "Gratis" },
+      "ChatGPT (OpenAI)": { en: "ChatGPT (OpenAI)", es: "ChatGPT (OpenAI)" },
+      "O mais versátil. Redige contratos, propostas comerciais, relatórios, e-mails corporativos e documentos administrativos em segundos. Automatiza rotinas, organiza processos e responde dúvidas de gestão. Essencial para consultores administrativos, equipes de RH e gestores de pequenas e médias empresas.": { en: "The most versatile option. It drafts contracts, business proposals, reports, corporate emails and administrative documents in seconds. It automates routines, organizes processes and answers management questions. Essential for administrative consultants, HR teams and managers of small and medium-sized businesses.", es: "El más versátil. Redacta contratos, propuestas comerciales, informes, correos corporativos y documentos administrativos en segundos. Automatiza rutinas, organiza procesos y responde dudas de gestión. Esencial para consultores administrativos, equipos de RRHH y gestores de pequeñas y medianas empresas." },
+      "→ Acessar ChatGPT": { en: "→ Go to ChatGPT", es: "→ Acceder a ChatGPT" },
+      "Google Gemini": { en: "Google Gemini", es: "Google Gemini" },
+      "Alternativa robusta do Google ao ChatGPT. Excelente para pesquisa de mercado, análise de concorrência, elaboração de planos de negócio e suporte à tomada de decisão empresarial. Integra-se ao Google Workspace, facilitando o uso em planilhas, documentos e apresentações corporativas.": { en: "Google's robust alternative to ChatGPT. Excellent for market research, competitive analysis, business plan development and support for business decision-making. It integrates with Google Workspace, making it easier to use in corporate spreadsheets, documents and presentations.", es: "Alternativa robusta de Google al ChatGPT. Excelente para investigación de mercado, análisis de la competencia, elaboración de planes de negocio y apoyo a la toma de decisiones empresariales. Se integra con Google Workspace, facilitando su uso en hojas de cálculo, documentos y presentaciones corporativas." },
+      "→ Acessar Gemini": { en: "→ Go to Gemini", es: "→ Acceder a Gemini" },
+      "Claude (Anthropic)": { en: "Claude (Anthropic)", es: "Claude (Anthropic)" },
+      "Destaque em análise e produção textual de alto nível. Ideal para elaborar documentos corporativos complexos, revisar contratos, estruturar manuais operacionais e criar comunicados institucionais. Excelente para equipes de RH que precisam redigir descrições de cargos, políticas internas e avaliações de desempenho com precisão.": { en: "Stands out for high-level analysis and text production. Ideal for drafting complex corporate documents, reviewing contracts, structuring operating manuals and creating institutional announcements. Excellent for HR teams that need to write job descriptions, internal policies and performance reviews with precision.", es: "Se destaca en análisis y producción textual de alto nivel. Ideal para elaborar documentos corporativos complejos, revisar contratos, estructurar manuales operativos y crear comunicados institucionales. Excelente para equipos de RRHH que necesitan redactar descripciones de puestos, políticas internas y evaluaciones de desempeño con precisión." },
+      "→ Acessar Claude": { en: "→ Go to Claude", es: "→ Acceder a Claude" },
+      "Freemium": { en: "Freemium", es: "Freemium" },
+      "Microsoft Copilot": { en: "Microsoft Copilot", es: "Microsoft Copilot" },
+      "A IA integrada ao ecossistema Microsoft 365. Automatiza tarefas no Word, Excel, PowerPoint e Outlook — gera relatórios, analisa planilhas, resume reuniões e cria apresentações executivas. Para consultores e gestores que já usam o pacote Office, o Copilot multiplica a produtividade sem mudar a ferramenta de trabalho.": { en: "AI integrated into the Microsoft 365 ecosystem. It automates tasks in Word, Excel, PowerPoint and Outlook — generating reports, analyzing spreadsheets, summarizing meetings and creating executive presentations. For consultants and managers who already use the Office suite, Copilot multiplies productivity without changing their working tools.", es: "La IA integrada al ecosistema Microsoft 365. Automatiza tareas en Word, Excel, PowerPoint y Outlook — genera informes, analiza hojas de cálculo, resume reuniones y crea presentaciones ejecutivas. Para consultores y gestores que ya usan el paquete Office, Copilot multiplica la productividad sin cambiar la herramienta de trabajo." },
+      "→ Saiba mais sobre o Copilot": { en: "→ Learn more about Copilot", es: "→ Más información sobre Copilot" },
+      "LinkedIn": { en: "LinkedIn", es: "LinkedIn" },
+      "Muito além de rede social: o LinkedIn com IA é uma plataforma estratégica para empresas encontrarem parceiros, fornecedores e talentos. Para a área de RH e recrutamento, permite mapear candidatos, divulgar vagas com alcance segmentado e acompanhar tendências de mercado. Para consultores, é canal de autoridade e geração de novos clientes.": { en: "Much more than a social network: LinkedIn with AI is a strategic platform for companies to find partners, suppliers and talent. For HR and recruitment, it allows mapping candidates, posting jobs with targeted reach and tracking market trends. For consultants, it's a channel for authority-building and generating new clients.", es: "Mucho más que una red social: LinkedIn con IA es una plataforma estratégica para que las empresas encuentren socios, proveedores y talento. Para el área de RRHH y reclutamiento, permite mapear candidatos, publicar vacantes con alcance segmentado y seguir las tendencias del mercado. Para los consultores, es un canal de autoridad y generación de nuevos clientes." },
+      "→ Acessar LinkedIn": { en: "→ Go to LinkedIn", es: "→ Acceder a LinkedIn" },
+      "Perplexity AI": { en: "Perplexity AI", es: "Perplexity AI" },
+      "Motor de busca com IA que responde perguntas com fontes citadas em tempo real. Essencial para pesquisa empresarial: análise de concorrentes, tendências de mercado, legislação trabalhista, tributação e dados do setor. Substitui horas de pesquisa por respostas objetivas e verificáveis — indispensável para consultores e gestores que tomam decisões com base em dados.": { en: "AI-powered search engine that answers questions with real-time cited sources. Essential for business research: competitor analysis, market trends, labor legislation, taxation and industry data. It replaces hours of research with objective, verifiable answers — indispensable for consultants and managers who make data-driven decisions.", es: "Motor de búsqueda con IA que responde preguntas con fuentes citadas en tiempo real. Esencial para la investigación empresarial: análisis de competidores, tendencias de mercado, legislación laboral, tributación y datos del sector. Sustituye horas de investigación por respuestas objetivas y verificables — indispensable para consultores y gestores que toman decisiones basadas en datos." },
+      "→ Acessar Perplexity": { en: "→ Go to Perplexity", es: "→ Acceder a Perplexity" },
+      "📝 ": { en: "📝 ", es: "📝 " },
+      "Prompts": { en: "Prompts", es: "Prompts" },
+      "Prontos de IA": { en: " Ready-Made AI", es: " Listos de IA" },
+      "prompts-ia.txt — gerando...": { en: "prompts-ia.txt — generating...", es: "prompts-ia.txt — generando..." },
+      "Prompts de IA para o seu Futuro Profissional": { en: "AI Prompts for Your Professional Future", es: "Prompts de IA para tu Futuro Profesional" },
+      "Currículo, imagens, vídeos, LinkedIn e entrevistas — prompts prontos pra colar no ChatGPT, Gemini, Copilot e outras IAs.": { en: "Resume, images, videos, LinkedIn and interviews — ready-to-paste prompts for ChatGPT, Gemini, Copilot and other AIs.", es: "Currículum, imágenes, vídeos, LinkedIn y entrevistas — prompts listos para pegar en ChatGPT, Gemini, Copilot y otras IAs." },
+      "Ver todos os prompts": { en: "See all prompts", es: "Ver todos los prompts" },
+      "Abre em uma nova aba": { en: "Opens in a new tab", es: "Se abre en una pestaña nueva" },
+      "o-que-e-ia.txt": { en: "o-que-e-ia.txt", es: "o-que-e-ia.txt" },
+      "🤖 O que é Inteligência Artificial?": { en: "🤖 What is Artificial Intelligence?", es: "🤖 ¿Qué es la Inteligencia Artificial?" },
+      "IA aprende padrões a partir de dados e automatiza tarefas que antes exigiam raciocínio humano.": { en: "AI learns patterns from data and automates tasks that once required human reasoning.", es: "La IA aprende patrones a partir de datos y automatiza tareas que antes exigían razonamiento humano." },
+      "💬 ChatGPT": { en: "💬 ChatGPT", es: "💬 ChatGPT" },
+      "🔍 Gemini": { en: "🔍 Gemini", es: "🔍 Gemini" },
+      "🤝 Copilot": { en: "🤝 Copilot", es: "🤝 Copilot" },
+      "🎨 Canva IA": { en: "🎨 Canva AI", es: "🎨 Canva IA" },
+      "📌 Como usar no trabalho": { en: "📌 How to use it at work", es: "📌 Cómo usarla en el trabajo" },
+      "Redija e-mails, relatórios e propostas": { en: "Draft emails, reports and proposals", es: "Redacta correos, informes y propuestas" },
+      "Crie currículos e cartas de apresentação": { en: "Create resumes and cover letters", es: "Crea currículums y cartas de presentación" },
+      "Pesquise e resuma conteúdos rapidamente": { en: "Research and summarize content quickly", es: "Investiga y resume contenidos rápidamente" },
+      "Gere imagens e materiais visuais": { en: "Generate images and visual materials", es: "Genera imágenes y materiales visuales" },
+      "Automatize planilhas e análises de dados": { en: "Automate spreadsheets and data analysis", es: "Automatiza hojas de cálculo y análisis de datos" },
+      "⚠️ Use com critério": { en: "⚠️ Use with judgment", es: "⚠️ Úsala con criterio" },
+      "Sempre revise o que a IA gera. Ela pode errar ou inventar informações.": { en: "Always review what AI generates. It can make mistakes or invent information.", es: "Revisa siempre lo que la IA genera. Puede equivocarse o inventar información." },
+      "\n          Clique nas laterais para voltar\n        ": { en: "\n          Click the sides to go back\n        ", es: "\n          Haz clic en los laterales para volver\n        " },
+      "💡 ": { en: "💡 ", es: "💡 " },
+      "Dica": { en: "Tip", es: "Consejo" },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "Use IA como ferramenta de apoio, não como substituto do pensamento estratégico. Ela agiliza processos, reduz erros e aumenta a produtividade — mas precisa de revisão humana. Na consultoria administrativa, gestão empresarial e recrutamento, a IA potencializa resultados quando usada com critério.": { en: "Use AI as a support tool, not as a substitute for strategic thinking. It speeds up processes, reduces errors and increases productivity — but it needs human review. In administrative consulting, business management and recruitment, AI boosts results when used with judgment.", es: "Usa la IA como herramienta de apoyo, no como sustituto del pensamiento estratégico. Agiliza procesos, reduce errores y aumenta la productividad — pero necesita revisión humana. En la consultoría administrativa, la gestión empresarial y el reclutamiento, la IA potencia los resultados cuando se usa con criterio." },
+      "Use IA como apoio, não como substituto do pensamento estratégico, sempre com revisão humana.": { en: "Use AI as support, not as a substitute for strategic thinking, always with human review.", es: "Usa la IA como apoyo, no como sustituto del pensamiento estratégico, siempre con revisión humana." },
+      "✍️ ": { en: "✍️ ", es: "✍️ " },
+      "Produção": { en: "Production", es: "Producción" },
+      "Textual e Design": { en: "Text and Design", es: "Textual y Diseño" },
+      "\n  💡 ": { en: "\n  💡 ", es: "\n  💡 " },
+      "Dica Orizon:": { en: "Orizon Tip:", es: "Consejo Orizon:" },
+      " Para documentos corporativos formais, contratos, propostas, relatórios, use sempre o Word e converta para PDF antes de enviar. Para apresentações executivas e materiais de comunicação visual, o Canva e o Gamma AI entregam resultado profissional com agilidade.\n": { en: " For formal corporate documents, contracts, proposals and reports, always use Word and convert to PDF before sending. For executive presentations and visual communication materials, Canva and Gamma AI deliver professional results quickly.\n", es: " Para documentos corporativos formales, contratos, propuestas e informes, usa siempre Word y convierte a PDF antes de enviar. Para presentaciones ejecutivas y materiales de comunicación visual, Canva y Gamma AI entregan resultados profesionales con agilidad.\n" },
+      "Canva": { en: "Canva", es: "Canva" },
+      "\n  Ferramenta de design visual com IA integrada. Ideal para criar materiais de comunicação empresarial: banners, posts para redes sociais, flyers de serviços, apresentações institucionais e materiais de RH como comunicados e organogramas. Simples o suficiente para qualquer equipe usar sem precisar de designer.\n": { en: "\n  Visual design tool with integrated AI. Ideal for creating business communication materials: banners, social media posts, service flyers, institutional presentations and HR materials such as announcements and org charts. Simple enough for any team to use without needing a designer.\n", es: "\n  Herramienta de diseño visual con IA integrada. Ideal para crear materiales de comunicación empresarial: banners, publicaciones para redes sociales, flyers de servicios, presentaciones institucionales y materiales de RRHH como comunicados y organigramas. Lo bastante sencilla para que cualquier equipo la use sin necesitar un diseñador.\n" },
+      "→ Acessar Canva": { en: "→ Go to Canva", es: "→ Acceder a Canva" },
+      "Gratuito/Office": { en: "Free/Office", es: "Gratis/Office" },
+      "Microsoft Word": { en: "Microsoft Word", es: "Microsoft Word" },
+      "O padrão ouro para produção textual empresarial. Contratos, manuais, propostas comerciais, relatórios gerenciais e políticas internas — tudo com formatação profissional, controle de revisões e compatibilidade universal. Combinado com IA como o Copilot, torna-se uma ferramenta de produtividade administrativa de alto nível.": { en: "The gold standard for business text production. Contracts, manuals, commercial proposals, management reports and internal policies — all with professional formatting, revision control and universal compatibility. Combined with AI such as Copilot, it becomes a top-tier administrative productivity tool.", es: "El estándar de oro para la producción textual empresarial. Contratos, manuales, propuestas comerciales, informes gerenciales y políticas internas — todo con formato profesional, control de revisiones y compatibilidad universal. Combinada con IA como Copilot, se convierte en una herramienta de productividad administrativa de alto nivel." },
+      "→ Acessar Word": { en: "→ Go to Word", es: "→ Acceder a Word" },
+      "PDF": { en: "PDF", es: "PDF" },
+      "Formato universal para entrega de documentos corporativos. Preserva a formatação em qualquer dispositivo e sistema operacional, garante segurança do conteúdo e transmite profissionalismo. Propostas, contratos, relatórios e laudos devem sempre ser entregues em PDF — o padrão do mundo dos negócios.": { en: "Universal format for delivering corporate documents. It preserves formatting on any device and operating system, ensures content security and conveys professionalism. Proposals, contracts, reports and technical opinions should always be delivered in PDF — the standard of the business world.", es: "Formato universal para la entrega de documentos corporativos. Preserva el formato en cualquier dispositivo y sistema operativo, garantiza la seguridad del contenido y transmite profesionalismo. Propuestas, contratos, informes y dictámenes deben entregarse siempre en PDF — el estándar del mundo de los negocios." },
+      "→ Salvar como PDF": { en: "→ Save as PDF", es: "→ Guardar como PDF" },
+      "🚀 ": { en: "🚀 ", es: "🚀 " },
+      "IA no": { en: "AI in", es: "IA en" },
+      "Seu Dia a Dia": { en: "Your Daily Life", es: "Tu Día a Día" },
+      "Currículo & Carreira": { en: "Resume & Career", es: "Currículum y Carrera" },
+      " Toque para saber mais": { en: " Tap to learn more", es: " Toca para saber más" },
+      "Use IA para revisar o currículo, treinar respostas de entrevista e ajustar seu perfil no LinkedIn com linguagem mais estratégica.": { en: "Use AI to review your resume, practice interview answers and refine your LinkedIn profile with more strategic language.", es: "Usa la IA para revisar tu currículum, entrenar respuestas de entrevista y ajustar tu perfil de LinkedIn con un lenguaje más estratégico." },
+      " Toque para voltar": { en: " Tap to go back", es: " Toca para volver" },
+      "RH & Recrutamento": { en: "HR & Recruitment", es: "RRHH y Reclutamiento" },
+      "Da triagem de candidatos à redação de descrições de vaga, a IA agiliza processos seletivos sem perder o olhar humano na decisão final.": { en: "From candidate screening to writing job descriptions, AI speeds up hiring processes without losing the human touch in the final decision.", es: "Desde la selección de candidatos hasta la redacción de descripciones de puesto, la IA agiliza los procesos de selección sin perder la mirada humana en la decisión final." },
+      "Gestão & Produtividade": { en: "Management & Productivity", es: "Gestión y Productividad" },
+      "Relatórios, planilhas e apresentações executivas ficam mais rápidos com a IA cuidando do trabalho repetitivo — sobra tempo pra decisão estratégica.": { en: "Reports, spreadsheets and executive presentations get faster with AI handling the repetitive work — leaving more time for strategic decisions.", es: "Los informes, las hojas de cálculo y las presentaciones ejecutivas se agilizan con la IA encargándose del trabajo repetitivo — queda más tiempo para la decisión estratégica." },
+      "Materiais para Download": { en: "Downloadable Materials", es: "Materiales para Descargar" },
+      " IA & Produtividade": { en: " AI & Productivity", es: " IA y Productividad" },
+      "3 arquivos": { en: "3 files", es: "3 archivos" },
+      "▼": { en: "▼", es: "▼" },
+      "Guia de Prompts para IA": { en: "AI Prompts Guide", es: "Guía de Prompts para IA" },
+      "Coletânea de prompts prontos e comentados para tarefas administrativas, RH, atendimento e gestão — compatível com ChatGPT, Claude, Gemini e Copilot.": { en: "Collection of ready-made, annotated prompts for administrative tasks, HR, customer service and management — compatible with ChatGPT, Claude, Gemini and Copilot.", es: "Colección de prompts listos y comentados para tareas administrativas, RRHH, atención al cliente y gestión — compatible con ChatGPT, Claude, Gemini y Copilot." },
+      "Word .docx": { en: "Word .docx", es: "Word .docx" },
+      "✓ Gratuito": { en: "✓ Free", es: "✓ Gratis" },
+      "⬇": { en: "⬇", es: "⬇" },
+      "Comparativo de Ferramentas de IA": { en: "AI Tools Comparison", es: "Comparativa de Herramientas de IA" },
+      "Tabela comparativa entre ChatGPT, Claude, Gemini e Copilot: recursos, limitações, planos e casos de uso ideais para cada contexto empresarial.": { en: "Comparison table of ChatGPT, Claude, Gemini and Copilot: features, limitations, plans and ideal use cases for each business context.", es: "Tabla comparativa entre ChatGPT, Claude, Gemini y Copilot: funciones, limitaciones, planes y casos de uso ideales para cada contexto empresarial." },
+      "Tarefas para Automatizar com IA": { en: "Tasks to Automate with AI", es: "Tareas para Automatizar con IA" },
+      "Planilha mapeando processos da sua empresa que podem ser automatizados com IA — com nível de esforço, impacto estimado e sugestão de ferramenta.": { en: "Spreadsheet mapping your company's processes that can be automated with AI — with effort level, estimated impact and tool suggestion.", es: "Hoja de cálculo que mapea los procesos de tu empresa que se pueden automatizar con IA — con nivel de esfuerzo, impacto estimado y sugerencia de herramienta." },
+      "Excel .xlsx": { en: "Excel .xlsx", es: "Excel .xlsx" },
+      "Orizon ": { en: "Orizon ", es: "Orizon " },
+      "Consultoria": { en: "Consulting", es: "Consultoría" },
+      "Consultoria + RH & Gestão — Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR & Management — Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RRHH y Gestión — Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Vagas & Oportunidades": { en: "Jobs & Opportunities", es: "Empleos y Oportunidades" },
+      "Sobre nós": { en: "About Us", es: "Sobre nosotros" },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "© 2026 ": { en: "© 2026 ", es: "© 2026 " },
+      "Orizon Consultoria e Gestão": { en: "Orizon Consulting and Management", es: "Orizon Consultoría y Gestión" },
+      ". Todos os direitos reservados.": { en: ". All rights reserved.", es: ". Todos los derechos reservados." },
+      "♥": { en: "♥", es: "♥" },
+      " Feito com propósito — Rio Grande do Sul, Brasil": { en: " Made with purpose — Rio Grande do Sul, Brazil", es: " Hecho con propósito — Rio Grande do Sul, Brasil" },
+      "▲": { en: "▲", es: "▲" },
+      "Assistente Orizon": { en: "Orizon Assistant", es: "Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ON" },
+      "✕": { en: "✕", es: "✕" },
+      "➤": { en: "➤", es: "➤" },
+    };
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      // Checa primeiro o dicionario de traducoes literais (chave = texto
+      // original em pt, exato, com espacos/quebras de linha ja preservados
+      // no proprio valor de en/es). So cai pra API se nao achar aqui.
+      const lit = literalTranslations[text];
+      if (lit && lit[to]) return lit[to];
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS_FIA !== 'undefined' && TRANSLATIONS_FIA.pt) ? TRANSLATIONS_FIA.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS_FIA.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS_FIA.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslations(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslations(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 </script>
 <script>
 (function(){
@@ -6046,11 +6478,6 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
-body:not(.dark-mode) .header::before {
-  
-}
-
 /* Logo: texto branco sólido sem glow neon */
 body:not(.dark-mode) .orizon-logo-svg text {
   fill: #ffffff !important;
@@ -6074,10 +6501,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
 }
 
 /* Subtítulo da página (ex: "Profissionais") */
-</style>
-<style>
-/* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}
 
 /* ============================================================
    SEÇÃO DE DOWNLOADS — PLANILHAS E DOCUMENTOS IA
@@ -7018,7 +7441,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

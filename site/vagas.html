@@ -166,10 +166,10 @@
     .voice-translator-toggle,
     .chatbot-button {
       -webkit-tap-highlight-color: transparent;
-      tap-highlight-color: transparent;
       -webkit-touch-callout: none;
       outline: none;
     }
+    
     .back-button:focus,
     .menu-toggle:focus,
     .topics-toggle:focus,
@@ -1617,22 +1617,22 @@ li::before {
     }
     .chatbot-send-btn:hover { transform: scale(1.05); }
 
-    /* ========== RESPONSIVO ========== */
-    @media (max-width: 768px) {
+  /* ========== RESPONSIVO ========== */
+   @media (max-width: 768px) {
 
-      .search-grid { grid-template-columns: 1fr; }
-      .menu-toggle { }
-      .chatbot-button { bottom: 2rem; right: 1rem; }
-      .chatbot-window { bottom: 2rem; right: 0.5rem; left: 0.5rem; width: calc(100% - 1rem); height: 70vh; max-height: 70vh; }
-      .vagas-grid { grid-template-columns: 1fr; }
+  .search-grid { grid-template-columns: 1fr; }
+  .chatbot-button { bottom: 2rem; right: 1rem; }
+  .chatbot-window { bottom: 2rem; right: 0.5rem; left: 0.5rem; width: calc(100% - 1rem); height: 70vh; max-height: 70vh; }
+  .vagas-grid { grid-template-columns: 1fr; }
 
-      /* Footer mobile: botoes centralizados e mesmo tamanho */
-      .vaga-footer { flex-direction: column; align-items: center; gap: 0.75rem; }
-      .vaga-footer-right { width: 100%; justify-content: center; gap: 0.6rem; }
-      .vaga-footer-right .benefits-calc,
-      .vaga-footer-right > div { flex: 1; }
-      .benefits-calc-btn,
-      .btn-apply { width: 100%; justify-content: center; }}
+  /* Footer mobile: botões centralizados e mesmo tamanho */
+  .vaga-footer { flex-direction: column; align-items: center; gap: 0.75rem; }
+  .vaga-footer-right { width: 100%; justify-content: center; gap: 0.6rem; }
+  .vaga-footer-right .benefits-calc,
+  .vaga-footer-right > div { flex: 1; }
+  .benefits-calc-btn,
+  .btn-apply { width: 100%; justify-content: center; }
+}
 
     @media (max-width: 480px) {
 
@@ -1797,7 +1797,6 @@ body.dark-mode .accordion-icon.descricao {
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -8728,6 +8727,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -8735,26 +8749,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -9080,32 +9121,567 @@ let vtRecognition = null;
       }
     };
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    // ================================================================
+    // TRADUCOES LITERAIS PRE-ESCRITAS (redundancia contra falha da API)
+    // Escritas a mao em 26/09/2026. vtTranslateOne confere aqui primeiro;
+    // so cai pra API MyMemory se o texto nao estiver neste dicionario.
+    // ================================================================
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando pronóstico…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Temas" },
+      "📋 Vagas Disponíveis": { en: "📋 Available Jobs", es: "📋 Empleos Disponibles" },
+      "🔍 Buscar Vagas": { en: "🔍 Search Jobs", es: "🔍 Buscar Empleos" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Videos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "Administração": { en: "Administration", es: "Administración" },
+      "◆": { en: "◆", es: "◆" },
+      "Gestão": { en: "Management", es: "Gestión" },
+      "Mural de Vagas": { en: "Job Board", es: "Mural de Empleos" },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Reset settings", es: "↺ Restablecer ajustes" },
+      "🔍 Buscar": { en: "🔍 Search", es: "🔍 Buscar" },
+      "🔄 Limpar": { en: "🔄 Clear", es: "🔄 Limpiar" },
+      "ℹ️": { en: "ℹ️", es: "ℹ️" },
+      "Atenção & Recursos para Profissionais": { en: "Attention & Resources for Professionals", es: "Atención y Recursos para Profesionales" },
+      "⚠️": { en: "⚠️", es: "⚠️" },
+      "Atenção:": { en: "Attention:", es: "Atención:" },
+      "Antes de enviar seu currículo, leia atentamente os requisitos da oportunidade. Envie apenas se seu perfil estiver alinhado às exigências informadas pelos nossos parceiros. Isso aumenta significativamente suas chances de avançar no processo seletivo.": { en: "Before sending your resume, carefully read the job's requirements. Only apply if your profile matches the criteria informed by our partners. This significantly increases your chances of moving forward in the hiring process.", es: "Antes de enviar su currículum, lea atentamente los requisitos de la oportunidad. Envíelo solo si su perfil está alineado con las exigencias informadas por nuestros socios. Esto aumenta significativamente sus posibilidades de avanzar en el proceso de selección." },
+      "📚 Recursos para Profissionais": { en: "📚 Resources for Professionals", es: "📚 Recursos para Profesionales" },
+      "Preparamos materiais para te ajudar a se destacar nos processos seletivos e desenvolver sua carreira. Confira nossos vídeos com dicas práticas, baixe modelos de currículo prontos para editar e acesse orientações de desenvolvimento profissional.": { en: "We've prepared materials to help you stand out in hiring processes and develop your career. Check out our videos with practical tips, download ready-to-edit resume templates and access professional development guidance.", es: "Preparamos materiales para ayudarle a destacar en los procesos de selección y desarrollar su carrera. Vea nuestros videos con consejos prácticos, descargue plantillas de currículum listas para editar y acceda a orientaciones de desarrollo profesional." },
+      "Vídeos Tutoriais": { en: "Tutorial Videos", es: "Videos Tutoriales" },
+      "Modelos de Currículo": { en: "Resume Templates", es: "Plantillas de Currículum" },
+      "Baixar Vagas em Word": { en: "Download Jobs in Word", es: "Descargar Empleos en Word" },
+      "Baixar Vagas em PDF": { en: "Download Jobs in PDF", es: "Descargar Empleos en PDF" },
+      "📊": { en: "📊", es: "📊" },
+      "vagas encontradas": { en: "jobs found", es: "empleos encontrados" },
+      "Como funciona": { en: "How it works", es: "Cómo funciona" },
+      "Recrutamento 100% gratuito para quem busca vaga": { en: "100% free recruitment for job seekers", es: "Reclutamiento 100% gratuito para quien busca empleo" },
+      "Recrutamento 100% gratuito": { en: "100% free recruitment", es: "Reclutamiento 100% gratuito" },
+      "A Orizon cuida de todo o processo seletivo em parceria com empresas de Guaíba, Eldorado do Sul e região. Você nunca paga nada para se candidatar — o custo é sempre da empresa contratante.": { en: "Orizon handles the entire hiring process in partnership with companies in Guaíba, Eldorado do Sul and the region. You never pay anything to apply — the cost is always covered by the hiring company.", es: "Orizon se encarga de todo el proceso de selección en alianza con empresas de Guaíba, Eldorado do Sul y la región. Usted nunca paga nada para postularse — el costo siempre corre por cuenta de la empresa contratante." },
+      "Basta escolher a vaga, enviar sua candidatura pelo canal que preferir e acompanhar o retorno com humanização e agilidade.": { en: "Just choose the job, send your application through the channel you prefer, and get a response with a human touch and speed.", es: "Simplemente elija la vacante, envíe su candidatura por el canal que prefiera y reciba una respuesta con humanización y agilidad." },
+      "Processo seletivo ágil e gratuito para quem se candidata, em parceria com empresas da região.": { en: "A fast, free hiring process for applicants, in partnership with companies in the region.", es: "Proceso de selección ágil y gratuito para quien se postula, en alianza con empresas de la región." },
+      "💸 Sem custo": { en: "💸 No cost", es: "💸 Sin costo" },
+      "⚡ Processo ágil": { en: "⚡ Fast process", es: "⚡ Proceso ágil" },
+      "🤝 Atendimento humanizado": { en: "🤝 Human-centered support", es: "🤝 Atención humanizada" },
+      "Assistente de Processos": { en: "Process Assistant", es: "Asistente de Procesos" },
+      "Confidencial": { en: "Confidential", es: "Confidencial" },
+      "🏭 Indústria": { en: "🏭 Industry", es: "🏭 Industria" },
+      "Efetivo": { en: "Permanent", es: "Efectivo" },
+      "Presencial": { en: "On-site", es: "Presencial" },
+      "Operacional": { en: "Operational", es: "Operativo" },
+      "Guaíba, RS": { en: "Guaíba, RS", es: "Guaíba, RS" },
+      "Descrição da vaga": { en: "Job description", es: "Descripción del empleo" },
+      "▼": { en: "▼", es: "▼" },
+      "O profissional será responsável por acompanhar e apoiar os processos produtivos, garantindo o cumprimento dos procedimentos operacionais e dos padrões de qualidade estabelecidos pela empresa. Atuará no controle e monitoramento das etapas de produção, identificando oportunidades de melhoria, auxiliando na análise e solução de não conformidades e prestando suporte às equipes de produção. Também realizará o preenchimento de registros e documentos de controle, acompanhará indicadores de desempenho, dará suporte na elaboração e atualização de instruções de trabalho e procedimentos, colaborará na implementação de melhorias contínuas e assegurará a organização das informações e o cumprimento das normas de qualidade, segurança e boas práticas de fabricação.": { en: "The professional will be responsible for monitoring and supporting production processes, ensuring compliance with the operational procedures and quality standards set by the company. They will control and monitor production stages, identify improvement opportunities, help analyze and resolve non-conformities, and support the production teams. They will also fill out control records and documents, track performance indicators, help draft and update work instructions and procedures, contribute to continuous improvement initiatives, and ensure the organization of information and compliance with quality, safety and good manufacturing practice standards.", es: "El profesional será responsable de acompañar y apoyar los procesos productivos, garantizando el cumplimiento de los procedimientos operativos y los estándares de calidad establecidos por la empresa. Actuará en el control y monitoreo de las etapas de producción, identificando oportunidades de mejora, ayudando en el análisis y solución de no conformidades y brindando soporte a los equipos de producción. También completará registros y documentos de control, hará seguimiento de indicadores de desempeño, apoyará en la elaboración y actualización de instrucciones de trabajo y procedimientos, colaborará en la implementación de mejoras continuas y asegurará la organización de la información y el cumplimiento de las normas de calidad, seguridad y buenas prácticas de fabricación." },
+      "Requisitos": { en: "Requirements", es: "Requisitos" },
+      "Curso Técnico completo em Eletromecânica, Mecânica ou áreas correlatas ou Ensino Superior em Engenharia Mecânica, Engenharia de Produção, Engenharia de Controle e Automação, Engenharia Elétrica, Tecnologia em Processos Industriais ou áreas afins.": { en: "Completed technical degree in Electromechanics, Mechanics or related fields, or a bachelor's degree in Mechanical Engineering, Production Engineering, Control and Automation Engineering, Electrical Engineering, Industrial Processes Technology or related fields.", es: "Curso Técnico completo en Electromecánica, Mecánica o áreas afines, o Educación Superior en Ingeniería Mecánica, Ingeniería de Producción, Ingeniería de Control y Automatización, Ingeniería Eléctrica, Tecnología en Procesos Industriales o áreas afines." },
+      "Experiência na função ou em atividades relacionadas a processos industriais.": { en: "Experience in the role or in activities related to industrial processes.", es: "Experiencia en la función o en actividades relacionadas con procesos industriales." },
+      "Conhecimento em leitura e interpretação de desenhos técnicos.": { en: "Knowledge of reading and interpreting technical drawings.", es: "Conocimiento en lectura e interpretación de planos técnicos." },
+      "Conhecimento em processos de fabricação, montagem e melhoria de processos.": { en: "Knowledge of manufacturing, assembly and process improvement processes.", es: "Conocimiento en procesos de fabricación, montaje y mejora de procesos." },
+      "Conhecimento do Pacote Office, principalmente Excel.": { en: "Knowledge of the Office suite, especially Excel.", es: "Conocimiento del paquete Office, especialmente Excel." },
+      "Horários": { en: "Schedule", es: "Horarios" },
+      "Segunda a sexta-feira.": { en: "Monday to Friday.", es: "Lunes a viernes." },
+      "Das 07h30 às 17h48, com 1 hora de intervalo.": { en: "From 7:30 AM to 5:48 PM, with a 1-hour break.", es: "De 07:30 a 17:48, con 1 hora de descanso." },
+      "Benefícios": { en: "Benefits", es: "Beneficios" },
+      "Vale-refeição R$ 504,00 por mês.": { en: "Meal voucher R$ 504.00 per month.", es: "Vale de comida R$ 504,00 por mes." },
+      "Vale-transporte.": { en: "Transportation voucher.", es: "Vale de transporte." },
+      "Bonificação por metas.": { en: "Bonus for meeting goals.", es: "Bonificación por metas." },
+      "Compartilhar:": { en: "Share:", es: "Compartir:" },
+      "Link": { en: "Link", es: "Enlace" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Telegram": { en: "Telegram", es: "Telegram" },
+      "Facebook": { en: "Facebook", es: "Facebook" },
+      "Instagram": { en: "Instagram", es: "Instagram" },
+      "LinkedIn": { en: "LinkedIn", es: "LinkedIn" },
+      "Canva": { en: "Canva", es: "Canva" },
+      "📅": { en: "📅", es: "📅" },
+      "Candidatar": { en: "Apply", es: "Postularse" },
+      "Operador de Produção": { en: "Production Operator", es: "Operador de Producción" },
+      "O profissional será responsável por realizar a montagem de equipamentos eletrônicos de pequeno e médio porte, executando a montagem e desmontagem de componentes mecânicos, eletromecânicos e eletrônicos, conforme procedimentos e especificações técnicas. Também realizará a instalação e conexão de componentes, efetuará testes básicos de funcionamento para garantir a qualidade dos equipamentos produzidos e identificará possíveis falhas ou não conformidades durante o processo produtivo. Além disso, utilizará ferramentas manuais e elétricas de forma segura, manterá a organização e a limpeza do ambiente de trabalho, cumprirá as normas de segurança e qualidade da empresa e prestará apoio às demais atividades da produção, contribuindo para o cumprimento dos prazos e das metas estabelecidas.": { en: "The professional will be responsible for assembling small and medium-sized electronic equipment, carrying out the assembly and disassembly of mechanical, electromechanical and electronic components according to procedures and technical specifications. They will also install and connect components, perform basic functional tests to ensure the quality of the equipment produced, and identify possible faults or non-conformities during the production process. In addition, they will safely use manual and power tools, keep the workplace organized and clean, comply with the company's safety and quality standards, and support other production activities, helping meet deadlines and established goals.", es: "El profesional será responsable de realizar el montaje de equipos electrónicos de pequeño y mediano porte, ejecutando el montaje y desmontaje de componentes mecánicos, electromecánicos y electrónicos, conforme a procedimientos y especificaciones técnicas. También realizará la instalación y conexión de componentes, efectuará pruebas básicas de funcionamiento para garantizar la calidad de los equipos producidos e identificará posibles fallas o no conformidades durante el proceso productivo. Además, utilizará herramientas manuales y eléctricas de forma segura, mantendrá la organización y limpieza del ambiente de trabajo, cumplirá las normas de seguridad y calidad de la empresa y apoyará las demás actividades de producción, contribuyendo al cumplimiento de plazos y metas establecidas." },
+      "Ensino Médio completo.": { en: "Completed high school.", es: "Educación secundaria completa." },
+      "Experiência mínima de 1 ano em atividades de montagem e desmontagem de componentes mecânicos, eletromecânicos ou eletrônicos.": { en: "Minimum of 1 year of experience assembling and disassembling mechanical, electromechanical or electronic components.", es: "Experiencia mínima de 1 año en actividades de montaje y desmontaje de componentes mecánicos, electromecánicos o electrónicos." },
+      "Conhecimento em montagem de peças mecânicas e componentes eletrônicos.": { en: "Knowledge of assembling mechanical parts and electronic components.", es: "Conocimiento en montaje de piezas mecánicas y componentes electrónicos." },
+      "Facilidade para seguir instruções técnicas e procedimentos operacionais.": { en: "Ability to follow technical instructions and operating procedures.", es: "Facilidad para seguir instrucciones técnicas y procedimientos operativos." },
+      "Perfil proativo, organizado, responsável e comprometido com a qualidade e os prazos.": { en: "Proactive, organized, responsible profile, committed to quality and deadlines.", es: "Perfil proactivo, organizado, responsable y comprometido con la calidad y los plazos." },
+      "Segunda a sexta-feira. Das 07h30 às 17h48.": { en: "Monday to Friday. From 7:30 AM to 5:48 PM.", es: "Lunes a viernes. De 07:30 a 17:48." },
+      "Com 1 hora de intervalo.": { en: "With a 1-hour break.", es: "Con 1 hora de descanso." },
+      "Auxiliar de Logística": { en: "Logistics Assistant", es: "Auxiliar de Logística" },
+      "Técnico": { en: "Technical", es: "Técnico" },
+      "Buscamos um profissional com conhecimento em processos de recebimento, armazenagem, separação, expedição e controle de estoque. É desejável familiaridade com sistemas ERP, coletores de dados ou WMS, sendo esse conhecimento considerado um diferencial. Também é necessário possuir conhecimentos básicos do Pacote Office, especialmente Excel. Procuramos uma pessoa organizada, atenta aos detalhes, proativa, com facilidade para trabalhar em equipe e comprometida com a qualidade e o cumprimento dos processos logísticos.": { en: "We are looking for a professional with knowledge of receiving, storage, picking, shipping and inventory control processes. Familiarity with ERP systems, data collectors or WMS is desirable and will be considered an advantage. Basic knowledge of the Office suite, especially Excel, is also required. We're looking for an organized, detail-oriented, proactive person, who works well in a team and is committed to quality and to following logistics processes.", es: "Buscamos un profesional con conocimiento en procesos de recepción, almacenamiento, separación, despacho y control de inventario. Es deseable familiaridad con sistemas ERP, lectores de datos o WMS, siendo ese conocimiento considerado un diferencial. También es necesario tener conocimientos básicos del paquete Office, especialmente Excel. Buscamos una persona organizada, atenta a los detalles, proactiva, con facilidad para trabajar en equipo y comprometida con la calidad y el cumplimiento de los procesos logísticos." },
+      "Ensino Técnico ou Superior completo ou em andamento em Logística, Administração ou áreas correlatas;": { en: "Completed or in-progress technical or bachelor's degree in Logistics, Administration or related fields;", es: "Educación Técnica o Superior completa o en curso en Logística, Administración o áreas afines;" },
+      "Experiência anterior na função de Auxiliar de Logística.": { en: "Previous experience as a Logistics Assistant.", es: "Experiencia previa en la función de Auxiliar de Logística." },
+      "Segunda a sexta-feira, das 07:30h às 17h48;": { en: "Monday to Friday, from 7:30 AM to 5:48 PM;", es: "Lunes a viernes, de 07:30 a 17:48;" },
+      "1 hora de intervalo.": { en: "1-hour break.", es: "1 hora de descanso." },
+      "Vale Alimentação R$ 504,00;": { en: "Food voucher R$ 504.00;", es: "Vale de Alimentación R$ 504,00;" },
+      "prêmio assiduidade;": { en: "attendance bonus;", es: "premio de asistencia;" },
+      "Refeitório no local.": { en: "On-site cafeteria.", es: "Comedor en el lugar." },
+      "Analista Financeiro Sênior": { en: "Senior Financial Analyst", es: "Analista Financiero Sénior" },
+      "📊 Financeiro": { en: "📊 Finance", es: "📊 Finanzas" },
+      "Sênior": { en: "Senior", es: "Sénior" },
+      "Responsável por realizar o controle financeiro da empresa, acompanhando o fluxo de caixa, contas a pagar e a receber, conciliações bancárias, elaboração e análise da DRE, fechamento financeiro, controle de despesas, receitas e custos, emissão e conferência de relatórios gerenciais, apoio à contabilidade, análise de indicadores financeiros, elaboração de projeções orçamentárias e suporte à tomada de decisões estratégicas, garantindo a organização dos processos financeiros e a conformidade das informações. Também será responsável pela utilização de ferramentas de Inteligência Artificial para automatização de processos, geração de relatórios, análises financeiras e aumento da performance e produtividade da área.": { en: "Responsible for the company's financial control, monitoring cash flow, accounts payable and receivable, bank reconciliations, preparation and analysis of the income statement, financial closing, control of expenses, revenues and costs, issuing and reviewing management reports, supporting accounting, analyzing financial indicators, preparing budget projections and supporting strategic decision-making, ensuring the organization of financial processes and information accuracy. Will also be responsible for using Artificial Intelligence tools to automate processes, generate reports, run financial analyses and increase the department's performance and productivity.", es: "Responsable de realizar el control financiero de la empresa, acompañando el flujo de caja, cuentas por pagar y por cobrar, conciliaciones bancarias, elaboración y análisis del estado de resultados, cierre financiero, control de gastos, ingresos y costos, emisión y revisión de informes gerenciales, apoyo a la contabilidad, análisis de indicadores financieros, elaboración de proyecciones presupuestarias y soporte a la toma de decisiones estratégicas, garantizando la organización de los procesos financieros y la conformidad de la información. También será responsable de utilizar herramientas de Inteligencia Artificial para automatizar procesos, generar informes, realizar análisis financieros y aumentar el rendimiento y la productividad del área." },
+      "Ensino Superior completo ou em andamento em Ciências Contábeis, Administração, Economia ou áreas correlatas;": { en: "Completed or in-progress bachelor's degree in Accounting, Administration, Economics or related fields;", es: "Educación Superior completa o en curso en Ciencias Contables, Administración, Economía o áreas afines;" },
+      "Experiência na área financeira e/ou contábil;": { en: "Experience in finance and/or accounting;", es: "Experiencia en el área financiera y/o contable;" },
+      "Conhecimento em DRE (Demonstrativo do Resultado do Exercício);": { en: "Knowledge of income statements;", es: "Conocimiento en estado de resultados;" },
+      "Conhecimento em fluxo de caixa, contas a pagar e receber,": { en: "Knowledge of cash flow, accounts payable and receivable,", es: "Conocimiento en flujo de caja, cuentas por pagar y por cobrar," },
+      "conciliação bancária e controle financeiro;": { en: "bank reconciliation and financial control;", es: "conciliación bancaria y control financiero;" },
+      "Domínio de Excel em nível intermediário a avançado;": { en: "Intermediate to advanced Excel skills;", es: "Dominio de Excel a nivel intermedio a avanzado;" },
+      "Conhecimento em indicadores financeiros e elaboração de relatórios gerenciais;": { en: "Knowledge of financial indicators and management report preparation;", es: "Conocimiento en indicadores financieros y elaboración de informes gerenciales;" },
+      "Experiência na utilização de ferramentas de Inteligência Artificial para análises, geração de relatórios e aumento da produtividade será considerada um diferencial;": { en: "Experience using Artificial Intelligence tools for analysis, report generation and productivity gains will be considered an advantage;", es: "La experiencia en el uso de herramientas de Inteligencia Artificial para análisis, generación de informes y aumento de la productividad será considerada un diferencial;" },
+      "Perfil analítico, organizado, proativo e com boa capacidade de resolução de problemas.": { en: "Analytical, organized, proactive profile with strong problem-solving skills.", es: "Perfil analítico, organizado, proactivo y con buena capacidad de resolución de problemas." },
+      "Segunda a sexta-feira, das 08h00 às 18h00;": { en: "Monday to Friday, from 8:00 AM to 6:00 PM;", es: "Lunes a viernes, de 08:00 a 18:00;" },
+      "Insalubridade de 20% (R$ 324,00).": { en: "20% hazard pay (R$ 324.00).", es: "Prima por insalubridad del 20% (R$ 324,00)." },
+      "Refeição no local.": { en: "On-site meal.", es: "Comida en el lugar." },
+      "Bonificação por metas": { en: "Bonus for meeting goals", es: "Bonificación por metas" },
+      "Banco de Talentos": { en: "Talent Pool", es: "Banco de Talentos" },
+      "🏭 Outro": { en: "🏭 Other", es: "🏭 Otro" },
+      "Estamos em constante crescimento e buscamos profissionais que desejam fazer parte do nosso banco de talentos.\nSe no momento não há uma vaga compatível com o seu perfil, cadastre seu currículo para que possamos entrar em contato quando surgir uma oportunidade alinhada à sua experiência e objetivos profissionais.": { en: "We are constantly growing and looking for professionals who want to be part of our talent pool.\nIf there isn't currently a job that matches your profile, submit your resume so we can reach out when an opportunity aligned with your experience and career goals comes up.", es: "Estamos en constante crecimiento y buscamos profesionales que quieran formar parte de nuestro banco de talentos.\nSi por el momento no hay una vacante compatible con su perfil, registre su currículum para que podamos contactarlo cuando surja una oportunidad alineada con su experiencia y objetivos profesionales." },
+      "Ensino Fundamental, Médio, Técnico ou Superior (conforme a oportunidade).": { en: "Elementary, high school, technical or higher education (depending on the opportunity).", es: "Educación Primaria, Secundaria, Técnica o Superior (según la oportunidad)." },
+      "Disponibilidade para atuar de acordo com a necessidade da vaga.": { en: "Availability to work according to the job's needs.", es: "Disponibilidad para trabajar según la necesidad de la vacante." },
+      "Experiência profissional será considerada um diferencial, conforme a posição.": { en: "Professional experience will be considered an advantage, depending on the position.", es: "La experiencia profesional será considerada un diferencial, según la posición." },
+      "Tipo de vaga: Banco de Talentos": { en: "Job type: Talent Pool", es: "Tipo de vacante: Banco de Talentos" },
+      "Regime de contratação: CLT, Estágio, Jovem Aprendiz ou PJ (conforme a oportunidade)": { en: "Employment type: CLT (formal contract), internship, apprenticeship or independent contractor (depending on the opportunity)", es: "Régimen de contratación: CLT (contrato formal), pasantía, aprendiz o contratista independiente (según la oportunidad)" },
+      "Local de trabalho: Conforme a vaga disponível": { en: "Work location: Depends on the available job", es: "Lugar de trabajo: Según la vacante disponible" },
+      "Horário: A definir": { en: "Schedule: To be defined", es: "Horario: A definir" },
+      "Benefícios compatíveis com a função.": { en: "Benefits appropriate to the role.", es: "Beneficios acordes a la función." },
+      "Remuneração compatível com o mercado.": { en: "Market-competitive pay.", es: "Remuneración acorde al mercado." },
+      "Oportunidades de desenvolvimento e crescimento profissional.": { en: "Opportunities for professional development and growth.", es: "Oportunidades de desarrollo y crecimiento profesional." },
+      "Programa de treinamentos.": { en: "Training program.", es: "Programa de capacitaciones." },
+      "Benefícios informados durante o processo seletivo, conforme a vaga.": { en: "Benefits disclosed during the hiring process, depending on the job.", es: "Beneficios informados durante el proceso de selección, según la vacante." },
+      "Auxiliar de Produção": { en: "Production Assistant", es: "Auxiliar de Producción" },
+      "🏭 Indústria / Manutenção": { en: "🏭 Industry / Maintenance", es: "🏭 Industria / Mantenimiento" },
+      "Auxiliar nas atividades do processo produtivo, realizando a separação, organização e movimentação de materiais, abastecimento das linhas de produção, embalagem e conferência de produtos, mantendo a organização e limpeza do ambiente de trabalho, sempre em conformidade com os procedimentos de qualidade, segurança e normas internas da empresa. Também prestará suporte às demais atividades do setor, conforme as demandas operacionais.": { en: "Assist with production process activities, sorting, organizing and moving materials, supplying production lines, packaging and checking products, keeping the workplace organized and clean, always in compliance with the company's quality, safety and internal procedures. Will also support other activities in the department as operational needs require.", es: "Ayudar en las actividades del proceso productivo, realizando la separación, organización y movimiento de materiales, abastecimiento de las líneas de producción, embalaje y revisión de productos, manteniendo la organización y limpieza del ambiente de trabajo, siempre conforme a los procedimientos de calidad, seguridad y normas internas de la empresa. También brindará apoyo a las demás actividades del sector, según las demandas operativas." },
+      "Ensino Fundamental Completo": { en: "Completed elementary education", es: "Educación Primaria Completa" },
+      "Segunda a sexta-feira, das 08h às 17h48;": { en: "Monday to Friday, from 8:00 AM to 5:48 PM;", es: "Lunes a viernes, de 08:00 a 17:48;" },
+      "Insalubridade 20% R$ 324,20;": { en: "20% hazard pay R$ 324.20;", es: "Prima por insalubridad 20% R$ 324,20;" },
+      "Refeitório no local;": { en: "On-site cafeteria;", es: "Comedor en el lugar;" },
+      "Fale Conosco": { en: "Contact Us", es: "Contáctenos" },
+      "❓": { en: "❓", es: "❓" },
+      "Ficou com alguma dúvida?": { en: "Have any questions?", es: "¿Tiene alguna duda?" },
+      "Confira nossas perguntas frequentes: respondemos as dúvidas mais comuns sobre candidaturas, vagas, empresas e privacidade.": { en: "Check out our frequently asked questions: we answer the most common questions about applications, jobs, companies and privacy.", es: "Consulte nuestras preguntas frecuentes: respondemos las dudas más comunes sobre candidaturas, empleos, empresas y privacidad." },
+      "👤 FAQ Candidatos": { en: "👤 FAQ for Candidates", es: "👤 FAQ Candidatos" },
+      "💼 FAQ Vagas": { en: "💼 FAQ for Jobs", es: "💼 FAQ Empleos" },
+      "🏢 FAQ Empresas": { en: "🏢 FAQ for Companies", es: "🏢 FAQ Empresas" },
+      "🔒 FAQ Privacidade": { en: "🔒 FAQ on Privacy", es: "🔒 FAQ Privacidad" },
+      "Prontos para conversar": { en: "Ready to talk", es: "Listos para conversar" },
+      "Prontos para o próximo passo da sua carreira?": { en: "Ready for the next step in your career?", es: "¿Listo para el próximo paso de su carrera?" },
+      "Prontos para o próximo passo?": { en: "Ready for the next step?", es: "¿Listos para el próximo paso?" },
+      "Nossa equipe está sempre disponível para tirar dúvidas sobre as vagas abertas, o andamento da sua candidatura ou como funciona o processo seletivo na Orizon.": { en: "Our team is always available to answer questions about open positions, the status of your application, or how Orizon's hiring process works.", es: "Nuestro equipo siempre está disponible para responder dudas sobre las vacantes abiertas, el avance de su candidatura o cómo funciona el proceso de selección en Orizon." },
+      "Enquanto isso, confira abaixo os materiais gratuitos de apoio para currículo, entrevista e organização profissional.": { en: "Meanwhile, check out the free support materials below for resumes, interviews and professional organization.", es: "Mientras tanto, consulte abajo los materiales gratuitos de apoyo para currículum, entrevista y organización profesional." },
+      "Tire dúvidas sobre vagas e confira nossos materiais gratuitos de apoio.": { en: "Get your questions about jobs answered and check out our free support materials.", es: "Resuelva dudas sobre empleos y consulte nuestros materiales gratuitos de apoyo." },
+      "Materiais para Download": { en: "Downloadable Materials", es: "Materiales para Descargar" },
+      "RH & Gestão de Pessoas": { en: "HR & People Management", es: "RH y Gestión de Personas" },
+      "6 arquivos": { en: "6 files", es: "6 archivos" },
+      "Avaliação de Desempenho": { en: "Performance Review", es: "Evaluación de Desempeño" },
+      "Modelo estruturado para avaliar colaboradores por competências, metas e comportamento.": { en: "Structured template to evaluate employees by competencies, goals and behavior.", es: "Plantilla estructurada para evaluar colaboradores por competencias, metas y comportamiento." },
+      "Excel .xlsx": { en: "Excel .xlsx", es: "Excel .xlsx" },
+      "✓ Gratuito": { en: "✓ Free", es: "✓ Gratuito" },
+      "⬇": { en: "⬇", es: "⬇" },
+      "Controle de Férias e Ausências": { en: "Vacation and Absence Tracking", es: "Control de Vacaciones y Ausencias" },
+      "Planilha para gerenciar férias, folgas e ausências de toda a equipe com visão mensal.": { en: "Spreadsheet to manage the whole team's vacations, days off and absences with a monthly view.", es: "Planilla para gestionar vacaciones, días libres y ausencias de todo el equipo con vista mensual." },
+      "Checklist de Onboarding": { en: "Onboarding Checklist", es: "Checklist de Incorporación" },
+      "Garanta uma integração completa para novos colaboradores — documentos, acessos e treinamentos.": { en: "Ensure a complete onboarding experience for new employees — documents, access and training.", es: "Garantice una incorporación completa para nuevos colaboradores — documentos, accesos y capacitaciones." },
+      "Checklist de Desligamento": { en: "Offboarding Checklist", es: "Checklist de Desvinculación" },
+      "Conduza saídas de colaboradores com segurança jurídica e processo organizado.": { en: "Handle employee departures with legal certainty and an organized process.", es: "Gestione la salida de colaboradores con seguridad jurídica y un proceso organizado." },
+      "Pesquisa de Clima Organizacional": { en: "Organizational Climate Survey", es: "Encuesta de Clima Organizacional" },
+      "Meça a satisfação e engajamento da equipe com um questionário anônimo e profissional.": { en: "Measure team satisfaction and engagement with an anonymous, professional questionnaire.", es: "Mida la satisfacción y el compromiso del equipo con un cuestionario anónimo y profesional." },
+      "Feedback Estruturado": { en: "Structured Feedback", es: "Feedback Estructurado" },
+      "Modelo de feedback construtivo baseado em fatos, impacto e comportamento esperado.": { en: "Constructive feedback template based on facts, impact and expected behavior.", es: "Plantilla de feedback constructivo basado en hechos, impacto y comportamiento esperado." },
+      "Comunicação Interna": { en: "Internal Communication", es: "Comunicación Interna" },
+      "5 arquivos": { en: "5 files", es: "5 archivos" },
+      "Manual do Colaborador": { en: "Employee Handbook", es: "Manual del Colaborador" },
+      "Apresente sua empresa, cultura, benefícios e regras de forma clara e profissional aos novos funcionários.": { en: "Introduce your company, culture, benefits and rules to new employees in a clear, professional way.", es: "Presente su empresa, cultura, beneficios y reglas de forma clara y profesional a los nuevos empleados." },
+      "Word .docx": { en: "Word .docx", es: "Word .docx" },
+      "Política de Home Office": { en: "Remote Work Policy", es: "Política de Teletrabajo" },
+      "Formalize as regras de trabalho remoto: horários, equipamentos, segurança e produtividade.": { en: "Formalize the rules for remote work: hours, equipment, security and productivity.", es: "Formalice las reglas del trabajo remoto: horarios, equipos, seguridad y productividad." },
+      "Código de Conduta": { en: "Code of Conduct", es: "Código de Conducta" },
+      "Estabeleça os valores, ética e comportamentos esperados de todos na organização.": { en: "Establish the values, ethics and behaviors expected of everyone in the organization.", es: "Establezca los valores, la ética y los comportamientos esperados de todos en la organización." },
+      "Modelo de Comunicado Interno": { en: "Internal Announcement Template", es: "Plantilla de Comunicado Interno" },
+      "Template para informar mudanças, avisos e novidades para toda a equipe de forma padronizada.": { en: "Template to inform the whole team about changes, notices and updates in a standardized way.", es: "Plantilla para informar cambios, avisos y novedades a todo el equipo de forma estandarizada." },
+      "Organograma da Empresa": { en: "Company Org Chart", es: "Organigrama de la Empresa" },
+      "Modelo visual editável para estruturar e comunicar a hierarquia e setores da organização.": { en: "Editable visual template to structure and communicate the organization's hierarchy and departments.", es: "Plantilla visual editable para estructurar y comunicar la jerarquía y los sectores de la organización." },
+      "Para empresas": { en: "For companies", es: "Para empresas" },
+      "Sua empresa também pode contar com a Orizon": { en: "Your company can count on Orizon too", es: "Su empresa también puede contar con Orizon" },
+      "Fazemos recrutamento e seleção ágil e humanizado para empresas de Guaíba, Eldorado do Sul e região metropolitana de Porto Alegre — com taxa cobrada apenas em caso de sucesso na contratação.": { en: "We handle fast, human-centered recruitment and selection for companies in Guaíba, Eldorado do Sul and the greater Porto Alegre area — with a fee charged only if the hire is successful.", es: "Realizamos reclutamiento y selección ágil y humanizado para empresas de Guaíba, Eldorado do Sul y la región metropolitana de Porto Alegre — con una tarifa cobrada solo en caso de contratación exitosa." },
+      "Fale com a nossa equipe e publique sua vaga com a gente.": { en: "Talk to our team and post your job with us.", es: "Hable con nuestro equipo y publique su vacante con nosotros." },
+      "Recrutamento ágil e humanizado — taxa só em caso de contratação.": { en: "Fast, human-centered recruitment — fee charged only upon hiring.", es: "Reclutamiento ágil y humanizado — tarifa solo en caso de contratación." },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "Consultoria": { en: "Consulting", es: "Consultoría" },
+      "Consultoria + RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR and Management: Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Vagas & Oportunidades": { en: "Jobs & Opportunities", es: "Empleos y Oportunidades" },
+      "Sobre nós": { en: "About us", es: "Sobre nosotros" },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "♥": { en: "♥", es: "♥" },
+      "Feito com propósito, Rio Grande do Sul, Brasil": { en: "Made with purpose, Rio Grande do Sul, Brazil", es: "Hecho con propósito, Rio Grande do Sul, Brasil" },
+      "Canal": { en: "Channel", es: "Canal" },
+      "✕": { en: "✕", es: "✕" },
+      "Como funciona o processo?": { en: "How does the process work?", es: "¿Cómo funciona el proceso?" },
+      "Escolha seu caminho: fazemos o resto.": { en: "Choose your path: we take care of the rest.", es: "Elija su camino: nosotros hacemos el resto." },
+      "✨ Recomendado": { en: "✨ Recommended", es: "✨ Recomendado" },
+      "🧠 Teste DISC": { en: "🧠 DISC Test", es: "🧠 Test DISC" },
+      "~5 min": { en: "~5 min", es: "~5 min" },
+      "Análise do perfil comportamental: abre em nova aba.": { en: "Behavioral profile analysis: opens in a new tab.", es: "Análisis del perfil conductual: se abre en una nueva pestaña." },
+      "🎤 Mini-Entrevista": { en: "🎤 Mini-Interview", es: "🎤 Mini-Entrevista" },
+      "~3 min": { en: "~3 min", es: "~3 min" },
+      "Suas experiências e motivação. Abre automaticamente após o DISC.": { en: "Your experience and motivation. Opens automatically after the DISC test.", es: "Su experiencia y motivación. Se abre automáticamente después del DISC." },
+      "📄 Currículo": { en: "📄 Resume", es: "📄 Currículum" },
+      "Redirecionado ao canal da vaga (e-mail, WhatsApp etc.).": { en: "Redirected to the job's channel (email, WhatsApp, etc.).", es: "Redirigido al canal de la vacante (correo, WhatsApp, etc.)." },
+      "🧠 DISC Simples": { en: "🧠 Simple DISC", es: "🧠 DISC Simple" },
+      "🧠 DISC Avançado": { en: "🧠 Advanced DISC", es: "🧠 DISC Avanzado" },
+      "⚠️ Já fez o DISC? Refaça a cada 1–2 meses para manter o perfil atualizado.": { en: "⚠️ Already took the DISC test? Retake it every 1–2 months to keep your profile up to date.", es: "⚠️ ¿Ya hizo el DISC? Repítalo cada 1–2 meses para mantener su perfil actualizado." },
+      "➜ Pular DISC": { en: "➜ Skip DISC", es: "➜ Omitir DISC" },
+      "Experiência e motivação para a vaga.": { en: "Experience and motivation for the job.", es: "Experiencia y motivación para la vacante." },
+      "✉️ E-mail": { en: "✉️ Email", es: "✉️ Correo" },
+      "(opcional)": { en: "(optional)", es: "(opcional)" },
+      "Redirecionado ao canal da vaga para enviar.": { en: "Redirected to the job's channel to send it.", es: "Redirigido al canal de la vacante para enviarlo." },
+      "➜ Ir para a Mini-Entrevista": { en: "➜ Go to the Mini-Interview", es: "➜ Ir a la Mini-Entrevista" },
+      "📌 Sem DISC, o perfil não terá análise comportamental, mas a candidatura ainda é válida.": { en: "📌 Without the DISC test, your profile won't have a behavioral analysis, but your application is still valid.", es: "📌 Sin el DISC, el perfil no tendrá análisis conductual, pero la candidatura sigue siendo válida." },
+      "♻️ Resultado recente": { en: "♻️ Recent result", es: "♻️ Resultado reciente" },
+      "🧠": { en: "🧠", es: "🧠" },
+      "—": { en: "—", es: "—" },
+      "Perfil comportamental identificado": { en: "Behavioral profile identified", es: "Perfil conductual identificado" },
+      "⏱ —": { en: "⏱ —", es: "⏱ —" },
+      "♻️ Usar este resultado e continuar →": { en: "♻️ Use this result and continue →", es: "♻️ Usar este resultado y continuar →" },
+      "🔄 Prefiro refazer o teste DISC": { en: "🔄 I'd rather retake the DISC test", es: "🔄 Prefiero repetir el test DISC" },
+      "⏳": { en: "⏳", es: "⏳" },
+      "Aguardando conclusão do teste...": { en: "Waiting for the test to be completed...", es: "Esperando la conclusión de la prueba..." },
+      "Conclua o teste na outra aba e clique em": { en: "Finish the test in the other tab and click", es: "Complete la prueba en la otra pestaña y haga clic en" },
+      "\"Prosseguir para a Mini-Entrevista\"": { en: "\"Proceed to the Mini-Interview\"", es: "\"Continuar a la Mini-Entrevista\"" },
+      "lá. Você será redirecionado automaticamente.": { en: "there. You'll be redirected automatically.", es: "allí. Será redirigido automáticamente." },
+      "✅ Teste DISC concluído! Perfil:": { en: "✅ DISC test completed! Profile:", es: "✅ ¡Test DISC completado! Perfil:" },
+      "📨": { en: "📨", es: "📨" },
+      "✅ BÔNUS (O que você ganha)": { en: "✅ BONUS (What you get)", es: "✅ BONO (Lo que usted obtiene)" },
+      "⚠️ ÔNUS": { en: "⚠️ TRADE-OFF", es: "⚠️ CONTRAPARTIDA" },
+      "Enviar Currículo →": { en: "Send Resume →", es: "Enviar Currículum →" },
+      "Cancelar": { en: "Cancel", es: "Cancelar" },
+      "▲": { en: "▲", es: "▲" },
+      "Assistente Orizon": { en: "Orizon Assistant", es: "Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ACTIVADO" },
+      "➤": { en: "➤", es: "➤" },
+      "Recrutamento & Seleção": { en: "Recruitment & Selection", es: "Reclutamiento y Selección" },
+      "✕ Fechar": { en: "✕ Close", es: "✕ Cerrar" },
+      "Processo Seletivo Online": { en: "Online Hiring Process", es: "Proceso de Selección en Línea" },
+      "Antes de começar,": { en: "Before you start,", es: "Antes de comenzar," },
+      "veja como funciona": { en: "see how it works", es: "vea cómo funciona" },
+      "Sua candidatura é composta por etapas rápidas e simples. Leva cerca de": { en: "Your application consists of quick, simple steps. It takes about", es: "Su candidatura consta de etapas rápidas y simples. Toma alrededor de" },
+      "15 a 20 minutos": { en: "15 to 20 minutes", es: "15 a 20 minutos" },
+      "no total e pode ser feita pelo celular mesmo.": { en: "in total and can even be done on your phone.", es: "en total y puede hacerse incluso desde el celular." },
+      "📋 Carregando vaga…": { en: "📋 Loading job…", es: "📋 Cargando vacante…" },
+      "você precisa completar": { en: "you need to complete", es: "necesita completar" },
+      "todas as etapas em até 24 horas": { en: "all the steps within 24 hours", es: "todas las etapas en un plazo de 24 horas" },
+      "após iniciar. Candidaturas incompletas são excluídas automaticamente do sistema para manter a fila de seleção organizada. Tenha uns 20 minutos disponíveis antes de começar.": { en: "after starting. Incomplete applications are automatically removed from the system to keep the selection queue organized. Make sure you have about 20 minutes available before you start.", es: "después de comenzar. Las candidaturas incompletas se eliminan automáticamente del sistema para mantener la fila de selección organizada. Tenga unos 20 minutos disponibles antes de empezar." },
+      "Dados de contato": { en: "Contact details", es: "Datos de contacto" },
+      "Preencha seu nome completo, telefone, e-mail e algumas informações básicas. Esses dados garantem que possamos entrar em contato e identificar você no processo seletivo.": { en: "Fill in your full name, phone number, email and some basic information. This data ensures we can reach you and identify you throughout the hiring process.", es: "Complete su nombre completo, teléfono, correo electrónico y algunos datos básicos. Esta información garantiza que podamos contactarlo e identificarlo en el proceso de selección." },
+      "⏱ ~2 minutos": { en: "⏱ ~2 minutes", es: "⏱ ~2 minutos" },
+      "Teste DISC": { en: "DISC Test", es: "Test DISC" },
+      "Avaliação comportamental com perguntas de múltipla escolha. Não há resposta certa ou errada: responda o que mais se identifica com você no dia a dia. Os resultados ajudam os recrutadores a entenderem seu perfil profissional.": { en: "A behavioral assessment with multiple-choice questions. There's no right or wrong answer: pick whatever fits you best in everyday life. The results help recruiters understand your professional profile.", es: "Evaluación conductual con preguntas de opción múltiple. No hay respuesta correcta o incorrecta: responda lo que más se identifique con usted en el día a día. Los resultados ayudan a los reclutadores a entender su perfil profesional." },
+      "⏱ ~8 minutos": { en: "⏱ ~8 minutes", es: "⏱ ~8 minutos" },
+      "Mini entrevista": { en: "Mini-interview", es: "Mini-entrevista" },
+      "Responda algumas perguntas por texto sobre sua experiência, motivações e expectativas. É uma conversa rápida que substitui a triagem inicial por telefone e agiliza muito o processo para você.": { en: "Answer a few text questions about your experience, motivations and expectations. It's a quick conversation that replaces the initial phone screening and speeds up the process a lot for you.", es: "Responda algunas preguntas por texto sobre su experiencia, motivaciones y expectativas. Es una conversación rápida que reemplaza la selección inicial por teléfono y agiliza mucho el proceso para usted." },
+      "⏱ ~5 minutos": { en: "⏱ ~5 minutes", es: "⏱ ~5 minutos" },
+      "Envio do currículo": { en: "Resume submission", es: "Envío del currículum" },
+      "Na última etapa, você escolhe como prefere enviar seu currículo: WhatsApp, e-mail ou formulário online. Uma mensagem já vem pré-preenchida com seus dados e resultado do DISC para facilitar.": { en: "In the last step, you choose how you'd like to send your resume: WhatsApp, email or an online form. A message comes pre-filled with your details and DISC result to make it easier.", es: "En la última etapa, usted elige cómo prefiere enviar su currículum: WhatsApp, correo electrónico o formulario en línea. Un mensaje viene precompletado con sus datos y el resultado del DISC para facilitarlo." },
+      "⏱ ~1 minuto": { en: "⏱ ~1 minute", es: "⏱ ~1 minuto" },
+      "Dúvidas frequentes": { en: "Frequently asked questions", es: "Preguntas frecuentes" },
+      "💰 É gratuito?": { en: "💰 Is it free?", es: "💰 ¿Es gratuito?" },
+      "Sim, 100% gratuito. A Orizon nunca cobra nada do profissional em nenhuma etapa do processo seletivo.": { en: "Yes, 100% free. Orizon never charges the candidate anything at any stage of the hiring process.", es: "Sí, 100% gratuito. Orizon nunca le cobra nada al profesional en ninguna etapa del proceso de selección." },
+      "📱 Posso fazer pelo celular?": { en: "📱 Can I do it on my phone?", es: "📱 ¿Puedo hacerlo desde el celular?" },
+      "Sim. Todo o processo foi desenvolvido para funcionar bem em smartphones. Não precisa de computador.": { en: "Yes. The whole process was designed to work well on smartphones. You don't need a computer.", es: "Sí. Todo el proceso fue diseñado para funcionar bien en smartphones. No necesita computadora." },
+      "🔒 Meus dados estão seguros?": { en: "🔒 Is my data safe?", es: "🔒 ¿Mis datos están seguros?" },
+      "Seus dados são usados exclusivamente para fins de recrutamento e não são compartilhados com terceiros fora do processo seletivo.": { en: "Your data is used exclusively for recruitment purposes and is not shared with third parties outside the hiring process.", es: "Sus datos se utilizan exclusivamente para fines de reclutamiento y no se comparten con terceros fuera del proceso de selección." },
+      "⏳ O que acontece se eu não terminar?": { en: "⏳ What happens if I don't finish?", es: "⏳ ¿Qué pasa si no termino?" },
+      "Se você não concluir todas as etapas em 24 horas, seu cadastro parcial é removido automaticamente. Você pode se candidatar novamente quando quiser.": { en: "If you don't complete all the steps within 24 hours, your partial application is automatically removed. You can apply again whenever you want.", es: "Si no completa todas las etapas en 24 horas, su registro parcial se elimina automáticamente. Puede volver a postularse cuando quiera." },
+      "Entendi, quero me candidatar →": { en: "Got it, I want to apply →", es: "Entendido, quiero postularme →" },
+      "✓": { en: "✓", es: "✓" },
+      "Sem cobrança": { en: "No charges", es: "Sin cobro" },
+      "100% online": { en: "100% online", es: "100% en línea" },
+      "Dados protegidos": { en: "Protected data", es: "Datos protegidos" },
+      "~15 a 20 min": { en: "~15 to 20 min", es: "~15 a 20 min" }
+    };
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      const trimmed = text.trim();
+      const literalEntry = literalTranslations[trimmed];
+      if (literalEntry && literalEntry[to]) {
+        const leading = text.match(/^\s*/)[0];
+        const trailing = text.match(/\s*$/)[0];
+        return leading + literalEntry[to] + trailing;
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()), aplica o
+    // mesmo .trim() que vtTranslateOne() usa nesta pagina antes de
+    // consultar o dicionario, e compara com as chaves de literalTranslations.
+    // Nao corrige nada sozinho -- so avisa no console, mesmo espirito do
+    // checkI18nSync(). Ver o comentario logo acima de "const literalTranslations"
+    // para o passo a passo de como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue.trim()); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) {
         selector.value = savedLang;
       }
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        if (translations[lang][key]) {
+        if (t[key]) {
           const icon = element.querySelector(':scope > img, :scope > svg');
-          element.textContent = translations[lang][key];
+          element.textContent = t[key];
           if (icon) element.insertBefore(icon, element.firstChild);
         }
       });
       
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 
     </script>
 <script>
@@ -9307,7 +9883,11 @@ body:not(.dark-mode) .header {
 
 /* Brilho dourado sutil no centro */
 body:not(.dark-mode) .header::before {
-  
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(250,204,21,0.15), transparent 70%);
+  pointer-events: none;
 }
 
 /* Logo: texto branco sólido sem glow neon */
@@ -10308,10 +10888,10 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }
+
 body.dark-mode .olh-eyebrow,
 body.dark-mode .olh-subtitle,
 body.dark-mode .header-page-title {

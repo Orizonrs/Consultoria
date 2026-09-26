@@ -1189,7 +1189,6 @@ body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 
   perspective: 1400px;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent !important;
-  tap-highlight-color: transparent !important;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
@@ -1198,7 +1197,6 @@ body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 
 .ia-photo-card,
 .ia-photo-card * {
   -webkit-tap-highlight-color: transparent !important;
-  tap-highlight-color: transparent !important;
 }
 .ia-photo-card:focus { outline: none; }
 .ia-photo-card:focus-visible .ia-photo-card-flip { outline: 2px solid #00c8ff; outline-offset: 2px; border-radius: 18px; }
@@ -1221,7 +1219,6 @@ body.dark-mode .orizon-section-title .ost-w2 { color: #00c8ff; text-shadow: 0 0 
 }
 
 /* ---- Frente: foto + título ---- */
-.ia-photo-card-front { }
 .ia-photo-card-front img {
   width: 100%; height: 100%; object-fit: cover; display: block;
   pointer-events: none;
@@ -2275,9 +2272,6 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
     }
 
     /* IMAGEM FUNDO.PNG - EXATAMENTE COMO PADRÃO */
-
-    @media (min-width: 1024px) {}
-    @media (max-width: 768px) {}
     @media (max-width: 480px) {
       .header-content {
         position: relative;
@@ -8103,6 +8097,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -8110,26 +8119,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma, texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -8436,22 +8472,544 @@ let vtRecognition = null;
       }
     };
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // literalTranslations: traducoes literais escritas a mao (pt -> en/es)
+    // para o conteudo desta pagina que fica fora do Sistema 1 (data-i18n).
+    // vtTranslateOne confere aqui primeiro; so cai pra API MyMemory se o
+    // texto nao estiver neste dicionario. Chave = texto EXATO do no (com
+    // os mesmos espacos/quebras de linha nas pontas do texto original).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      'Carregando previsão…': { en: 'Loading forecast…', es: 'Cargando pronóstico…' },
+      'Voltar': { en: 'Back', es: 'Volver' },
+      'Menu': { en: 'Menu', es: 'Menú' },
+      'Topics': { en: 'Topics', es: 'Topics' },
+      ' Nossos Resultados': { en: ' Our Results', es: ' Nuestros Resultados' },
+      ' Especialistas em RH': { en: ' HR Specialists', es: ' Especialistas en RRHH' },
+      ' Serviços da Orizon': { en: ' Orizon\'s Services', es: ' Servicios de Orizon' },
+      ' Abrir Fichas de Serviço': { en: ' Open Service Sheets', es: ' Abrir Fichas de Servicio' },
+      'Bem-Vindo': { en: 'Welcome', es: 'Bienvenido' },
+      'Sobre': { en: 'About', es: 'Sobre' },
+      '▾': { en: '▾', es: '▾' },
+      'Missão': { en: 'Mission', es: 'Misión' },
+      'Visão': { en: 'Vision', es: 'Visión' },
+      'Valores': { en: 'Values', es: 'Valores' },
+      'Candidatos': { en: 'Candidates', es: 'Candidatos' },
+      'Vídeos': { en: 'Videos', es: 'Videos' },
+      'Vagas': { en: 'Jobs', es: 'Vacantes' },
+      'Ferramentas IA': { en: 'AI Tools', es: 'Herramientas IA' },
+      'Utilidades': { en: 'Utilities', es: 'Utilidades' },
+      'Mapa de Carreiras': { en: 'Career Map', es: 'Mapa de Carreras' },
+      'Atendimento': { en: 'Support', es: 'Atención' },
+      'Serviços': { en: 'Services', es: 'Servicios' },
+      'Contato': { en: 'Contact', es: 'Contacto' },
+      'Informações': { en: 'Information', es: 'Información' },
+      'Privacidade': { en: 'Privacy', es: 'Privacidad' },
+      'LGBT+': { en: 'LGBT+', es: 'LGBT+' },
+      'Privacidade & LGPD': { en: 'Privacy & LGPD', es: 'Privacidad y LGPD' },
+      'Cookies': { en: 'Cookies', es: 'Cookies' },
+      'Loja de Sistemas': { en: 'Systems Store', es: 'Tienda de Sistemas' },
+      'Teste de Perfil': { en: 'Profile Test', es: 'Test de Perfil' },
+      '// Sistema de Gestão //': { en: '// Management System //', es: '// Sistema de Gestión //' },
+      'ORIZON': { en: 'ORIZON', es: 'ORIZON' },
+      '\n          Administração\n          ': { en: '\n          Administration\n          ', es: '\n          Administración\n          ' },
+      '◆': { en: '◆', es: '◆' },
+      '\n          Gestão\n        ': { en: '\n          Management\n        ', es: '\n          Gestión\n        ' },
+      '\n  A Orizon é ': { en: '\n  Orizon is an ', es: '\n  Orizon es una ' },
+      'agência de empregos': { en: 'employment agency', es: 'agencia de empleo' },
+      'agência de RH': { en: 'HR agency', es: 'agencia de RRHH' },
+      ' e ': { en: ' and ', es: ' y ' },
+      'consultoria de RH': { en: 'HR consultancy', es: 'consultoría de RRHH' },
+      ' em Guaíba, Eldorado do Sul e Barra do Ribeiro, com serviços completos de ': { en: ' in Guaíba, Eldorado do Sul and Barra do Ribeiro, with full services in ', es: ' en Guaíba, Eldorado do Sul y Barra do Ribeiro, con servicios completos de ' },
+      'consultoria administrativa': { en: 'administrative consulting', es: 'consultoría administrativa' },
+      'consultoria financeira': { en: 'financial consulting', es: 'consultoría financiera' },
+      'consultoria de logística': { en: 'logistics consulting', es: 'consultoría de logística' },
+      '. Fazemos recrutamento e seleção, gestão de pessoas, ': { en: '. We handle recruitment and selection, people management, ', es: '. Realizamos reclutamiento y selección, gestión de personas, ' },
+      'apoio administrativo': { en: 'administrative support', es: 'apoyo administrativo' },
+      'digitação': { en: 'typing', es: 'digitación' },
+      ' e digitalização de documentos para empresas e candidatos da região. Também desenvolvemos e vendemos ': { en: ' and document digitization for companies and candidates in the region. We also develop and sell ', es: ' y digitalización de documentos para empresas y candidatos de la región. También desarrollamos y vendemos ' },
+      'sistemas e softwares de gestão': { en: 'management systems and software', es: 'sistemas y software de gestión' },
+      ': sistema de RH, sistema para agências de recrutamento e seleção, sistema de controle de compras, sistema de controle financeiro e sistema de controle de logística. Uma consultoria completa para gestão de RH, administrativo, financeiro, compras e logística.\n': { en: ': an HR system, a system for recruitment and selection agencies, a purchasing control system, a financial control system and a logistics control system. A complete consultancy for HR, administrative, financial, purchasing and logistics management.\n', es: ': sistema de RRHH, sistema para agencias de reclutamiento y selección, sistema de control de compras, sistema de control financiero y sistema de control de logística. Una consultoría completa para gestión de RRHH, administrativa, financiera, de compras y de logística.\n' },
+      'Acessibilidade': { en: 'Accessibility', es: 'Accesibilidad' },
+      'A+': { en: 'A+', es: 'A+' },
+      'A++': { en: 'A++', es: 'A++' },
+      '◐ Contraste': { en: '◐ Contrast', es: '◐ Contraste' },
+      '↺ Restaurar recursos': { en: '↺ Reset features', es: '↺ Restaurar funciones' },
+      'Cidades': { en: 'Cities', es: 'Ciudades' },
+      'Atendidas': { en: 'Served', es: 'Atendidas' },
+      ' Ao vivo, direto da nossa lista de vagas': { en: ' Live, straight from our job listings', es: ' En vivo, directo de nuestra lista de vacantes' },
+      'Carregando…': { en: 'Loading…', es: 'Cargando…' },
+      '\n  A Orizon RH & Gestão é uma consultoria que integra gestão, tecnologia e desenvolvimento humano para apoiar empresas, profissionais e equipes em diferentes etapas de sua jornada. Atuamos em consultoria organizacional, desenvolvimento de pessoas, comunicação estratégica, empregabilidade e soluções digitais, combinando conhecimento técnico, criatividade e experiência prática para oferecer soluções personalizadas, eficientes e orientadas a resultados.\n': { en: '\n  Orizon RH & Gestão is a consultancy that integrates management, technology and human development to support companies, professionals and teams at different stages of their journey. We work in organizational consulting, people development, strategic communication, employability and digital solutions, combining technical knowledge, creativity and practical experience to deliver personalized, efficient and results-oriented solutions.\n', es: '\n  Orizon RH & Gestão es una consultoría que integra gestión, tecnología y desarrollo humano para apoyar empresas, profesionales y equipos en diferentes etapas de su trayectoria. Trabajamos en consultoría organizacional, desarrollo de personas, comunicación estratégica, empleabilidad y soluciones digitales, combinando conocimiento técnico, creatividad y experiencia práctica para ofrecer soluciones personalizadas, eficientes y orientadas a resultados.\n' },
+      ' Nossa Força:': { en: ' Our Strength:', es: ' Nuestra Fuerza:' },
+      ' Integramos análise de dados, inteligência artificial, conhecimento de mercado, tecnologia e produção de conteúdo para transformar informações em soluções práticas. Atuamos de forma estratégica para apoiar empresas em seus desafios de gestão e profissionais em seu desenvolvimento e posicionamento no mercado.\n\n      ': { en: ' We combine data analysis, artificial intelligence, market knowledge, technology and content production to turn information into practical solutions. We act strategically to support companies with their management challenges and professionals with their development and market positioning.\n\n      ', es: ' Integramos análisis de datos, inteligencia artificial, conocimiento de mercado, tecnología y producción de contenido para transformar información en soluciones prácticas. Actuamos de forma estratégica para apoyar a las empresas en sus desafíos de gestión y a los profesionales en su desarrollo y posicionamiento en el mercado.\n\n      ' },
+      ' Sinal ao vivo, alcance real da Orizon': { en: ' Live signal, Orizon\'s real reach', es: ' Señal en vivo, alcance real de Orizon' },
+      'Currículos': { en: 'Résumés', es: 'Currículums' },
+      'WhatsApp': { en: 'WhatsApp', es: 'WhatsApp' },
+      'LinkedIn': { en: 'LinkedIn', es: 'LinkedIn' },
+      'Grupo': { en: 'Group', es: 'Grupo' },
+      'Instagram': { en: 'Instagram', es: 'Instagram' },
+      'Facebook': { en: 'Facebook', es: 'Facebook' },
+      'Como trabalhar': { en: 'How to work', es: 'Cómo trabajar' },
+      'com a Orizon': { en: 'with Orizon', es: 'con Orizon' },
+      'Cada empresa está num momento diferente. Você pode delegar o processo inteiro, contar com a Orizon apenas como reforço, ou só pedir uma orientação. Escolha o modelo que cabe na sua necessidade e no seu orçamento.': { en: 'Every company is at a different stage. You can delegate the whole process, count on Orizon just as extra support, or simply ask for guidance. Choose the model that fits your needs and your budget.', es: 'Cada empresa está en un momento diferente. Puedes delegar el proceso completo, contar con Orizon solo como refuerzo, o simplemente pedir una orientación. Elige el modelo que se ajusta a tu necesidad y a tu presupuesto.' },
+      'MODELO 01': { en: 'MODEL 01', es: 'MODELO 01' },
+      'Envolvimento ': { en: 'Involvement ', es: 'Participación ' },
+      'A Orizon conduz': { en: 'Orizon leads', es: 'Orizon conduce' },
+      'Serviço completo': { en: 'Full service', es: 'Servicio completo' },
+      'Você delega e a Orizon assume o processo do começo ao fim: recrutamento, tecnologia, marketing e gestão.': { en: 'You delegate and Orizon takes over the whole process from start to finish: recruitment, technology, marketing and management.', es: 'Tú delegas y Orizon asume el proceso de principio a fin: reclutamiento, tecnología, marketing y gestión.' },
+      'Ideal para quem não tem equipe ou tempo': { en: 'Ideal for those without a team or time', es: 'Ideal para quien no tiene equipo ni tiempo' },
+      'Um responsável único pelo processo inteiro': { en: 'A single person in charge of the whole process', es: 'Un único responsable de todo el proceso' },
+      'Acompanhamento até a entrega final': { en: 'Follow-up through to final delivery', es: 'Seguimiento hasta la entrega final' },
+      'Ver serviços completos ': { en: 'See full services ', es: 'Ver servicios completos ' },
+      '↓': { en: '↓', es: '↓' },
+      'MODELO 02': { en: 'MODEL 02', es: 'MODELO 02' },
+      'Você conduz, a Orizon apoia': { en: 'You lead, Orizon supports', es: 'Tú conduces, Orizon apoya' },
+      'Apoio': { en: 'Support', es: 'Apoyo' },
+      'Você mantém o controle e contrata só o que precisa: sistema ATS, divulgação, análise, digitação e reforço administrativo.': { en: 'You stay in control and hire only what you need: ATS system, promotion, analysis, typing and administrative support.', es: 'Mantienes el control y contratas solo lo que necesitas: sistema ATS, difusión, análisis, digitación y refuerzo administrativo.' },
+      'Ideal para quem já tem equipe ou processo': { en: 'Ideal for those who already have a team or process', es: 'Ideal para quien ya tiene equipo o proceso' },
+      'Contrate uma etapa, horas ou apoio mensal': { en: 'Hire one stage, hours or monthly support', es: 'Contrata una etapa, horas o apoyo mensual' },
+      'Investimento menor que o serviço completo': { en: 'Lower investment than the full service', es: 'Inversión menor que el servicio completo' },
+      'Ver categorias de apoio ': { en: 'See support categories ', es: 'Ver categorías de apoyo ' },
+      'MODELO 03': { en: 'MODEL 03', es: 'MODELO 03' },
+      'Você decide, a Orizon orienta': { en: 'You decide, Orizon guides', es: 'Tú decides, Orizon orienta' },
+      'Consultoria': { en: 'Consulting', es: 'Consultoría' },
+      'Diagnóstico, conversa estratégica e plano de ação. A Orizon aponta o caminho e a execução fica com você.': { en: 'Diagnosis, strategic conversation and action plan. Orizon points the way and execution stays with you.', es: 'Diagnóstico, conversación estratégica y plan de acción. Orizon señala el camino y la ejecución queda contigo.' },
+      'Ideal para decidir com segurança antes de investir': { en: 'Ideal for deciding with confidence before investing', es: 'Ideal para decidir con seguridad antes de invertir' },
+      'Sessão avulsa, por hora ou acompanhamento': { en: 'Single session, hourly or ongoing follow-up', es: 'Sesión individual, por hora o seguimiento' },
+      'Sem projeto longo nem compromisso de execução': { en: 'No long project or execution commitment', es: 'Sin proyecto largo ni compromiso de ejecución' },
+      'Ver consultorias ': { en: 'See consulting services ', es: 'Ver consultorías ' },
+      'Não sabe qual modelo combina com você? ': { en: 'Not sure which model fits you? ', es: '¿No sabes qué modelo te conviene? ' },
+      'Conte sua situação pelo WhatsApp': { en: 'Tell us your situation on WhatsApp', es: 'Cuéntanos tu situación por WhatsApp' },
+      ' e a gente indica o caminho.': { en: ' and we\'ll point you the right way.', es: ' y te indicamos el camino.' },
+      'da Orizon': { en: 'from Orizon', es: 'de Orizon' },
+      'Modelo 01': { en: 'Model 01', es: 'Modelo 01' },
+      ' A Orizon conduz do começo ao fim': { en: ' Orizon leads from start to finish', es: ' Orizon conduce de principio a fin' },
+      '\n          Uma consultoria administrativa completa, muito além do RH. Do recrutamento ao desenvolvimento de software, do marketing digital ao apoio operacional. Toque em cada ponto do radar pra abrir a frente correspondente.\n        ': { en: '\n          A complete administrative consultancy, far beyond HR. From recruitment to software development, from digital marketing to operational support. Tap each point on the radar to open the corresponding area.\n        ', es: '\n          Una consultoría administrativa completa, mucho más allá del RRHH. Del reclutamiento al desarrollo de software, del marketing digital al apoyo operativo. Toca cada punto del radar para abrir el frente correspondiente.\n        ' },
+      'hub central': { en: 'central hub', es: 'hub central' },
+      '‹': { en: '‹', es: '‹' },
+      '›': { en: '›', es: '›' },
+      '← deslize para trocar de frente →': { en: '← swipe to switch views →', es: '← desliza para cambiar de frente →' },
+      'Modelo 02': { en: 'Model 02', es: 'Modelo 02' },
+      ' Você conduz, a Orizon apoia': { en: ' You lead, Orizon supports', es: ' Tú conduces, Orizon apoya' },
+      'Nem toda empresa precisa entregar o processo inteiro para alguém. Se você já conduz o recrutamento ou a rotina administrativa, a Orizon entra como ': { en: 'Not every company needs to hand the whole process over to someone else. If you already run recruitment or the administrative routine, Orizon steps in as ', es: 'No toda empresa necesita entregarle el proceso completo a alguien. Si ya conduces el reclutamiento o la rutina administrativa, Orizon entra como ' },
+      'apoio': { en: 'support', es: 'apoyo' },
+      ': sistema, canais de divulgação, análise, digitação e consultoria nas etapas que você escolher. O serviço fica mais leve e mais barato.': { en: ': system, promotion channels, analysis, typing and consulting in the stages you choose. The service becomes lighter and cheaper.', es: ': sistema, canales de difusión, análisis, digitación y consultoría en las etapas que elijas. El servicio queda más ligero y más económico.' },
+      'Valores sob consulta, conforme a etapa e o volume. Precisa do processo inteiro? Veja as frentes do radar acima. Prefere só uma orientação? Veja as consultorias abaixo.': { en: 'Prices on request, depending on the stage and volume. Need the whole process? See the radar areas above. Prefer just guidance? See the consulting services below.', es: 'Valores a consultar, según la etapa y el volumen. ¿Necesitas el proceso completo? Mira los frentes del radar arriba. ¿Prefieres solo una orientación? Mira las consultorías abajo.' },
+      'Consultorias': { en: 'Consulting Services', es: 'Consultorías' },
+      'Modelo 03': { en: 'Model 03', es: 'Modelo 03' },
+      ' Você decide, a Orizon orienta': { en: ' You decide, Orizon guides', es: ' Tú decides, Orizon orienta' },
+      'Quando você só precisa de orientação: a Orizon analisa a situação, aponta o caminho e entrega um plano claro. A execução fica com você, sem projeto longo e com investimento bem menor.': { en: 'When all you need is guidance: Orizon analyzes the situation, points the way and delivers a clear plan. Execution stays with you, with no long project and a much lower investment.', es: 'Cuando solo necesitas orientación: Orizon analiza la situación, señala el camino y entrega un plan claro. La ejecución queda contigo, sin proyecto largo y con una inversión mucho menor.' },
+      'Consultoria em RH e Recrutamento': { en: 'HR and Recruitment Consulting', es: 'Consultoría en RRHH y Reclutamiento' },
+      'Como estruturar ou melhorar o processo seletivo da sua empresa.': { en: 'How to structure or improve your company\'s selection process.', es: 'Cómo estructurar o mejorar el proceso de selección de tu empresa.' },
+      'Desenho do processo e do perfil de cada vaga': { en: 'Designing the process and profile for each position', es: 'Diseño del proceso y del perfil de cada vacante' },
+      'Uso de testes DISC e de sistema ATS': { en: 'Use of DISC tests and ATS system', es: 'Uso de tests DISC y de sistema ATS' },
+      'Diagnóstico dos gargalos na contratação': { en: 'Diagnosis of hiring bottlenecks', es: 'Diagnóstico de los cuellos de botella en la contratación' },
+      'Consultoria Administrativa': { en: 'Administrative Consulting', es: 'Consultoría Administrativa' },
+      'Rotinas e fluxos mais leves para o dia a dia da empresa.': { en: 'Lighter routines and workflows for the company\'s daily operations.', es: 'Rutinas y flujos más ligeros para el día a día de la empresa.' },
+      'Mapeamento de processos e rotinas': { en: 'Mapping of processes and routines', es: 'Mapeo de procesos y rutinas' },
+      'Planilhas e controles sob medida': { en: 'Custom spreadsheets and controls', es: 'Planillas y controles a medida' },
+      'Plano de organização por prioridade': { en: 'Priority-based organization plan', es: 'Plan de organización por prioridad' },
+      'Gestão e Cultura Organizacional': { en: 'Management and Organizational Culture', es: 'Gestión y Cultura Organizacional' },
+      'Um olhar de fora sobre como a empresa funciona e onde melhorar.': { en: 'An outside perspective on how the company works and where to improve.', es: 'Una mirada externa sobre cómo funciona la empresa y dónde mejorar.' },
+      'Diagnóstico de cultura e clima': { en: 'Culture and climate diagnosis', es: 'Diagnóstico de cultura y clima' },
+      'Alinhamento de papéis e responsabilidades': { en: 'Alignment of roles and responsibilities', es: 'Alineación de roles y responsabilidades' },
+      'Plano de melhoria em etapas': { en: 'Step-by-step improvement plan', es: 'Plan de mejora por etapas' },
+      'Carreira e Mentoria': { en: 'Career and Mentoring', es: 'Carrera y Mentoría' },
+      'Para profissionais e gestores que querem decidir o próximo passo.': { en: 'For professionals and managers who want to decide their next step.', es: 'Para profesionales y gerentes que quieren decidir su próximo paso.' },
+      'Plano de carreira ou de transição': { en: 'Career or transition plan', es: 'Plan de carrera o de transición' },
+      'Currículo e LinkedIn preparados para ATS': { en: 'Résumé and LinkedIn prepared for ATS', es: 'Currículum y LinkedIn preparados para ATS' },
+      'Mentoria individual com acompanhamento': { en: 'One-on-one mentoring with follow-up', es: 'Mentoría individual con seguimiento' },
+      'Tecnologia e IA para o Negócio': { en: 'Technology and AI for Business', es: 'Tecnología e IA para el Negocio' },
+      'Saber o que vale a pena antes de investir em site, sistema ou automação.': { en: 'Know what\'s worth it before investing in a website, system or automation.', es: 'Saber qué vale la pena antes de invertir en un sitio, sistema o automatización.' },
+      'Qual site, sistema ou automação faz sentido': { en: 'Which website, system or automation makes sense', es: 'Qué sitio, sistema o automatización tiene sentido' },
+      'IA aplicada à rotina da empresa': { en: 'AI applied to the company\'s routine', es: 'IA aplicada a la rutina de la empresa' },
+      'Escopo e prioridades antes de contratar': { en: 'Scope and priorities before hiring', es: 'Alcance y prioridades antes de contratar' },
+      'Divulgação e Marca Empregadora': { en: 'Promotion and Employer Branding', es: 'Difusión y Marca Empleadora' },
+      'Como fazer sua empresa e suas vagas serem vistas por quem importa.': { en: 'How to get your company and job postings seen by the people who matter.', es: 'Cómo lograr que tu empresa y tus vacantes sean vistas por quien importa.' },
+      'Estratégia de canais para vagas e marca': { en: 'Channel strategy for jobs and brand', es: 'Estrategia de canales para vacantes y marca' },
+      'Presença no LinkedIn e nas redes': { en: 'Presence on LinkedIn and social media', es: 'Presencia en LinkedIn y en redes' },
+      'Como aproveitar comunidades locais': { en: 'How to make the most of local communities', es: 'Cómo aprovechar comunidades locales' },
+      'Nossos': { en: 'Our', es: 'Nuestros' },
+      'Recrutamento & Consultoria': { en: 'Recruitment & Consulting', es: 'Reclutamiento y Consultoría' },
+      '↻': { en: '↻', es: '↻' },
+      'Recrutamento e seleção de candidatos': { en: 'Candidate recruitment and selection', es: 'Reclutamiento y selección de candidatos' },
+      'Triagem e entrevistas': { en: 'Screening and interviews', es: 'Preselección y entrevistas' },
+      'Consultoria administrativa': { en: 'Administrative consulting', es: 'Consultoría administrativa' },
+      'Consultoria em gestão empresarial': { en: 'Business management consulting', es: 'Consultoría en gestión empresarial' },
+      'Sites & Chatbots': { en: 'Websites & Chatbots', es: 'Sitios Web y Chatbots' },
+      'Criação de sites profissionais': { en: 'Creation of professional websites', es: 'Creación de sitios web profesionales' },
+      'Sites responsivos (mobile e desktop)': { en: 'Responsive websites (mobile and desktop)', es: 'Sitios web responsivos (móvil y escritorio)' },
+      'Criação de chatbots inteligentes': { en: 'Creation of intelligent chatbots', es: 'Creación de chatbots inteligentes' },
+      'Automação de atendimento': { en: 'Support automation', es: 'Automatización de atención' },
+      'Conteúdo, SEO & Digitação': { en: 'Content, SEO & Typing', es: 'Contenido, SEO y Digitación' },
+      'Divulgação de conteúdo': { en: 'Content promotion', es: 'Difusión de contenido' },
+      'Digitação de documentos': { en: 'Document typing', es: 'Digitación de documentos' },
+      'Criação de conteúdo em Python': { en: 'Content creation in Python', es: 'Creación de contenido en Python' },
+      'SEO para redes sociais': { en: 'SEO for social media', es: 'SEO para redes sociales' },
+      'SEO para websites': { en: 'SEO for websites', es: 'SEO para sitios web' },
+      'Consultoria & Gestão de Projetos': { en: 'Consulting & Project Management', es: 'Consultoría y Gestión de Proyectos' },
+      'Diagnóstico e reestruturação organizacional': { en: 'Diagnosis and organizational restructuring', es: 'Diagnóstico y reestructuración organizacional' },
+      'Gestão de projetos e processos': { en: 'Project and process management', es: 'Gestión de proyectos y procesos' },
+      'Planejamento estratégico': { en: 'Strategic planning', es: 'Planificación estratégica' },
+      'Implantação de metodologias ágeis': { en: 'Implementation of agile methodologies', es: 'Implementación de metodologías ágiles' },
+      'Sistemas & Softwares de Gestão': { en: 'Management Systems & Software', es: 'Sistemas y Software de Gestión' },
+      'Sistema de Gestão de RH completo': { en: 'Complete HR Management System', es: 'Sistema de Gestión de RRHH completo' },
+      'Sistema para Agências de Recrutamento e Seleção': { en: 'System for Recruitment and Selection Agencies', es: 'Sistema para Agencias de Reclutamiento y Selección' },
+      'Sistema de Controle de Compras': { en: 'Purchasing Control System', es: 'Sistema de Control de Compras' },
+      'Sistema de Controle Financeiro': { en: 'Financial Control System', es: 'Sistema de Control Financiero' },
+      'Sistema de Controle de Logística': { en: 'Logistics Control System', es: 'Sistema de Control de Logística' },
+      'Testes DISC & Sistema ATS': { en: 'DISC Tests & ATS System', es: 'Tests DISC y Sistema ATS' },
+      'Testes comportamentais DISC': { en: 'DISC behavioral tests', es: 'Tests conductuales DISC' },
+      'Sistema ATS com Inteligência Artificial': { en: 'ATS System with Artificial Intelligence', es: 'Sistema ATS con Inteligencia Artificial' },
+      'Análise automatizada de currículos': { en: 'Automated résumé analysis', es: 'Análisis automatizado de currículums' },
+      'Triagem inteligente de candidatos': { en: 'Intelligent candidate screening', es: 'Preselección inteligente de candidatos' },
+      'Modelos': { en: 'Templates', es: 'Plantillas' },
+      'para Download': { en: 'to Download', es: 'para Descargar' },
+      'Baixe gratuitamente nossos materiais de apoio para empresas e profissionais:': { en: 'Download our support materials for companies and professionals for free:', es: 'Descarga gratis nuestros materiales de apoyo para empresas y profesionales:' },
+      '📁 Abertura de Vaga': { en: '📁 Job Opening', es: '📁 Apertura de Vacante' },
+      'Preencha a ficha (Word ou Excel) com os dados da vaga ou abra direto pelo botão.': { en: 'Fill in the form (Word or Excel) with the job details, or open it directly using the button.', es: 'Completa la ficha (Word o Excel) con los datos de la vacante o ábrela directamente con el botón.' },
+      'Word': { en: 'Word', es: 'Word' },
+      'Abertura de Vaga': { en: 'Job Opening', es: 'Apertura de Vacante' },
+      'Formulário em Word para abertura de novas vagas com todas as informações necessárias para o processo.': { en: 'Word form for opening new positions with all the information needed for the process.', es: 'Formulario en Word para la apertura de nuevas vacantes con toda la información necesaria para el proceso.' },
+      '\n    Baixar Modelo\n  ': { en: '\n    Download Template\n  ', es: '\n    Descargar Plantilla\n  ' },
+      'Excel': { en: 'Excel', es: 'Excel' },
+      'Planilha Excel para abertura de vagas.': { en: 'Excel spreadsheet for opening positions.', es: 'Planilla Excel para la apertura de vacantes.' },
+      'Sistema': { en: 'System', es: 'Sistema' },
+      'Abra a vaga direto pelo nosso sistema, sem precisar preencher ficha.': { en: 'Open the position directly through our system, no form needed.', es: 'Abre la vacante directamente por nuestro sistema, sin necesidad de completar una ficha.' },
+      '\n    Abrir Sistema\n  ': { en: '\n    Open System\n  ', es: '\n    Abrir Sistema\n  ' },
+      'Abra uma vaga clicando no botão abaixo': { en: 'Open a position by clicking the button below', es: 'Abre una vacante haciendo clic en el botón de abajo' },
+      'Abrir Ficha de Vaga': { en: 'Open Job Form', es: 'Abrir Ficha de Vacante' },
+      '→': { en: '→', es: '→' },
+      '📄 Propostas Comerciais': { en: '📄 Business Proposals', es: '📄 Propuestas Comerciales' },
+      'Escolha o modelo de proposta de acordo com o tipo de contratação.': { en: 'Choose the proposal template according to the type of hiring.', es: 'Elige la plantilla de propuesta según el tipo de contratación.' },
+      'PDF': { en: 'PDF', es: 'PDF' },
+      'Agenciamento': { en: 'Agency Services', es: 'Agenciamiento' },
+      'Proposta comercial para contratação de agenciamento e recrutamento de vagas com a Orizon.': { en: 'Business proposal for hiring Orizon\'s agency and job recruitment services.', es: 'Propuesta comercial para la contratación de agenciamiento y reclutamiento de vacantes con Orizon.' },
+      'Proposta comercial para contratação de consultoria em RH sob medida para a sua empresa.': { en: 'Business proposal for hiring HR consulting tailored to your company.', es: 'Propuesta comercial para la contratación de consultoría en RRHH a medida para tu empresa.' },
+      'Proposta comercial para contratação avulsa de etapa, hora ou apoio mensal em recrutamento, ATS, divulgação e administrativo.': { en: 'Business proposal for one-off hiring of a stage, hourly work or monthly support in recruitment, ATS, promotion and administrative tasks.', es: 'Propuesta comercial para la contratación puntual de una etapa, por hora o apoyo mensual en reclutamiento, ATS, difusión y administración.' },
+      'Materiais para Download': { en: 'Materials to Download', es: 'Materiales para Descargar' },
+      ' Documentação & Contratos': { en: ' Documentation & Contracts', es: ' Documentación y Contratos' },
+      '9 arquivos': { en: '9 files', es: '9 archivos' },
+      '▼': { en: '▼', es: '▼' },
+      'Contrato de Prestação de Serviços': { en: 'Service Agreement', es: 'Contrato de Prestación de Servicios' },
+      'Modelo completo com cláusulas de escopo, prazo, valor, rescisão e responsabilidades — adaptável a qualquer serviço.': { en: 'Complete template with clauses on scope, timeline, value, termination and responsibilities — adaptable to any service.', es: 'Plantilla completa con cláusulas de alcance, plazo, valor, rescisión y responsabilidades — adaptable a cualquier servicio.' },
+      'Word .docx': { en: 'Word .docx', es: 'Word .docx' },
+      '✓ Gratuito': { en: '✓ Free', es: '✓ Gratuito' },
+      '⬇': { en: '⬇', es: '⬇' },
+      'NDA — Acordo de Confidencialidade': { en: 'NDA — Non-Disclosure Agreement', es: 'NDA — Acuerdo de Confidencialidad' },
+      'Proteja suas informações estratégicas com um termo de sigilo sólido e juridicamente fundamentado.': { en: 'Protect your strategic information with a solid, legally sound confidentiality agreement.', es: 'Protege tu información estratégica con un acuerdo de confidencialidad sólido y jurídicamente fundamentado.' },
+      'Procuração Simples': { en: 'Simple Power of Attorney', es: 'Poder Simple' },
+      'Modelo de outorga de poderes para representação em atos específicos — civil e empresarial.': { en: 'Template for granting power of attorney for representation in specific acts — civil and business.', es: 'Plantilla de otorgamiento de poderes para representación en actos específicos — civil y empresarial.' },
+      'Recibo de Pagamento': { en: 'Payment Receipt', es: 'Recibo de Pago' },
+      'Comprove pagamentos com um recibo profissional — inclui campos para dados fiscais e assinatura.': { en: 'Prove payments with a professional receipt — includes fields for tax data and signature.', es: 'Comprueba pagos con un recibo profesional — incluye campos para datos fiscales y firma.' },
+      'Proposta Comercial': { en: 'Business Proposal', es: 'Propuesta Comercial' },
+      'Template elegante e persuasivo para apresentar serviços, valores e condições ao cliente.': { en: 'Elegant, persuasive template to present services, prices and terms to the client.', es: 'Plantilla elegante y persuasiva para presentar servicios, valores y condiciones al cliente.' },
+      'Termo de Responsabilidade': { en: 'Statement of Responsibility', es: 'Término de Responsabilidad' },
+      'Formalize a responsabilidade de colaboradores ou parceiros sobre equipamentos, dados ou processos.': { en: 'Formalize employees\' or partners\' responsibility for equipment, data or processes.', es: 'Formaliza la responsabilidad de colaboradores o socios sobre equipos, datos o procesos.' },
+      'Declaração de Prestação de Serviços': { en: 'Statement of Services Rendered', es: 'Declaración de Prestación de Servicios' },
+      'Documento para comprovação de experiência profissional ou vínculo de trabalho autônomo.': { en: 'Document to prove professional experience or a freelance work relationship.', es: 'Documento para comprobar experiencia profesional o vínculo de trabajo autónomo.' },
+      'Ofício Formal': { en: 'Formal Official Letter', es: 'Oficio Formal' },
+      'Modelo de comunicação oficial entre organizações — padrão para solicitações, notificações e correspondências.': { en: 'Template for official communication between organizations — standard for requests, notices and correspondence.', es: 'Plantilla de comunicación oficial entre organizaciones — estándar para solicitudes, notificaciones y correspondencia.' },
+      'Contrato de Fornecimento': { en: 'Supply Agreement', es: 'Contrato de Suministro' },
+      'Regule a relação com fornecedores: prazo, qualidade, entrega e penalidades em um contrato completo.': { en: 'Regulate the relationship with suppliers: timeline, quality, delivery and penalties in a complete contract.', es: 'Regula la relación con proveedores: plazo, calidad, entrega y penalidades en un contrato completo.' },
+      ' Atendimento ao Cliente': { en: ' Customer Support', es: ' Atención al Cliente' },
+      '5 arquivos': { en: '5 files', es: '5 archivos' },
+      'Script de Atendimento ao Cliente': { en: 'Customer Support Script', es: 'Guion de Atención al Cliente' },
+      'Roteiro profissional para padronizar abordagens, soluções de problemas e encerramento de atendimentos.': { en: 'Professional script to standardize approaches, problem solving and closing of support interactions.', es: 'Guion profesional para estandarizar abordajes, soluciones de problemas y cierre de atenciones.' },
+      'FAQ Template': { en: 'FAQ Template', es: 'Plantilla de FAQ' },
+      'Estrutura pronta para montar sua base de perguntas frequentes — reduza chamados e melhore a experiência.': { en: 'Ready-made structure to build your FAQ base — reduce support tickets and improve the experience.', es: 'Estructura lista para armar tu base de preguntas frecuentes — reduce llamados y mejora la experiencia.' },
+      'Pesquisa NPS': { en: 'NPS Survey', es: 'Encuesta NPS' },
+      'Planilha completa para aplicar o Net Promoter Score e calcular o índice de lealdade dos seus clientes.': { en: 'Complete spreadsheet to apply the Net Promoter Score and calculate your customers\' loyalty index.', es: 'Planilla completa para aplicar el Net Promoter Score y calcular el índice de lealtad de tus clientes.' },
+      'Excel .xlsx': { en: 'Excel .xlsx', es: 'Excel .xlsx' },
+      'Controle de Reclamações': { en: 'Complaint Tracking', es: 'Control de Reclamos' },
+      'Registre, categorize e acompanhe a resolução de cada reclamação recebida com prazo e responsável.': { en: 'Record, categorize and track the resolution of every complaint received, with a deadline and owner.', es: 'Registra, categoriza y da seguimiento a la resolución de cada reclamo recibido con plazo y responsable.' },
+      'SLA de Suporte': { en: 'Support SLA', es: 'SLA de Soporte' },
+      'Defina e monitore os acordos de nível de serviço por tipo de chamado, prioridade e tempo de resposta.': { en: 'Define and monitor service-level agreements by ticket type, priority and response time.', es: 'Define y monitorea los acuerdos de nivel de servicio por tipo de ticket, prioridad y tiempo de respuesta.' },
+      ' Gestão de Projetos': { en: ' Project Management', es: ' Gestión de Proyectos' },
+      'Quadro Kanban': { en: 'Kanban Board', es: 'Tablero Kanban' },
+      'Gerencie tarefas em colunas visuais (A fazer / Em andamento / Concluído) com controle de responsáveis.': { en: 'Manage tasks in visual columns (To Do / In Progress / Done) with owner tracking.', es: 'Gestiona tareas en columnas visuales (Por hacer / En curso / Completado) con control de responsables.' },
+      'Cronograma de Projeto (Gantt)': { en: 'Project Schedule (Gantt)', es: 'Cronograma de Proyecto (Gantt)' },
+      'Planeje e acompanhe etapas, datas e dependências do projeto em um gráfico de Gantt simples.': { en: 'Plan and track project stages, dates and dependencies in a simple Gantt chart.', es: 'Planifica y da seguimiento a etapas, fechas y dependencias del proyecto en un gráfico de Gantt simple.' },
+      'Matriz de Riscos': { en: 'Risk Matrix', es: 'Matriz de Riesgos' },
+      'Identifique, classifique e mitigue riscos do projeto por probabilidade e impacto.': { en: 'Identify, classify and mitigate project risks by probability and impact.', es: 'Identifica, clasifica y mitiga los riesgos del proyecto por probabilidad e impacto.' },
+      'Controle de Escopo': { en: 'Scope Control', es: 'Control de Alcance' },
+      'Documente o que está dentro e fora do projeto — evite scope creep e mantenha o foco nas entregas.': { en: 'Document what\'s in and out of scope for the project — avoid scope creep and stay focused on deliverables.', es: 'Documenta lo que está dentro y fuera del proyecto — evita el scope creep y mantén el foco en las entregas.' },
+      'Relatório de Status do Projeto': { en: 'Project Status Report', es: 'Informe de Estado del Proyecto' },
+      'Modelo semanal/quinzenal para comunicar progresso, bloqueios e próximos passos às partes interessadas.': { en: 'Weekly/biweekly template to communicate progress, blockers and next steps to stakeholders.', es: 'Plantilla semanal/quincenal para comunicar el progreso, bloqueos y próximos pasos a las partes interesadas.' },
+      ' Apresentações dos Serviços': { en: ' Service Presentations', es: ' Presentaciones de los Servicios' },
+      '6 arquivos': { en: '6 files', es: '6 archivos' },
+      'Chatbot com IA': { en: 'Chatbot with AI', es: 'Chatbot con IA' },
+      'Apresentação completa do serviço de desenvolvimento de chatbot com inteligência artificial para atendimento e automação.': { en: 'Complete presentation of the AI chatbot development service for support and automation.', es: 'Presentación completa del servicio de desarrollo de chatbot con inteligencia artificial para atención y automatización.' },
+      'Saiba como a Orizon atua na reestruturação organizacional, gestão de processos e otimização operacional da sua empresa.': { en: 'Learn how Orizon works on organizational restructuring, process management and operational optimization for your company.', es: 'Conoce cómo Orizon actúa en la reestructuración organizacional, gestión de procesos y optimización operativa de tu empresa.' },
+      'Divulgação & Alcance': { en: 'Promotion & Reach', es: 'Difusión y Alcance' },
+      'Apresentação da estratégia omnichannel com alcance de 2,7 milhões de visualizações trimestrais para divulgar seu negócio ou vaga.': { en: 'Presentation of the omnichannel strategy reaching 2.7 million views per quarter to promote your business or job posting.', es: 'Presentación de la estrategia omnicanal con un alcance de 2,7 millones de visualizaciones trimestrales para difundir tu negocio o vacante.' },
+      'Criação de Sites': { en: 'Website Creation', es: 'Creación de Sitios Web' },
+      'Detalhes do serviço de desenvolvimento de sites institucionais, landing pages e portfólios com foco em SEO e performance.': { en: 'Details of the development service for corporate websites, landing pages and portfolios focused on SEO and performance.', es: 'Detalles del servicio de desarrollo de sitios institucionales, landing pages y portafolios enfocado en SEO y rendimiento.' },
+      'Gestão de Redes Sociais': { en: 'Social Media Management', es: 'Gestión de Redes Sociales' },
+      'Conheça a metodologia de gestão de mídias sociais da Orizon: estratégia de conteúdo, engajamento e resultados mensuráveis.': { en: 'Learn about Orizon\'s social media management methodology: content strategy, engagement and measurable results.', es: 'Conoce la metodología de gestión de redes sociales de Orizon: estrategia de contenido, engagement y resultados medibles.' },
+      'Construção de Currículo com SEO': { en: 'SEO-Optimized Résumé Building', es: 'Construcción de Currículum con SEO' },
+      'Apresentação do serviço de análise e criação de currículos otimizados para sistemas ATS e recrutadores — aumente suas chances de recolocação.': { en: 'Presentation of the résumé analysis and creation service optimized for ATS systems and recruiters — boost your chances of getting rehired.', es: 'Presentación del servicio de análisis y creación de currículums optimizados para sistemas ATS y reclutadores — aumenta tus posibilidades de recolocación.' },
+      'Fale Conosco': { en: 'Contact Us', es: 'Habla con Nosotros' },
+      '❓': { en: '❓', es: '❓' },
+      'Ficou com alguma dúvida?': { en: 'Still have a question?', es: '¿Te quedó alguna duda?' },
+      '\n      Confira nossas perguntas frequentes: respondemos as dúvidas mais comuns sobre candidaturas, vagas, empresas e privacidade.\n    ': { en: '\n      Check out our frequently asked questions: we answer the most common questions about applications, jobs, companies and privacy.\n    ', es: '\n      Revisa nuestras preguntas frecuentes: respondemos las dudas más comunes sobre postulaciones, vacantes, empresas y privacidad.\n    ' },
+      '\n        👤 FAQ Candidatos\n      ': { en: '\n        👤 FAQ Candidates\n      ', es: '\n        👤 FAQ Candidatos\n      ' },
+      '\n        💼 FAQ Vagas\n      ': { en: '\n        💼 FAQ Jobs\n      ', es: '\n        💼 FAQ Vacantes\n      ' },
+      '\n        🏢 FAQ Empresas\n      ': { en: '\n        🏢 FAQ Companies\n      ', es: '\n        🏢 FAQ Empresas\n      ' },
+      '\n        🔒 FAQ Privacidade\n      ': { en: '\n        🔒 FAQ Privacy\n      ', es: '\n        🔒 FAQ Privacidad\n      ' },
+      'Orizon ': { en: 'Orizon ', es: 'Orizon ' },
+      'Consultoria + RH & Gestão, Conhecimento, estratégia e humanidade para empresas e pessoas.': { en: 'Consulting + HR & Management. Knowledge, strategy and humanity for companies and people.', es: 'Consultoría + RRHH y Gestión. Conocimiento, estrategia y humanidad para empresas y personas.' },
+      'Navegação': { en: 'Navigation', es: 'Navegación' },
+      'Vagas & Oportunidades': { en: 'Jobs & Opportunities', es: 'Vacantes y Oportunidades' },
+      'Sobre nós': { en: 'About us', es: 'Sobre nosotros' },
+      'Comercial': { en: 'Sales', es: 'Comercial' },
+      'Recrutamento': { en: 'Recruitment', es: 'Reclutamiento' },
+      'Atendimento IA': { en: 'AI Support', es: 'Atención con IA' },
+      '♥': { en: '♥', es: '♥' },
+      ' Feito com propósito, Rio Grande do Sul, Brasil': { en: ' Made with purpose, Rio Grande do Sul, Brazil', es: ' Hecho con propósito, Rio Grande do Sul, Brasil' },
+      '▲': { en: '▲', es: '▲' },
+      'Orizon': { en: 'Orizon', es: 'Orizon' },
+      'Assistente Orizon': { en: 'Orizon Assistant', es: 'Asistente Orizon' },
+      'Modo IA': { en: 'AI Mode', es: 'Modo IA' },
+      'ON': { en: 'ON', es: 'ON' },
+      '✕': { en: '✕', es: '✕' },
+      '➤': { en: '➤', es: '➤' },
+    };
+
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      if (literalTranslations.hasOwnProperty(text) && literalTranslations[text].hasOwnProperty(to)) {
+        return literalTranslations[text][to];
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) { selector.value = savedLang; }
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
-        if (translations[lang][key]) {
+        if (t[key]) {
           const icon = element.querySelector(':scope > img, :scope > svg');
           if (element.classList.contains('orizon-section-title')) {
-            const txt = translations[lang][key].trim();
+            const txt = t[key].trim();
             const sp = txt.indexOf(' ');
             const w1 = sp === -1 ? txt : txt.slice(0, sp);
             const w2 = sp === -1 ? '' : txt.slice(sp + 1);
@@ -8469,15 +9027,17 @@ let vtRecognition = null;
               element.appendChild(s2);
             }
           } else {
-            element.textContent = translations[lang][key];
+            element.textContent = t[key];
             if (icon) element.insertBefore(icon, element.firstChild);
           }
         }
       });
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 
     </script>
 <script>
@@ -8678,11 +9238,6 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
-body:not(.dark-mode) .header::before {
-  
-}
-
 /* Logo: texto branco sólido sem glow neon */
 body:not(.dark-mode) .orizon-logo-svg text {
   fill: #ffffff !important;
@@ -8706,10 +9261,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
 }
 
 /* Subtítulo da página (ex: "Candidatos") */
-</style>
-<style>
-/* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}
 
 /* ============================================================
    SEÇÃO DE DOWNLOADS — SERVIÇOS
@@ -9553,7 +10104,6 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }

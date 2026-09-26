@@ -1887,7 +1887,6 @@ body.dark-mode .chip { background: transparent; border-color: rgba(255,255,255,0
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
     .footer-brand-logo {
       display: flex;
       align-items: center;
@@ -4869,6 +4868,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -4876,26 +4890,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -5223,22 +5264,465 @@ let vtRecognition = null;
         'ck-p-9': 'Si tiene preguntas sobre nuestra política de cookies:'
       }
     };
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // Traducoes literais escritas a mao (pt -> en/es), verificadas antes de
+    // chamar a API MyMemory. Chave = texto original em pt, exato (sem trim).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando previsión…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Topics" },
+      " O que são Cookies?": { en: " What Are Cookies?", es: " ¿Qué son las Cookies?" },
+      " Tipos de Cookies": { en: " Types of Cookies", es: " Tipos de Cookies" },
+      " Cookies Essenciais": { en: " Essential Cookies", es: " Cookies Esenciales" },
+      " Seus Direitos": { en: " Your Rights", es: " Tus Derechos" },
+      " Contato": { en: " Contact", es: " Contacto" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Vídeos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "\n          Administração\n          ": { en: "\n          Administration\n          ", es: "\n          Administración\n          " },
+      "◆": { en: "◆", es: "◆" },
+      "\n          Gestão\n        ": { en: "\n          Management\n        ", es: "\n          Gestión\n        " },
+      "Política de Cookies": { en: "Cookie Policy", es: "Política de Cookies" },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Restore defaults", es: "↺ Restaurar valores" },
+      "O que são Cookies?": { en: "What Are Cookies?", es: "¿Qué son las Cookies?" },
+      "Tipos de Cookies": { en: "Types of Cookies", es: "Tipos de Cookies" },
+      "\n            Cookies são pequenos arquivos de texto armazenados no seu navegador que permitem que um site se lembre de informações sobre suas visitas. Eles são uma tecnologia padrão usada por praticamente todos os websites modernos para melhorar a experiência do usuário e fornecer funcionalidades essenciais.\n          ": { en: "\n            Cookies are small text files stored in your browser that let a website remember information about your visits. They are a standard technology used by practically every modern website to improve the user experience and provide essential functionality.\n          ", es: "\n            Las cookies son pequeños archivos de texto almacenados en tu navegador que permiten que un sitio web recuerde información sobre tus visitas. Son una tecnología estándar utilizada por prácticamente todos los sitios web modernos para mejorar la experiencia del usuario y proporcionar funcionalidades esenciales.\n          " },
+      "🍪 Tecnologia Padrão:": { en: "🍪 Standard Technology:", es: "🍪 Tecnología Estándar:" },
+      " Cookies são completamente seguros e não contêm vírus. Eles simplesmente armazenam informações em formato de texto que você forneceu ou que foi observado durante sua navegação.\n          ": { en: " Cookies are completely safe and do not contain viruses. They simply store information in text format that you provided or that was observed during your browsing.\n          ", es: " Las cookies son completamente seguras y no contienen virus. Simplemente almacenan información en formato de texto que proporcionaste o que se observó durante tu navegación.\n          " },
+      "\n            A Orizon não utiliza cookies próprios para rastreamento, apenas aqueles essenciais para navegação normal do site. Caso haja necessidade futura de utilização de cookies adicionais, esta política será atualizada.\n          ": { en: "\n            Orizon does not use its own tracking cookies, only those essential for normal navigation of the site. Should there be a future need to use additional cookies, this policy will be updated.\n          ", es: "\n            Orizon no utiliza cookies propias de rastreo, solo aquellas esenciales para la navegación normal del sitio. En caso de que surja la necesidad futura de utilizar cookies adicionales, esta política será actualizada.\n          " },
+      "Necessários para funcionalidade básica do site. Permitem login, navegação e segurança.": { en: "Necessary for basic site functionality. They enable login, navigation and security.", es: "Necesarias para la funcionalidad básica del sitio. Permiten el inicio de sesión, la navegación y la seguridad." },
+      " Cookies de Desempenho": { en: " Performance Cookies", es: " Cookies de Rendimiento" },
+      "Analisam como você usa o site para melhorias. Coletam dados anônimos sobre navegação.": { en: "They analyze how you use the site for improvements. They collect anonymous browsing data.", es: "Analizan cómo usas el sitio para hacer mejoras. Recopilan datos anónimos de navegación." },
+      " Cookies de Funcionalidade": { en: " Functionality Cookies", es: " Cookies de Funcionalidad" },
+      "Lembram suas preferências e configurações para futuras visitas.": { en: "They remember your preferences and settings for future visits.", es: "Recuerdan tus preferencias y configuraciones para futuras visitas." },
+      " Cookies de Marketing": { en: " Marketing Cookies", es: " Cookies de Marketing" },
+      "Rastreiam seu interesse em anúncios e conteúdo personalizado (requer consentimento).": { en: "They track your interest in ads and personalized content (requires consent).", es: "Rastrean tu interés en anuncios y contenido personalizado (requiere consentimiento)." },
+      "🔗 gov.br": { en: "🔗 gov.br", es: "🔗 gov.br" },
+      "Base legal": { en: "Legal basis", es: "Base legal" },
+      "Nossa política segue a LGPD à risca": { en: "Our policy strictly follows the LGPD", es: "Nuestra política sigue la LGPD al pie de la letra" },
+      "Seguimos a LGPD à risca": { en: "We strictly follow the LGPD", es: "Seguimos la LGPD al pie de la letra" },
+      "A Lei Geral de Proteção de Dados (Lei nº 13.709/2018) regula como empresas como a Orizon podem coletar, usar e armazenar seus dados pessoais no Brasil.": { en: "The General Data Protection Law (Law No. 13,709/2018) regulates how companies like Orizon can collect, use and store your personal data in Brazil.", es: "La Ley General de Protección de Datos (Ley n.º 13.709/2018) regula cómo empresas como Orizon pueden recopilar, usar y almacenar tus datos personales en Brasil." },
+      "Você pode consultar o texto integral da lei diretamente no site oficial do governo federal.": { en: "You can consult the full text of the law directly on the official federal government website.", es: "Puedes consultar el texto completo de la ley directamente en el sitio oficial del gobierno federal." },
+      "A LGPD regula como coletamos e usamos seus dados pessoais no Brasil.": { en: "The LGPD regulates how we collect and use your personal data in Brazil.", es: "La LGPD regula cómo recopilamos y usamos tus datos personales en Brasil." },
+      "Essenciais": { en: "Essential", es: "Esenciales" },
+      "Desempenho e Análise": { en: "Performance and Analytics", es: "Rendimiento y Análisis" },
+      "Funcionalidade": { en: "Functionality", es: "Funcionalidad" },
+      "Marketing": { en: "Marketing", es: "Marketing" },
+      "\n            Os cookies essenciais são ativados automaticamente pois são necessários para o funcionamento correto do site:\n          ": { en: "\n            Essential cookies are automatically enabled because they are necessary for the site to function correctly:\n          ", es: "\n            Las cookies esenciales se activan automáticamente porque son necesarias para el correcto funcionamiento del sitio:\n          " },
+      "Exemplos de Cookies Essenciais:": { en: "Examples of Essential Cookies:", es: "Ejemplos de Cookies Esenciales:" },
+      "Autenticação:": { en: "Authentication:", es: "Autenticación:" },
+      " Mantém você conectado na sua conta": { en: " Keeps you logged into your account", es: " Te mantiene conectado a tu cuenta" },
+      "Segurança:": { en: "Security:", es: "Seguridad:" },
+      " Protege contra acessos não autorizados": { en: " Protects against unauthorized access", es: " Protege contra accesos no autorizados" },
+      "Preferências de Sessão:": { en: "Session Preferences:", es: "Preferencias de Sesión:" },
+      " Mantém seu idioma, tema (claro/escuro) e outras configurações": { en: " Keeps your language, theme (light/dark) and other settings", es: " Mantiene tu idioma, tema (claro/oscuro) y otras configuraciones" },
+      "Navegação:": { en: "Navigation:", es: "Navegación:" },
+      " Permite que o site funcione corretamente": { en: " Allows the site to function correctly", es: " Permite que el sitio funcione correctamente" },
+      "\n            Utilizamos ferramentas de análise para entender como você interage com nosso site:\n          ": { en: "\n            We use analytics tools to understand how you interact with our site:\n          ", es: "\n            Utilizamos herramientas de análisis para entender cómo interactúas con nuestro sitio:\n          " },
+      "O que Rastreamos:": { en: "What We Track:", es: "Qué Rastreamos:" },
+      "Páginas visitadas e tempo gasto em cada uma": { en: "Pages visited and time spent on each one", es: "Páginas visitadas y tiempo dedicado a cada una" },
+      "Origem da sua visita (busca, rede social, link direto)": { en: "The source of your visit (search, social media, direct link)", es: "Origen de tu visita (búsqueda, red social, enlace directo)" },
+      "Tipo de navegador e dispositivo utilizado": { en: "Type of browser and device used", es: "Tipo de navegador y dispositivo utilizado" },
+      "Localização geográfica (apenas país/cidade)": { en: "Geographic location (country/city only)", es: "Ubicación geográfica (solo país/ciudad)" },
+      "Taxa de rejeição e conversão": { en: "Bounce and conversion rate", es: "Tasa de rebote y conversión" },
+      "📊 Dados Anônimos:": { en: "📊 Anonymous Data:", es: "📊 Datos Anónimos:" },
+      " Todos os dados são completamente anônimos e agregados. Nós nunca identificamos você pessoalmente através deles.\n          ": { en: " All data is completely anonymous and aggregated. We never personally identify you through it.\n          ", es: " Todos los datos son completamente anónimos y agregados. Nunca te identificamos personalmente a través de ellos.\n          " },
+      "\n            Esses cookies melhoram sua experiência ao lembrar suas preferências:\n          ": { en: "\n            These cookies improve your experience by remembering your preferences:\n          ", es: "\n            Estas cookies mejoran tu experiencia al recordar tus preferencias:\n          " },
+      "Idioma preferido para visualizar o site": { en: "Preferred language for viewing the site", es: "Idioma preferido para ver el sitio" },
+      "Tema de cores (modo escuro ou claro)": { en: "Color theme (dark or light mode)", es: "Tema de colores (modo oscuro o claro)" },
+      "Configurações de privacidade que você definiu": { en: "Privacy settings you have set", es: "Configuraciones de privacidad que has definido" },
+      "Preferências de notificação": { en: "Notification preferences", es: "Preferencias de notificación" },
+      "Items no seu carrinho (se aplicável)": { en: "Items in your cart (if applicable)", es: "Artículos en tu carrito (si aplica)" },
+      "\n            Utilizamos cookies de marketing apenas com seu consentimento explícito:\n          ": { en: "\n            We use marketing cookies only with your explicit consent:\n          ", es: "\n            Utilizamos cookies de marketing solo con tu consentimiento explícito:\n          " },
+      "Finalidades:": { en: "Purposes:", es: "Finalidades:" },
+      "Mostrar anúncios relevantes com base em seus interesses": { en: "Show relevant ads based on your interests", es: "Mostrar anuncios relevantes según tus intereses" },
+      "Rastrear efetividade das campanhas publicitárias": { en: "Track the effectiveness of advertising campaigns", es: "Rastrear la efectividad de las campañas publicitarias" },
+      "Entender quais anúncios você acha mais relevantes": { en: "Understand which ads you find most relevant", es: "Entender qué anuncios te parecen más relevantes" },
+      "Evitar mostrar anúncios repetidamente": { en: "Avoid showing the same ads repeatedly", es: "Evitar mostrar los mismos anuncios repetidamente" },
+      "🔒 Consentimento Necessário:": { en: "🔒 Consent Required:", es: "🔒 Consentimiento Necesario:" },
+      " Você pode desabilitar cookies de marketing a qualquer momento alterando suas preferências de consentimento.\n          ": { en: " You can disable marketing cookies at any time by changing your consent preferences.\n          ", es: " Puedes desactivar las cookies de marketing en cualquier momento cambiando tus preferencias de consentimiento.\n          " },
+      "🔗 gov.br/anpd": { en: "🔗 gov.br/anpd", es: "🔗 gov.br/anpd" },
+      "Órgão fiscalizador": { en: "Regulatory body", es: "Órgano fiscalizador" },
+      "A ANPD fiscaliza a proteção dos seus dados": { en: "The ANPD oversees the protection of your data", es: "La ANPD fiscaliza la protección de tus datos" },
+      "A ANPD fiscaliza seus dados": { en: "The ANPD oversees your data", es: "La ANPD fiscaliza tus datos" },
+      "A Autoridade Nacional de Proteção de Dados (ANPD) é o órgão do governo federal responsável por zelar pela proteção de dados pessoais e fiscalizar o cumprimento da LGPD em todo o Brasil.": { en: "The National Data Protection Authority (ANPD) is the federal government body responsible for overseeing the protection of personal data and enforcing compliance with the LGPD throughout Brazil.", es: "La Autoridad Nacional de Protección de Datos (ANPD) es el organismo del gobierno federal responsable de velar por la protección de los datos personales y fiscalizar el cumplimiento de la LGPD en todo Brasil." },
+      "Em caso de dúvidas sobre seus direitos como titular de dados, você também pode consultar diretamente o canal oficial da ANPD.": { en: "If you have questions about your rights as a data subject, you can also consult the official ANPD channel directly.", es: "En caso de dudas sobre tus derechos como titular de datos, también puedes consultar directamente el canal oficial de la ANPD." },
+      "Órgão federal responsável por fiscalizar o cumprimento da LGPD.": { en: "Federal body responsible for enforcing compliance with the LGPD.", es: "Organismo federal responsable de fiscalizar el cumplimiento de la LGPD." },
+      "Ferramentas de Análise": { en: "Analytics Tools", es: "Herramientas de Análisis" },
+      "Duração dos Cookies": { en: "Cookie Duration", es: "Duración de las Cookies" },
+      "\n            A Orizon utiliza as seguintes ferramentas para análise de dados:\n          ": { en: "\n            Orizon uses the following tools for data analysis:\n          ", es: "\n            Orizon utiliza las siguientes herramientas para el análisis de datos:\n          " },
+      "Google Analytics": { en: "Google Analytics", es: "Google Analytics" },
+      "Fornecido por: Google LLC (EUA)": { en: "Provided by: Google LLC (USA)", es: "Proporcionado por: Google LLC (EE. UU.)" },
+      "Finalidade: Análise de tráfego e comportamento do usuário": { en: "Purpose: Traffic and user behavior analysis", es: "Finalidad: Análisis de tráfico y comportamiento del usuario" },
+      "Política: https://policies.google.com/privacy": { en: "Policy: https://policies.google.com/privacy", es: "Política: https://policies.google.com/privacy" },
+      "Opt-out: Google Analytics Opt-out Browser Add-on": { en: "Opt-out: Google Analytics Opt-out Browser Add-on", es: "Opt-out: Google Analytics Opt-out Browser Add-on" },
+      "\n            Diferentes cookies têm diferentes durações:\n          ": { en: "\n            Different cookies have different durations:\n          ", es: "\n            Diferentes cookies tienen diferentes duraciones:\n          " },
+      "Cookies de Sessão:": { en: "Session Cookies:", es: "Cookies de Sesión:" },
+      " Removidos quando você fecha o navegador": { en: " Removed when you close the browser", es: " Se eliminan al cerrar el navegador" },
+      "Cookies Persistentes:": { en: "Persistent Cookies:", es: "Cookies Persistentes:" },
+      " Armazenados por período específico (até 2 anos)": { en: " Stored for a specific period (up to 2 years)", es: " Se almacenan durante un período específico (hasta 2 años)" },
+      "Cookies Essenciais:": { en: "Essential Cookies:", es: "Cookies Esenciales:" },
+      " Mantidos enquanto necessário para funcionalidade": { en: " Kept for as long as necessary for functionality", es: " Se mantienen mientras sean necesarias para su funcionalidad" },
+      "Cookies de Análise:": { en: "Analytics Cookies:", es: "Cookies de Análisis:" },
+      " Normalmente 12 a 24 meses": { en: " Typically 12 to 24 months", es: " Normalmente de 12 a 24 meses" },
+      "Seus Direitos": { en: "Your Rights", es: "Tus Derechos" },
+      "Alterar Preferências": { en: "Change Preferences", es: "Cambiar Preferencias" },
+      "Instruções por Navegador": { en: "Browser Instructions", es: "Instrucciones por Navegador" },
+      "\n            Você tem controle total sobre os cookies do seu navegador:\n          ": { en: "\n            You have full control over the cookies in your browser:\n          ", es: "\n            Tienes control total sobre las cookies de tu navegador:\n          " },
+      "Como Gerenciar Cookies": { en: "How to Manage Cookies", es: "Cómo Gestionar las Cookies" },
+      "Bloquear todos os cookies (pode limitar funcionalidade do site)": { en: "Block all cookies (may limit site functionality)", es: "Bloquear todas las cookies (puede limitar la funcionalidad del sitio)" },
+      "Aceitar apenas cookies essenciais": { en: "Accept only essential cookies", es: "Aceptar solo cookies esenciales" },
+      "Excluir cookies existentes do seu navegador": { en: "Delete existing cookies from your browser", es: "Eliminar las cookies existentes de tu navegador" },
+      "Configurar o navegador para avisar antes de aceitar cookies": { en: "Set the browser to warn you before accepting cookies", es: "Configurar el navegador para que avise antes de aceptar cookies" },
+      "Usar navegação privada/incógnito para não armazenar cookies": { en: "Use private/incognito browsing to avoid storing cookies", es: "Usar navegación privada/incógnito para no almacenar cookies" },
+      "\n            Você pode alterar suas preferências a qualquer momento:\n          ": { en: "\n            You can change your preferences at any time:\n          ", es: "\n            Puedes cambiar tus preferencias en cualquier momento:\n          " },
+      "⚙️ Passos para Alterar Preferências:": { en: "⚙️ Steps to Change Preferences:", es: "⚙️ Pasos para Cambiar las Preferencias:" },
+      "\n            1. Procure por \"Preferências de Cookies\" no rodapé do site": { en: "\n            1. Look for \"Cookie Preferences\" in the site footer", es: "\n            1. Busca \"Preferencias de Cookies\" en el pie de página del sitio" },
+      "\n            2. Clique no botão \"Gerenciar Consentimento\"": { en: "\n            2. Click the \"Manage Consent\" button", es: "\n            2. Haz clic en el botón \"Gestionar Consentimiento\"" },
+      "\n            3. Selecione quais cookies você aceita": { en: "\n            3. Select which cookies you accept", es: "\n            3. Selecciona qué cookies aceptas" },
+      "\n            4. Confirme suas preferências": { en: "\n            4. Confirm your preferences", es: "\n            4. Confirma tus preferencias" },
+      "\n            5. Você pode mudar isso a qualquer momento\n          ": { en: "\n            5. You can change this at any time\n          ", es: "\n            5. Puedes cambiar esto en cualquier momento\n          " },
+      "\n            Como desabilitar cookies em diferentes navegadores:\n          ": { en: "\n            How to disable cookies in different browsers:\n          ", es: "\n            Cómo desactivar las cookies en distintos navegadores:\n          " },
+      "Google Chrome": { en: "Google Chrome", es: "Google Chrome" },
+      "Clique em Configurações → Privacidade e segurança → Cookies e outros dados de sites": { en: "Click Settings → Privacy and security → Cookies and other site data", es: "Haz clic en Configuración → Privacidad y seguridad → Cookies y otros datos de sitios" },
+      "Selecione sua preferência de bloqueio de cookies": { en: "Select your cookie-blocking preference", es: "Selecciona tu preferencia de bloqueo de cookies" },
+      "Mozilla Firefox": { en: "Mozilla Firefox", es: "Mozilla Firefox" },
+      "Clique em Preferências → Privacidade e segurança → Cookies e dados de sites": { en: "Click Preferences → Privacy & Security → Cookies and Site Data", es: "Haz clic en Preferencias → Privacidad y seguridad → Cookies y datos del sitio" },
+      "Escolha qual tipo de cookie aceitar": { en: "Choose which type of cookie to accept", es: "Elige qué tipo de cookie aceptar" },
+      "Safari": { en: "Safari", es: "Safari" },
+      "Clique em Preferências → Privacidade → Cookies e dados de sites": { en: "Click Preferences → Privacy → Cookies and website data", es: "Haz clic en Preferencias → Privacidad → Cookies y datos de sitios web" },
+      "Selecione sua preferência desejada": { en: "Select your desired preference", es: "Selecciona la preferencia que desees" },
+      "Microsoft Edge": { en: "Microsoft Edge", es: "Microsoft Edge" },
+      "Clique em Configurações → Privacidade, pesquisa e serviços → Cookies e outros dados": { en: "Click Settings → Privacy, search, and services → Cookies and site permissions", es: "Haz clic en Configuración → Privacidad, búsqueda y servicios → Cookies y otros datos" },
+      "Escolha o nível de proteção": { en: "Choose the level of protection", es: "Elige el nivel de protección" },
+      "Seus direitos, na prática": { en: "Your rights, in practice", es: "Tus derechos, en la práctica" },
+      "Dúvidas sobre seus dados? Fale com o canal oficial": { en: "Questions about your data? Contact the official channel", es: "¿Dudas sobre tus datos? Habla con el canal oficial" },
+      "Dúvidas? Fale com o canal oficial": { en: "Questions? Contact the official channel", es: "¿Dudas? Habla con el canal oficial" },
+      "Além de gerenciar suas preferências de cookies aqui no site, você pode buscar orientação diretamente com a ANPD sobre como exercer seus direitos de titular de dados pessoais.": { en: "In addition to managing your cookie preferences here on the site, you can seek guidance directly from the ANPD on how to exercise your rights as a personal data subject.", es: "Además de gestionar tus preferencias de cookies aquí en el sitio, puedes buscar orientación directamente con la ANPD sobre cómo ejercer tus derechos como titular de datos personales." },
+      "O canal do cidadão é gratuito e mantido pelo governo federal.": { en: "The citizen channel is free and maintained by the federal government.", es: "El canal ciudadano es gratuito y está mantenido por el gobierno federal." },
+      "Você também pode buscar orientação direto com a ANPD sobre seus dados.": { en: "You can also seek guidance directly from the ANPD about your data.", es: "También puedes buscar orientación directamente con la ANPD sobre tus datos." },
+      "Links Externos": { en: "External Links", es: "Enlaces Externos" },
+      "Mudanças na Política": { en: "Changes to the Policy", es: "Cambios en la Política" },
+      "\n            Nosso site pode conter links para sites de terceiros que usam seus próprios cookies:\n          ": { en: "\n            Our site may contain links to third-party sites that use their own cookies:\n          ", es: "\n            Nuestro sitio puede contener enlaces a sitios de terceros que usan sus propias cookies:\n          " },
+      "Não somos responsáveis pelas políticas desses sites": { en: "We are not responsible for the policies of those sites", es: "No somos responsables de las políticas de esos sitios" },
+      "Recomendamos ler suas políticas de cookies": { en: "We recommend reading their cookie policies", es: "Recomendamos leer sus políticas de cookies" },
+      "Você pode rejeitar cookies de terceiros em seu navegador": { en: "You can reject third-party cookies in your browser", es: "Puedes rechazar las cookies de terceros en tu navegador" },
+      "\n            Esta política pode ser atualizada ocasionalmente:\n          ": { en: "\n            This policy may be updated occasionally:\n          ", es: "\n            Esta política puede actualizarse ocasionalmente:\n          " },
+      "Atualizações significativas serão comunicadas por e-mail": { en: "Significant updates will be communicated by email", es: "Las actualizaciones significativas se comunicarán por correo electrónico" },
+      "Continuação do uso implica aceitação das mudanças": { en: "Continued use implies acceptance of the changes", es: "La continuación del uso implica la aceptación de los cambios" },
+      "Você pode revisar a versão atual a qualquer momento": { en: "You can review the current version at any time", es: "Puedes revisar la versión actual en cualquier momento" },
+      "\n            Se tiver perguntas sobre nossa política de cookies:\n          ": { en: "\n            If you have questions about our cookie policy:\n          ", es: "\n            Si tienes preguntas sobre nuestra política de cookies:\n          " },
+      "Entre em Contato:": { en: "Get in Touch:", es: "Ponte en Contacto:" },
+      "\n            Email:\n            ": { en: "\n            Email:\n            ", es: "\n            Correo electrónico:\n            " },
+      "\n              adm@orizonrs.com\n            ": { en: "\n              adm@orizonrs.com\n            ", es: "\n              adm@orizonrs.com\n            " },
+      " WhatsApp: (51) 99697-6579": { en: " WhatsApp: (51) 99697-6579", es: " WhatsApp: (51) 99697-6579" },
+      " Horário: Segunda a Sexta, 09h às 18h\n\n          ": { en: " Hours: Monday to Friday, 9am to 6pm\n\n          ", es: " Horario: Lunes a Viernes, 9h a 18h\n\n          " },
+      "\n            Você controla seus cookies. Nós respeitamos sua privacidade! 🔒\n          ": { en: "\n            You control your cookies. We respect your privacy! 🔒\n          ", es: "\n            Tú controlas tus cookies. ¡Nosotros respetamos tu privacidad! 🔒\n          " },
+      "Fale Conosco": { en: "Contact Us", es: "Habla con Nosotros" },
+      "Portal oficial": { en: "Official portal", es: "Portal oficial" },
+      "Todos os serviços do governo em um só lugar": { en: "All government services in one place", es: "Todos los servicios del gobierno en un solo lugar" },
+      "Serviços do governo, num só lugar": { en: "Government services, all in one place", es: "Servicios del gobierno, en un solo lugar" },
+      "O portal gov.br reúne todos os serviços públicos federais, incluindo informações sobre proteção de dados, direitos do consumidor e canais de denúncia.": { en: "The gov.br portal brings together all federal public services, including information on data protection, consumer rights and reporting channels.", es: "El portal gov.br reúne todos los servicios públicos federales, incluida información sobre protección de datos, derechos del consumidor y canales de denuncia." },
+      "Transparência é um compromisso tanto do governo quanto da Orizon com você.": { en: "Transparency is a commitment that both the government and Orizon have made to you.", es: "La transparencia es un compromiso tanto del gobierno como de Orizon contigo." },
+      "O portal gov.br reúne os serviços públicos federais sobre seus direitos.": { en: "The gov.br portal brings together federal public services related to your rights.", es: "El portal gov.br reúne los servicios públicos federales sobre tus derechos." },
+      "Orizon ": { en: "Orizon ", es: "Orizon " },
+      "Consultoria": { en: "Consulting", es: "Consultoría" },
+      "Consultoria + RH & Gestão — Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR & Management — Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RRHH y Gestión — Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Oportunidades & Recrutamento": { en: "Opportunities & Recruitment", es: "Oportunidades y Reclutamiento" },
+      "Sobre nós": { en: "About Us", es: "Sobre nosotros" },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "♥": { en: "♥", es: "♥" },
+      " Feito com propósito — Rio Grande do Sul, Brasil": { en: " Made with purpose — Rio Grande do Sul, Brazil", es: " Hecho con propósito — Rio Grande do Sul, Brasil" },
+      "▲": { en: "▲", es: "▲" },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "● Assistente Orizon": { en: "● Orizon Assistant", es: "● Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ON" },
+      "✕": { en: "✕", es: "✕" },
+      "➤": { en: "➤", es: "➤" },
+      "🍪": { en: "🍪", es: "🍪" },
+      " Usamos cookies essenciais para o funcionamento do site e, mediante seu consentimento, cookies de desempenho, funcionalidade e marketing. ": { en: " We use essential cookies for the site to function and, with your consent, performance, functionality and marketing cookies. ", es: " Usamos cookies esenciales para el funcionamiento del sitio y, con tu consentimiento, cookies de rendimiento, funcionalidad y marketing. " },
+      "Saiba mais": { en: "Learn more", es: "Saber más" },
+      "Personalizar": { en: "Customize", es: "Personalizar" },
+      "Rejeitar Todos": { en: "Reject All", es: "Rechazar Todo" },
+      "Aceitar Todos": { en: "Accept All", es: "Aceptar Todo" },
+      "Preferências de Cookies": { en: "Cookie Preferences", es: "Preferencias de Cookies" },
+      "×": { en: "×", es: "×" },
+      "Escolha quais categorias de cookies você permite. Cookies essenciais não podem ser desativados, pois são necessários para o funcionamento do site.": { en: "Choose which categories of cookies you allow. Essential cookies cannot be disabled, as they are necessary for the site to function.", es: "Elige qué categorías de cookies permites. Las cookies esenciales no se pueden desactivar, ya que son necesarias para el funcionamiento del sitio." },
+      "Necessários para login, navegação e segurança. Sempre ativos.": { en: "Necessary for login, navigation and security. Always active.", es: "Necesarias para el inicio de sesión, la navegación y la seguridad. Siempre activas." },
+      "Nos ajudam a entender como você usa o site (ex.: Google Analytics).": { en: "They help us understand how you use the site (e.g., Google Analytics).", es: "Nos ayudan a entender cómo usas el sitio (p. ej., Google Analytics)." },
+      "Usados para anúncios e conteúdo personalizado. Requer consentimento explícito.": { en: "Used for personalized ads and content. Requires explicit consent.", es: "Se usan para anuncios y contenido personalizado. Requiere consentimiento explícito." },
+      "Salvar Preferências": { en: "Save Preferences", es: "Guardar Preferencias" },
+    };
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      // Checa primeiro o dicionario de traducoes literais (chave = texto
+      // original em pt, exato, com espacos/quebras de linha ja preservados
+      // no proprio valor de en/es). So cai pra API se nao achar aqui.
+      const lit = literalTranslations[text];
+      if (lit && lit[to]) return lit[to];
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) el.textContent = translations[lang][key];
+        if (t[key]) el.textContent = t[key];
       });
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
     </script>
 
 <script>
@@ -5440,11 +5924,6 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
-body:not(.dark-mode) .header::before {
-  
-}
-
 /* Logo: texto branco sólido sem glow neon */
 body:not(.dark-mode) .orizon-logo-svg text {
   fill: #ffffff !important;
@@ -5472,9 +5951,6 @@ body:not(.dark-mode) .header-page-title {
   color: #ffffff !important;
   letter-spacing: 4px;
 }</style>
-<style>
-/* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}</style>
 
 <script>
 /* ORIZON EMAIL CLICK */
@@ -5740,7 +6216,6 @@ body:not(.dark-mode) .header-page-title {
 /* BLOCO 2 — MODO ESCURO */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff;
-  text-stroke: 2.6px #ffffff;
   paint-order: stroke fill;
   text-shadow: none;
 }

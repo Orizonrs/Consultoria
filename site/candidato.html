@@ -4154,8 +4154,8 @@ body.dark-mode .download-free-tag { color: #34d399; }
 <details class="vt-settings">
 <summary>⚙️ Configurações de voz</summary>
 <div class="vt-settings-body">
-<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById(\'vtRateVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
-<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById(\'vtPitchVal\').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
+<label>Velocidade <input id="vtRate" max="2" min="0.5" oninput="document.getElementById('vtRateVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtRateVal">1</span>x</label>
+<label>Tom <input id="vtPitch" max="2" min="0.5" oninput="document.getElementById('vtPitchVal').textContent=this.value" step="0.1" type="range" value="1"/> <span id="vtPitchVal">1</span></label>
 <label>Voz
             <select id="vtVoiceSelect" style="margin-left:4px;font-size:0.8rem;border-radius:8px;border: 2.5px solid rgba(0,0,0,0.35);padding:2px 6px;"></select>
 </label>
@@ -6312,6 +6312,21 @@ loadSavedTheme();
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -6319,25 +6334,53 @@ loadSavedTheme();
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
+        // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6695,7 +6738,7 @@ loadSavedTheme();
     };
 
     function applyTranslations(lang) {
-      const t = TRANSLATIONS_CAND[lang] || TRANSLATIONS_CAND['pt'];
+      const t = Object.assign({}, TRANSLATIONS_CAND['pt'], TRANSLATIONS_CAND[lang] || {});
 
       // Header
       const h1 = document.querySelector('.header h1');
@@ -6766,19 +6809,439 @@ loadSavedTheme();
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
     }
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar TRANSLATIONS_CAND.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    // === SISTEMA 3 (redundancia) - TRADUCOES LITERAIS PRE-ESCRITAS ===
+    // Escritas a mao (pt -> en/es) para o conteudo desta pagina que fica
+    // fora do Sistema 1 (data-i18n). Usadas por vtTranslateOne antes de
+    // chamar a API MyMemory: elimina delay de rede e gasto de cota para
+    // o texto ja coberto aqui. Chave = texto original em pt, exato (com
+    // os mesmos espacos/quebras de linha do texto no HTML).
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando previsión…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Topics" },
+      "🔗 Conectar Conosco": { en: "🔗 Connect With Us", es: "🔗 Conéctate con Nosotros" },
+      "🎯 Dicas para Candidatos": { en: "🎯 Tips for Candidates", es: "🎯 Consejos para Candidatos" },
+      "💡 Comportamento": { en: "💡 Behavior", es: "💡 Comportamiento" },
+      "📄 Baixe seu Currículo": { en: "📄 Download Your Resume", es: "📄 Descarga tu Currículum" },
+      "🚀 Gere seu Currículo": { en: "🚀 Generate Your Resume", es: "🚀 Genera tu Currículum" },
+      "📧 Envio de Currículo": { en: "📧 Sending Your Resume", es: "📧 Envío de Currículum" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Vídeos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "\n          Administração\n          ": { en: "\n          Administration\n          ", es: "\n          Administración\n          " },
+      "◆": { en: "◆", es: "◆" },
+      "\n          Gestão\n        ": { en: "\n          Management\n        ", es: "\n          Gestión\n        " },
+      "Área do Candidato": { en: "Candidate Area", es: "Área del Candidato" },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Reset settings", es: "↺ Restablecer ajustes" },
+      "⬇️ ": { en: "⬇️ ", es: "⬇️ " },
+      "Entre": { en: "Get", es: "Póngase" },
+      "em contato!": { en: "in touch!", es: "en contacto!" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Canal rápido para enviar seu currículo e tirar dúvidas. Nossa equipe responde com agilidade.": { en: "Fast channel to send your resume and ask questions. Our team responds quickly.", es: "Canal rápido para enviar su currículum y resolver dudas. Nuestro equipo responde con agilidad." },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento (Chatbot)": { en: "Recruitment (Chatbot)", es: "Reclutamiento (Chatbot)" },
+      "Segunda a sexta, 8h-18h": { en: "Monday to Friday, 8am–6pm", es: "Lunes a viernes, 8h–18h" },
+      "E-mail": { en: "E-mail", es: "E-mail" },
+      "Envie seu currículo em PDF para análise cuidadosa. Responderemos assim que possível.": { en: "Send your resume in PDF for careful review. We will respond as soon as possible.", es: "Envíe su currículum en PDF para un análisis cuidadoso. Responderemos lo antes posible." },
+      "adm@orizonrs.com": { en: "adm@orizonrs.com", es: "adm@orizonrs.com" },
+      "Resposta o mais breve possível": { en: "Response as soon as possible", es: "Respuesta lo antes posible" },
+      "Orizon Recruiter": { en: "Orizon Recruiter", es: "Orizon Recruiter" },
+      "Nosso sistema de IA analisa seu perfil automaticamente e conecta com vagas compatíveis.": { en: "Our AI system automatically analyzes your profile and matches it with compatible job openings.", es: "Nuestro sistema de IA analiza su perfil automáticamente y lo conecta con vacantes compatibles." },
+      "Como funciona?": { en: "How does it work?", es: "¿Cómo funciona?" },
+      "Triagem automática e eficiente": { en: "Automatic and efficient screening", es: "Selección automática y eficiente" },
+      "🎯 ": { en: "🎯 ", es: "🎯 " },
+      "Dicas": { en: "Tips", es: "Consejos" },
+      "Profissionais": { en: "for Professionals", es: "para Profesionales" },
+      "Currículo Impecável": { en: "Impeccable Resume", es: "Currículum Impecable" },
+      "passe o mouse ↺": { en: "hover to flip ↺", es: "pase el mouse ↺" },
+      "Seu currículo é seu primeiro contato. Mantenha-o sempre atualizado, com informações claras e bem organizadas. Use formato PDF, evite cores excessivas e fontes estranhas. Destaque suas principais competências, certificações e experiências relevantes. Seja objetivo: recrutadores gastam segundos na leitura inicial.": { en: "Your resume is your first contact. Keep it always updated, with clear and well-organized information. Use PDF format, avoid excessive colors and strange fonts. Highlight your main skills, certifications and relevant experience. Be objective: recruiters spend only seconds on the first read.", es: "Su currículum es su primer contacto. Manténgalo siempre actualizado, con información clara y bien organizada. Use formato PDF, evite colores excesivos y fuentes extrañas. Destaque sus principales competencias, certificaciones y experiencias relevantes. Sea objetivo: los reclutadores dedican segundos a la lectura inicial." },
+      "Imagem Profissional": { en: "Professional Image", es: "Imagen Profesional" },
+      "Vista-se adequadamente para entrevistas, pesquise sobre a cultura da empresa. Use linguagem profissional em todas as comunicações, mesmo em WhatsApp. Sua primeira impressão importa e pode abrir ou fechar portas. Não é necessário colocar dados pessoais no currículo, apenas E-mail, telefone, Linkedin (opcional) e demais dados de contato.": { en: "Dress appropriately for interviews and research the company culture. Use professional language in all communications, even on WhatsApp. Your first impression matters and can open or close doors. There is no need to put personal data on your resume, only e-mail, phone, LinkedIn (optional) and other contact details.", es: "Vístase adecuadamente para las entrevistas e investigue la cultura de la empresa. Use un lenguaje profesional en todas las comunicaciones, incluso en WhatsApp. Su primera impresión importa y puede abrir o cerrar puertas. No es necesario poner datos personales en el currículum, solo e-mail, teléfono, LinkedIn (opcional) y demás datos de contacto." },
+      "LinkedIn Otimizado": { en: "Optimized LinkedIn", es: "LinkedIn Optimizado" },
+      "Complete totalmente seu perfil do LinkedIn com foto, headline, descrição detalhada, experiências e habilidades. Mantenha-o sincronizado com seu currículo. Networking é ouro: conecte-se com profissionais da sua área. LinkedIn é a vitrine moderna do profissional.": { en: "Fully complete your LinkedIn profile with photo, headline, detailed description, experiences and skills. Keep it in sync with your resume. Networking is gold: connect with professionals in your field. LinkedIn is the modern professional showcase.", es: "Complete totalmente su perfil de LinkedIn con foto, titular, descripción detallada, experiencias y habilidades. Manténgalo sincronizado con su currículum. El networking es oro: conéctese con profesionales de su área. LinkedIn es la vitrina moderna del profesional." },
+      "Disponibilidade Total": { en: "Full Availability", es: "Disponibilidad Total" },
+      "Certifique-se de que seus dados de contato (WhatsApp, email, telefone) estão corretos e atualizados. Verifique regularmente suas mensagens. Não perca oportunidades por falta de comunicação. Deixe um voicemail profissional em seu telefone.": { en: "Make sure your contact details (WhatsApp, email, phone) are correct and up to date. Check your messages regularly. Don't miss opportunities due to lack of communication. Leave a professional voicemail greeting on your phone.", es: "Asegúrese de que sus datos de contacto (WhatsApp, email, teléfono) estén correctos y actualizados. Revise sus mensajes con regularidad. No pierda oportunidades por falta de comunicación. Deje un mensaje de voz profesional en su teléfono." },
+      "Autenticidade e Honestidade": { en: "Authenticity and Honesty", es: "Autenticidad y Honestidad" },
+      "Apresente suas verdadeiras habilidades e experiências. Nunca minta sobre qualificações, isso será descoberto. Demonstre entusiasmo genuíno pela oportunidade e pela empresa. Pesquise sobre a empresa antes de se candidatar.": { en: "Present your true skills and experience. Never lie about qualifications, it will be discovered. Show genuine enthusiasm for the opportunity and the company. Research the company before applying.", es: "Presente sus verdaderas habilidades y experiencias. Nunca mienta sobre calificaciones, esto será descubierto. Demuestre entusiasmo genuino por la oportunidad y por la empresa. Investigue sobre la empresa antes de postularse." },
+      "Estude Continuamente": { en: "Keep Learning", es: "Estudie Continuamente" },
+      "O mercado muda constantemente. Invista em sua formação com cursos, certificações e aprendizado. Mencione seus estudos recentes no currículo. Empresas valorizam profissionais que nunca param de aprender e se atualizar.": { en: "The market changes constantly. Invest in your education with courses, certifications and learning. Mention your recent studies on your resume. Companies value professionals who never stop learning and updating themselves.", es: "El mercado cambia constantemente. Invierta en su formación con cursos, certificaciones y aprendizaje. Mencione sus estudios recientes en el currículum. Las empresas valoran a los profesionales que nunca dejan de aprender y actualizarse." },
+      "Ver mais dicas ▼": { en: "See more tips ▼", es: "Ver más consejos ▼" },
+      "⟷ Arraste para o lado para ver todas as dicas": { en: "⟷ Swipe sideways to see all the tips", es: "⟷ Deslice hacia el lado para ver todos los consejos" },
+      "💡 ": { en: "💡 ", es: "💡 " },
+      "Comportamento": { en: "Behavior", es: "Comportamiento" },
+      "✅ Esperados": { en: "✅ Expected", es: "✅ Esperados" },
+      "Seja a pessoa que toda equipe quer ter por perto": { en: "Be the person every team wants to have around", es: "Sea la persona que todo equipo quiere tener cerca" },
+      "A pessoa certa": { en: "The right person", es: "La persona correcta" },
+      "Recrutadores percebem rápido quem realmente quer estar ali. Ser proativo, demonstrar interesse genuíno e chegar com vontade de aprender pesa mais do que qualquer currículo perfeito. Cumprir prazos, ouvir feedback sem se fechar e se comunicar com clareza são detalhes simples que constroem uma reputação sólida e é essa reputação que abre a próxima porta.": { en: "Recruiters quickly notice who really wants to be there. Being proactive, showing genuine interest and arriving eager to learn matters more than any perfect resume. Meeting deadlines, listening to feedback without getting defensive and communicating clearly are simple details that build a solid reputation, and it is that reputation that opens the next door.", es: "Los reclutadores perciben rápido quién realmente quiere estar ahí. Ser proactivo, demostrar interés genuino y llegar con ganas de aprender pesa más que cualquier currículum perfecto. Cumplir plazos, escuchar el feedback sin cerrarse y comunicarse con claridad son detalles simples que construyen una reputación sólida, y es esa reputación la que abre la próxima puerta." },
+      "🚫 Evitar": { en: "🚫 Avoid", es: "🚫 Evitar" },
+      "Atitudes que fecham portas antes mesmo da entrevista": { en: "Attitudes that close doors even before the interview", es: "Actitudes que cierran puertas incluso antes de la entrevista" },
+      "Atitudes que fecham portas": { en: "Attitudes that close doors", es: "Actitudes que cierran puertas" },
+      "Mentir sobre qualificações, desaparecer sem responder mensagens ou tratar o processo seletivo com descaso são erros que custam caro e ficam registrados. Atrasos frequentes, tom agressivo ou desrespeitoso e um comportamento diferente entre as redes sociais e a entrevista também levantam bandeiras vermelhas. Autenticidade e consistência valem mais do que tentar parecer perfeito.": { en: "Lying about qualifications, disappearing without responding to messages or treating the selection process carelessly are mistakes that cost dearly and stay on record. Frequent lateness, an aggressive or disrespectful tone and behaving differently on social media than in the interview also raise red flags. Authenticity and consistency are worth more than trying to look perfect.", es: "Mentir sobre calificaciones, desaparecer sin responder mensajes o tratar el proceso de selección con descuido son errores que salen caros y quedan registrados. Los retrasos frecuentes, un tono agresivo o irrespetuoso y un comportamiento diferente entre las redes sociales y la entrevista también levantan banderas rojas. La autenticidad y la coherencia valen más que intentar parecer perfecto." },
+      "💡 Lembre-se": { en: "💡 Remember", es: "💡 Recuerde" },
+      "Quem para de aprender, para de crescer": { en: "Whoever stops learning, stops growing", es: "Quien deja de aprender, deja de crecer" },
+      "O mercado muda o tempo todo, e as empresas valorizam quem acompanha essa mudança. Investir em cursos, certificações e novos conhecimentos e mencionar isso no currículo, mostra que você está em movimento. Organize seu tempo, mantenha boa comunicação com a equipe e trate cada entrega como uma oportunidade de mostrar evolução, não apenas de cumprir tarefa.": { en: "The market changes all the time, and companies value those who keep up with that change. Investing in courses, certifications and new knowledge, and mentioning this on your resume, shows that you are moving forward. Organize your time, maintain good communication with the team and treat every task as an opportunity to show growth, not just to get it done.", es: "El mercado cambia todo el tiempo, y las empresas valoran a quienes acompañan ese cambio. Invertir en cursos, certificaciones y nuevos conocimientos, y mencionarlo en el currículum, muestra que usted está en movimiento. Organice su tiempo, mantenga una buena comunicación con el equipo y trate cada entrega como una oportunidad de mostrar evolución, no solo de cumplir una tarea." },
+      "\n    💡 Comportamento!\n  ": { en: "\n    💡 Behavior!\n  ", es: "\n    💡 ¡Comportamiento!\n  " },
+      "Comportamentos Esperados": { en: "Expected Behaviors", es: "Comportamientos Esperados" },
+      "✅ Ser proativo, demonstrar interesse real e entusiasmo": { en: "✅ Be proactive, show genuine interest and enthusiasm", es: "✅ Ser proactivo, demostrar interés real y entusiasmo" },
+      "✅ Estar sempre aprendendo e evoluindo": { en: "✅ Always be learning and evolving", es: "✅ Estar siempre aprendiendo y evolucionando" },
+      "✅ Colaborar em equipe e se comunicar com clareza": { en: "✅ Collaborate as a team and communicate clearly", es: "✅ Colaborar en equipo y comunicarse con claridad" },
+      "✅ Ser pontual, confiável e cumprir prazos": { en: "✅ Be punctual, reliable and meet deadlines", es: "✅ Ser puntual, confiable y cumplir plazos" },
+      "✅ Ouvir feedback e demonstrar comprometimento": { en: "✅ Listen to feedback and show commitment", es: "✅ Escuchar el feedback y demostrar compromiso" },
+      "Comportamentos a Evitar": { en: "Behaviors to Avoid", es: "Comportamientos a Evitar" },
+      "❌ Mentiras sobre qualificações ou experiências": { en: "❌ Lies about qualifications or experience", es: "❌ Mentiras sobre calificaciones o experiencias" },
+      "❌ Ignorar mensagens ou desaparecer sem aviso": { en: "❌ Ignoring messages or disappearing without notice", es: "❌ Ignorar mensajes o desaparecer sin aviso" },
+      "❌ Ser agressivo, grosseiro ou desrespeitoso": { en: "❌ Being aggressive, rude or disrespectful", es: "❌ Ser agresivo, grosero o irrespetuoso" },
+      "❌ Atrasos frequentes ou falta de pontualidade": { en: "❌ Frequent lateness or lack of punctuality", es: "❌ Retrasos frecuentes o falta de puntualidad" },
+      "❌ Mau comportamento nas entrevistas ou redes sociais": { en: "❌ Poor behavior in interviews or on social media", es: "❌ Mal comportamiento en entrevistas o redes sociales" },
+      "Lembre-se": { en: "Remember", es: "Recuerde" },
+      "💡 Revise sempre suas mensagens antes de enviar": { en: "💡 Always review your messages before sending", es: "💡 Revise siempre sus mensajes antes de enviarlos" },
+      "💡 Organize seu tempo e cumpra os prazos": { en: "💡 Organize your time and meet deadlines", es: "💡 Organice su tiempo y cumpla los plazos" },
+      "💡 Mantenha boa comunicação e colaboração com a equipe": { en: "💡 Maintain good communication and collaboration with the team", es: "💡 Mantenga buena comunicación y colaboración con el equipo" },
+      "💡 Demonstre interesse e comprometimento em tudo que faz": { en: "💡 Show interest and commitment in everything you do", es: "💡 Demuestre interés y compromiso en todo lo que hace" },
+      "💡 Continue aprendendo e evoluindo constantemente": { en: "💡 Keep learning and evolving constantly", es: "💡 Continúe aprendiendo y evolucionando constantemente" },
+      "📄 ": { en: "📄 ", es: "📄 " },
+      "Baixe": { en: "Download", es: "Descargue" },
+      "seu Currículo!": { en: "Your Resume!", es: "su Currículum!" },
+      "Currículo CLT": { en: "CLT Resume", es: "Currículum CLT" },
+      "Modelo clássico no Word, otimizado para plataformas ATS e recrutadores.": { en: "Classic Word template, optimized for ATS platforms and recruiters.", es: "Modelo clásico en Word, optimizado para plataformas ATS y reclutadores." },
+      "\n   ⬇️ Baixar Currículo\n": { en: "\n   ⬇️ Download Resume\n", es: "\n   ⬇️ Descargar Currículum\n" },
+      " downloads": { en: " downloads", es: " descargas" },
+      "\n   🎥 Ver como editar este modelo\n": { en: "\n   🎥 See how to edit this template\n", es: "\n   🎥 Vea cómo editar este modelo\n" },
+      "\n    Após editar transforme em PDF para o envio\n  ": { en: "\n    After editing, convert it to PDF before sending\n  ", es: "\n    Después de editar, conviértalo en PDF para el envío\n  " },
+      "Currículo Aprendiz": { en: "Apprentice Resume", es: "Currículum Aprendiz" },
+      "Modelo no Word ideal para jovens aprendizes em primeira oportunidade.": { en: "Word template ideal for young apprentices in their first opportunity.", es: "Modelo en Word ideal para jóvenes aprendices en su primera oportunidad." },
+      "\n          Inclui seções de habilidades e idioma\n        ": { en: "\n          Includes skills and language sections\n        ", es: "\n          Incluye secciones de habilidades e idioma\n        " },
+      "Currículo Estágio": { en: "Internship Resume", es: "Currículum Pasantía" },
+      "Modelo no Word pensado para candidatos a vagas de estágio.": { en: "Word template designed for internship candidates.", es: "Modelo en Word pensado para candidatos a vacantes de pasantía." },
+      "\n          Pronto para personalizar e enviar\n        ": { en: "\n          Ready to customize and send\n        ", es: "\n          Listo para personalizar y enviar\n        " },
+      "✦ Novidade": { en: "✦ New", es: "✦ Novedad" },
+      "Gere seu Currículo": { en: "Generate Your Resume", es: "Genere su Currículum" },
+      "em PDF na hora": { en: "in PDF instantly", es: "en PDF al instante" },
+      "Sem Word, sem complicação. Preencha uma vez e baixe 3 versões prontas — para e-mail, WhatsApp e sistemas ATS.": { en: "No Word, no hassle. Fill it out once and download 3 ready versions — for email, WhatsApp and ATS systems.", es: "Sin Word, sin complicaciones. Complete una vez y descargue 3 versiones listas — para e-mail, WhatsApp y sistemas ATS." },
+      "✅ PDF pronto": { en: "✅ PDF ready", es: "✅ PDF listo" },
+      "🚀 Gerador Inteligente": { en: "🚀 Smart Generator", es: "🚀 Generador Inteligente" },
+      "Gerador de Currículo Estratégico": { en: "Strategic Resume Generator", es: "Generador de Currículum Estratégico" },
+      "Preencha seus dados, experiências e habilidades. O sistema monta o currículo profissional e você baixa o PDF direto no celular.": { en: "Fill in your details, experience and skills. The system builds the professional resume and you download the PDF straight to your phone.", es: "Complete sus datos, experiencias y habilidades. El sistema arma el currículum profesional y usted descarga el PDF directo al celular." },
+      "Preencha seus dados": { en: "Fill in your details", es: "Complete sus datos" },
+      "O sistema monta o layout": { en: "The system builds the layout", es: "El sistema arma el diseño" },
+      "Baixe o PDF pronto": { en: "Download the ready PDF", es: "Descargue el PDF listo" },
+      "✅ 100% gratuito": { en: "✅ 100% free", es: "✅ 100% gratuito" },
+      "📱 Funciona no celular": { en: "📱 Works on mobile", es: "📱 Funciona en el celular" },
+      "🤖 Otimizado para ATS": { en: "🤖 Optimized for ATS", es: "🤖 Optimizado para ATS" },
+      "✨ Criar meu currículo agora": { en: "✨ Create my resume now", es: "✨ Crear mi currículum ahora" },
+      "🎥": { en: "🎥", es: "🎥" },
+      "Vídeos tutoriais": { en: "Tutorial videos", es: "Videos tutoriales" },
+      "Aprenda a editar os modelos e se destacar em processos seletivos.": { en: "Learn how to edit the templates and stand out in selection processes.", es: "Aprenda a editar los modelos y destacar en procesos de selección." },
+      "▶ Assistir agora": { en: "▶ Watch now", es: "▶ Ver ahora" },
+      "▲": { en: "▲", es: "▲" },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "Assistente Orizon": { en: "Orizon Assistant", es: "Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ON" },
+      "✕": { en: "✕", es: "✕" },
+      "➤": { en: "➤", es: "➤" },
+      "Materiais para Download": { en: "Materials for Download", es: "Materiales para Descargar" },
+      " Carreira & Candidato": { en: " Career & Candidate", es: " Carrera y Candidato" },
+      "3 arquivos": { en: "3 files", es: "3 archivos" },
+      "▼": { en: "▼", es: "▼" },
+      "Modelo de Currículo ATS": { en: "ATS Resume Template", es: "Modelo de Currículum ATS" },
+      "Currículo otimizado para sistemas de triagem automática (ATS) — estrutura validada para passar pelos filtros das grandes empresas e plataformas.": { en: "Resume optimized for automatic screening systems (ATS) — validated structure to pass through the filters of large companies and platforms.", es: "Currículum optimizado para sistemas de selección automática (ATS) — estructura validada para pasar los filtros de las grandes empresas y plataformas." },
+      "Word .docx": { en: "Word .docx", es: "Word .docx" },
+      "✓ Gratuito": { en: "✓ Free", es: "✓ Gratuito" },
+      "⬇": { en: "⬇", es: "⬇" },
+      "Carta de Apresentação": { en: "Cover Letter", es: "Carta de Presentación" },
+      "Modelo profissional de carta de apresentação personalizável por vaga e empresa — destaque-se antes mesmo da entrevista.": { en: "Professional cover letter template, customizable for each job and company — stand out even before the interview.", es: "Modelo profesional de carta de presentación personalizable por vacante y empresa — destáquese incluso antes de la entrevista." },
+      "Controle de Candidaturas": { en: "Application Tracker", es: "Control de Postulaciones" },
+      "Planilha para acompanhar cada candidatura: empresa, vaga, status, próximos passos e histórico de contatos.": { en: "Spreadsheet to track each application: company, job, status, next steps and contact history.", es: "Planilla para seguir cada postulación: empresa, vacante, estado, próximos pasos e historial de contactos." },
+      "Excel .xlsx": { en: "Excel .xlsx", es: "Excel .xlsx" },
+      " RH & Pessoas": { en: " HR & People", es: " RH y Personas" },
+      "6 arquivos": { en: "6 files", es: "6 archivos" },
+      "Avaliação de Desempenho": { en: "Performance Review", es: "Evaluación de Desempeño" },
+      "Modelo estruturado para avaliar colaboradores por competências, metas e comportamento.": { en: "Structured template to evaluate employees by competencies, goals and behavior.", es: "Modelo estructurado para evaluar colaboradores por competencias, metas y comportamiento." },
+      "Controle de Férias e Ausências": { en: "Vacation and Absence Tracker", es: "Control de Vacaciones y Ausencias" },
+      "Planilha para gerenciar férias, folgas e ausências de toda a equipe com visão mensal.": { en: "Spreadsheet to manage vacations, time off and absences for the whole team with a monthly view.", es: "Planilla para gestionar vacaciones, permisos y ausencias de todo el equipo con vista mensual." },
+      "Checklist de Onboarding": { en: "Onboarding Checklist", es: "Checklist de Incorporación" },
+      "Garanta uma integração completa para novos colaboradores — documentos, acessos e treinamentos.": { en: "Ensure complete onboarding for new employees — documents, access and training.", es: "Garantice una incorporación completa para los nuevos colaboradores — documentos, accesos y capacitaciones." },
+      "Checklist de Desligamento": { en: "Offboarding Checklist", es: "Checklist de Desvinculación" },
+      "Conduza saídas de colaboradores com segurança jurídica e processo organizado.": { en: "Handle employee departures with legal security and an organized process.", es: "Gestione las salidas de colaboradores con seguridad jurídica y un proceso organizado." },
+      "Pesquisa de Clima Organizacional": { en: "Organizational Climate Survey", es: "Encuesta de Clima Organizacional" },
+      "Meça a satisfação e engajamento da equipe com um questionário anônimo e profissional.": { en: "Measure team satisfaction and engagement with an anonymous, professional questionnaire.", es: "Mida la satisfacción y el compromiso del equipo con un cuestionario anónimo y profesional." },
+      "Feedback Estruturado": { en: "Structured Feedback", es: "Feedback Estructurado" },
+      "Modelo de feedback construtivo baseado em fatos, impacto e comportamento esperado.": { en: "Constructive feedback template based on facts, impact and expected behavior.", es: "Modelo de feedback constructivo basado en hechos, impacto y comportamiento esperado." },
+      "Orizon ": { en: "Orizon ", es: "Orizon " },
+      "Consultoria": { en: "Consultoria", es: "Consultoria" },
+      "Consultoria + RH & Gestão — Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR & Management — Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RH & Gestión — Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Vagas & Oportunidades": { en: "Jobs & Opportunities", es: "Empleos y Oportunidades" },
+      "Sobre nós": { en: "About us", es: "Sobre nosotros" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "♥": { en: "♥", es: "♥" },
+      " Feito com propósito — Rio Grande do Sul, Brasil": { en: " Made with purpose — Rio Grande do Sul, Brazil", es: " Hecho con propósito — Rio Grande do Sul, Brasil" }
+    };
+
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      // Prioridade 1: traducao literal pre-escrita (sem chamar a API)
+      const lit = literalTranslations[text];
+      if (lit && lit[to]) return lit[to];
+      // Prioridade 2: cache local de traducoes ja feitas pela API antes
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      // Prioridade 3: API MyMemory em tempo real (so pra texto novo/nao mapeado)
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof TRANSLATIONS_CAND !== 'undefined' && TRANSLATIONS_CAND.pt) ? TRANSLATIONS_CAND.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'TRANSLATIONS_CAND.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize TRANSLATIONS_CAND.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()) e compara
+    // com as chaves do dicionario. Nao corrige nada sozinho -- so avisa
+    // no console, mesmo espirito do checkI18nSync(). Ver o comentario
+    // logo acima de "const literalTranslations" para o passo a passo de
+    // como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) selector.value = savedLang;
       applyTranslations(savedLang);
+          translateWholePage(savedLang);
     }
 
     function changeLanguage(lang) {
       localStorage.setItem('siteLanguage', lang);
       applyTranslations(lang);
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 </script>
 <script>
 (function(){
@@ -7009,7 +7472,6 @@ body:not(.dark-mode) .orizon-logo-svg [filter] {
 </style>
 <style>
 /* Footer: oculta WhatsApp escrito no mobile */
-@media (max-width: 768px) {}
 
 /* ============================================================
    SEÇÃO DE DOWNLOADS — CANDIDATO & RH
@@ -7743,6 +8205,7 @@ body:not(.dark-mode) .olh-title {
   text-shadow: 0 1px 10px rgba(0,0,0,0.3) !important;
   animation: olhShine 5s ease-in-out infinite !important;
   -webkit-text-stroke: 1.5px #000000 !important;
+  text-stroke: 1.5px #000000 !important;
   paint-order: stroke fill !important;
 }
 @keyframes olhShine {

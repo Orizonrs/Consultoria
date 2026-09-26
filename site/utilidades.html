@@ -1736,11 +1736,14 @@ body:not(.dark-mode) .theme-toggle {
     border:2px solid transparent;
     background:linear-gradient(120deg, rgba(37,99,235,0.5), rgba(37,99,235,0), rgba(37,99,235,0.5)) border-box;
     -webkit-mask:linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+    mask:linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor; mask-composite:exclude;
     background-size:250% 100%;
     animation:flowBorderSheen 3.4s linear infinite;
     pointer-events:none;
   }
+  
+  
   body.dark-mode .flow-front::before {
     background:linear-gradient(120deg, rgba(56,189,248,0.55), rgba(56,189,248,0), rgba(56,189,248,0.55)) border-box;
     background-size:250% 100%;
@@ -2004,13 +2007,13 @@ body:not(.dark-mode) .theme-toggle {
     @media (max-width: 560px) {
       .footer-top { grid-template-columns: 1fr; gap: 1.6rem; padding: 2rem 1.2rem 1.5rem; }}
 
-    .footer-brand {}
-    .footer-brand-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.7rem;
-      margin-bottom: 0.9rem;
-    }
+  .footer-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.9rem;
+}
+
     .footer-brand-logo img {
       object-fit: contain;
       border-radius: 8px;
@@ -5773,6 +5776,21 @@ let vtRecognition = null;
       'de-DE':'de','it-IT':'it','ja-JP':'ja','zh-CN':'zh','ar-SA':'ar','ru-RU':'ru'
     };
 
+        // Auto-deteccao de idioma de origem a partir do navegador do
+    // visitante. Se o navegador ja estiver em pt, mantem o padrao
+    // pt->en definido no HTML.
+    function vtAutoDetectLang() {
+      const from = document.getElementById('vtLangFrom');
+      const to   = document.getElementById('vtLangTo');
+      if (!from || !to) return;
+      const browserLang = (navigator.language || navigator.userLanguage || 'pt-BR').toLowerCase();
+      const base = browserLang.split('-')[0];
+      if (base === 'pt') return; // mantem o padrao do HTML
+      const supported = Object.keys(VT_LANG_CODE);
+      const match = supported.find(code => code.toLowerCase().startsWith(base));
+      if (match) from.value = match;
+    }
+
     async function vtTranslateText(text, fromLang, toLang) {
       const status = document.getElementById('vtStatus');
       if (fromLang === toLang) {
@@ -5780,26 +5798,53 @@ let vtRecognition = null;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = text; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Mesmo idioma — texto copiado';
+        status.textContent = '\u2705 Mesmo idioma \u2014 texto copiado';
         return;
       }
-      status.textContent = '🔄 Traduzindo…';
+      status.textContent = '\ud83d\udd04 Traduzindo\u2026';
       const from = VT_LANG_CODE[fromLang] || 'pt';
       const to   = VT_LANG_CODE[toLang]   || 'en';
+
+      // Cache: evita gastar cota da API repetindo a mesma traducao
+      const vtCacheKey = `vtCache:${from}|${to}:${text}`;
+      try {
+        const cached = localStorage.getItem(vtCacheKey);
+        if (cached) {
+          vtLastTranslation = cached;
+          const el = document.getElementById('vtTranslatedText');
+          el.textContent = cached; el.classList.remove('placeholder');
+          document.getElementById('vtSpeakBtn').style.display = 'flex';
+          status.textContent = '\u2705 Traducao concluida (cache)';
+          vtSpeak();
+          return;
+        }
+      } catch(e) { /* localStorage indisponivel, segue sem cache */ }
+
       try {
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
         const r   = await fetch(url);
         const d   = await r.json();
-        const translation = d.responseData?.translatedText || text;
+
+        // Detecta limite diario da API gratuita (responseStatus 403 ou
+        // aviso de cota embutido no proprio texto retornado)
+        const rawText = (d.responseData && d.responseData.translatedText) || '';
+        const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+        if (quotaHit) {
+          status.textContent = '\u26a0\ufe0f Limite diario de traducao gratuita atingido. Tente novamente mais tarde.';
+          return;
+        }
+
+        const translation = rawText || text;
         vtLastTranslation = translation;
         const el = document.getElementById('vtTranslatedText');
         el.textContent = translation; el.classList.remove('placeholder');
         document.getElementById('vtSpeakBtn').style.display = 'flex';
-        status.textContent = '✅ Tradução concluída';
+        status.textContent = '\u2705 Traducao concluida';
+        try { localStorage.setItem(vtCacheKey, translation); } catch(e) {}
         // falar automaticamente
         vtSpeak();
       } catch(e) {
-        status.textContent = '❌ Erro de tradução. Tente novamente.';
+        status.textContent = '\u274c Erro de traducao. Tente novamente.';
       }
     }
 
@@ -6097,13 +6142,490 @@ let vtRecognition = null;
       }
     };
 
+        // [i18n] Avisa no console se o texto no HTML divergir do dicionário
+    // pt (ex.: alguém editou o texto direto no HTML e esqueceu de
+    // atualizar translations.pt / en / es). Não corrige sozinho, só avisa.
+        // ================================================================
+    // SISTEMA 3 - TRADUCAO AUTOMATICA DA PAGINA INTEIRA (MyMemory API)
+    // Traduz todo texto visivel que NAO esta coberto pelo dicionario
+    // manual (Sistema 1), reaproveitando a mesma API do tradutor de
+    // voz (Sistema 2). Cache por idioma em localStorage, para nao
+    // gastar cota da API de novo no mesmo texto.
+    // ================================================================
+    let vtPageOriginals = null;   // Map<Node, string> com o texto original em pt
+    let vtPageNodes = null;       // lista de Text nodes elegiveis (calculada 1x)
+    let vtPageRunId = 0;          // cancela traducoes antigas se o idioma mudar nde novo
+
+    // ================================================================
+    // TRADUCOES LITERAIS PRE-ESCRITAS (redundancia contra falha da API)
+    // Escritas a mao em 26/09/2026. vtTranslateOne confere aqui primeiro;
+    // so cai pra API MyMemory se o texto nao estiver neste dicionario.
+    // ================================================================
+    // ================================================================
+    // [PARA UMA FUTURA SESSAO DE IA] Como conferir/atualizar este
+    // dicionario depois que o texto em pt desta pagina for editado:
+    //
+    // O checador vtCheckDictSync() (chamado dentro de initLanguage(),
+    // logo abaixo neste arquivo) ja avisa sozinho no console do
+    // navegador quando o texto do HTML e as chaves deste dicionario
+    // saem de sincronia. Mas para corrigir rapido, sem abrir o
+    // DevTools manualmente, o metodo mais rapido e:
+    //
+    //   1. Abrir esta pagina num Chromium headless via Playwright.
+    //   2. Rodar no page.evaluate() a propria funcao vtCollectPageNodes()
+    //      que ja existe nesta pagina (ela devolve os Text nodes
+    //      elegiveis para traducao, os mesmos que o vtCheckDictSync()
+    //      usa) e extrair o nodeValue de cada um, exatamente do jeito
+    //      que vtTranslateOne() consulta o dicionario nesta pagina (ver
+    //      o inicio de vtTranslateOne(), logo abaixo, para saber se a
+    //      chave e o texto exato do no ou o texto ja com .trim()).
+    //   3. Comparar essa lista contra Object.keys(literalTranslations)
+    //      (tambem via page.evaluate, pegando o objeto direto da pagina
+    //      carregada -- nao adivinhar as chaves pela leitura do arquivo).
+    //   4. Textos que aparecem no HTML mas nao em literalTranslations
+    //      sao entradas novas a adicionar (en/es). Chaves que aparecem
+    //      em literalTranslations mas nao mais no HTML provavelmente
+    //      correspondem a um texto que mudou de redacao -- localizar a
+    //      entrada antiga pelo pedaco de texto ainda reconhecivel e
+    //      atualizar a chave e as traducoes.
+    //
+    // Isso evita reconstruir esse processo de comparacao do zero a
+    // cada sessao: e so reaproveitar vtCollectPageNodes() e
+    // literalTranslations que ja existem nesta propria pagina.
+    // ================================================================
+    const literalTranslations = {
+      "Carregando previsão…": { en: "Loading forecast…", es: "Cargando pronóstico…" },
+      "Voltar": { en: "Back", es: "Volver" },
+      "Menu": { en: "Menu", es: "Menú" },
+      "Topics": { en: "Topics", es: "Temas" },
+      "Dicas de Carreira": { en: "Career Tips", es: "Consejos de Carrera" },
+      "Sites de Vagas": { en: "Job Sites", es: "Sitios de Empleo" },
+      "Dicas Rápidas": { en: "Quick Tips", es: "Consejos Rápidos" },
+      "Transporte": { en: "Transportation", es: "Transporte" },
+      "Sistema ATS": { en: "ATS System", es: "Sistema ATS" },
+      "Grupos & Redes": { en: "Groups & Networks", es: "Grupos y Redes" },
+      "Bem-Vindo": { en: "Welcome", es: "Bienvenido" },
+      "Sobre": { en: "About", es: "Sobre" },
+      "▾": { en: "▾", es: "▾" },
+      "Missão": { en: "Mission", es: "Misión" },
+      "Visão": { en: "Vision", es: "Visión" },
+      "Valores": { en: "Values", es: "Valores" },
+      "Candidatos": { en: "Candidates", es: "Candidatos" },
+      "Vídeos": { en: "Videos", es: "Videos" },
+      "Vagas": { en: "Jobs", es: "Empleos" },
+      "Ferramentas IA": { en: "AI Tools", es: "Herramientas IA" },
+      "Utilidades": { en: "Utilities", es: "Utilidades" },
+      "Mapa de Carreiras": { en: "Career Map", es: "Mapa de Carreras" },
+      "Atendimento": { en: "Support", es: "Atención" },
+      "Serviços": { en: "Services", es: "Servicios" },
+      "Contato": { en: "Contact", es: "Contacto" },
+      "Informações": { en: "Information", es: "Información" },
+      "Privacidade": { en: "Privacy", es: "Privacidad" },
+      "LGBT+": { en: "LGBT+", es: "LGBT+" },
+      "Privacidade & LGPD": { en: "Privacy & LGPD", es: "Privacidad y LGPD" },
+      "Cookies": { en: "Cookies", es: "Cookies" },
+      "Loja de Sistemas": { en: "Systems Store", es: "Tienda de Sistemas" },
+      "Teste de Perfil": { en: "Profile Test", es: "Test de Perfil" },
+      "// Sistema de Gestão //": { en: "// Management System //", es: "// Sistema de Gestión //" },
+      "ORIZON": { en: "ORIZON", es: "ORIZON" },
+      "Administração": { en: "Administration", es: "Administración" },
+      "◆": { en: "◆", es: "◆" },
+      "Gestão": { en: "Management", es: "Gestión" },
+      "Ferramentas e Utilidades": { en: "Tools and Utilities", es: "Herramientas y Utilidades" },
+      "Ferramentas e utilidades da Orizon,": { en: "Orizon's tools and utilities,", es: "Herramientas y utilidades de Orizon," },
+      "agência de RH": { en: "HR agency", es: "agencia de RH" },
+      "e": { en: "and", es: "y" },
+      "consultoria de RH": { en: "HR consulting", es: "consultoría de RH" },
+      "em Guaíba, Eldorado do Sul, Porto Alegre e Barra do Ribeiro, com": { en: "in Guaíba, Eldorado do Sul, Porto Alegre and Barra do Ribeiro, with", es: "en Guaíba, Eldorado do Sul, Porto Alegre y Barra do Ribeiro, con" },
+      "consultoria administrativa": { en: "administrative consulting", es: "consultoría administrativa" },
+      "consultoria financeira": { en: "financial consulting", es: "consultoría financiera" },
+      "consultoria de logística": { en: "logistics consulting", es: "consultoría de logística" },
+      ". Calculadoras de gestão, cursos gratuitos, dicas de ATS e grupos de oportunidades, além dos": { en: ". Management calculators, free courses, ATS tips and opportunity groups, plus the", es: ". Calculadoras de gestión, cursos gratuitos, consejos de ATS y grupos de oportunidades, además de los" },
+      "sistemas de gestão": { en: "management systems", es: "sistemas de gestión" },
+      "(RH, compras, financeiro e logística) desenvolvidos pela Orizon.": { en: "(HR, purchasing, finance and logistics) developed by Orizon.", es: "(RH, compras, finanzas y logística) desarrollados por Orizon." },
+      "Acessibilidade": { en: "Accessibility", es: "Accesibilidad" },
+      "A+": { en: "A+", es: "A+" },
+      "A++": { en: "A++", es: "A++" },
+      "◐ Contraste": { en: "◐ Contrast", es: "◐ Contraste" },
+      "↺ Restaurar recursos": { en: "↺ Reset settings", es: "↺ Restablecer ajustes" },
+      "Ferramentas e Utilidades para Gestão e Negócios": { en: "Tools and Utilities for Management and Business", es: "Herramientas y Utilidades para Gestión y Negocios" },
+      "Comunicação": { en: "Communication", es: "Comunicación" },
+      "E-mail Profissional": { en: "Professional Email", es: "Correo Electrónico Profesional" },
+      "O e-mail é o cartão de visitas digital de qualquer profissional ou empresa. Use um endereço com nome real ou da empresa. Ao enviar propostas, orçamentos ou relatórios, escreva um assunto claro e um corpo de mensagem objetivo. Evite informalidades em comunicações corporativas.": { en: "Email is the digital business card of any professional or company. Use an address with a real name or the company name. When sending proposals, quotes or reports, write a clear subject line and a straightforward message body. Avoid informal language in corporate communications.", es: "El correo electrónico es la tarjeta de presentación digital de cualquier profesional o empresa. Use una dirección con nombre real o el de la empresa. Al enviar propuestas, presupuestos o informes, escriba un asunto claro y un cuerpo de mensaje directo. Evite la informalidad en las comunicaciones corporativas." },
+      "Segurança": { en: "Security", es: "Seguridad" },
+      "Imagem Digital e Redes Sociais": { en: "Digital Image and Social Media", es: "Imagen Digital y Redes Sociales" },
+      "A presença digital importa tanto para profissionais quanto para empresas. Verifique o que aparece ao pesquisar seu nome ou o nome do seu negócio. Mantenha o LinkedIn atualizado, cuide da imagem pública no Instagram e Facebook. Uma marca bem posicionada online gera credibilidade e atrai parceiros e clientes.": { en: "Digital presence matters for professionals and companies alike. Check what comes up when you search your name or your business name. Keep LinkedIn up to date and take care of your public image on Instagram and Facebook. A well-positioned online brand builds credibility and attracts partners and clients.", es: "La presencia digital importa tanto para profesionales como para empresas. Verifique qué aparece al buscar su nombre o el de su negocio. Mantenga LinkedIn actualizado y cuide la imagen pública en Instagram y Facebook. Una marca bien posicionada en línea genera credibilidad y atrae socios y clientes." },
+      "Network": { en: "Network", es: "Red" },
+      "Networking Estratégico": { en: "Strategic Networking", es: "Networking Estratégico" },
+      "Mais de 70% das oportunidades, seja emprego, parceria ou contrato, chegam por indicação. Participe de grupos no LinkedIn, associações empresariais e comunidades do setor. Construa relacionamentos genuínos: mostre seu trabalho, compartilhe conhecimento e colabore antes de pedir. Conexões de qualidade abrem portas para negócios e crescimento.": { en: "More than 70% of opportunities, whether a job, a partnership or a contract, come through referrals. Join LinkedIn groups, business associations and industry communities. Build genuine relationships: show your work, share knowledge and collaborate before asking for anything. Quality connections open doors for business and growth.", es: "Más del 70% de las oportunidades, ya sea empleo, alianza o contrato, llegan por recomendación. Participe en grupos de LinkedIn, asociaciones empresariales y comunidades del sector. Construya relaciones genuinas: muestre su trabajo, comparta conocimiento y colabore antes de pedir. Las conexiones de calidad abren puertas a negocios y crecimiento." },
+      "monitoramento contínuo": { en: "continuous monitoring", es: "monitoreo continuo" },
+      "O radar de oportunidades da região": { en: "The region's opportunity radar", es: "El radar de oportunidades de la región" },
+      "Escaneando": { en: "Scanning", es: "Escaneando" },
+      "|": { en: "|", es: "|" },
+      "🔎 toque numa bolinha pra abrir o canal": { en: "🔎 tap a dot to open the channel", es: "🔎 toca un punto para abrir el canal" },
+      "Dica:": { en: "Tip:", es: "Consejo:" },
+      "Mantenha perfis completos nas principais plataformas, seja para busca de profissionais, fornecedores ou parcerias. Configure alertas para receber notificações quando surgir algo relevante para o seu negócio ou carreira.": { en: "Keep complete profiles on the main platforms, whether for finding professionals, suppliers or partnerships. Set up alerts to get notified whenever something relevant to your business or career comes up.", es: "Mantenga perfiles completos en las principales plataformas, ya sea para buscar profesionales, proveedores o alianzas. Configure alertas para recibir notificaciones cuando surja algo relevante para su negocio o carrera." },
+      "Dicas de Carreira e Gestão": { en: "Career and Management Tips", es: "Consejos de Carrera y Gestión" },
+      "6 dicas": { en: "6 tips", es: "6 consejos" },
+      "▼": { en: "▼", es: "▼" },
+      "Documentos importantes:": { en: "Important documents:", es: "Documentos importantes:" },
+      "Sempre salve e compartilhe relatórios, propostas e currículos em": { en: "Always save and share reports, proposals and resumes in", es: "Siempre guarde y comparta informes, propuestas y currículums en" },
+      "PDF": { en: "PDF", es: "PDF" },
+      ". O Word pode desconfigurar em diferentes versões do Office.": { en: ". Word files can lose their formatting across different versions of Office.", es: ". Word puede desconfigurarse en diferentes versiones de Office." },
+      "Clareza na comunicação:": { en: "Clear communication:", es: "Claridad en la comunicación:" },
+      "Relatórios e propostas curtos e objetivos têm mais impacto. Seja direto ao ponto, independente do contexto, profissional ou empresarial.": { en: "Short, objective reports and proposals have more impact. Get straight to the point, whether the context is professional or business.", es: "Los informes y propuestas cortos y objetivos tienen más impacto. Vaya directo al punto, sea cual sea el contexto, profesional o empresarial." },
+      "Imagem profissional:": { en: "Professional image:", es: "Imagen profesional:" },
+      "Seja em fotos de currículo, LinkedIn ou apresentações da empresa, use fundo neutro, aparência cuidada e expressão confiante.": { en: "Whether it's a resume photo, LinkedIn or a company presentation, use a neutral background, a well-groomed look and a confident expression.", es: "Ya sea en fotos de currículum, LinkedIn o presentaciones de la empresa, use un fondo neutro, una apariencia cuidada y una expresión segura." },
+      "Personalização:": { en: "Personalization:", es: "Personalización:" },
+      "Adapte sua apresentação ao contexto, seja um currículo, proposta comercial ou pitch. Mencionar o nome da empresa e o problema específico demonstra preparo e interesse genuíno.": { en: "Adapt your presentation to the context, whether it's a resume, a business proposal or a pitch. Mentioning the company's name and its specific problem shows preparation and genuine interest.", es: "Adapte su presentación al contexto, ya sea un currículum, una propuesta comercial o un pitch. Mencionar el nombre de la empresa y el problema específico demuestra preparación e interés genuino." },
+      "Carta de apresentação ou proposta:": { en: "Cover letter or proposal:", es: "Carta de presentación o propuesta:" },
+      "Não é obrigatória, mas quando bem feita faz toda a diferença, tanto em processos seletivos quanto em negociações comerciais.": { en: "It's not mandatory, but when well written it makes all the difference, both in hiring processes and in business negotiations.", es: "No es obligatoria, pero cuando está bien hecha marca toda la diferencia, tanto en procesos de selección como en negociaciones comerciales." },
+      "Pesquisa de mercado:": { en: "Market research:", es: "Investigación de mercado:" },
+      "Antes de negociar salário, honorários ou contratos, pesquise o mercado. Sites como Glassdoor, Salario.com.br e Vagas.com têm dados de referência. Nunca negocie sem saber o piso e teto da área.": { en: "Before negotiating a salary, fees or contracts, research the market. Sites like Glassdoor, Salario.com.br and Vagas.com have reference data. Never negotiate without knowing the low and high end of the field.", es: "Antes de negociar salario, honorarios o contratos, investigue el mercado. Sitios como Glassdoor, Salario.com.br y Vagas.com tienen datos de referencia. Nunca negocie sin saber el piso y el techo del área." },
+      "🔗": { en: "🔗", es: "🔗" },
+      "Sites para pesquisar salários:": { en: "Websites to research salaries:", es: "Sitios para investigar salarios:" },
+      "Glassdoor": { en: "Glassdoor", es: "Glassdoor" },
+      "Salário.com.br": { en: "Salário.com.br", es: "Salário.com.br" },
+      "Vagas.com": { en: "Vagas.com", es: "Vagas.com" },
+      "Love Mondays": { en: "Love Mondays", es: "Love Mondays" },
+      "Selecione o tipo de transporte abaixo para ver as linhas disponíveis e baixar os horários em PDF. Os PDFs são disponibilizados pelas empresas de transporte, se algum link estiver indisponível, entre em contato com a operadora diretamente.": { en: "Select the type of transportation below to see the available lines and download the schedules in PDF. The PDFs are provided by the transport companies; if any link is unavailable, contact the operator directly.", es: "Seleccione el tipo de transporte abajo para ver las líneas disponibles y descargar los horarios en PDF. Los PDFs son proporcionados por las empresas de transporte; si algún enlace no está disponible, contacte directamente con el operador." },
+      "🗺️ Escolha o transporte:": { en: "🗺️ Choose the transportation:", es: "🗺️ Elige el transporte:" },
+      "Ônibus Guaíba": { en: "Guaíba Bus", es: "Autobús Guaíba" },
+      "(bairros)": { en: "(neighborhoods)", es: "(barrios)" },
+      "Alimentadora": { en: "Alimentadora", es: "Alimentadora" },
+      "Guaíba": { en: "Guaíba", es: "Guaíba" },
+      "Catamarã": { en: "Ferry", es: "Catamarán" },
+      "CATSUL": { en: "CATSUL", es: "CATSUL" },
+      "🏙️ Expresso Assur, Guaíba": { en: "🏙️ Expresso Assur, Guaíba", es: "🏙️ Expresso Assur, Guaíba" },
+      "🔵 COHAB - CENTRO - H.REGIONAL-": { en: "🔵 COHAB - DOWNTOWN - REGIONAL HOSPITAL-", es: "🔵 COHAB - CENTRO - HOSPITAL REGIONAL-" },
+      "👁️ Ver": { en: "👁️ View", es: "👁️ Ver" },
+      "📥 Baixar": { en: "📥 Download", es: "📥 Descargar" },
+      "🔵 PEDRAS BRANCAS": { en: "🔵 PEDRAS BRANCAS", es: "🔵 PEDRAS BRANCAS" },
+      "🔵 JARDIM DOS LAGOS - COLINA - V.IOLANDA": { en: "🔵 JARDIM DOS LAGOS - COLINA - V.IOLANDA", es: "🔵 JARDIM DOS LAGOS - COLINA - V.IOLANDA" },
+      "🔵 LOGRADOURO": { en: "🔵 LOGRADOURO", es: "🔵 LOGRADOURO" },
+      "🔵 VILA IOLANDA": { en: "🔵 VILA IOLANDA", es: "🔵 VILA IOLANDA" },
+      "🔵 FLORIDA - ARAUCARIA": { en: "🔵 FLORIDA - ARAUCARIA", es: "🔵 FLORIDA - ARAUCARIA" },
+      "🔵 SÃO FRANCISCO - PRIMAVERA": { en: "🔵 SÃO FRANCISCO - PRIMAVERA", es: "🔵 SÃO FRANCISCO - PRIMAVERA" },
+      "🔵 PASSO FUNDO": { en: "🔵 PASSO FUNDO", es: "🔵 PASSO FUNDO" },
+      "🔵 OPERAÇÃO NOTURNA": { en: "🔵 NIGHT OPERATION", es: "🔵 OPERACIÓN NOCTURNA" },
+      "📞 Empresa de Transporte Guaíba: entre em contato para obter os horários atualizados": { en: "📞 Guaíba Transport Company: contact them to get the updated schedules", es: "📞 Empresa de Transporte Guaíba: contacte para obtener los horarios actualizados" },
+      "Ônibus Alimentadora, Guaíba": { en: "Alimentadora Bus, Guaíba", es: "Autobús Alimentadora, Guaíba" },
+      "🟠 ALIMENTADORA BOM FIM": { en: "🟠 ALIMENTADORA BOM FIM", es: "🟠 ALIMENTADORA BOM FIM" },
+      "🟠 ALIMENTADORA COLINA": { en: "🟠 ALIMENTADORA COLINA", es: "🟠 ALIMENTADORA COLINA" },
+      "🟠 ALIMENTADORA JARDIM DOS LAGOS": { en: "🟠 ALIMENTADORA JARDIM DOS LAGOS", es: "🟠 ALIMENTADORA JARDIM DOS LAGOS" },
+      "🟠 ALIMENTADORA PARQUE 35": { en: "🟠 ALIMENTADORA PARQUE 35", es: "🟠 ALIMENTADORA PARQUE 35" },
+      "🟠 ALIMENTADORA PASSO FUNDO": { en: "🟠 ALIMENTADORA PASSO FUNDO", es: "🟠 ALIMENTADORA PASSO FUNDO" },
+      "🟠 ALIMENTADORA PEDRAS BRANCAS": { en: "🟠 ALIMENTADORA PEDRAS BRANCAS", es: "🟠 ALIMENTADORA PEDRAS BRANCAS" },
+      "🟠 ALIMENTADORA SÃO FRANCISCO": { en: "🟠 ALIMENTADORA SÃO FRANCISCO", es: "🟠 ALIMENTADORA SÃO FRANCISCO" },
+      "🟠 ALIMENTADORA SÃO JORGE": { en: "🟠 ALIMENTADORA SÃO JORGE", es: "🟠 ALIMENTADORA SÃO JORGE" },
+      "📞 Expresso Guaíba - 0800 707 7639": { en: "📞 Expresso Guaíba - 0800 707 7639", es: "📞 Expresso Guaíba - 0800 707 7639" },
+      "⛴️ Catamarã CATSUL": { en: "⛴️ CATSUL Ferry", es: "⛴️ Catamarán CATSUL" },
+      "⛴️ EMBARCADERO GUAÍBA": { en: "⛴️ EMBARCADERO GUAÍBA", es: "⛴️ EMBARCADERO GUAÍBA" },
+      "⛴️ GUAÍBA → POA": { en: "⛴️ GUAÍBA → POA", es: "⛴️ GUAÍBA → POA" },
+      "⛴️ PIER GUAÍBA": { en: "⛴️ PIER GUAÍBA", es: "⛴️ PIER GUAÍBA" },
+      "⛴️ PIER POA": { en: "⛴️ PIER POA", es: "⛴️ PIER POA" },
+      "⛴️ POA → GUAÍBA": { en: "⛴️ POA → GUAÍBA", es: "⛴️ POA → GUAÍBA" },
+      "⛴️ CATSUL: Companhia de Travessias do Sul": { en: "⛴️ CATSUL: Companhia de Travessias do Sul (Southern Crossings Company)", es: "⛴️ CATSUL: Companhia de Travessias do Sul (Compañía de Travesías del Sur)" },
+      "ATS: Applicant Tracking System": { en: "ATS: Applicant Tracking System", es: "ATS: Applicant Tracking System" },
+      "ATS é um": { en: "ATS is a", es: "ATS es un" },
+      "sistema de rastreamento de candidatos": { en: "applicant tracking system", es: "sistema de rastreo de candidatos" },
+      "usado por empresas para gerenciar processos seletivos de forma automatizada. Antes que um humano veja seu currículo, um algoritmo já decidiu se ele passa ou não — por isso entender como o ATS funciona é essencial para não ser eliminado antes da entrevista.": { en: "used by companies to manage hiring processes automatically. Before a human ever sees your resume, an algorithm has already decided whether it passes or not — that's why understanding how an ATS works is essential to avoid being eliminated before the interview.", es: "usado por empresas para gestionar procesos de selección de forma automatizada. Antes de que un humano vea su currículum, un algoritmo ya decidió si pasa o no — por eso entender cómo funciona el ATS es esencial para no ser eliminado antes de la entrevista." },
+      "O funcionamento típico começa com o recebimento totalmente automatizado dos currículos. O sistema aplica algoritmos de ranqueamento, atribuindo uma pontuação de aderência a cada candidato em relação à vaga — por exemplo, de 1 a 100 para 100 candidatos — filtrando por palavras-chave, experiência, qualificações e compatibilidade geral. Os mais bem ranqueados são destacados para possível entrevista, enquanto os demais recebem respostas automáticas de reprovação. Agendamentos também podem ser automatizados, e alguns sistemas ainda aplicam testes de perfil comportamental (como DISC) ou de habilidades específicas antes da decisão final.": { en: "The typical process starts with fully automated resume intake. The system applies ranking algorithms, giving each candidate a fit score relative to the job — for example, from 1 to 100 across 100 candidates — filtering by keywords, experience, qualifications and overall fit. The highest-ranked candidates are flagged for a possible interview, while the rest get automatic rejection replies. Scheduling can also be automated, and some systems even apply behavioral profile tests (such as DISC) or specific skills tests before the final decision.", es: "El funcionamiento típico comienza con la recepción totalmente automatizada de los currículums. El sistema aplica algoritmos de clasificación, asignando una puntuación de afinidad a cada candidato respecto a la vacante — por ejemplo, de 1 a 100 para 100 candidatos — filtrando por palabras clave, experiencia, calificaciones y compatibilidad general. Los mejor clasificados son destacados para una posible entrevista, mientras que el resto recibe respuestas automáticas de rechazo. Las citas también pueden automatizarse, y algunos sistemas incluso aplican pruebas de perfil conductual (como DISC) o de habilidades específicas antes de la decisión final." },
+      "💻 Explicação completa disponível na versão para computador.": { en: "💻 Full explanation available in the desktop version.", es: "💻 Explicación completa disponible en la versión para computadora." },
+      "➜": { en: "➜", es: "➜" },
+      "🤖": { en: "🤖", es: "🤖" },
+      "Excel ✓": { en: "Excel ✓", es: "Excel ✓" },
+      "Liderança ✓": { en: "Leadership ✓", es: "Liderazgo ✓" },
+      "Vendas ✓": { en: "Sales ✓", es: "Ventas ✓" },
+      "Pontuação de compatibilidade": { en: "Compatibility score", es: "Puntuación de compatibilidad" },
+      "87% de match com a vaga": { en: "87% match with the job", es: "87% de coincidencia con la vacante" },
+      "Currículo enviado": { en: "Resume submitted", es: "Currículum enviado" },
+      "toque para saber mais ↻": { en: "tap to learn more ↻", es: "toca para saber más ↻" },
+      "Recebimento 100% automático, sem triagem manual": { en: "100% automatic intake, no manual screening", es: "Recepción 100% automática, sin selección manual" },
+      "Filtro por palavras-chave": { en: "Keyword filter", es: "Filtro por palabras clave" },
+      "Compara experiência, qualificações e termos da vaga": { en: "Compares experience, qualifications and job terms", es: "Compara experiencia, calificaciones y términos de la vacante" },
+      "Ranking automático": { en: "Automatic ranking", es: "Clasificación automática" },
+      "Pontuação de aderência de 1 a 100 por candidato": { en: "Fit score from 1 to 100 per candidate", es: "Puntuación de afinidad de 1 a 100 por candidato" },
+      "Entrevista ou reprovação": { en: "Interview or rejection", es: "Entrevista o rechazo" },
+      "Melhor ranqueados avançam, resto é reprovado automaticamente": { en: "Top-ranked candidates move forward, the rest are automatically rejected", es: "Los mejor clasificados avanzan, el resto es rechazado automáticamente" },
+      "Além dos portais de emprego, grupos no Facebook, WhatsApp e Telegram são canais ativos para vagas locais, parcerias comerciais e networking regional. Útil tanto para quem busca oportunidades de trabalho quanto para empresas que querem divulgar serviços ou contratar localmente.": { en: "Besides job portals, Facebook, WhatsApp and Telegram groups are active channels for local job openings, business partnerships and regional networking. Useful both for people looking for job opportunities and for companies wanting to promote services or hire locally.", es: "Además de los portales de empleo, los grupos de Facebook, WhatsApp y Telegram son canales activos para vacantes locales, alianzas comerciales y networking regional. Útil tanto para quienes buscan oportunidades laborales como para empresas que quieren promocionar servicios o contratar localmente." },
+      "Escolha a plataforma e explore os grupos de oportunidades. Ative as notificações para não perder nada!": { en: "Choose a platform and explore the opportunity groups. Turn on notifications so you don't miss anything!", es: "Elija la plataforma y explore los grupos de oportunidades. ¡Active las notificaciones para no perderse nada!" },
+      "Facebook Grupos": { en: "Facebook Groups", es: "Grupos de Facebook" },
+      "Oportunidades divulgadas em comunidades locais": { en: "Opportunities shared in local communities", es: "Oportunidades publicadas en comunidades locales" },
+      "Grupos disponíveis": { en: "Available groups", es: "Grupos disponibles" },
+      "Emprego Guaíba e Região": { en: "Emprego Guaíba e Região", es: "Emprego Guaíba e Região" },
+      "→": { en: "→", es: "→" },
+      "Emprego em Guaíba": { en: "Emprego em Guaíba", es: "Emprego em Guaíba" },
+      "Guaíba Empregos e Estágios": { en: "Guaíba Empregos e Estágios", es: "Guaíba Empregos e Estágios" },
+      "Orizon": { en: "Orizon", es: "Orizon" },
+      "WhatsApp Grupos": { en: "WhatsApp Groups", es: "Grupos de WhatsApp" },
+      "Oportunidades em tempo real no seu celular": { en: "Real-time opportunities on your phone", es: "Oportunidades en tiempo real en su celular" },
+      "Vagas Guaíba RS": { en: "Vagas Guaíba RS", es: "Vagas Guaíba RS" },
+      "Grupo": { en: "Group", es: "Grupo" },
+      "Grupo Vagas Guaíba RS": { en: "Grupo Vagas Guaíba RS", es: "Grupo Vagas Guaíba RS" },
+      "Telegram Canais": { en: "Telegram Channels", es: "Canales de Telegram" },
+      "Canais com oportunidades e alertas automáticos": { en: "Channels with opportunities and automatic alerts", es: "Canales con oportunidades y alertas automáticas" },
+      "Canais disponíveis": { en: "Available channels", es: "Canales disponibles" },
+      "Vagas Guaíba: Canal Telegram": { en: "Vagas Guaíba: Telegram Channel", es: "Vagas Guaíba: Canal de Telegram" },
+      "Vagas Porto Alegre: Telegram": { en: "Vagas Porto Alegre: Telegram", es: "Vagas Porto Alegre: Telegram" },
+      "POA": { en: "POA", es: "POA" },
+      "Vagas RS: Alertas em tempo real": { en: "Vagas RS: Real-time alerts", es: "Vagas RS: Alertas en tiempo real" },
+      "Estado": { en: "State", es: "Estado" },
+      "Os links de grupos são atualizados periodicamente. Se algum estiver inativo, entre em contato com a Orizon via WhatsApp para receber o link mais recente.": { en: "Group links are updated periodically. If any of them are inactive, contact Orizon via WhatsApp to get the latest link.", es: "Los enlaces de los grupos se actualizan periódicamente. Si alguno está inactivo, contacte a Orizon por WhatsApp para recibir el enlace más reciente." },
+      "Voltar para Profissionais": { en: "Back to Professionals", es: "Volver a Profesionales" },
+      "Ver Ferramentas IA": { en: "See AI Tools", es: "Ver Herramientas IA" },
+      "Materiais para Download": { en: "Downloadable Materials", es: "Materiales para Descargar" },
+      "Administração & Rotinas": { en: "Administration & Routines", es: "Administración y Rutinas" },
+      "10 arquivos": { en: "10 files", es: "10 archivos" },
+      "Checklist de Rotinas Administrativas": { en: "Administrative Routines Checklist", es: "Checklist de Rutinas Administrativas" },
+      "Organize as tarefas do dia a dia da sua empresa com um checklist estruturado por setor.": { en: "Organize your company's day-to-day tasks with a checklist structured by department.", es: "Organice las tareas del día a día de su empresa con un checklist estructurado por sector." },
+      "Excel .xlsx": { en: "Excel .xlsx", es: "Excel .xlsx" },
+      "✓ Gratuito": { en: "✓ Free", es: "✓ Gratuito" },
+      "⬇": { en: "⬇", es: "⬇" },
+      "POP — Procedimento Operacional Padrão": { en: "SOP — Standard Operating Procedure", es: "POE — Procedimiento Operativo Estándar" },
+      "Padronize processos internos e reduza erros operacionais com este modelo completo.": { en: "Standardize internal processes and reduce operational errors with this complete template.", es: "Estandarice los procesos internos y reduzca errores operativos con esta plantilla completa." },
+      "5W2H — Plano de Ação": { en: "5W2H — Action Plan", es: "5W2H — Plan de Acción" },
+      "Defina responsáveis, prazos e recursos para qualquer iniciativa em poucos minutos.": { en: "Define who's responsible, deadlines and resources for any initiative in just a few minutes.", es: "Defina responsables, plazos y recursos para cualquier iniciativa en pocos minutos." },
+      "Ata de Reunião": { en: "Meeting Minutes", es: "Acta de Reunión" },
+      "Registre decisões, responsáveis e prazos de cada reunião de forma profissional.": { en: "Record decisions, responsible parties and deadlines for each meeting in a professional way.", es: "Registre decisiones, responsables y plazos de cada reunión de forma profesional." },
+      "Ordem de Serviço": { en: "Service Order", es: "Orden de Servicio" },
+      "Formalize demandas internas e externas com um modelo de OS completo e editável.": { en: "Formalize internal and external requests with a complete, editable service order template.", es: "Formalice solicitudes internas y externas con una plantilla de orden de servicio completa y editable." },
+      "Fluxo de Caixa Mensal": { en: "Monthly Cash Flow", es: "Flujo de Caja Mensual" },
+      "Controle entradas e saídas mensais com planilha pronta e gráficos automáticos.": { en: "Track monthly income and expenses with a ready-made spreadsheet and automatic charts.", es: "Controle ingresos y egresos mensuales con una planilla lista y gráficos automáticos." },
+      "Contas a Pagar e Receber": { en: "Accounts Payable and Receivable", es: "Cuentas por Pagar y Cobrar" },
+      "Nunca perca um vencimento. Planilha com alertas de prazo e status por cor.": { en: "Never miss a due date. Spreadsheet with deadline alerts and color-coded status.", es: "Nunca pierda un vencimiento. Planilla con alertas de plazo y estado por color." },
+      "Precificação de Produtos e Serviços": { en: "Product and Service Pricing", es: "Fijación de Precios de Productos y Servicios" },
+      "Calcule o preço ideal considerando custos, margem e mercado automaticamente.": { en: "Automatically calculate the ideal price considering costs, margin and market.", es: "Calcule el precio ideal considerando costos, margen y mercado automáticamente." },
+      "CRM — Gestão de Clientes": { en: "CRM — Customer Management", es: "CRM — Gestión de Clientes" },
+      "Centralize o histórico, contatos e status de cada cliente em uma planilha simples e poderosa.": { en: "Centralize the history, contacts and status of each client in a simple, powerful spreadsheet.", es: "Centralice el historial, contactos y estado de cada cliente en una planilla simple y poderosa." },
+      "Metas & KPIs — Indicadores de Desempenho": { en: "Goals & KPIs — Performance Indicators", es: "Metas y KPIs — Indicadores de Desempeño" },
+      "Acompanhe os principais indicadores da empresa com dashboard visual e metas definidas.": { en: "Track the company's key indicators with a visual dashboard and defined goals.", es: "Siga los principales indicadores de la empresa con un panel visual y metas definidas." },
+      "Planejamento Estratégico": { en: "Strategic Planning", es: "Planificación Estratégica" },
+      "5 arquivos": { en: "5 files", es: "5 archivos" },
+      "Análise SWOT": { en: "SWOT Analysis", es: "Análisis FODA" },
+      "Mapeie forças, fraquezas, oportunidades e ameaças do seu negócio com clareza.": { en: "Clearly map out your business's strengths, weaknesses, opportunities and threats.", es: "Mapee con claridad las fortalezas, debilidades, oportunidades y amenazas de su negocio." },
+      "Defina missão, visão, objetivos e metas de longo prazo para o crescimento da empresa.": { en: "Define mission, vision, objectives and long-term goals for the company's growth.", es: "Defina misión, visión, objetivos y metas a largo plazo para el crecimiento de la empresa." },
+      "Plano de Negócios": { en: "Business Plan", es: "Plan de Negocios" },
+      "Estruture sua ideia ou expansão com um plano completo pronto para apresentar a investidores.": { en: "Structure your idea or expansion with a complete plan ready to present to investors.", es: "Estructure su idea o expansión con un plan completo listo para presentar a inversores." },
+      "Calendário Anual de Obrigações": { en: "Annual Compliance Calendar", es: "Calendario Anual de Obligaciones" },
+      "Planeje eventos, obrigações fiscais e prazos estratégicos do ano em uma visão consolidada.": { en: "Plan events, tax obligations and strategic deadlines for the year in one consolidated view.", es: "Planifique eventos, obligaciones fiscales y plazos estratégicos del año en una vista consolidada." },
+      "OKR — Objetivos e Resultados-Chave": { en: "OKR — Objectives and Key Results", es: "OKR — Objetivos y Resultados Clave" },
+      "Implante a metodologia usada por Google e Netflix para alinhar metas e resultados mensuráveis.": { en: "Implement the methodology used by Google and Netflix to align goals with measurable results.", es: "Implemente la metodología usada por Google y Netflix para alinear metas y resultados medibles." },
+      "E-commerce e Vendas": { en: "E-commerce and Sales", es: "E-commerce y Ventas" },
+      "4 arquivos": { en: "4 files", es: "4 archivos" },
+      "Cadastro de Produtos para E-commerce": { en: "Product Catalog for E-commerce", es: "Registro de Productos para E-commerce" },
+      "Planilha completa para catalogar produtos com fotos, preços, estoque e variações.": { en: "Complete spreadsheet to catalog products with photos, prices, stock and variations.", es: "Planilla completa para catalogar productos con fotos, precios, stock y variantes." },
+      "Controle de Pedidos e Vendas": { en: "Order and Sales Tracking", es: "Control de Pedidos y Ventas" },
+      "Registre, acompanhe e analise todos os pedidos com status e valor por período.": { en: "Log, track and analyze all orders with status and value per period.", es: "Registre, siga y analice todos los pedidos con estado y valor por período." },
+      "Política de Troca e Devolução": { en: "Exchange and Return Policy", es: "Política de Cambio y Devolución" },
+      "Modelo de política clara e alinhada ao CDC para publicar na sua loja online.": { en: "Clear policy template aligned with consumer protection law, ready to publish in your online store.", es: "Plantilla de política clara y alineada con la ley de defensa del consumidor para publicar en su tienda en línea." },
+      "Word .docx": { en: "Word .docx", es: "Word .docx" },
+      "Gestão de Marketplaces": { en: "Marketplace Management", es: "Gestión de Marketplaces" },
+      "Tudo que você precisa controlar para vender bem no Mercado Livre, Shopee e similares.": { en: "Everything you need to keep track of to sell well on Mercado Livre, Shopee and similar marketplaces.", es: "Todo lo que necesita controlar para vender bien en Mercado Livre, Shopee y similares." },
+      "Consultoria": { en: "Consulting", es: "Consultoría" },
+      "Consultoria + RH e Gestão: Conhecimento, estratégia e humanidade para empresas e pessoas.": { en: "Consulting + HR and Management: Knowledge, strategy and humanity for companies and people.", es: "Consultoría + RH y Gestión: Conocimiento, estrategia y humanidad para empresas y personas." },
+      "Navegação": { en: "Navigation", es: "Navegación" },
+      "Vagas & Oportunidades": { en: "Jobs & Opportunities", es: "Empleos y Oportunidades" },
+      "Sobre nós": { en: "About us", es: "Sobre nosotros" },
+      "Comercial": { en: "Sales", es: "Comercial" },
+      "Recrutamento": { en: "Recruitment", es: "Reclutamiento" },
+      "WhatsApp": { en: "WhatsApp", es: "WhatsApp" },
+      "Atendimento IA": { en: "AI Support", es: "Atención IA" },
+      "♥": { en: "♥", es: "♥" },
+      "Feito com propósito, Rio Grande do Sul, Brasil": { en: "Made with purpose, Rio Grande do Sul, Brazil", es: "Hecho con propósito, Rio Grande do Sul, Brasil" },
+      "▲": { en: "▲", es: "▲" },
+      "Assistente Orizon": { en: "Orizon Assistant", es: "Asistente Orizon" },
+      "Modo IA": { en: "AI Mode", es: "Modo IA" },
+      "ON": { en: "ON", es: "ACTIVADO" },
+      "✕": { en: "✕", es: "✕" },
+      "➤": { en: "➤", es: "➤" }
+    };
+
+    function vtHash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) { h = (Math.imul(31, h) + str.charCodeAt(i)) | 0; }
+      return (h >>> 0).toString(36);
+    }
+
+    function vtCollectPageNodes() {
+      if (vtPageNodes) return vtPageNodes;
+      vtPageNodes = [];
+      vtPageOriginals = new Map();
+      const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','SVG','SELECT','OPTION','INPUT','TEXTAREA','CODE','PRE']);
+      const onlyNumbersOrSymbols = /^[\d\s.,;:%$R+\-()\/#@_*]*$/;
+      const widget = document.getElementById('voiceTranslatorPanel');
+      const topButtons = document.getElementById('topRightButtons');
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const val = node.nodeValue;
+          if (!val || !val.trim()) return NodeFilter.FILTER_REJECT;
+          if (onlyNumbersOrSymbols.test(val)) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
+          if (widget && widget.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (topButtons && topButtons.contains(parent)) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('[data-i18n]')) return NodeFilter.FILTER_REJECT; // ja coberto pelo Sistema 1
+          if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let n;
+      while ((n = walker.nextNode())) {
+        vtPageOriginals.set(n, n.nodeValue);
+        vtPageNodes.push(n);
+      }
+      return vtPageNodes;
+    }
+
+    function vtRestorePageToPt() {
+      if (!vtPageOriginals) return;
+      vtPageOriginals.forEach(function(orig, node) { node.nodeValue = orig; });
+    }
+
+    async function vtTranslateOne(text, to) {
+      const trimmed = text.trim();
+      const literalEntry = literalTranslations[trimmed];
+      if (literalEntry && literalEntry[to]) {
+        const leading = text.match(/^\s*/)[0];
+        const trailing = text.match(/\s*$/)[0];
+        return leading + literalEntry[to] + trailing;
+      }
+      const key = 'vtPageCache:' + to + ':' + vtHash(text);
+      try {
+        const cached = localStorage.getItem(key);
+        if (cached) return cached;
+      } catch(e) {}
+      const url = 'https://api.mymemory.translated.net/get?q=' + encodeURIComponent(text) + '&langpair=pt|' + to;
+      const r = await fetch(url);
+      const d = await r.json();
+      const rawText = (d.responseData && d.responseData.translatedText) || '';
+      const quotaHit = d.responseStatus === 403 || /MYMEMORY WARNING|QUOTA/i.test(rawText);
+      if (quotaHit) throw new Error('quota');
+      const translated = rawText || text;
+      try { localStorage.setItem(key, translated); } catch(e) {}
+      return translated;
+    }
+
+    function vtShowPageStatus(msg) {
+      let bar = document.getElementById('vtPageStatusBar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'vtPageStatusBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);' +
+          'background:rgba(20,20,30,0.92);color:#fff;padding:8px 16px;border-radius:20px;' +
+          'font-size:13px;z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,0.3);' +
+          'font-family:system-ui,-apple-system,sans-serif;pointer-events:none;transition:opacity .3s;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent = msg;
+      bar.style.opacity = '1';
+      return bar;
+    }
+
+    function vtHidePageStatus(delay) {
+      const bar = document.getElementById('vtPageStatusBar');
+      if (!bar) return;
+      setTimeout(function() { bar.style.opacity = '0'; }, delay || 800);
+    }
+
+    async function translateWholePage(lang) {
+      vtPageRunId++;
+      const myRun = vtPageRunId;
+      if (lang === 'pt') { vtRestorePageToPt(); return; }
+      const to = lang; // 'en' / 'es' ja batem com os codigos da MyMemory
+      const nodes = vtCollectPageNodes();
+      if (!nodes.length) return;
+
+      let done = 0, quota = false, idx = 0;
+      const CONCURRENCY = 4;
+      vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 0/' + nodes.length);
+
+      async function worker() {
+        while (idx < nodes.length && !quota) {
+          const i = idx++;
+          const node = nodes[i];
+          if (myRun !== vtPageRunId) return; // idioma mudou de novo, cancela
+          const original = vtPageOriginals.get(node);
+          try {
+            const translated = await vtTranslateOne(original, to);
+            if (myRun !== vtPageRunId) return;
+            node.nodeValue = translated;
+          } catch (e) {
+            quota = true;
+          }
+          done++;
+          if (myRun === vtPageRunId) vtShowPageStatus('\ud83c\udf10 Traduzindo p\u00e1gina\u2026 ' + done + '/' + nodes.length);
+        }
+      }
+
+      await Promise.all(Array.from({length: CONCURRENCY}, worker));
+      if (myRun !== vtPageRunId) return;
+      if (quota) {
+        vtShowPageStatus('\u26a0\ufe0f Limite di\u00e1rio de tradu\u00e7\u00e3o gratuita atingido. Parte da p\u00e1gina ficou em portugu\u00eas.');
+        vtHidePageStatus(4000);
+      } else {
+        vtShowPageStatus('\u2705 P\u00e1gina traduzida');
+        vtHidePageStatus(1200);
+      }
+    }
+
+    function checkI18nSync() {
+      var dict = (typeof translations !== 'undefined' && translations.pt) ? translations.pt : null;
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var ptValue = dict[key];
+        if (ptValue === undefined) return;
+        var current = el.textContent.replace(/\s+/g, ' ').trim();
+        var expected = String(ptValue).replace(/\s+/g, ' ').trim();
+        if (current && current !== expected) {
+          console.warn('[i18n] A chave "' + key + '" no HTML esta diferente de ' +
+            'translations.pt. HTML: "' + current + '" | dicionario: "' + expected +
+            '". Atualize translations.pt e, junto, en/es.');
+        }
+      });
+    }
+
+    // [i18n] Irmao do checkI18nSync(), mas para o dicionario do Sistema 3
+    // (literalTranslations). Roda ANTES de qualquer traducao ser aplicada
+    // (a pagina ainda esta em pt puro nesse momento), pega os mesmos Text
+    // nodes que o Sistema 3 traduziria (vtCollectPageNodes()), aplica o
+    // mesmo .trim() que vtTranslateOne() usa nesta pagina antes de
+    // consultar o dicionario, e compara com as chaves de literalTranslations.
+    // Nao corrige nada sozinho -- so avisa no console, mesmo espirito do
+    // checkI18nSync(). Ver o comentario logo acima de "const literalTranslations"
+    // para o passo a passo de como usar isso pra atualizar o dicionario.
+    function vtCheckDictSync() {
+      if (typeof literalTranslations === 'undefined') return;
+      var nodes = vtCollectPageNodes();
+      var htmlTexts = new Set();
+      nodes.forEach(function(n) { htmlTexts.add(n.nodeValue.trim()); });
+
+      htmlTexts.forEach(function(text) {
+        if (!Object.prototype.hasOwnProperty.call(literalTranslations, text)) {
+          console.warn('[vt] Texto no HTML sem entrada em literalTranslations (Sistema 3): "' + text + '"');
+        }
+      });
+
+      Object.keys(literalTranslations).forEach(function(key) {
+        if (!htmlTexts.has(key)) {
+          console.warn('[vt] Chave de literalTranslations (Sistema 3) nao encontrada mais no HTML -- ' +
+            'texto pode ter mudado de redacao ou sido removido: "' + key + '"');
+        }
+      });
+    }
+
     function initLanguage() {
+      checkI18nSync();
+      vtCheckDictSync();
       const savedLang = localStorage.getItem('siteLanguage') || 'pt';
       const selector = document.getElementById('languageSelector');
       if (selector) {
         selector.value = savedLang;
       }
       changeLanguage(savedLang);
+          translateWholePage(savedLang);
     }
 
     function applyBicolor(container, text) {
@@ -6131,6 +6653,7 @@ let vtRecognition = null;
     function changeLanguage(lang) {
       if (!translations[lang]) lang = 'pt';
       localStorage.setItem('siteLanguage', lang);
+      const t = Object.assign({}, translations.pt, translations[lang] || {});
       
       document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
@@ -6138,12 +6661,12 @@ let vtRecognition = null;
           const shortMap = { pt: 'Ônibus: Horários', en: 'Buses: Schedules', es: 'Buses: Horarios' };
           const fullEl = element.querySelector('.transporte-full');
           const shortEl = element.querySelector('.transporte-short');
-          if (fullEl && translations[lang][key]) applyBicolor(fullEl, translations[lang][key]);
+          if (fullEl && t[key]) applyBicolor(fullEl, t[key]);
           if (shortEl) applyBicolor(shortEl, shortMap[lang] || shortMap.pt);
           return;
         }
-        if (key === 'util-sec-ats' && translations[lang][key]) {
-          const txt = translations[lang][key].trim();
+        if (key === 'util-sec-ats' && t[key]) {
+          const txt = t[key].trim();
           const m = txt.match(/^([\u{1F000}-\u{1FFFF}\u{2190}-\u{2BFF}\u{2600}-\u{27BF}\uFE0F\u200D]+\s*)/u);
           const leadEmoji = m ? m[0] : '';
           const rest = (m ? txt.slice(m[0].length) : txt).trim();
@@ -6172,10 +6695,10 @@ let vtRecognition = null;
           }
           return;
         }
-        if (translations[lang][key]) {
+        if (t[key]) {
           const icon = element.querySelector(':scope > img, :scope > svg');
           if (element.classList.contains('orizon-section-title') || element.classList.contains('info-bar')) {
-            const txt = translations[lang][key].trim();
+            const txt = t[key].trim();
             if (icon) {
               element.textContent = '';
               element.appendChild(icon);
@@ -6186,16 +6709,18 @@ let vtRecognition = null;
               applyBicolor(element, txt);
             }
           } else {
-            element.textContent = translations[lang][key];
+            element.textContent = t[key];
             if (icon) element.insertBefore(icon, element.firstChild);
           }
         }
       });
       
       document.documentElement.lang = lang === 'es' ? 'es-ES' : lang === 'en' ? 'en-US' : 'pt-BR';
+          translateWholePage(lang);
     }
 
     document.addEventListener('DOMContentLoaded', initLanguage);
+    document.addEventListener('DOMContentLoaded', vtAutoDetectLang);
 
     </script>
 <!-- ── MODAL DE PRÉ-VISUALIZAÇÃO ── -->
@@ -6409,9 +6934,12 @@ body:not(.dark-mode) .header {
   border-top: 2px solid #000000 !important;
 }
 
-/* Brilho dourado sutil no centro */
 body:not(.dark-mode) .header::before {
-  
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(250,204,21,0.15), transparent 70%);
+  pointer-events: none;
 }
 
 /* Logo: texto branco sólido sem glow neon */
@@ -7073,10 +7601,10 @@ body:not(.dark-mode) .header-page-title {
 ══════════════════════════════════════════════ */
 body.dark-mode .olh-title {
   -webkit-text-stroke: 2.6px #ffffff !important;
-  text-stroke: 2.6px #ffffff !important;
   paint-order: stroke fill !important;
   text-shadow: none !important;
 }
+
 body.dark-mode .olh-eyebrow,
 body.dark-mode .olh-subtitle,
 body.dark-mode .header-page-title {
