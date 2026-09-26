@@ -1465,7 +1465,7 @@ body.dark-mode { --primary: #00c8ff !important; --accent: #38bdf8 !important; }
     @keyframes spin {
       to { transform: rotate(360deg); }}
 
-        .message-content p { margin: 0 0 0.55rem 0; line-height: 1.55; }
+        .message-content p {text-align:left !important;hyphens:none !important;-webkit-hyphens:none !important;-ms-hyphens:none !important; margin: 0 0 0.55rem 0; line-height: 1.55; }.chat-icon{width:18px;height:18px;vertical-align:-3px;margin:0 2px 0 0;display:inline-block;}
 .message-content p:last-child { margin-bottom: 0; }
 .message-content strong { font-weight: 700; }
 .message-content ul { padding-left: 1.2rem; margin: 0.3rem 0 0.6rem; }
@@ -3719,7 +3719,7 @@ const CHIP_ACOES = {
       const msgs = document.getElementById('chatbotMessages');
       const div = document.createElement('div');
       div.innerHTML = '<div class="chip-row">' +
-        chips.map(c => `<button class="chip" onclick="clicarChip('${c.replace(/'/g,"\\'")}')">${c}</button>`).join('') +
+        chips.map(c => `<button class="chip" onclick="clicarChip('${c.replace(/'/g,"\\'")}')">${emojiParaImg(c)}</button>`).join('') +
       '</div>';
       msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
     }
@@ -3747,7 +3747,22 @@ const CHIP_ACOES = {
       msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
     }
 
-  function markdownParaHTML(texto) {
+  
+  const EMOJI_ICONS = {
+    '🛒':'icon-carrinho.png','↩️':'icon-voltar.png','😊':'icon-sorriso.png','📰':'icon-jornal.png',
+    '📄':'icon-documento.png','🎯':'icon-alvo.png','💚':'icon-coracao-verde.png','🏢':'icon-predio.png',
+    '🆓':'icon-gratis.png','💬':'icon-balao-fala.png','📱':'icon-celular.png','📞':'icon-telefone.png',
+    '📊':'icon-grafico.png','⏱️':'icon-cronometro.png','💡':'icon-lampada.png','👋':'icon-aceno.png',
+    '🤔':'icon-pensativo.png','✅':'icon-check.png','🎉':'icon-confete.png','📝':'icon-bloco-notas.png'
+  };
+  const EMOJI_REGEX = /🛒|↩️|😊|📰|📄|🎯|💚|🏢|🆓|💬|📱|📞|📊|⏱️|💡|👋|🤔|✅|🎉|📝/g;
+  function emojiParaImg(str) {
+    return String(str).replace(EMOJI_REGEX, function(e) {
+      return '<img src="imagensbot/' + EMOJI_ICONS[e] + '" alt="" class="chat-icon">';
+    });
+  }
+
+function markdownParaHTML(texto) {
   function processarInline(str) {
     return str
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -3758,11 +3773,15 @@ const CHIP_ACOES = {
   const linhas = texto.split('\n');
   const blocos = []; 
   let listaAtual = [];
+  let tipoListaAtual = null;
 
   function fecharLista() {
     if (listaAtual.length > 0) {
-      blocos.push('<ul class="list-disc ml-5 mb-4">' + listaAtual.map(i => `<li>${i}</li>`).join('') + '</ul>');
+      const tag = tipoListaAtual === 'ol' ? 'ol' : 'ul';
+      const cls = tipoListaAtual === 'ol' ? 'list-decimal ml-5 mb-4' : 'list-disc ml-5 mb-4';
+      blocos.push(`<${tag} class="${cls}">` + listaAtual.map(i => `<li>${i}</li>`).join('') + `</${tag}>`);
       listaAtual = [];
+      tipoListaAtual = null;
     }
   }
 
@@ -3772,8 +3791,17 @@ const CHIP_ACOES = {
 
     // 1. Detecção de Listas
     const matchLista = linhaTrim.match(/^[-\*]\s+(.+)/);
+    const matchListaOl = linhaTrim.match(/^\d+[\.\)]\s+(.+)/);
     if (matchLista) {
+      if (tipoListaAtual === 'ol') fecharLista();
+      tipoListaAtual = 'ul';
       listaAtual.push(processarInline(matchLista[1]));
+      continue;
+    }
+    if (matchListaOl) {
+      if (tipoListaAtual === 'ul') fecharLista();
+      tipoListaAtual = 'ol';
+      listaAtual.push(processarInline(matchListaOl[1]));
       continue;
     }
 
@@ -3797,7 +3825,7 @@ const CHIP_ACOES = {
   }
 
   fecharLista();
-  return blocos.join('');
+  return emojiParaImg(blocos.join(''));
 }
 
 function escapeHtml(t) {

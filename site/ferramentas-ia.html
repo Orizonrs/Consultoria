@@ -1658,7 +1658,7 @@ body:not(.dark-mode) .theme-toggle {
   @media (max-width: 480px) {
     .chatbot-window { bottom: 2rem; right: 0.5rem; left: 0.5rem; width: calc(100% - 1rem); height: 70vh; }}
 
-  .message-content p { margin: 0 0 0.55rem 0; line-height: 1.55; }
+  .message-content p {text-align:left !important;hyphens:none !important;-webkit-hyphens:none !important;-ms-hyphens:none !important; margin: 0 0 0.55rem 0; line-height: 1.55; }.chat-icon{width:18px;height:18px;vertical-align:-3px;margin:0 2px 0 0;display:inline-block;}
   .message-content p:last-child { margin-bottom: 0; }
   .message-content strong { font-weight: 700; }
   .message-content ul { padding-left: 1.2rem; margin: 0.3rem 0 0.6rem; }
@@ -5164,19 +5164,34 @@ function closeMenu() {
       msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight;
       setTimeout(()=>{ document.getElementById('typing-indicator')?.remove(); digitando=false; cb(); },delay);
     }
-    function adicionarChips(chips) { const msgs=document.getElementById('chatbotMessages'); const div=document.createElement('div'); div.innerHTML='<div class="chip-row">'+chips.map(c=>`<button class="chip" onclick="clicarChip('${c.replace(/'/g,"\\'")}'">${c}</button>`).join('')+'</div>'; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; }
+    function adicionarChips(chips) { const msgs=document.getElementById('chatbotMessages'); const div=document.createElement('div'); div.innerHTML='<div class="chip-row">'+chips.map(c=>`<button class="chip" onclick="clicarChip('${c.replace(/'/g,"\\'")}')">${emojiParaImg(c)}</button>`).join('')+'</div>'; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; }
     function clicarChip(chip) { adicionarBubbleUser(chip); const a=CHIP_ACOES[chip]; if(a){setTimeout(a,200);}else{setTimeout(()=>processarTexto(chip),300);} }
     function adicionarBubbleBot(html) { const msgs=document.getElementById('chatbotMessages'); const div=document.createElement('div'); div.className='message bot'; div.innerHTML=`<div class="message-content">${html}</div>`; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; }
     function adicionarBubbleUser(texto) { const msgs=document.getElementById('chatbotMessages'); const div=document.createElement('div'); div.className='message user'; div.innerHTML=`<div class="message-content">${escapeHtml(texto)}</div>`; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; }
-    function markdownParaHTML(texto) {
+    
+  const EMOJI_ICONS = {
+    '🛒':'icon-carrinho.png','↩️':'icon-voltar.png','😊':'icon-sorriso.png','📰':'icon-jornal.png',
+    '📄':'icon-documento.png','🎯':'icon-alvo.png','💚':'icon-coracao-verde.png','🏢':'icon-predio.png',
+    '🆓':'icon-gratis.png','💬':'icon-balao-fala.png','📱':'icon-celular.png','📞':'icon-telefone.png',
+    '📊':'icon-grafico.png','⏱️':'icon-cronometro.png','💡':'icon-lampada.png','👋':'icon-aceno.png',
+    '🤔':'icon-pensativo.png','✅':'icon-check.png','🎉':'icon-confete.png','📝':'icon-bloco-notas.png'
+  };
+  const EMOJI_REGEX = /🛒|↩️|😊|📰|📄|🎯|💚|🏢|🆓|💬|📱|📞|📊|⏱️|💡|👋|🤔|✅|🎉|📝/g;
+  function emojiParaImg(str) {
+    return String(str).replace(EMOJI_REGEX, function(e) {
+      return '<img src="imagensbot/' + EMOJI_ICONS[e] + '" alt="" class="chat-icon">';
+    });
+  }
+
+function markdownParaHTML(texto) {
       function processarInline(str) {
         return str
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
           .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#2563eb;text-decoration:underline;">$1</a>');
       }
-      const linhas=texto.split('\n'); const blocos=[]; let lista=[];
-      function fechar(){ if(lista.length){blocos.push('<ul>'+lista.map(i=>`<li>${i}</li>`).join('')+'</ul>');lista=[];} }
-      for(let l of linhas){ l=l.trim(); if(/^[-\*] (.+)/.test(l)){lista.push(processarInline(l.replace(/^[-\*] /,'')));continue;} fechar(); if(!l)continue; blocos.push(`<p>${processarInline(l)}</p>`); } fechar(); return blocos.join('');
+      const linhas=texto.split('\n'); const blocos=[]; let lista=[]; let tipoLista=null;
+      function fechar(){ if(lista.length){const tag=tipoLista==='ol'?'ol':'ul';blocos.push(`<${tag}>`+lista.map(i=>`<li>${i}</li>`).join('')+`</${tag}>`);lista=[];tipoLista=null;} }
+      for(let l of linhas){ l=l.trim(); if(/^[-\*] (.+)/.test(l)){ if(tipoLista==='ol')fechar(); tipoLista='ul'; lista.push(processarInline(l.replace(/^[-\*] /,'')));continue;} const mOl=l.match(/^\d+[\.\)]\s+(.+)/); if(mOl){ if(tipoLista==='ul')fechar(); tipoLista='ol'; lista.push(processarInline(mOl[1])); continue; } fechar(); if(!l)continue; blocos.push(`<p>${processarInline(l)}</p>`); } fechar(); return emojiParaImg(blocos.join(''));
     }
     function escapeHtml(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
