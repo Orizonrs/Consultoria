@@ -7381,5 +7381,63 @@ body.dark-mode .scroll-top-btn:hover {
   };
 })();
 </script>
+<style id="acc-estilo-sobre">
+/* ===== Estilo dos accordions (igual ao sobre.html): hover, ícone, entrada em cascata, itens da lista ===== */
+.accordion-wrap .accordion-item{
+  transition: opacity .6s ease, filter .6s ease, transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .4s ease, border-color .25s ease, background .5s ease !important;
+  will-change: transform;
+}
+/* Hover: o accordion sobe e brilha */
+.accordion-wrap .accordion-item:hover{ transform: translateY(-3px); box-shadow: 0 8px 24px rgba(37,99,235,.14); }
+body.dark-mode .accordion-wrap .accordion-item:hover{ box-shadow: 0 8px 24px rgba(0,200,255,.14); }
+.accordion-wrap .accordion-item.open:hover{ transform: translateY(-1px); }
+/* Ícone do título: gira e aumenta no hover / quando aberto */
+.accordion-btn span:first-child{ display:inline-flex; align-items:center; }
+.accordion-btn span:first-child img, .accordion-btn span:first-child svg{ transition: transform .4s cubic-bezier(.34,1.56,.64,1); }
+.accordion-btn:hover span:first-child img, .accordion-btn:hover span:first-child svg{ transform: scale(1.12) rotate(-6deg); }
+.accordion-item.open .accordion-btn span:first-child img, .accordion-item.open .accordion-btn span:first-child svg{ transform: scale(1.15) rotate(8deg); }
+/* Entrada em cascata com blur (só ativa se o JS abaixo rodar) */
+.accordion-wrap.acc-cascade-ready .accordion-item:not(.acc-in){ opacity:0; filter:blur(6px); transform: translateY(26px) scale(.96); }
+/* Itens da lista entram um a um ao abrir */
+.accordion-wrap .accordion-item .accordion-inner li{
+  opacity:0; transform: translateX(-8px);
+  transition: opacity .4s ease, transform .4s ease;
+}
+.accordion-wrap .accordion-item.open .accordion-inner li{ opacity:1; transform: translateX(0); }
+.accordion-wrap .accordion-item.open .accordion-inner li:nth-child(1){ transition-delay:.10s; }
+.accordion-wrap .accordion-item.open .accordion-inner li:nth-child(2){ transition-delay:.16s; }
+.accordion-wrap .accordion-item.open .accordion-inner li:nth-child(3){ transition-delay:.22s; }
+.accordion-wrap .accordion-item.open .accordion-inner li:nth-child(4){ transition-delay:.28s; }
+.accordion-wrap .accordion-item.open .accordion-inner li:nth-child(5){ transition-delay:.34s; }
+@media (prefers-reduced-motion: reduce){
+  .accordion-wrap .accordion-item, .accordion-wrap .accordion-item:hover, .accordion-btn span:first-child img,
+  .accordion-btn span:first-child svg, .accordion-wrap .accordion-inner li{ transition:none !important; transform:none !important; }
+  .accordion-wrap.acc-cascade-ready .accordion-item:not(.acc-in){ opacity:1; filter:none; }
+}
+</style>
+<script>
+(function(){
+  /* Liga a cascata só agora (JS ativo) e garante que nada fique escondido se algo falhar */
+  var wraps = document.querySelectorAll('.accordion-wrap');
+  wraps.forEach(function(w){ w.classList.add('acc-cascade-ready'); });
+  setTimeout(function(){
+    document.querySelectorAll('.accordion-wrap .accordion-item').forEach(function(i){ i.classList.add('acc-in'); });
+  }, 4000);
+})();
+</script>
+<style id="acc-sem-container">
+/* Texto dentro dos accordions SEM container: remove o fundo, a borda lateral e o padding do .highlight-box */
+.accordion-wrap .accordion-inner .highlight-box,
+body.dark-mode .accordion-wrap .accordion-inner .highlight-box,
+body:not(.dark-mode) .accordion-wrap .accordion-inner .highlight-box{
+  background: none !important;
+  border: none !important;
+  border-left: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: .25rem 0 0 !important;
+}
+</style>
 </body>
 </html>
