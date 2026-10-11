@@ -508,9 +508,9 @@ html,body{width:100%;height:100%;background:#050810;color:#00e5ff;font-family:'S
   <div class="sep"></div>
 
   <div class="btns">
-    <a href="site/index.html" class="btn btn-p">Acessar o Site <span class="arr"></span></a>
-    <a href="blog/index.html" class="btn btn-s">Blog Comunidade<span class="arr"></span></a>
-    <a href="https://orizonrs.com/ficha/index.html" class="btn btn-s">Abertura de Serviço <span class="arr"></span></a>
+    <a href="site/index.html" class="btn btn-p" data-clique="site">Acessar o Site <span class="arr"></span></a>
+    <a href="blog/index.html" class="btn btn-s" data-clique="blog">Blog Comunidade<span class="arr"></span></a>
+    <a href="https://orizonrs.com/ficha/index.html" class="btn btn-s" data-clique="ficha">Abertura de Serviço <span class="arr"></span></a>
 
   </div>
 
@@ -653,6 +653,35 @@ setInterval(()=>{
     },70);
   }
 },3000);
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script>
+// ===== CONTADOR DA PÁGINA DE ENTRADA (Firebase da Orizon) =====
+// Grava em caminhos separados: não mistura com o stats/visits do site.
+(function(){
+  try{
+    firebase.initializeApp({
+      apiKey:"AIzaSyDA_s5wRqWHHF5MZSYcONRbGGBxW5o-XY8",
+      authDomain:"contador-de-visitas-d6f70.firebaseapp.com",
+      databaseURL:"https://contador-de-visitas-d6f70-default-rtdb.firebaseio.com",
+      projectId:"contador-de-visitas-d6f70",
+      storageBucket:"contador-de-visitas-d6f70.firebasestorage.app",
+      messagingSenderId:"505164647916",
+      appId:"1:505164647916:web:c2cf128fd396afc31604c9"
+    });
+    const db=firebase.database();
+    const somar=c=>db.ref(c).transaction(v=>(v||0)+1);
+    // 1 visita por sessão (F5 não infla)
+    try{
+      if(!sessionStorage.getItem("entrada")){ sessionStorage.setItem("entrada","1"); somar("stats/entrada/visitas").catch(()=>{}); }
+    }catch(e){ somar("stats/entrada/visitas").catch(()=>{}); }
+    // cliques nos botões: site, blog, ficha
+    document.querySelectorAll("[data-clique]").forEach(a=>
+      a.addEventListener("click",()=>somar("stats/entrada/cliques/"+a.dataset.clique).catch(()=>{}))
+    );
+  }catch(e){ console.warn("[contador] indisponível",e); }
+})();
 </script>
 </body>
 </html>
