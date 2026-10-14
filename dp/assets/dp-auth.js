@@ -1,65 +1,44 @@
-/* ════════════════════════════════════════════
-   dp-auth.js — Orizon Consultoria · Auth Guard
-   Supabase Auth — proteção de rota para todas
-   as páginas do sistema DP.
+/* ═══════════════════════════════════════
+   dp-auth.js — Orizon Consultoria · Auth Guard (v2)
+   Protege as páginas do DP usando a MESMA sessão que o login.html grava
+   (localStorage 'orizon_dp_session_v1', validade 8 h). Sem SDK, sem projeto
+   Supabase aqui e sem caminho fixo: o login é sempre procurado na MESMA
+   pasta da página atual (funciona em /dp/, /Consultoria/dp/ ou qualquer outra).
+   ═══════════════════════════════════════ */
+(function () {
+  'use strict';
+  var SESSION_KEY = 'orizon_dp_session_v1';
+  var VALIDADE_MS = 8 * 60 * 60 * 1000;
 
-   ➜ Substitua SUPABASE_URL e SUPABASE_ANON_KEY
-     pelos valores do seu projeto Supabase.
-     Veja: supabase.com → seu projeto → Settings → API
-   ════════════════════════════════════════════ */
-
-// ── 1. CONFIGURAÇÃO — preencha após criar o projeto Supabase ──
-const SUPABASE_URL      = 'https://yunoxkembhskpnprffoi.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1bm94a2VtYmhza3BucHJmZm9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5Nzg2MzksImV4cCI6MjA5NDU1NDYzOX0.WhkzrBCHThvJaMuLeo6oVPjrWvc_MvfCoyz9B90-Yms';
-
-// ── 2. Carrega o SDK do Supabase via CDN ──
-(function loadSupabaseSDK() {
-  const s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-  s.onload = () => window.__supabaseReady && window.__supabaseReady();
-  document.head.appendChild(s);
-})();
-
-// ── 3. Auth Guard — bloqueia página se não autenticado ──
-window.__supabaseReady = async function () {
-  const { createClient } = window.supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window._sb = sb; // expõe para uso global (logout, etc.)
-
-  const { data: { session } } = await sb.auth.getSession();
-
-  if (!session) {
-    // Sem sessão → redireciona para login, preservando a página de origem
-    const origem = encodeURIComponent(window.location.pathname + window.location.search);
-    const base   = '/Consultoria/dp/';
-    window.location.replace(`${base}login.html?next=${origem}`);
-    return;
+  function lerSessao() {
+    try {
+      var s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (s && s.ts && s.access_token && (Date.now() - s.ts) < VALIDADE_MS) return s;
+    } catch (e) {}
+    return null;
   }
 
-  // Sessão válida → preenche info do usuário no topbar (se existir)
-  const user = session.user;
-  const nomeEl = document.getElementById('user-nome');
-  const emailEl = document.getElementById('user-email');
-  if (nomeEl)  nomeEl.textContent  = user.user_metadata?.nome || user.email.split('@')[0];
-  if (emailEl) emailEl.textContent = user.email;
+  function irParaLogin() {
+    var arq = window.location.pathname.split('/').pop() || 'index.html';
+    var volta = encodeURIComponent(arq + window.location.search);
+    window.location.replace('login.html?next=' + volta);
+  }
 
-  // Expõe função de logout globalmente
-  window.dpLogout = async () => {
-    await sb.auth.signOut();
-    window.location.replace(_dpAuthBase() + 'login.html');
+  var sessao = lerSessao();
+  if (!sessao) { irParaLogin(); return; }
+
+  window.dpSessao = sessao;
+  window.dpLogout = function () {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+    window.location.replace('login.html');
   };
-};
 
-// Detecta base path (para funcionar em subpastas como /dp/)
-function _dpAuthBase() {
-  const path = window.location.pathname;
-  const idx  = path.lastIndexOf('/');
-  return idx >= 0 ? path.slice(0, idx + 1) : '/';
-}
-
-// ── 4. Fallback: se o SDK demorar muito (CDN lento), mostra aviso ──
-setTimeout(() => {
-  if (!window._sb) {
-    console.warn('[dp-auth] SDK do Supabase não carregou. Verifique sua conexão.');
+  function preencher() {
+    var n = document.getElementById('user-nome');
+    var e = document.getElementById('user-email');
+    if (n) n.textContent = sessao.nome || (sessao.email || '').split('@')[0];
+    if (e) e.textContent = sessao.email || '';
   }
-}, 8000);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', preencher);
+  else preencher();
+})();
