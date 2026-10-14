@@ -298,6 +298,11 @@ body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50
 const SUPABASE_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
 const SESSION_KEY  = 'orizon_dp_session_v1';
+// destino após o login: só uma página .html da MESMA pasta (aceita links antigos como /dp/index.html)
+function destinoPosLogin(next){
+  const m=String(next||'').match(/([\w-]+\.html)(\?[^#]*)?$/i);
+  return (m&&!/^(login|reset-senha)\.html$/i.test(m[1]))?m[1]+(m[2]||''):'index.html';
+}
 
 const ROLES_MAP = {
   'adm@orizon.com.br':              { nome:'Admin',     role:'admin' },
@@ -443,7 +448,7 @@ async function loginTentar(){
 
     const params = new URLSearchParams(window.location.search);
     const next   = params.get('next');
-    window.location.href = (next&&!next.includes('login'))?next:'index.html';
+    window.location.href = destinoPosLogin(next);
 
   }catch(e){
     err.textContent='❌ Erro de conexão. Tente novamente.';
@@ -458,7 +463,7 @@ window.addEventListener('load',()=>{
     if(s&&s.ts&&(Date.now()-s.ts)<8*60*60*1000){
       const params=new URLSearchParams(window.location.search);
       const next=params.get('next');
-      window.location.href=(next&&!next.includes('login'))?next:'index.html';
+      window.location.href=destinoPosLogin(next);
     }
   }catch(e){}
 });
