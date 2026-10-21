@@ -1741,6 +1741,10 @@ html[data-theme="light"] .sidebar .sb-sec-label{color:#000000 !important;}
 #loginScreen .lf-sub{font-size:0.84rem;}
 #loginScreen .f-label{font-size:0.7rem;}
 #loginScreen .f-input{font-size:0.92rem;}
+.foto-row{display:flex;gap:0.4rem;align-items:center;margin-top:0.3rem;}
+.foto-btn{flex:1;font-family:inherit;font-size:0.68rem;font-weight:700;padding:0.45rem 0.6rem;border-radius:8px;cursor:pointer;border:1px solid rgba(59,130,246,0.35);background:rgba(59,130,246,0.1);color:var(--accent);}
+.foto-btn:hover{background:rgba(59,130,246,0.2);}
+.foto-btn-rm{flex:0 0 auto;border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.08);color:#e74c3c;}
 </style>
 </head>
 <body>
@@ -2192,6 +2196,14 @@ html[data-theme="light"] .sidebar .sb-sec-label{color:#000000 !important;}
             <button class="add-profile-btn" onclick="adicionarPerfil()" title="Adicionar">＋</button>
           </div>
 
+          <!-- Seção: foto de perfil -->
+          <span class="edit-name-section-lbl" style="margin-top:0.55rem;">Foto de perfil</span>
+          <div class="foto-row">
+            <button type="button" class="foto-btn" onclick="event.stopPropagation();document.getElementById('fotoPerfilInput').click()">📷 Escolher foto</button>
+            <button type="button" class="foto-btn foto-btn-rm" id="fotoPerfilRm" onclick="event.stopPropagation();removerFotoPerfil()" style="display:none;">Remover</button>
+            <input type="file" id="fotoPerfilInput" accept="image/*" style="display:none;" onchange="escolherFotoPerfil(this)"/>
+          </div>
+
           <!-- Seção: logo -->
           <span class="edit-name-section-lbl" style="margin-top:0.55rem;">Logo do painel</span>
           <div class="logo-picker" id="logoPicker">
@@ -2265,16 +2277,6 @@ html[data-theme="light"] .sidebar .sb-sec-label{color:#000000 !important;}
         <div class="sb-stat orange">Pipeline <strong id="stPipeline">—</strong></div>
         <div class="sb-divider-v"></div>
         <div class="sb-stat blue">Hoje <strong id="stHoje">—</strong></div>
-        <div class="sb-divider-v"></div>
-        <div class="sb-stat" style="margin-left:auto;margin-right:0.5rem;">
-          <div id="clockDisplay" style="display:inline-flex;align-items:center;gap:0.55rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:0.28rem 0.72rem;font-variant-numeric:tabular-nums;">
-            <span id="clockIco" style="font-size:0.72rem;opacity:0.7;">🕐</span>
-            <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
-              <span id="clockTime" style="font-size:0.72rem;font-weight:900;color:var(--accent);letter-spacing:0.5px;"></span>
-              <span id="clockDate" style="font-size:0.54rem;font-weight:600;color:var(--muted);letter-spacing:0.3px;"></span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- IFRAME AREA -->
@@ -2966,6 +2968,7 @@ function iniciarApp(){
   document.getElementById('userName').textContent = _sessao.nome;
   document.getElementById('tbName').textContent   = _sessao.nome.split(' ')[0];
   document.getElementById('userRole').textContent = _sessao.role==='admin' ? 'Administrador' : 'Recrutador';
+  aplicarFotoPerfil();
   // aplica restrições de acesso conforme role
   _verificarRoleAdmin();
   // restaura nome personalizado salvo
@@ -2975,8 +2978,6 @@ function iniciarApp(){
   // sinc welcome stats após kpis carregarem
   setTimeout(_sincronizarWelcomeStats, 2500);
   // relógio
-  atualizarRelogio();
-  setInterval(atualizarRelogio, 1000);
   // polling de notificações (60s)
   setTimeout(pollingNotif, 3000);
   setInterval(pollingNotif, 60000);
@@ -3734,6 +3735,56 @@ function _aplicarNome(nome){
   if(_sessao){ _sessao.nome = nome; try{ localStorage.setItem(SESSION_KEY, JSON.stringify(_sessao)); }catch(e){} }
 }
 
+// ── FOTO DE PERFIL (fica salva neste navegador, por usuário) ──
+function _fotoChave(){
+  return 'orizon_foto_perfil_v1' + (_sessao && _sessao.email ? '_' + String(_sessao.email).toLowerCase() : '');
+}
+function aplicarFotoPerfil(){
+  let src = null;
+  try{ src = localStorage.getItem(_fotoChave()); }catch(e){}
+  ['userAva','tbAva','mob-ava'].forEach(function(id){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(src){
+      el.style.backgroundImage = 'url("' + src + '")';
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.color = 'transparent';
+    } else {
+      el.style.backgroundImage = '';
+      el.style.backgroundSize = '';
+      el.style.backgroundPosition = '';
+      el.style.color = '';
+    }
+  });
+  const rm = document.getElementById('fotoPerfilRm');
+  if(rm) rm.style.display = src ? '' : 'none';
+}
+function escolherFotoPerfil(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if(!f || !/^image\//.test(f.type)) return;
+  const fr = new FileReader();
+  fr.onload = function(){
+    const img = new Image();
+    img.onload = function(){
+      // recorta o quadrado central e reduz para 160x160 (leve para guardar)
+      const t = 160, lado = Math.min(img.width, img.height);
+      const c = document.createElement('canvas'); c.width = t; c.height = t;
+      c.getContext('2d').drawImage(img, (img.width-lado)/2, (img.height-lado)/2, lado, lado, 0, 0, t, t);
+      try{ localStorage.setItem(_fotoChave(), c.toDataURL('image/jpeg', 0.85)); }
+      catch(e){ if(typeof mostrarToast==='function') mostrarToast('Não foi possível salvar a foto.', true); return; }
+      aplicarFotoPerfil();
+    };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(f);
+}
+function removerFotoPerfil(){
+  try{ localStorage.removeItem(_fotoChave()); }catch(e){}
+  aplicarFotoPerfil();
+}
+
 function toggleEditName(e){
   e.stopPropagation();
   const popup = document.getElementById('editNamePopup');
@@ -4370,7 +4421,7 @@ function _temaNoFrame(){
   const t = temaAtual();
   try{
     const doc = frame.contentDocument;
-    if(doc && doc.documentElement) doc.documentElement.setAttribute('data-theme', t);
+    if(doc && doc.documentElement && doc.documentElement.getAttribute('data-theme') !== t) doc.documentElement.setAttribute('data-theme', t);
   }catch(e){}
   try{ frame.contentWindow && frame.contentWindow.postMessage({orizonTema: t}, '*'); }catch(e){}
 }
