@@ -43,6 +43,10 @@
 ═════════════════════════════════════════════════════════════ -->
 <link rel="icon" type="image/png" href="../imagens/icone.png"/>
 <meta name="theme-color" content="#1d4ed8"/>
+<script>
+/* Tema claro/escuro — aplicado antes da pintura para evitar "flash" */
+(function(){try{var t=localStorage.getItem('orizon_tema');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
 
 <!-- ════════════════════════════════════════════════════════════
      ACESSIBILIDADE — título descritivo para leitores de tela
@@ -269,13 +273,13 @@ body:not(.app-ativo) #mob-overlay{
 .sb-nav::-webkit-scrollbar-thumb{background:var(--muted2);border-radius:99px;}
 
 .sb-sec-label{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;
-  color:#ffffff;text-transform:uppercase;padding:0.75rem 0.7rem 0.25rem;margin-top:0.3rem;white-space:nowrap;overflow:hidden;}
+  color:rgba(255,255,255,0.9);padding:0.75rem 0.7rem 0.25rem;margin-top:0.3rem;white-space:nowrap;overflow:hidden;}
 .sb-sec-ico{font-size:1.05rem;vertical-align:middle;line-height:1;font-style:normal;text-transform:none;letter-spacing:0;}
 .sidebar.collapsed .sb-sec-label{opacity:0;height:0;padding:0;margin:0;}
 
 .sb-item{display:flex;align-items:center;gap:0.55rem;padding:0.55rem 0.7rem;
   border-radius:10px;cursor:pointer;transition:all 0.14s;
-  border:1px solid transparent;font-size:0.78rem;font-weight:600;color:#ffffff;
+  border:1px solid transparent;font-size:0.78rem;font-weight:600;color:var(--muted);
   white-space:nowrap;overflow:hidden;text-decoration:none;position:relative;}
 .sb-item:hover{background:rgba(59,130,246,0.07);color:var(--text);border-color:var(--border);}
 .sb-item.active{background:rgba(59,130,246,0.12);color:var(--accent);border-color:var(--border2);font-weight:700;}
@@ -786,7 +790,7 @@ body:not(.app-ativo) #mob-overlay{
 #mob-sidebar .mob-sec{
   font-size:0.48rem;font-weight:700;
   text-transform:uppercase;letter-spacing:2px;
-  color:#ffffff;opacity:1;
+  color:#3b82f6;opacity:0.6;
   padding:0.7rem 0.5rem 0.2rem;
   margin-top:0.3rem;
 }
@@ -797,7 +801,7 @@ body:not(.app-ativo) #mob-overlay{
   padding:0.72rem 0.75rem;
   border-radius:10px;cursor:pointer;
   border:1px solid transparent;
-  font-size:0.84rem;font-weight:600;color:#ffffff;
+  font-size:0.84rem;font-weight:600;color:#ccc;
   min-height:46px;
   transition:background 0.12s,color 0.12s;
   touch-action:manipulation;
@@ -1626,6 +1630,38 @@ button:focus-visible,
   color: #00c8ff;
   text-shadow: none;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MODO CLARO / ESCURO
+   O painel é escuro por padrão. No modo claro, a página inteira
+   (inclusive o iframe dos módulos) é invertida com um filtro,
+   e imagens/vídeos recebem o filtro inverso para manter as cores.
+═══════════════════════════════════════════════════════════ */
+html[data-theme="light"]{filter:invert(1) hue-rotate(180deg);}
+html[data-theme="light"] img,
+html[data-theme="light"] video,
+html[data-theme="light"] picture{filter:invert(1) hue-rotate(180deg);}
+/* listas nativas de <select> não sofrem o filtro: forçamos cores claras */
+html[data-theme="light"] option{background:#ffffff!important;color:#111111!important;}
+
+/* botão de tema */
+.theme-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.theme-toggle .ico-moon{display:none;}
+html[data-theme="light"] .theme-toggle .ico-sun{display:none;}
+html[data-theme="light"] .theme-toggle .ico-moon{display:block;}
+.theme-toggle-login{position:absolute;top:1rem;right:1rem;z-index:5;}
+
+/* posição do botão de tema: ao lado da logo; no topbar só quando a sidebar está recolhida */
+.sb-head{position:relative;}
+.theme-toggle-side{position:absolute;top:0.5rem;right:0.55rem;width:26px;height:26px;border-radius:8px;}
+.theme-toggle-side svg{width:14px;height:14px;}
+.theme-toggle-top{display:none;}
+.sidebar.collapsed .theme-toggle-side{display:none;}
+body:has(.sidebar.collapsed) .theme-toggle-top{display:flex;}
+@media(max-width:900px){
+  .sidebar .theme-toggle-side{display:none;}
+  .theme-toggle-top{display:flex;}
+}
 </style>
   <!-- Favicon -->
   <link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png" />
@@ -1652,11 +1688,16 @@ button:focus-visible,
 
 <!-- ══════════════ LOGIN SCREEN ══════════════ -->
 <div id="loginScreen" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+  <button type="button" class="tb-btn theme-toggle theme-toggle-login" onclick="alternarTema()" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro"><svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
   <div class="login-wrap">
 
     <!-- LADO ESQUERDO: Branding -->
     <div class="login-brand" aria-hidden="true">
       <div>
+        <div class="lb-logo-text">
+          <div class="olh-eyebrow" style="font-size:8px;">// SISTEMA DE GESTÃO //</div>
+          <div class="olh-title" style="font-size:2.2rem;-webkit-text-stroke:1.6px #ffffff;">ORIZON</div>
+        </div>
         <div class="lb-title"><span>Orizon</span><br/>ATS</div>
         <div class="lb-sub">Painel de recrutamento de alto desempenho para a Agência Orizon.</div>
         <div class="lb-features">
@@ -1760,6 +1801,7 @@ button:focus-visible,
           <div class="sb-logo-name"><span>Orizon</span></div>
           <div class="sb-logo-sub">ATS Recruiter</div>
         </div>
+        <button type="button" class="tb-btn theme-toggle theme-toggle-side" onclick="alternarTema()" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro"><svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
       </div>
 
       <nav class="sb-nav" id="sbNav">
@@ -2141,6 +2183,7 @@ button:focus-visible,
             onkeydown="onSearch(event)"/>
         </div>
         <div class="topbar-right">
+          <button class="tb-btn theme-toggle theme-toggle-top" onclick="alternarTema()" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro"><svg class="ico-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="ico-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
           <button class="tb-btn" onclick="abrirModulo(document.querySelector('[data-mod=notificacoes]'))" title="Notificações" aria-label="Notificações">
             🔔<span class="notif-dot" id="notifDot" style="display:none;"></span>
           </button>
@@ -2167,6 +2210,16 @@ button:focus-visible,
         <div class="sb-stat orange">Pipeline <strong id="stPipeline">—</strong></div>
         <div class="sb-divider-v"></div>
         <div class="sb-stat blue">Hoje <strong id="stHoje">—</strong></div>
+        <div class="sb-divider-v"></div>
+        <div class="sb-stat" style="margin-left:auto;margin-right:0.5rem;">
+          <div id="clockDisplay" style="display:inline-flex;align-items:center;gap:0.55rem;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.18);border-radius:10px;padding:0.28rem 0.72rem;font-variant-numeric:tabular-nums;">
+            <span id="clockIco" style="font-size:0.72rem;opacity:0.7;">🕐</span>
+            <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15;">
+              <span id="clockTime" style="font-size:0.72rem;font-weight:900;color:var(--accent);letter-spacing:0.5px;"></span>
+              <span id="clockDate" style="font-size:0.54rem;font-weight:600;color:var(--muted);letter-spacing:0.3px;"></span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- IFRAME AREA -->
@@ -3017,6 +3070,7 @@ p{font-size:0.88rem;color:#666;line-height:1.7;margin-bottom:1.5rem;}
 </div>
 </body></html>`);
       doc.close();
+      _temaNoFrame();
     }catch(e){}
   }, 50);
 }
@@ -4242,6 +4296,56 @@ function _verificarRoleAdmin(){
     </div>
   </div>
 </div>
+
+<script>
+// ══════════════════════════════════════════
+// MODO CLARO / ESCURO — todas as telas (painel + módulos no iframe)
+// ══════════════════════════════════════════
+const TEMA_KEY = 'orizon_tema';
+const _TEMA_CSS = `
+html[data-orizon-tema="light"] img,
+html[data-orizon-tema="light"] video,
+html[data-orizon-tema="light"] picture{filter:invert(1) hue-rotate(180deg);}
+html[data-orizon-tema="light"] option{background:#ffffff!important;color:#111111!important;}`;
+
+function temaAtual(){
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+// Propaga o tema ao módulo aberto no iframe (mesma origem). O filtro de inversão
+// já vem do painel; aqui só protegemos imagens/vídeos e a lista de <select>.
+function _temaNoFrame(){
+  const frame = document.getElementById('moduleFrame');
+  if(!frame) return;
+  try{
+    const doc = frame.contentDocument;
+    if(!doc || !doc.documentElement) return;
+    if(!doc.getElementById('orizon-tema-css')){
+      const st = doc.createElement('style');
+      st.id = 'orizon-tema-css';
+      st.textContent = _TEMA_CSS;
+      (doc.head || doc.documentElement).appendChild(st);
+    }
+    doc.documentElement.setAttribute('data-orizon-tema', temaAtual());
+  }catch(e){}
+}
+function aplicarTema(t, salvar){
+  document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+  if(salvar){ try{ localStorage.setItem(TEMA_KEY, t); }catch(e){} }
+  _temaNoFrame();
+}
+function alternarTema(){
+  aplicarTema(temaAtual() === 'light' ? 'dark' : 'light', true);
+}
+// reaplica a cada módulo carregado (inclusive navegação interna do iframe)
+(function(){
+  const f = document.getElementById('moduleFrame');
+  if(f) f.addEventListener('load', _temaNoFrame);
+})();
+// sincroniza se o tema mudar em outra aba
+window.addEventListener('storage', e => {
+  if(e.key === TEMA_KEY && (e.newValue === 'light' || e.newValue === 'dark')) aplicarTema(e.newValue, false);
+});
+</script>
 </body>
 </html>
 
