@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script id="orizon-tema-boot">(function(){var K="orizon_tema";function ap(t){document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}try{var t=localStorage.getItem(K);if(t==="light"||t==="dark")ap(t);}catch(e){}window.addEventListener("storage",function(e){if(e.key===K&&(e.newValue==="light"||e.newValue==="dark"))ap(e.newValue);});window.addEventListener("message",function(e){var d=e.data;if(d&&d.orizonTema)ap(d.orizonTema);});})();window.OZC=function(n,f){try{var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||f;}catch(e){return f;}};(function(){var T=null;function P(c){var m=c&&c.match(/rgba?\(([^)]+)\)/);if(!m)return null;var a=m[1].split(',').map(parseFloat);return{r:a[0],g:a[1],b:a[2],a:a.length>3?a[3]:1};}
+function L(c){function f(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b);}
+function R(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+function BG(el){var ly=[],e=el;while(e&&e.nodeType===1){var cs=getComputedStyle(e);if(/gradient/.test(cs.backgroundImage))return null;var c=P(cs.backgroundColor);if(c&&c.a>0){ly.push(c);if(c.a>=.98)break;}e=e.parentElement;}
+var b={r:255,g:255,b:255};for(var i=ly.length-1;i>=0;i--){var l=ly[i];b={r:l.r*l.a+b.r*(1-l.a),g:l.g*l.a+b.g*(1-l.a),b:l.b*l.a+b.b*(1-l.a)};}return b;}
+function DK(c,bg){var r=c.r/255,g=c.g/255,b=c.b/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2,d=mx-mn;
+if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;}
+function hu(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}
+var o=c;for(var i=0;i<16;i++){l=Math.max(0,l-.035);var q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;o=s?{r:hu(p,q,h+1/3)*255,g:hu(p,q,h)*255,b:hu(p,q,h-1/3)*255}:{r:l*255,g:l*255,b:l*255};if(R(o,bg)>=4.5)break;}return o;}
+function restore(){var n=document.querySelectorAll('[data-oz-orig]');for(var i=0;i<n.length;i++){var el=n[i],v=el.getAttribute('data-oz-orig').split('|');if(v[0])el.style.setProperty('color',v[0],v[1]||'');else el.style.removeProperty('color');el.removeAttribute('data-oz-orig');}}
+function run(){T=null;var de=document.documentElement;if(de.getAttribute('data-theme')!=='light'){restore();return;}
+if(!document.body)return;var els=document.body.getElementsByTagName('*');
+for(var i=0;i<els.length;i++){var el=els[i],tg=el.tagName;if(tg==='SCRIPT'||tg==='STYLE'||tg==='OPTION'||tg==='CANVAS'||tg==='SVG'||el.hasAttribute('data-oz-orig'))continue;
+var has=false;for(var k=el.firstChild;k;k=k.nextSibling){if(k.nodeType===3&&k.nodeValue.trim().length>0){has=true;break;}}if(!has)continue;
+var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;var fg=P(cs.color);if(!fg||fg.a<.5)continue;var bg=BG(el);if(!bg||L(bg)<.45)continue;
+if(R(fg,bg)>=3.6)continue;var nc=DK(fg,bg);el.setAttribute('data-oz-orig',el.style.getPropertyValue('color')+'|'+el.style.getPropertyPriority('color'));
+el.style.setProperty('color','rgb('+Math.round(nc.r)+','+Math.round(nc.g)+','+Math.round(nc.b)+')','important');}}
+function sch(){if(T)return;T=setTimeout(run,160);}
+function init(){run();try{new MutationObserver(sch).observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+try{new MutationObserver(function(){run();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',sch);})();</script>
+
 <script src="../guard.js"></script>
 <script src="../supabase-config.js"></script>
   <meta charset="UTF-8"/>
@@ -83,12 +105,12 @@ body {
     .logo-area img{width:40px;height:40px;object-fit:contain;border-radius:50%;}
     .logo-area span{font-size:0.82rem;color:var(--muted);}
     .top-title{text-align:center;}
-    .top-title h1{font-size:1.6rem;font-weight:800;color:#ffffff;letter-spacing:0.2px;}
+    .top-title h1{font-size:1.6rem;font-weight:800;color:var(--k-t-ffffff,#ffffff);letter-spacing:0.2px;}
     .top-title h1 span{background:linear-gradient(135deg,var(--accent),#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;}
     .top-title p{font-size:0.78rem;color:var(--muted);margin-top:0.15rem;}
     .top-bar-actions{display:flex;justify-content:flex-end;gap:0.6rem;flex-wrap:wrap;}
-    .btn-back{background:rgba(255,255,255,0.07);color:#ffffff;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:0.5rem 1rem;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;transition:all 0.2s;}
-    .btn-back:hover{background:rgba(255,255,255,0.12);color:#ffffff;}
+    .btn-back{background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));color:var(--k-t-ffffff,#ffffff);border:1px solid var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));border-radius:10px;padding:0.5rem 1rem;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.4rem;transition:all 0.2s;}
+    .btn-back:hover{background:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));color:var(--k-t-ffffff,#ffffff);}
     @media(max-width:640px){.top-bar{grid-template-columns:1fr;text-align:center;}.top-bar-actions{justify-content:center;}}
 
     /* ── CANDIDATO HEADER ── */
@@ -113,8 +135,8 @@ body {
     @media(max-width:600px){.grid-2,.grid-3{grid-template-columns:1fr;}}
 
     /* ── CAMPOS ── */
-    .field-label{font-size:0.68rem;font-weight:800;color:#ffffff;text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:0.35rem;}
-    .field-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;}
+    .field-label{font-size:0.68rem;font-weight:800;color:var(--k-t-ffffff,#ffffff);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:0.35rem;}
+    .field-input{width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.6rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;}
     .field-input:focus{border-color:var(--accent);}
     .field-input::placeholder{color:var(--muted2);}
     .field-textarea{resize:vertical;line-height:1.65;min-height:100px;}
@@ -123,7 +145,7 @@ body {
 
     /* ── OBSERVAÇÕES RÁPIDAS ── */
     .obs-list{display:flex;flex-direction:column;gap:0.5rem;}
-    .obs-item{display:flex;align-items:center;gap:0.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.5rem 0.8rem;}
+    .obs-item{display:flex;align-items:center;gap:0.6rem;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:10px;padding:0.5rem 0.8rem;}
     .obs-item input[type="checkbox"]{accent-color:var(--accent);width:15px;height:15px;cursor:pointer;flex-shrink:0;}
     .obs-item span{font-size:0.82rem;color:var(--muted);flex:1;}
     .obs-item input[type="text"]{flex:1;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:0.82rem;outline:none;}
@@ -133,42 +155,42 @@ body {
     .rating-row{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.6rem;}
     .rating-label{font-size:0.8rem;color:var(--text);flex:1;}
     .stars{display:flex;gap:0.25rem;}
-    .star{width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
+    .star{width:22px;height:22px;border-radius:6px;border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
     .star:hover,.star.on{background:rgba(59,130,246,0.2);border-color:var(--accent);color:var(--accent);}
 
     /* ── RESULTADO / DECISÃO ── */
     .decisao-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;}
-    .decisao-btn{border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.8rem 0.5rem;background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;transition:all 0.2s;font-family:inherit;}
-    .decisao-btn:hover{background:rgba(255,255,255,0.08);}
-    .decisao-btn.selected-aprovado{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#2ecc71;}
-    .decisao-btn.selected-reserva{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.4);color:#f39c12;}
-    .decisao-btn.selected-reprovado{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:#e74c3c;}
-    .decisao-btn.selected-contratar{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:#2ecc71;}
-    .decisao-btn.selected-entrevista{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:#3b82f6;}
-    .decisao-btn.selected-ressalvas{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.5);color:#f39c12;}
-    .decisao-btn.selected-banco{background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.5);color:#3498db;}
-    .decisao-btn.selected-nao{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:#e74c3c;}
-    .decisao-btn.selected-comprovada{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:#2ecc71;}
-    .decisao-btn.selected-parcial{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.5);color:#f39c12;}
-    .decisao-btn.selected-correlata{background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.5);color:#3498db;}
+    .decisao-btn{border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:12px;padding:0.8rem 0.5rem;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));cursor:pointer;text-align:center;transition:all 0.2s;font-family:inherit;}
+    .decisao-btn:hover{background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));}
+    .decisao-btn.selected-aprovado{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:var(--k-c-2ecc71,#2ecc71);}
+    .decisao-btn.selected-reserva{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.4);color:var(--k-c-f39c12,#f39c12);}
+    .decisao-btn.selected-reprovado{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:var(--k-c-e74c3c,#e74c3c);}
+    .decisao-btn.selected-contratar{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:var(--k-c-2ecc71,#2ecc71);}
+    .decisao-btn.selected-entrevista{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:var(--k-c-3b82f6,#3b82f6);}
+    .decisao-btn.selected-ressalvas{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.5);color:var(--k-c-f39c12,#f39c12);}
+    .decisao-btn.selected-banco{background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.5);color:var(--k-c-3498db,#3498db);}
+    .decisao-btn.selected-nao{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:var(--k-c-e74c3c,#e74c3c);}
+    .decisao-btn.selected-comprovada{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:var(--k-c-2ecc71,#2ecc71);}
+    .decisao-btn.selected-parcial{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.5);color:var(--k-c-f39c12,#f39c12);}
+    .decisao-btn.selected-correlata{background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.5);color:var(--k-c-3498db,#3498db);}
     .decisao-btn.selected-estagio{background:rgba(155,89,182,0.15);border-color:rgba(155,89,182,0.5);color:#9b59b6;}
-    .decisao-btn.selected-pj{background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.5);color:#2563eb;}
-    .decisao-btn.selected-autonomo{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:#3b82f6;}
+    .decisao-btn.selected-pj{background:rgba(26,188,156,0.15);border-color:rgba(26,188,156,0.5);color:var(--k-c-2563eb,#2563eb);}
+    .decisao-btn.selected-autonomo{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.5);color:var(--k-c-3b82f6,#3b82f6);}
     .decisao-btn.selected-indireto{background:rgba(149,165,166,0.15);border-color:rgba(149,165,166,0.5);color:#95a5a6;}
-    .decisao-btn.selected-sem{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:#e74c3c;}
+    .decisao-btn.selected-sem{background:rgba(231,76,60,0.15);border-color:rgba(231,76,60,0.4);color:var(--k-c-e74c3c,#e74c3c);}
     .decisao-icon{font-size:1.4rem;display:block;margin-bottom:0.3rem;}
-    .decisao-label{font-size:0.78rem;font-weight:700;color:#ffffff;}
+    .decisao-label{font-size:0.78rem;font-weight:700;color:var(--k-t-ffffff,#ffffff);}
 
-    .field-select{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;}
+    .field-select{width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.6rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;transition:border-color 0.2s;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.85rem center;}
     .field-select:focus{border-color:var(--accent);}
-    .field-select option{background:#1a1a1a;color:var(--text);}
-    .formacao-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1rem 1rem 0.8rem;}
+    .field-select option{background:var(--k-bg-1a1a1a,#1a1a1a);color:var(--text);}
+    .formacao-card{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:14px;padding:1rem 1rem 0.8rem;}
     .status-btns{display:flex;gap:0.4rem;}
-    .status-btn{flex:1;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.4rem 0.3rem;background:rgba(255,255,255,0.04);cursor:pointer;text-align:center;font-family:inherit;font-size:0.72rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
-    .status-btn:hover{background:rgba(255,255,255,0.08);}
-    .status-btn.on-concluido{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#2ecc71;}
-    .status-btn.on-andamento{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.4);color:#f39c12;}
-    .status-btn.on-incompleto{background:rgba(231,76,60,0.12);border-color:rgba(231,76,60,0.3);color:#e74c3c;}
+    .status-btn{flex:1;border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:8px;padding:0.4rem 0.3rem;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));cursor:pointer;text-align:center;font-family:inherit;font-size:0.72rem;font-weight:700;color:var(--muted);transition:all 0.15s;}
+    .status-btn:hover{background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));}
+    .status-btn.on-concluido{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:var(--k-c-2ecc71,#2ecc71);}
+    .status-btn.on-andamento{background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.4);color:var(--k-c-f39c12,#f39c12);}
+    .status-btn.on-incompleto{background:rgba(231,76,60,0.12);border-color:rgba(231,76,60,0.3);color:var(--k-c-e74c3c,#e74c3c);}
     .action-bar{display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:1.5rem;}
     .btn-pdf{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:14px;padding:1rem 1.8rem;font-family:inherit;font-size:0.95rem;font-weight:800;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;gap:0.5rem;}
     .btn-pdf:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(59,130,246,0.25);}
@@ -182,14 +204,14 @@ body {
     .field-wrap{position:relative;}
     .conf-toggle{display:inline-flex;align-items:center;gap:0.35rem;margin-bottom:0.35rem;cursor:pointer;user-select:none;}
     .conf-toggle input[type="checkbox"]{display:none;}
-    .conf-box{width:14px;height:14px;border-radius:4px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;}
+    .conf-box{width:14px;height:14px;border-radius:4px;border:1px solid var(--k-w-180,var(--k-w-180,rgba(255,255,255,0.18)));background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;}
     .conf-toggle input:checked ~ .conf-box{background:rgba(231,76,60,0.25);border-color:rgba(231,76,60,0.6);}
     .conf-toggle input:checked ~ .conf-box::after{content:'🔒';font-size:8px;line-height:1;}
-    .conf-label-text{font-size:0.6rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#ffffff;transition:color 0.18s;}
-    .conf-toggle:has(input:checked) .conf-label-text{color:#e74c3c;}
+    .conf-label-text{font-size:0.6rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--k-t-ffffff,#ffffff);transition:color 0.18s;}
+    .conf-toggle:has(input:checked) .conf-label-text{color:var(--k-c-e74c3c,#e74c3c);}
     .field-input.is-confidential{color:transparent!important;text-shadow:0 0 8px rgba(231,76,60,0.6);background:rgba(231,76,60,0.07)!important;border-color:rgba(231,76,60,0.4)!important;caret-color:var(--text);letter-spacing:2px;}
     .field-input.is-confidential::placeholder{color:transparent;}
-    .conf-badge{display:none;position:absolute;right:0.7rem;top:50%;transform:translateY(-50%);font-size:0.62rem;font-weight:800;color:#e74c3c;background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:6px;padding:1px 7px;pointer-events:none;letter-spacing:0.5px;}
+    .conf-badge{display:none;position:absolute;right:0.7rem;top:50%;transform:translateY(-50%);font-size:0.62rem;font-weight:800;color:var(--k-c-e74c3c,#e74c3c);background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:6px;padding:1px 7px;pointer-events:none;letter-spacing:0.5px;}
     .field-wrap.has-pretensao .conf-badge{right:0.7rem;}
     .is-confidential ~ .conf-badge,.field-input.is-confidential + .conf-badge{display:block;}
 
@@ -198,6 +220,16 @@ body {
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
     .toast.erro{background:#e74c3c;}
   </style>
+<style id="orizon-light-css">/* MODO CLARO — paleta própria (sem filtro de inversão) */
+html[data-theme="light"],html[data-orizon-tema="light"]{color-scheme:light;--C:#0369a1;--D:#dc2626;--I:#c2410c;--S:#15803d;--accent:#2563eb;--accent2:#4d7c0f;--aprovado:#2563eb;--bg:#f1f5f9;--bg2:#f8fafc;--blue:#0369a1;--border:rgba(15,23,42,0.10);--border-a:rgba(37,99,235,0.30);--border2:rgba(15,23,42,0.16);--border3:rgba(15,23,42,0.24);--card:#ffffff;--card2:#f8fafc;--card3:#f1f5f9;--cyan:#0e7490;--entrevista:#c2410c;--finalista:#15803d;--green:#15803d;--green-d:#dbeafe;--green-glow:rgba(37,99,235,0.12);--k-b-000000:#e2e8f0;--k-b-090909:#e2e8f0;--k-b-222222:#e2e8f0;--k-b-2a2a2a:#cbd5e1;--k-b-333333:#cbd5e1;--k-b-444444:#cbd5e1;--k-b-555555:#94a3b8;--k-b-666666:#94a3b8;--k-b-888888:#94a3b8;--k-b-999999:#94a3b8;--k-b-bbbbbb:#94a3b8;--k-b-cccccc:#94a3b8;--k-b-dddddd:#94a3b8;--k-b-e0e0e0:#94a3b8;--k-b-ebebeb:#94a3b8;--k-b-eeeeee:#94a3b8;--k-b-f0f0f0:#94a3b8;--k-b-f2f2f2:#94a3b8;--k-b-ffffff:#94a3b8;--k-bg-000000:#f1f5f9;--k-bg-080808:#f1f5f9;--k-bg-080810:#f1f5f9;--k-bg-090909:#f1f5f9;--k-bg-0a0a0a:#f1f5f9;--k-bg-0b0b14:#ffffff;--k-bg-0e0e0e:#ffffff;--k-bg-0e0e14:#ffffff;--k-bg-0e0e18:#ffffff;--k-bg-0e0f11:#ffffff;--k-bg-0f0f0f:#ffffff;--k-bg-111111:#ffffff;--k-bg-111317:#ffffff;--k-bg-12161e:#f8fafc;--k-bg-131313:#ffffff;--k-bg-141414:#ffffff;--k-bg-141518:#ffffff;--k-bg-151515:#ffffff;--k-bg-161616:#f8fafc;--k-bg-161618:#f8fafc;--k-bg-161622:#f8fafc;--k-bg-1a1a1a:#f8fafc;--k-bg-1a1b1f:#f8fafc;--k-bg-1e1e1e:#f1f5f9;--k-bg-222222:#f1f5f9;--k-bg-r0g0b0a85:rgba(241,245,249,0.85);--k-bg-r0g0b0a88:rgba(241,245,249,0.88);--k-bg-r0g0b0a92:rgba(241,245,249,0.92);--k-bg-r0g0b0a94:rgba(241,245,249,0.94);--k-bg-r0g0b0a95:rgba(241,245,249,0.95);--k-bg-r0g0b0a96:rgba(241,245,249,0.96);--k-bg-r10g10b10a97:rgba(241,245,249,0.97);--k-bg-r10g10b10a99:rgba(241,245,249,0.99);--k-bg-r12g20b5a100:rgba(255,255,255,1.0);--k-bg-r13g13b13a97:rgba(255,255,255,0.97);--k-bg-r6g6b8a92:rgba(241,245,249,0.92);--k-bg-r7g7b9a97:rgba(241,245,249,0.97);--k-bg-r8g12b3a100:rgba(241,245,249,1.0);--k-bg-r8g14b3a100:rgba(241,245,249,1.0);--k-bg-r9g9b9a95:rgba(241,245,249,0.95);--k-bg-r9g9b9a97:rgba(241,245,249,0.97);--k-c-1e3a5f:#1d4ed8;--k-c-2563eb:#1d4ed8;--k-c-25d366:#128c7e;--k-c-2ecc71:#15803d;--k-c-3498db:#0369a1;--k-c-3b82f6:#2563eb;--k-c-4fa8e8:#0369a1;--k-c-4fc87a:#15803d;--k-c-60a5fa:#2563eb;--k-c-8b5cf6:#6d28d9;--k-c-93c5fd:#1d4ed8;--k-c-a78bfa:#7c3aed;--k-c-c0392b:#b91c1c;--k-c-c4b5fd:#6d28d9;--k-c-e05252:#dc2626;--k-c-e74c3c:#dc2626;--k-c-e8943a:#c2410c;--k-c-f1c40f:#a16207;--k-c-f39c12:#b45309;--k-c-f59e0b:#b45309;--k-c-f5c518:#a16207;--k-c-f97316:#c2410c;--k-c-fbbf24:#b45309;--k-ov-07:rgba(15,23,42,0.043);--k-ov-12:rgba(15,23,42,0.074);--k-ov-18:rgba(15,23,42,0.112);--k-ov-20:rgba(15,23,42,0.124);--k-ov-25:rgba(15,23,42,0.155);--k-ov-30:rgba(15,23,42,0.186);--k-ov-35:rgba(15,23,42,0.217);--k-ov-40:rgba(15,23,42,0.248);--k-ov-60:rgba(15,23,42,0.372);--k-ov-65:rgba(15,23,42,0.403);--k-ov-70:rgba(15,23,42,0.434);--k-ov-72:rgba(15,23,42,0.446);--k-ov-75:rgba(15,23,42,0.465);--k-ov-78:rgba(15,23,42,0.484);--k-ov-80:rgba(15,23,42,0.496);--k-ov-82:rgba(15,23,42,0.508);--k-ov-85:rgba(15,23,42,0.527);--k-ov-88:rgba(15,23,42,0.546);--k-ov-92:rgba(15,23,42,0.57);--k-ov-94:rgba(15,23,42,0.583);--k-ov-95:rgba(15,23,42,0.589);--k-ov-96:rgba(15,23,42,0.595);--k-sh-10:rgba(15,23,42,0.028);--k-sh-25:rgba(15,23,42,0.07);--k-sh-30:rgba(15,23,42,0.084);--k-sh-35:rgba(15,23,42,0.098);--k-sh-40:rgba(15,23,42,0.112);--k-sh-45:rgba(15,23,42,0.126);--k-sh-50:rgba(15,23,42,0.14);--k-sh-60:rgba(15,23,42,0.168);--k-sh-70:rgba(15,23,42,0.196);--k-sh-80:rgba(15,23,42,0.224);--k-sh-90:rgba(15,23,42,0.252);--k-t-777777:#475569;--k-t-888888:#475569;--k-t-999999:#475569;--k-t-aaaaaa:#1e293b;--k-t-b0b0b0:#1e293b;--k-t-bbbbbb:#1e293b;--k-t-c0c0c0:#1e293b;--k-t-cccccc:#1e293b;--k-t-d0d0d0:#0f172a;--k-t-dddddd:#0f172a;--k-t-e0e0e0:#0f172a;--k-t-e0e0ea:#0f172a;--k-t-e8e8f0:#0f172a;--k-t-eeeef0:#0f172a;--k-t-f0f0f0:#0f172a;--k-t-f0f0f4:#0f172a;--k-t-ffffff:#0f172a;--k-w-010:rgba(15,23,42,0.013);--k-w-012:rgba(15,23,42,0.015);--k-w-015:rgba(15,23,42,0.019);--k-w-020:rgba(15,23,42,0.025);--k-w-025:rgba(15,23,42,0.031);--k-w-030:rgba(15,23,42,0.037);--k-w-035:rgba(15,23,42,0.044);--k-w-040:rgba(15,23,42,0.05);--k-w-045:rgba(15,23,42,0.056);--k-w-050:rgba(15,23,42,0.062);--k-w-055:rgba(15,23,42,0.069);--k-w-060:rgba(15,23,42,0.075);--k-w-065:rgba(15,23,42,0.081);--k-w-070:rgba(15,23,42,0.088);--k-w-080:rgba(15,23,42,0.1);--k-w-090:rgba(15,23,42,0.112);--k-w-100:rgba(15,23,42,0.125);--k-w-110:rgba(15,23,42,0.138);--k-w-120:rgba(15,23,42,0.15);--k-w-130:rgba(15,23,42,0.163);--k-w-140:rgba(15,23,42,0.175);--k-w-150:rgba(15,23,42,0.188);--k-w-160:rgba(15,23,42,0.2);--k-w-180:rgba(15,23,42,0.225);--k-w-200:rgba(15,23,42,0.25);--k-w-250:rgba(15,23,42,0.312);--k-w-300:rgba(15,23,42,0.375);--k-w-350:rgba(15,23,42,0.438);--k-w-380:rgba(15,23,42,0.475);--k-w-400:rgba(15,23,42,0.5);--k-w-450:rgba(15,23,42,0.562);--k-w-600:rgba(15,23,42,0.75);--k-w-650:rgba(15,23,42,0.812);--k-w-750:rgba(15,23,42,0.938);--k-w-800:rgba(15,23,42,1.0);--k-w-850:rgba(15,23,42,1.0);--k-w-900:rgba(15,23,42,1.0);--muted:#64748b;--muted2:#7b8ba1;--orange:#c2410c;--pre:#7c3aed;--primary:#1e40af;--purple:#7c3aed;--recusado:#dc2626;--recusado-cli:#b91c1c;--red:#dc2626;--sub:#64748b;--surface:#ffffff;--surface2:#f8fafc;--surface3:#eef2f7;--teal:#0f766e;--text:#0f172a;--text-2:#334155;--text-3:#64748b;--text2:#334155;--triagem:#0369a1;--yellow:#a16207}
+
+html[data-theme="light"] body,html[data-orizon-tema="light"] body{background:var(--bg);color:var(--text);}
+html[data-theme="light"] ::placeholder{color:#94a3b8!important;opacity:1;}
+html[data-theme="light"] option,html[data-orizon-tema="light"] option{background:#ffffff;color:#0f172a;}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#cbd5e1;}
+html[data-theme="light"] ::-webkit-scrollbar-track{background:transparent;}
+html[data-theme="light"] input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #fff inset;-webkit-text-fill-color:#0f172a;}
+</style>
 </head>
 <body>
 
@@ -574,16 +606,16 @@ body {
   <div class="action-bar" style="align-items:center;">
     <div style="display:flex;flex-direction:column;gap:0.2rem;">
       <label for="dataEmissao" style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;">Data de emissão</label>
-      <input type="date" id="dataEmissao" style="background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:0.55rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;color-scheme:dark;"/>
+      <input type="date" id="dataEmissao" style="background:var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:0.55rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.85rem;outline:none;cursor:pointer;color-scheme:dark;"/>
     </div>
     <button class="btn-pdf" onclick="gerarPDFCompleto()">🖨️ Gerar PDF (4 páginas)</button>
-    <button class="btn-save" onclick="diagnosticoConf()" style="background:rgba(255,200,0,0.12);color:#f1c40f;border-color:rgba(241,196,15,0.4);">🔍 Testar Confidencial</button>
+    <button class="btn-save" onclick="diagnosticoConf()" style="background:rgba(255,200,0,0.12);color:var(--k-c-f1c40f,#f1c40f);border-color:rgba(241,196,15,0.4);">🔍 Testar Confidencial</button>
     <button class="btn-unif" onclick="abrirPDFUnificado()">📄 PDF Unificado (Parecer + DISC)</button>
     <button class="btn-save" onclick="salvarParecer()">💾 Salvar Parecer</button>
-    <button class="btn-save" onclick="carregarDados()" style="background:rgba(52,152,219,0.12);color:#3498db;border-color:rgba(52,152,219,0.4);" title="Busca novamente no Supabase e preenche o formulário">🔄 Recarregar do Banco</button>
-    <button class="btn-save" onclick="novoParecerVersao()" style="background:rgba(59,130,246,0.08);color:#2ecc71;border-color:rgba(59,130,246,0.25);" title="Cria um novo registro no banco para outra empresa/vaga">➕ Nova Versão</button>
-    <button class="btn-save" onclick="abrirHistorico()" style="background:rgba(167,139,250,0.1);color:#a78bfa;border-color:rgba(167,139,250,0.3);">📂 Histórico</button>
-    <button class="btn-save" onclick="abrirParecerFinal()" style="background:rgba(255,215,0,0.1);color:#f1c40f;border-color:rgba(241,196,15,0.4);font-weight:800;">⭐ Parecer Final</button>
+    <button class="btn-save" onclick="carregarDados()" style="background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.4);" title="Busca novamente no Supabase e preenche o formulário">🔄 Recarregar do Banco</button>
+    <button class="btn-save" onclick="novoParecerVersao()" style="background:rgba(59,130,246,0.08);color:var(--k-c-2ecc71,#2ecc71);border-color:rgba(59,130,246,0.25);" title="Cria um novo registro no banco para outra empresa/vaga">➕ Nova Versão</button>
+    <button class="btn-save" onclick="abrirHistorico()" style="background:rgba(167,139,250,0.1);color:var(--k-c-a78bfa,#a78bfa);border-color:rgba(167,139,250,0.3);">📂 Histórico</button>
+    <button class="btn-save" onclick="abrirParecerFinal()" style="background:rgba(255,215,0,0.1);color:var(--k-c-f1c40f,#f1c40f);border-color:rgba(241,196,15,0.4);font-weight:800;">⭐ Parecer Final</button>
     <button class="btn-save" onclick="abrirConfigSupabase()" style="background:rgba(255,100,0,0.1);color:#ff6b35;border-color:rgba(255,107,53,0.35);font-size:0.75rem;" title="Configurar chave do Supabase">⚙️ Config Supabase</button>
     <span class="save-status" id="saveStatus"></span>
   </div>
@@ -596,14 +628,14 @@ body {
   </script>
 
 <!-- MODAL PARECER FINAL -->
-<div id="modalParecerFinal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:#161616;border:1px solid rgba(241,196,15,0.35);border-radius:22px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;position:relative;">
-    <button onclick="fecharParecerFinal()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#777;font-size:1rem;">✕</button>
-    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#f1c40f;margin-bottom:0.3rem;">Resultado</div>
-    <div style="font-size:1.1rem;font-weight:900;color:#f0f0f0;margin-bottom:1.4rem;">⭐ Parecer Final do Candidato</div>
+<div id="modalParecerFinal" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--k-ov-92,var(--k-bg-r0g0b0a92,rgba(0,0,0,0.92)));backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--k-bg-161616,#161616);border:1px solid rgba(241,196,15,0.35);border-radius:22px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;position:relative;">
+    <button onclick="fecharParecerFinal()" style="position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--k-t-777777,#777);font-size:1rem;">✕</button>
+    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--k-c-f1c40f,#f1c40f);margin-bottom:0.3rem;">Resultado</div>
+    <div style="font-size:1.1rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);margin-bottom:1.4rem;">⭐ Parecer Final do Candidato</div>
 
     <!-- Nome e Vaga -->
-    <div id="pfNomeVaga" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:0.9rem 1.1rem;margin-bottom:1rem;"></div>
+    <div id="pfNomeVaga" style="background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:12px;padding:0.9rem 1.1rem;margin-bottom:1rem;"></div>
 
     <!-- Decisão -->
     <div id="pfDecisao" style="border-radius:12px;padding:1rem 1.2rem;margin-bottom:0.8rem;border:2px solid;"></div>
@@ -620,16 +652,16 @@ body {
     <!-- Observações marcadas -->
     <div id="pfObs" style="display:none;margin-bottom:0.8rem;"></div>
 
-    <button onclick="fecharParecerFinal()" style="width:100%;background:rgba(241,196,15,0.12);color:#f1c40f;border:1px solid rgba(241,196,15,0.35);border-radius:12px;padding:0.8rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;margin-top:0.4rem;transition:all 0.2s;" onmouseover="this.style.background='rgba(241,196,15,0.22)'" onmouseout="this.style.background='rgba(241,196,15,0.12)'">Fechar</button>
+    <button onclick="fecharParecerFinal()" style="width:100%;background:rgba(241,196,15,0.12);color:var(--k-c-f1c40f,#f1c40f);border:1px solid rgba(241,196,15,0.35);border-radius:12px;padding:0.8rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;margin-top:0.4rem;transition:all 0.2s;" onmouseover="this.style.background='rgba(241,196,15,0.22)'" onmouseout="this.style.background='rgba(241,196,15,0.12)'">Fechar</button>
   </div>
 </div>
 
 <!-- MODAL HISTÓRICO -->
-<div id="modalHistorico" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:#161616;border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:1.6rem;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative;">
-    <button onclick="fecharHistorico()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;color:#777;font-size:0.9rem;">✕</button>
-    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:0.3rem;">Pareceres Salvos</div>
-    <div style="font-size:1rem;font-weight:900;color:#f0f0f0;margin-bottom:0.3rem;">📂 Histórico de versões</div>
+<div id="modalHistorico" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--k-ov-88,var(--k-bg-r0g0b0a88,rgba(0,0,0,0.88)));backdrop-filter:blur(10px);align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--k-bg-161616,#161616);border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:1.6rem;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;position:relative;">
+    <button onclick="fecharHistorico()" style="position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--k-t-777777,#777);font-size:0.9rem;">✕</button>
+    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--k-c-a78bfa,#a78bfa);margin-bottom:0.3rem;">Pareceres Salvos</div>
+    <div style="font-size:1rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);margin-bottom:0.3rem;">📂 Histórico de versões</div>
     <div style="font-size:0.75rem;color:#666;margin-bottom:1.2rem;">Clique em uma versão para carregar os dados. Você pode gerar um novo PDF com outra data.</div>
     <div id="historicoLista" style="display:flex;flex-direction:column;gap:0.5rem;">
       <p style="text-align:center;padding:2rem;color:#555;font-size:0.78rem;">⏳ Carregando…</p>
@@ -642,33 +674,33 @@ body {
 <div class="toast" id="toast"></div>
 
 <!-- MODAL CONFIG SUPABASE -->
-<div id="modalConfigSb" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:1rem;">
-  <div style="background:#161616;border:1px solid rgba(255,107,53,0.4);border-radius:22px;padding:2rem;width:100%;max-width:560px;position:relative;">
-    <button onclick="fecharConfigSupabase()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#777;font-size:1rem;">✕</button>
+<div id="modalConfigSb" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--k-ov-92,var(--k-bg-r0g0b0a92,rgba(0,0,0,0.92)));backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:1rem;">
+  <div style="background:var(--k-bg-161616,#161616);border:1px solid rgba(255,107,53,0.4);border-radius:22px;padding:2rem;width:100%;max-width:560px;position:relative;">
+    <button onclick="fecharConfigSupabase()" style="position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--k-t-777777,#777);font-size:1rem;">✕</button>
     <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ff6b35;margin-bottom:0.3rem;">Configuração</div>
-    <div style="font-size:1.1rem;font-weight:900;color:#f0f0f0;margin-bottom:1.2rem;">⚙️ Conexão Supabase</div>
+    <div style="font-size:1.1rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);margin-bottom:1.2rem;">⚙️ Conexão Supabase</div>
 
     <div id="sbDiagResult" style="margin-bottom:1.2rem;"></div>
 
     <div style="margin-bottom:1rem;">
-      <label style="font-size:0.68rem;font-weight:700;color:#777;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:0.4rem;">Anon Key atual (primeiros 30 chars)</label>
-      <div id="sbKeyPreview" style="font-size:0.75rem;color:#555;font-family:monospace;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:0.5rem 0.8rem;"></div>
+      <label style="font-size:0.68rem;font-weight:700;color:var(--k-t-777777,#777);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:0.4rem;">Anon Key atual (primeiros 30 chars)</label>
+      <div id="sbKeyPreview" style="font-size:0.75rem;color:#555;font-family:monospace;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:8px;padding:0.5rem 0.8rem;"></div>
     </div>
 
     <div style="margin-bottom:1.2rem;">
       <label style="font-size:0.68rem;font-weight:700;color:#ff6b35;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:0.4rem;">Nova Anon Key (cole aqui)</label>
-      <textarea id="sbNewKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,107,53,0.4);border-radius:10px;padding:0.6rem 0.85rem;color:#f0f0f0;font-family:monospace;font-size:0.78rem;outline:none;resize:vertical;min-height:80px;"></textarea>
-      <div style="font-size:0.7rem;color:#555;margin-top:0.3rem;">A anon key fica em Supabase → Settings → API → "anon public". Começa sempre com <code style="color:#3b82f6;">eyJ</code></div>
+      <textarea id="sbNewKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." style="width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid rgba(255,107,53,0.4);border-radius:10px;padding:0.6rem 0.85rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:monospace;font-size:0.78rem;outline:none;resize:vertical;min-height:80px;"></textarea>
+      <div style="font-size:0.7rem;color:#555;margin-top:0.3rem;">A anon key fica em Supabase → Settings → API → "anon public". Começa sempre com <code style="color:var(--k-c-3b82f6,#3b82f6);">eyJ</code></div>
     </div>
 
     <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
       <button onclick="salvarNovaKey()" style="flex:1;background:rgba(255,107,53,0.15);color:#ff6b35;border:1px solid rgba(255,107,53,0.4);border-radius:12px;padding:0.75rem;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">💾 Salvar Chave</button>
-      <button onclick="testarConexao()" style="flex:1;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.75rem;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">🔍 Testar Conexão</button>
+      <button onclick="testarConexao()" style="flex:1;background:rgba(59,130,246,0.1);color:var(--k-c-3b82f6,#3b82f6);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.75rem;font-family:inherit;font-size:0.85rem;font-weight:700;cursor:pointer;">🔍 Testar Conexão</button>
     </div>
 
-    <div style="margin-top:1.2rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;">
-      <div style="font-size:0.65rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-bottom:0.6rem;">📋 SQL — Criar tabela pareceres_historico</div>
-      <pre id="sqlCreate" style="font-size:0.68rem;color:#aaa;line-height:1.7;white-space:pre-wrap;margin:0;font-family:monospace;">create table if not exists pareceres_historico (
+    <div style="margin-top:1.2rem;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:12px;padding:1rem;">
+      <div style="font-size:0.65rem;font-weight:700;color:var(--k-c-3b82f6,#3b82f6);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.6rem;">📋 SQL — Criar tabela pareceres_historico</div>
+      <pre id="sqlCreate" style="font-size:0.68rem;color:var(--k-t-aaaaaa,#aaa);line-height:1.7;white-space:pre-wrap;margin:0;font-family:monospace;">create table if not exists pareceres_historico (
   id bigint generated always as identity primary key,
   cand_id text,
   nome text,
@@ -683,7 +715,7 @@ body {
 -- Habilitar RLS e permitir acesso anon:
 alter table pareceres_historico enable row level security;
 create policy "anon_all" on pareceres_historico for all to anon using (true) with check (true);</pre>
-      <button onclick="copiarSQL()" style="margin-top:0.6rem;background:rgba(59,130,246,0.08);color:#3b82f6;border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0.35rem 0.9rem;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;">📋 Copiar SQL</button>
+      <button onclick="copiarSQL()" style="margin-top:0.6rem;background:rgba(59,130,246,0.08);color:var(--k-c-3b82f6,#3b82f6);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0.35rem 0.9rem;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;">📋 Copiar SQL</button>
     </div>
   </div>
 </div>
@@ -766,7 +798,7 @@ function addFormacao(data){
   card.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.7rem;">
       <span style="font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;">Formação ${id}</span>
-      <button type="button" onclick="document.getElementById('formacao-card-${id}').remove()" style="background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:7px;color:#e74c3c;font-size:0.8rem;font-weight:700;padding:0.2rem 0.6rem;cursor:pointer;">× Remover</button>
+      <button type="button" onclick="document.getElementById('formacao-card-${id}').remove()" style="background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:7px;color:var(--k-c-e74c3c,#e74c3c);font-size:0.8rem;font-weight:700;padding:0.2rem 0.6rem;cursor:pointer;">× Remover</button>
     </div>
     <div style="margin-bottom:0.5rem;">
       <label class="field-label">Nível de escolaridade</label>
@@ -1304,12 +1336,12 @@ async function abrirHistorico(){
       const txt = await res.text();
       if(res.status === 404 || txt.includes('does not exist')){
         lista.innerHTML = `
-          <div style="text-align:center;padding:1.5rem;font-size:0.78rem;color:#f39c12;line-height:1.8;">
+          <div style="text-align:center;padding:1.5rem;font-size:0.78rem;color:var(--k-c-f39c12,#f39c12);line-height:1.8;">
             ⚠️ A tabela <code>pareceres_historico</code> ainda não existe no Supabase.<br/>
             <span style="color:#666;">Execute o SQL de criação no painel do Supabase e salve um parecer.</span>
           </div>`;
       } else {
-        lista.innerHTML = `<p style="text-align:center;padding:2rem;color:#e74c3c;font-size:0.78rem;">❌ Erro ${res.status}: ${txt}</p>`;
+        lista.innerHTML = `<p style="text-align:center;padding:2rem;color:var(--k-c-e74c3c,#e74c3c);font-size:0.78rem;">❌ Erro ${res.status}: ${txt}</p>`;
       }
       return;
     }
@@ -1331,15 +1363,15 @@ async function abrirHistorico(){
       const dCor    = decisao==='aprovado'?'#2ecc71': decisao==='reprovado'?'#e74c3c': decisao==='reserva'?'#f39c12':'#555';
       const ativo   = r.id === _parecerSbId;
       return `
-      <div style="background:${ativo?'rgba(59,130,246,0.07)':'rgba(255,255,255,0.03)'};
-                  border:1px solid ${ativo?'rgba(59,130,246,0.4)':'rgba(255,255,255,0.08)'};
+      <div style="background:${ativo?'rgba(59,130,246,0.07)':'var(--k-w-030,rgba(255,255,255,0.03))'};
+                  border:1px solid ${ativo?'rgba(59,130,246,0.4)':'var(--k-w-080,rgba(255,255,255,0.08))'};
                   border-radius:12px;padding:0.85rem 1rem;cursor:pointer;transition:all 0.15s;margin-bottom:0.1rem;"
            onmouseover="this.style.borderColor='rgba(167,139,250,0.4)'"
-           onmouseout="this.style.borderColor='${ativo?'rgba(59,130,246,0.4)':'rgba(255,255,255,0.08)'}'"
+           onmouseout="this.style.borderColor='${ativo?'rgba(59,130,246,0.4)':'var(--k-w-080,rgba(255,255,255,0.08))'}'"
            onclick="carregarVersao(${r.id})">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
           <div style="min-width:0;">
-            <div style="font-size:0.85rem;font-weight:800;color:#f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div style="font-size:0.85rem;font-weight:800;color:var(--k-t-f0f0f0,#f0f0f0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               ${ativo?'▶ ':''}${r.nome||'—'}
             </div>
             <div style="font-size:0.68rem;color:#666;margin-top:0.15rem;">
@@ -1355,7 +1387,7 @@ async function abrirHistorico(){
     }).join('');
 
   } catch(e){
-    lista.innerHTML = `<p style="text-align:center;padding:2rem;color:#e74c3c;font-size:0.78rem;">❌ Erro: ${e.message}</p>`;
+    lista.innerHTML = `<p style="text-align:center;padding:2rem;color:var(--k-c-e74c3c,#e74c3c);font-size:0.78rem;">❌ Erro: ${e.message}</p>`;
     console.error('abrirHistorico erro:', e);
   }
 }
@@ -1756,17 +1788,17 @@ async function gerarPDFCompleto(){
   <div><div style="font-size:16px;font-weight:900;letter-spacing:1.2px;">${titulo}</div></div>
   <div style="text-align:right;font-size:9px;opacity:.7;line-height:1.7;"><div>${dataHoje}</div><div>Recrutamento e Seleção</div></div>
 </div>
-<div style="background:${corH};padding:5px 22px;color:#fff;font-size:9px;">${esc(vagaCandAtual).toUpperCase()} · ${esc(nomeCandAtual).toUpperCase()}</div>`;
+<div style="background:${corH};padding:5px 22px;color:var(--k-t-ffffff,#fff);font-size:9px;">${esc(vagaCandAtual).toUpperCase()} · ${esc(nomeCandAtual).toUpperCase()}</div>`;
 
     const fl = (label, val) => {
       const isConf = typeof val === 'string' && (val.toLowerCase().includes('confidencial') || val.includes('🔒'));
       const displayVal = isConf
-        ? '<span style="color:#c0392b;font-weight:800;font-size:10px;background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:1px 6px;letter-spacing:0.5px;">🔒 CONFIDENCIAL</span>'
-        : (esc(val)||'<span style="color:#888;font-weight:500;">—</span>');
+        ? '<span style="color:var(--k-c-c0392b,#c0392b);font-weight:800;font-size:10px;background:#fdf0f0;border:1px solid #e74c3c;border-radius:4px;padding:1px 6px;letter-spacing:0.5px;">🔒 CONFIDENCIAL</span>'
+        : (esc(val)||'<span style="color:var(--k-t-888888,#888);font-weight:500;">—</span>');
       return `
 <div style="flex:1;min-width:0;">
   <span style="font-size:10px;color:#444;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;font-weight:700;">${label}</span>
-  <div style="font-size:13px;color:#111;font-weight:600;border-bottom:1px solid #ddd;padding-bottom:3px;min-height:17px;word-break:break-word;">${displayVal}</div>
+  <div style="font-size:13px;color:#111;font-weight:600;border-bottom:1px solid var(--k-b-dddddd,#ddd);padding-bottom:3px;min-height:17px;word-break:break-word;">${displayVal}</div>
 </div>`;
     };
 
@@ -1837,7 +1869,7 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
 }
 .capa-nome-ag{
   font-size:10px;font-weight:800;letter-spacing:3px;text-transform:uppercase;
-  color:rgba(255,255,255,0.75);margin-bottom:2px;
+  color:var(--k-w-750,rgba(255,255,255,0.75));margin-bottom:2px;
 }
 .capa-titulo{
   font-size:26px;font-weight:900;color:#fff;
@@ -1845,7 +1877,7 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
 }
 .capa-titulo span{color:#3b82f6;}
 .capa-sub{
-  font-size:7px;color:rgba(255,255,255,0.6);
+  font-size:7px;color:var(--k-w-600,rgba(255,255,255,0.6));
   letter-spacing:2px;text-transform:uppercase;margin-top:8px;
 }
 .capa-div{
@@ -1871,7 +1903,7 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
 }
 .capa-meta-item{display:flex;flex-direction:column;gap:2px;}
 .capa-meta-k{
-  font-size:6px;color:rgba(255,255,255,0.6);
+  font-size:6px;color:var(--k-w-600,rgba(255,255,255,0.6));
   text-transform:uppercase;letter-spacing:1px;font-weight:700;
 }
 .capa-meta-v{
@@ -1882,7 +1914,7 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
   background:rgba(59,130,246,0.15);
   border:1px solid rgba(59,130,246,0.45);
   border-radius:3px;padding:3px 9px;
-  font-size:7px;color:rgba(255,255,255,0.85);
+  font-size:7px;color:var(--k-w-850,rgba(255,255,255,0.85));
   font-weight:700;letter-spacing:.7px;text-transform:uppercase;
 }
 .capa-chip b{color:#60a5fa;margin-right:3px;}
@@ -1894,15 +1926,15 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
   border-left:1px solid rgba(59,130,246,0.3);
 }
 .capa-stamp-date{
-  font-size:7px;color:rgba(255,255,255,0.75);
+  font-size:7px;color:var(--k-w-750,rgba(255,255,255,0.75));
   letter-spacing:.8px;text-transform:uppercase;
   text-align:right;line-height:1.9;
 }
 .capa-stamp-conf{
   margin-top:10px;
-  font-size:6px;color:rgba(255,255,255,0.65);
+  font-size:6px;color:var(--k-w-650,rgba(255,255,255,0.65));
   letter-spacing:1.5px;text-transform:uppercase;
-  border:1px solid rgba(255,255,255,0.4);
+  border:1px solid var(--k-w-400,rgba(255,255,255,0.4));
   padding:2px 7px;border-radius:2px;text-align:center;
 }
 
@@ -1933,18 +1965,18 @@ p{text-align:justify;word-wrap:break-word;overflow-wrap:break-word;}
 
     const toolbar = `
 <div class="nopr" style="background:#1e3a5f;padding:8px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:99;width:100%;">
-  <span style="color:#fff;font-size:13px;font-weight:700;">Parecer — ${esc(nomeCandAtual)}</span>
+  <span style="color:var(--k-t-ffffff,#fff);font-size:13px;font-weight:700;">Parecer — ${esc(nomeCandAtual)}</span>
   <button onclick="window.print()" style="margin-left:auto;background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;">💾 Salvar como PDF</button>
-  <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕</button>
+  <button onclick="window.close()" style="background:var(--k-w-150,var(--k-w-150,rgba(255,255,255,0.15)));color:var(--k-t-ffffff,#fff);border:1px solid var(--k-w-300,var(--k-w-300,rgba(255,255,255,0.3)));border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕</button>
 </div>`;
 
     const statusLabel = {concluido:'✅ Concluído', andamento:'⏳ Em andamento', incompleto:'❌ Incompleto'};
     const fmtList = (arr, dual) => arr && arr.length
       ? arr.map(item => dual
-          ? `<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid #f0f0f0;"><span style="font-size:12.5px;color:#111;font-weight:600;flex:1;">${esc(item.v)}</span>${item.extra?`<span style="font-size:11px;color:#888;">${esc(item.extra)}</span>`:''}</div>`
-          : `<div style="padding:3px 0;border-bottom:1px solid #f0f0f0;font-size:12.5px;color:#111;font-weight:600;">${esc(item)}</div>`
+          ? `<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--k-b-f0f0f0,#f0f0f0);"><span style="font-size:12.5px;color:#111;font-weight:600;flex:1;">${esc(item.v)}</span>${item.extra?`<span style="font-size:11px;color:var(--k-t-888888,#888);">${esc(item.extra)}</span>`:''}</div>`
+          : `<div style="padding:3px 0;border-bottom:1px solid var(--k-b-f0f0f0,#f0f0f0);font-size:12.5px;color:#111;font-weight:600;">${esc(item)}</div>`
         ).join('')
-      : '<span style="font-size:12px;color:#aaa;">—</span>';
+      : '<span style="font-size:12px;color:var(--k-t-aaaaaa,#aaa);">—</span>';
     const footer = `
 <div class="pg-footer">
   <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1e3a5f,#3b82f6,#1e3a5f);"></div>
@@ -2046,7 +2078,7 @@ ${d.formacoes.map(f=>`
       <div style="font-size:13px;font-weight:700;color:#111;">${esc(f.curso)||'—'}</div>
       ${f.inst?`<div style="font-size:11px;color:#666;margin-top:1px;">${esc(f.inst)}</div>`:''}
     </div>
-    ${f.status?`<div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:${f.status==='concluido'?'#e8f8ef':f.status==='andamento'?'#fff8e7':'#fdf5f5'};color:${f.status==='concluido'?'#1e8449':f.status==='andamento'?'#b36200':'#c0392b'};border:1px solid ${f.status==='concluido'?'#aee6c4':f.status==='andamento'?'#f5d88a':'#f1b6b0'};white-space:nowrap;">${statusLabel[f.status]||''}</div>`:''}
+    ${f.status?`<div style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:${f.status==='concluido'?'#e8f8ef':f.status==='andamento'?'#fff8e7':'#fdf5f5'};color:${f.status==='concluido'?'#1e8449':f.status==='andamento'?'#b36200':'var(--k-c-c0392b,#c0392b)'};border:1px solid ${f.status==='concluido'?'#aee6c4':f.status==='andamento'?'#f5d88a':'#f1b6b0'};white-space:nowrap;">${statusLabel[f.status]||''}</div>`:''}
   </div>
 </div>`).join('')}
 </div>` : ''}
@@ -2088,12 +2120,12 @@ ${footer}
     // ── PG 3: Avaliação + Decisão ──
     const algumRating = Object.values(d.ratings).some(v => v > 0);
     const ratingsHTML = algumRating ? Object.entries(d.ratings).filter(([,v]) => v > 0).map(([crit, v]) => `
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;padding:4px 0;border-bottom:1px solid #f0f0f0;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;padding:4px 0;border-bottom:1px solid var(--k-b-f0f0f0,#f0f0f0);">
   <span style="flex:1;font-size:11.5px;color:#333;">${esc(crit)}</span>
   <div style="display:flex;gap:3px;">
-    ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div style="width:18px;height:18px;border-radius:3px;border:1px solid ${v>=n?'#1e40af':'#ddd'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:${v>=n?'#3b82f6':'#f5f5f5'};color:${v>=n?'#fff':'#bbb'};">${n}</div>`).join('')}
+    ${[1,2,3,4,5,6,7,8,9,10].map(n=>`<div style="width:18px;height:18px;border-radius:3px;border:1px solid ${v>=n?'#1e40af':'var(--k-b-dddddd,#ddd)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:${v>=n?'#3b82f6':'#f5f5f5'};color:${v>=n?'#fff':'var(--k-t-bbbbbb,#bbb)'};">${n}</div>`).join('')}
   </div>
-  <span style="font-size:11px;font-weight:700;color:${v>=7?'#1e8449':v>=5?'#d68910':'#c0392b'};width:40px;text-align:right;">${v}/10</span>
+  <span style="font-size:11px;font-weight:700;color:${v>=7?'#1e8449':v>=5?'#d68910':'var(--k-c-c0392b,#c0392b)'};width:40px;text-align:right;">${v}/10</span>
 </div>`).join('') : '';
 
     const checksHTML = checksMarcados.length ? `
@@ -2189,9 +2221,9 @@ function abrirParecerFinal(){
 
   // Nome / Vaga
   document.getElementById('pfNomeVaga').innerHTML = `
-    <div style="font-size:0.65rem;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Candidato</div>
-    <div style="font-size:1.05rem;font-weight:900;color:#f0f0f0;">${nome}</div>
-    <div style="font-size:0.8rem;color:#3b82f6;font-weight:600;margin-top:2px;">📋 ${vaga}</div>`;
+    <div style="font-size:0.65rem;font-weight:700;color:var(--k-t-ffffff,#ffffff);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Candidato</div>
+    <div style="font-size:1.05rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);">${nome}</div>
+    <div style="font-size:0.8rem;color:var(--k-c-3b82f6,#3b82f6);font-weight:600;margin-top:2px;">📋 ${vaga}</div>`;
 
   // Decisão
   const decMap = {
@@ -2199,11 +2231,11 @@ function abrirParecerFinal(){
     reserva:   { label:'🟡 Reserva',      bg:'rgba(243,156,18,0.12)', cor:'#f39c12' },
     reprovado: { label:'❌ Não Aprovado', bg:'rgba(231,76,60,0.12)',  cor:'#e74c3c' },
   };
-  const dec = decMap[decisaoAtual] || { label:'— Não definida —', bg:'rgba(255,255,255,0.04)', cor:'#555' };
+  const dec = decMap[decisaoAtual] || { label:'— Não definida —', bg:'var(--k-w-040,rgba(255,255,255,0.04))', cor:'#555' };
   document.getElementById('pfDecisao').style.background = dec.bg;
   document.getElementById('pfDecisao').style.borderColor = dec.cor + '55';
   document.getElementById('pfDecisao').innerHTML = `
-    <div style="font-size:0.62rem;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">Decisão do Recrutador</div>
+    <div style="font-size:0.62rem;font-weight:700;color:var(--k-t-ffffff,#ffffff);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">Decisão do Recrutador</div>
     <div style="font-size:1.3rem;font-weight:900;color:${dec.cor};">${dec.label}</div>`;
 
   // Recomendação
@@ -2214,11 +2246,11 @@ function abrirParecerFinal(){
     banco:      { label:'📁 Banco de Talentos',                      bg:'rgba(52,152,219,0.12)', cor:'#3498db' },
     nao:        { label:'🚫 Não Recomendado',                        bg:'rgba(231,76,60,0.12)',  cor:'#e74c3c' },
   };
-  const rec = recMap[recAtual] || { label:'— Não definida —', bg:'rgba(255,255,255,0.04)', cor:'#555' };
+  const rec = recMap[recAtual] || { label:'— Não definida —', bg:'var(--k-w-040,rgba(255,255,255,0.04))', cor:'#555' };
   document.getElementById('pfRecomendacao').style.background = rec.bg;
   document.getElementById('pfRecomendacao').style.borderColor = rec.cor + '55';
   document.getElementById('pfRecomendacao').innerHTML = `
-    <div style="font-size:0.62rem;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">Recomendação para a Empresa</div>
+    <div style="font-size:0.62rem;font-weight:700;color:var(--k-t-ffffff,#ffffff);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;">Recomendação para a Empresa</div>
     <div style="font-size:1.15rem;font-weight:900;color:${rec.cor};">${rec.label}</div>`;
 
   // Média dos ratings
@@ -2241,7 +2273,7 @@ function abrirParecerFinal(){
   if(ressalvas){
     pfJ.style.display = 'block';
     pfJ.innerHTML = `<div style="font-size:0.62rem;font-weight:700;color:#b36200;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;">📝 Motivo / Justificativa</div>
-      <p style="font-size:0.83rem;color:#ddd;line-height:1.65;margin:0;">${ressalvas.replace(/\n/g,'<br>')}</p>`;
+      <p style="font-size:0.83rem;color:var(--k-t-dddddd,#ddd);line-height:1.65;margin:0;">${ressalvas.replace(/\n/g,'<br>')}</p>`;
   } else { pfJ.style.display = 'none'; }
 
   // Observações marcadas
@@ -2249,9 +2281,9 @@ function abrirParecerFinal(){
   const pfO = document.getElementById('pfObs');
   if(checksMarcados.length){
     pfO.style.display = 'block';
-    pfO.innerHTML = `<div style="font-size:0.62rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">✅ Observações Positivas</div>
+    pfO.innerHTML = `<div style="font-size:0.62rem;font-weight:700;color:var(--k-c-3b82f6,#3b82f6);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;">✅ Observações Positivas</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;">
-        ${checksMarcados.map(ch=>`<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:3px 10px;font-size:0.75rem;color:#3b82f6;font-weight:600;">✓ ${ch}</div>`).join('')}
+        ${checksMarcados.map(ch=>`<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:3px 10px;font-size:0.75rem;color:var(--k-c-3b82f6,#3b82f6);font-weight:600;">✓ ${ch}</div>`).join('')}
       </div>`;
   } else { pfO.style.display = 'none'; }
 }
@@ -2285,7 +2317,7 @@ function copiarSQL(){
 }
 async function testarConexao(){
   const el = document.getElementById('sbDiagResult');
-  el.innerHTML = '<div style="font-size:0.78rem;color:#f39c12;">⏳ Testando conexão…</div>';
+  el.innerHTML = '<div style="font-size:0.78rem;color:var(--k-c-f39c12,#f39c12);">⏳ Testando conexão…</div>';
   try{
     const res = await fetchComTimeout(
       SUPABASE_URL + '/rest/v1/pareceres_historico?limit=1',
@@ -2295,30 +2327,30 @@ async function testarConexao(){
     let body = '';
     try{ body = await res.text(); }catch(e){}
     if(res.ok){
-      el.innerHTML = `<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:#2ecc71;">
+      el.innerHTML = `<div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--k-c-2ecc71,#2ecc71);">
         ✅ <strong>Conexão OK!</strong> Tabela <code>pareceres_historico</code> encontrada e acessível.
       </div>`;
     } else if(res.status === 401 || res.status === 403){
-      el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:#e74c3c;line-height:1.7;">
+      el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--k-c-e74c3c,#e74c3c);line-height:1.7;">
         ❌ <strong>Erro de autenticação (${res.status})</strong><br/>
         A <em>anon key</em> está incorreta ou expirada.<br/>
-        <span style="color:#aaa;">Acesse Supabase → Settings → API → copie a <strong>anon public key</strong> (começa com <code style="color:#3b82f6;">eyJ</code>) e cole abaixo.</span>
+        <span style="color:var(--k-t-aaaaaa,#aaa);">Acesse Supabase → Settings → API → copie a <strong>anon public key</strong> (começa com <code style="color:var(--k-c-3b82f6,#3b82f6);">eyJ</code>) e cole abaixo.</span>
       </div>`;
     } else if(res.status === 404 || body.includes('does not exist') || body.includes('relation')){
-      el.innerHTML = `<div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:#f39c12;line-height:1.7;">
+      el.innerHTML = `<div style="background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--k-c-f39c12,#f39c12);line-height:1.7;">
         ⚠️ <strong>Chave OK, mas tabela não existe.</strong><br/>
         Execute o SQL abaixo no painel do Supabase (SQL Editor) para criar a tabela.
       </div>`;
     } else {
-      el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:#e74c3c;line-height:1.7;">
+      el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--k-c-e74c3c,#e74c3c);line-height:1.7;">
         ❌ <strong>Erro HTTP ${res.status}</strong><br/>
-        <code style="font-size:0.68rem;color:#aaa;">${body.slice(0,200)}</code>
+        <code style="font-size:0.68rem;color:var(--k-t-aaaaaa,#aaa);">${body.slice(0,200)}</code>
       </div>`;
     }
   } catch(e){
-    el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:#e74c3c;line-height:1.7;">
+    el.innerHTML = `<div style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.3);border-radius:10px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--k-c-e74c3c,#e74c3c);line-height:1.7;">
       ❌ <strong>Sem conexão de rede</strong><br/>
-      <span style="color:#aaa;">${e.message}</span>
+      <span style="color:var(--k-t-aaaaaa,#aaa);">${e.message}</span>
     </div>`;
   }
 }

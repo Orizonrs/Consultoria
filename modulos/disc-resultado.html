@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script id="orizon-tema-boot">(function(){var K="orizon_tema";function ap(t){document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}try{var t=localStorage.getItem(K);if(t==="light"||t==="dark")ap(t);}catch(e){}window.addEventListener("storage",function(e){if(e.key===K&&(e.newValue==="light"||e.newValue==="dark"))ap(e.newValue);});window.addEventListener("message",function(e){var d=e.data;if(d&&d.orizonTema)ap(d.orizonTema);});})();window.OZC=function(n,f){try{var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||f;}catch(e){return f;}};(function(){var T=null;function P(c){var m=c&&c.match(/rgba?\(([^)]+)\)/);if(!m)return null;var a=m[1].split(',').map(parseFloat);return{r:a[0],g:a[1],b:a[2],a:a.length>3?a[3]:1};}
+function L(c){function f(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b);}
+function R(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+function BG(el){var ly=[],e=el;while(e&&e.nodeType===1){var cs=getComputedStyle(e);if(/gradient/.test(cs.backgroundImage))return null;var c=P(cs.backgroundColor);if(c&&c.a>0){ly.push(c);if(c.a>=.98)break;}e=e.parentElement;}
+var b={r:255,g:255,b:255};for(var i=ly.length-1;i>=0;i--){var l=ly[i];b={r:l.r*l.a+b.r*(1-l.a),g:l.g*l.a+b.g*(1-l.a),b:l.b*l.a+b.b*(1-l.a)};}return b;}
+function DK(c,bg){var r=c.r/255,g=c.g/255,b=c.b/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2,d=mx-mn;
+if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;}
+function hu(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}
+var o=c;for(var i=0;i<16;i++){l=Math.max(0,l-.035);var q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;o=s?{r:hu(p,q,h+1/3)*255,g:hu(p,q,h)*255,b:hu(p,q,h-1/3)*255}:{r:l*255,g:l*255,b:l*255};if(R(o,bg)>=4.5)break;}return o;}
+function restore(){var n=document.querySelectorAll('[data-oz-orig]');for(var i=0;i<n.length;i++){var el=n[i],v=el.getAttribute('data-oz-orig').split('|');if(v[0])el.style.setProperty('color',v[0],v[1]||'');else el.style.removeProperty('color');el.removeAttribute('data-oz-orig');}}
+function run(){T=null;var de=document.documentElement;if(de.getAttribute('data-theme')!=='light'){restore();return;}
+if(!document.body)return;var els=document.body.getElementsByTagName('*');
+for(var i=0;i<els.length;i++){var el=els[i],tg=el.tagName;if(tg==='SCRIPT'||tg==='STYLE'||tg==='OPTION'||tg==='CANVAS'||tg==='SVG'||el.hasAttribute('data-oz-orig'))continue;
+var has=false;for(var k=el.firstChild;k;k=k.nextSibling){if(k.nodeType===3&&k.nodeValue.trim().length>0){has=true;break;}}if(!has)continue;
+var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;var fg=P(cs.color);if(!fg||fg.a<.5)continue;var bg=BG(el);if(!bg||L(bg)<.45)continue;
+if(R(fg,bg)>=3.6)continue;var nc=DK(fg,bg);el.setAttribute('data-oz-orig',el.style.getPropertyValue('color')+'|'+el.style.getPropertyPriority('color'));
+el.style.setProperty('color','rgb('+Math.round(nc.r)+','+Math.round(nc.g)+','+Math.round(nc.b)+')','important');}}
+function sch(){if(T)return;T=setTimeout(run,160);}
+function init(){run();try{new MutationObserver(sch).observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+try{new MutationObserver(function(){run();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',sch);})();(function(){var last=document.documentElement.getAttribute("data-theme");document.addEventListener("DOMContentLoaded",function(){last=document.documentElement.getAttribute("data-theme");new MutationObserver(function(){var n=document.documentElement.getAttribute("data-theme");if(n!==last){last=n;location.reload();}}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});});})();</script>
+
 <script src="../modulos/guard.js"></script>
 <script src="../modulos/orizon-security.js"></script>
   <meta charset="UTF-8"/>
@@ -34,13 +56,13 @@
     .combo-badge{display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1.1rem;border-radius:99px;font-size:0.82rem;font-weight:700;margin-bottom:0.8rem;}
     .dim-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:0.9rem;}
     .dim-bar-label{width:150px;font-size:0.82rem;font-weight:700;flex-shrink:0;}
-    .dim-bar-track{flex:1;height:10px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;}
+    .dim-bar-track{flex:1;height:10px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:99px;overflow:hidden;}
     .dim-bar-fill{height:100%;border-radius:99px;}
     .dim-bar-pct{width:38px;font-size:0.8rem;font-weight:700;text-align:right;flex-shrink:0;}
     .chart-wrap{max-width:240px;margin:0 auto;}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
     @media(max-width:560px){.two-col{grid-template-columns:1fr;}}
-    .inner-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem 1rem;}
+    .inner-box{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:12px;padding:0.9rem 1rem;}
     .inner-box h6{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:0.5rem;}
     .inner-box p{font-size:0.82rem;color:var(--muted);line-height:1.5;}
     .tag-list{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem;}
@@ -50,27 +72,27 @@
     .bullet-list li .dot{flex-shrink:0;margin-top:3px;}
     .compat-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;}
     @media(max-width:560px){.compat-grid{grid-template-columns:1fr;}}
-    .compat-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem 1rem;}
+    .compat-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:12px;padding:0.9rem 1rem;}
     .compat-item .compat-name{font-size:0.8rem;font-weight:700;margin-bottom:0.4rem;}
     .compat-item p{font-size:0.78rem;color:var(--muted);line-height:1.5;}
-    .interview-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.6rem;}
+    .interview-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.8rem 1rem;margin-bottom:0.6rem;}
     .interview-item .q-label{font-size:0.68rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:0.3rem;}
     .interview-item p{font-size:0.85rem;line-height:1.5;}
-    .recruiter-item{display:flex;gap:0.6rem;align-items:flex-start;font-size:0.84rem;color:var(--muted);line-height:1.5;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.05);}
+    .recruiter-item{display:flex;gap:0.6rem;align-items:flex-start;font-size:0.84rem;color:var(--muted);line-height:1.5;padding:0.5rem 0;border-bottom:1px solid var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));}
     .recruiter-item:last-child{border-bottom:none;}
     .recruiter-item .arr{color:var(--accent);flex-shrink:0;margin-top:1px;}
     .fit-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;}
     @media(max-width:560px){.fit-grid{grid-template-columns:1fr;}}
-    .fit-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.8rem 1rem;}
+    .fit-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.8rem 1rem;}
     .fit-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;}
     .fit-name{font-size:0.8rem;font-weight:600;}
     .fit-score{font-size:0.88rem;font-weight:800;}
-    .fit-track{height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;}
+    .fit-track{height:5px;background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:99px;overflow:hidden;}
     .fit-fill{height:100%;border-radius:99px;}
     .aviso{background:rgba(224,128,0,0.08);border:1px solid rgba(224,128,0,0.25);border-radius:12px;padding:1rem 1.2rem;margin-top:1.2rem;}
     .aviso p{font-size:0.82rem;color:#c8a060;line-height:1.6;}
     .footer{text-align:center;padding-top:2rem;font-size:0.72rem;color:#444;}
-    .obs-textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:0.9rem 1rem;color:var(--text);font-family:inherit;font-size:0.85rem;line-height:1.6;resize:vertical;min-height:110px;margin-top:0.5rem;transition:border-color 0.2s;}
+    .obs-textarea{width:100%;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border:1px solid var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));border-radius:12px;padding:0.9rem 1rem;color:var(--text);font-family:inherit;font-size:0.85rem;line-height:1.6;resize:vertical;min-height:110px;margin-top:0.5rem;transition:border-color 0.2s;}
     .obs-textarea:focus{outline:none;border-color:var(--accent);}
     .obs-textarea::placeholder{color:var(--muted);opacity:.6;}
     .confi-badge{display:inline-flex;align-items:center;gap:0.4rem;padding:0.3rem 0.9rem;border-radius:99px;font-size:0.76rem;font-weight:700;}
@@ -78,7 +100,7 @@
     .reaprov-bar{background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.22);border-radius:14px;padding:0.85rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
     .reaprov-label{font-size:0.7rem;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;flex-shrink:0;}
     .reaprov-label span{display:block;font-size:0.62rem;color:var(--muted);font-weight:500;letter-spacing:.5px;text-transform:none;margin-top:1px;}
-    .reaprov-input{flex:1;min-width:180px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:0.5rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
+    .reaprov-input{flex:1;min-width:180px;background:var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));border:1px solid var(--k-w-150,var(--k-w-150,rgba(255,255,255,0.15)));border-radius:10px;padding:0.5rem 0.85rem;color:var(--text);font-family:inherit;font-size:0.88rem;outline:none;transition:border-color 0.2s;}
     .reaprov-input:focus{border-color:var(--accent);}
     .reaprov-input::placeholder{color:var(--muted);opacity:.6;}
     .btn-reaprov{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:10px;padding:0.52rem 1.1rem;font-family:inherit;font-size:0.82rem;font-weight:800;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:0.4rem;}
@@ -86,23 +108,23 @@
     .reaprov-ativo{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.35);border-radius:8px;padding:0.3rem 0.75rem;font-size:0.75rem;font-weight:700;color:var(--accent);display:none;align-items:center;gap:0.4rem;white-space:nowrap;}
     .reaprov-ativo.show{display:inline-flex;}
     .btn-reaprov-reset{background:none;border:none;color:rgba(231,76,60,0.5);font-size:0.85rem;cursor:pointer;padding:0 0.2rem;transition:color 0.2s;line-height:1;}
-    .btn-reaprov-reset:hover{color:#e74c3c;}
-    .score-global-wrap{display:flex;align-items:center;gap:1.2rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:0.9rem 1.2rem;margin-bottom:1rem;}
+    .btn-reaprov-reset:hover{color:var(--k-c-e74c3c,#e74c3c);}
+    .score-global-wrap{display:flex;align-items:center;gap:1.2rem;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:14px;padding:0.9rem 1.2rem;margin-bottom:1rem;}
     .score-global-num{font-size:2.4rem;font-weight:900;line-height:1;}
     .score-global-info{flex:1;}
     .score-global-info strong{font-size:0.9rem;display:block;margin-bottom:0.2rem;}
     .score-global-info span{font-size:0.75rem;color:var(--muted);}
     .btn-hist{background:rgba(59,130,246,0.1);color:var(--accent);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:0.75rem 1.4rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;text-decoration:none;}
     .btn-hist:hover{background:rgba(59,130,246,0.2);}
-    .btn-parecer{background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:0.75rem 1.4rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;text-decoration:none;}
+    .btn-parecer{background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:0.75rem 1.4rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;text-decoration:none;}
     .btn-parecer:hover{background:rgba(52,152,219,0.22);}
-    .btn-cand{background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:0.75rem 1.4rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;}
+    .btn-cand{background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:12px;padding:0.75rem 1.4rem;font-family:inherit;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:0.5rem;}
     .btn-cand:hover{background:rgba(52,152,219,0.22);}
     body.modo-impressao{background:#f4f4f4!important;color:#111111!important;}
     body.modo-impressao body::before{display:none;}
-    body.modo-impressao .result-card{background:#ffffff!important;border:1px solid #dddddd!important;color:#111111!important;}
-    body.modo-impressao .cand-bar{background:#eeeeee!important;border:1px solid #cccccc!important;}
-    body.modo-impressao .inner-box,.modo-impressao .fit-item,.modo-impressao .interview-item,.modo-impressao .compat-item{background:#f5f5f5!important;border-color:#dddddd!important;}
+    body.modo-impressao .result-card{background:#ffffff!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;color:#111111!important;}
+    body.modo-impressao .cand-bar{background:#eeeeee!important;border:1px solid var(--k-b-cccccc,#cccccc)!important;}
+    body.modo-impressao .inner-box,.modo-impressao .fit-item,.modo-impressao .interview-item,.modo-impressao .compat-item{background:#f5f5f5!important;border-color:var(--k-b-dddddd,#dddddd)!important;}
     body.modo-impressao .dim-bar-track{background:#dddddd!important;}
     body.modo-impressao p,body.modo-impressao span{color:#333333!important;}
     body.modo-impressao .aviso{background:#fff8e7!important;}
@@ -112,20 +134,30 @@
       .btn-pdf,.btn-print-mode{display:none!important;}
       .top-bar{display:none!important;}
       .wrapper{padding:1rem;max-width:100%;}
-      .result-card{background:#ffffff!important;border:1px solid #dddddd!important;break-inside:avoid;page-break-inside:avoid;color:#111111!important;}
+      .result-card{background:#ffffff!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;break-inside:avoid;page-break-inside:avoid;color:#111111!important;}
       .dim-bar-track{background:#eeeeee!important;}
-      .inner-box{background:#f9f9f9!important;border:1px solid #dddddd!important;}
-      .fit-item{background:#f9f9f9!important;border:1px solid #dddddd!important;}
-      .interview-item{background:#f9f9f9!important;border:1px solid #dddddd!important;}
-      .compat-item{background:#f9f9f9!important;border:1px solid #dddddd!important;}
-      .cand-bar{background:#f0f0f0!important;border:1px solid #cccccc!important;}
+      .inner-box{background:#f9f9f9!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;}
+      .fit-item{background:#f9f9f9!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;}
+      .interview-item{background:#f9f9f9!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;}
+      .compat-item{background:#f9f9f9!important;border:1px solid var(--k-b-dddddd,#dddddd)!important;}
+      .cand-bar{background:#f0f0f0!important;border:1px solid var(--k-b-cccccc,#cccccc)!important;}
       p,span,li{color:#333333!important;}
       h4{color:#1e40af!important;}
       .aviso{background:#fff8e7!important;border:1px solid #e08000!important;}
-      .footer{color:#888888!important;}
+      .footer{color:var(--k-t-888888,#888888)!important;}
       #cardGrafico canvas{filter:invert(0);}
     }
   </style>
+<style id="orizon-light-css">/* MODO CLARO — paleta própria (sem filtro de inversão) */
+html[data-theme="light"],html[data-orizon-tema="light"]{color-scheme:light;--C:#0369a1;--D:#dc2626;--I:#b45309;--S:#15803d;--accent:#2563eb;--accent2:#4d7c0f;--aprovado:#2563eb;--bg:#f1f5f9;--bg2:#f8fafc;--blue:#0369a1;--border:rgba(15,23,42,0.10);--border-a:rgba(37,99,235,0.30);--border2:rgba(15,23,42,0.16);--border3:rgba(15,23,42,0.24);--card:#ffffff;--card2:#f8fafc;--card3:#f1f5f9;--cyan:#0e7490;--entrevista:#c2410c;--finalista:#15803d;--green:#15803d;--green-d:#dbeafe;--green-glow:rgba(37,99,235,0.12);--k-b-000000:#e2e8f0;--k-b-090909:#e2e8f0;--k-b-222222:#e2e8f0;--k-b-2a2a2a:#cbd5e1;--k-b-333333:#cbd5e1;--k-b-444444:#cbd5e1;--k-b-555555:#94a3b8;--k-b-666666:#94a3b8;--k-b-888888:#94a3b8;--k-b-999999:#94a3b8;--k-b-bbbbbb:#94a3b8;--k-b-cccccc:#94a3b8;--k-b-dddddd:#94a3b8;--k-b-e0e0e0:#94a3b8;--k-b-ebebeb:#94a3b8;--k-b-eeeeee:#94a3b8;--k-b-f0f0f0:#94a3b8;--k-b-f2f2f2:#94a3b8;--k-b-ffffff:#94a3b8;--k-bg-000000:#f1f5f9;--k-bg-080808:#f1f5f9;--k-bg-080810:#f1f5f9;--k-bg-090909:#f1f5f9;--k-bg-0a0a0a:#f1f5f9;--k-bg-0b0b14:#ffffff;--k-bg-0e0e0e:#ffffff;--k-bg-0e0e14:#ffffff;--k-bg-0e0e18:#ffffff;--k-bg-0e0f11:#ffffff;--k-bg-0f0f0f:#ffffff;--k-bg-111111:#ffffff;--k-bg-111317:#ffffff;--k-bg-12161e:#f8fafc;--k-bg-131313:#ffffff;--k-bg-141414:#ffffff;--k-bg-141518:#ffffff;--k-bg-151515:#ffffff;--k-bg-161616:#f8fafc;--k-bg-161618:#f8fafc;--k-bg-161622:#f8fafc;--k-bg-1a1a1a:#f8fafc;--k-bg-1a1b1f:#f8fafc;--k-bg-1e1e1e:#f1f5f9;--k-bg-222222:#f1f5f9;--k-bg-r0g0b0a85:rgba(241,245,249,0.85);--k-bg-r0g0b0a88:rgba(241,245,249,0.88);--k-bg-r0g0b0a92:rgba(241,245,249,0.92);--k-bg-r0g0b0a94:rgba(241,245,249,0.94);--k-bg-r0g0b0a95:rgba(241,245,249,0.95);--k-bg-r0g0b0a96:rgba(241,245,249,0.96);--k-bg-r10g10b10a97:rgba(241,245,249,0.97);--k-bg-r10g10b10a99:rgba(241,245,249,0.99);--k-bg-r12g20b5a100:rgba(255,255,255,1.0);--k-bg-r13g13b13a97:rgba(255,255,255,0.97);--k-bg-r6g6b8a92:rgba(241,245,249,0.92);--k-bg-r7g7b9a97:rgba(241,245,249,0.97);--k-bg-r8g12b3a100:rgba(241,245,249,1.0);--k-bg-r8g14b3a100:rgba(241,245,249,1.0);--k-bg-r9g9b9a95:rgba(241,245,249,0.95);--k-bg-r9g9b9a97:rgba(241,245,249,0.97);--k-c-1e3a5f:#1d4ed8;--k-c-2563eb:#1d4ed8;--k-c-25d366:#128c7e;--k-c-2ecc71:#15803d;--k-c-3498db:#0369a1;--k-c-3b82f6:#2563eb;--k-c-4fa8e8:#0369a1;--k-c-4fc87a:#15803d;--k-c-60a5fa:#2563eb;--k-c-8b5cf6:#6d28d9;--k-c-93c5fd:#1d4ed8;--k-c-a78bfa:#7c3aed;--k-c-c0392b:#b91c1c;--k-c-c4b5fd:#6d28d9;--k-c-e05252:#dc2626;--k-c-e74c3c:#dc2626;--k-c-e8943a:#c2410c;--k-c-f1c40f:#a16207;--k-c-f39c12:#b45309;--k-c-f59e0b:#b45309;--k-c-f5c518:#a16207;--k-c-f97316:#c2410c;--k-c-fbbf24:#b45309;--k-ov-07:rgba(15,23,42,0.043);--k-ov-12:rgba(15,23,42,0.074);--k-ov-18:rgba(15,23,42,0.112);--k-ov-20:rgba(15,23,42,0.124);--k-ov-25:rgba(15,23,42,0.155);--k-ov-30:rgba(15,23,42,0.186);--k-ov-35:rgba(15,23,42,0.217);--k-ov-40:rgba(15,23,42,0.248);--k-ov-60:rgba(15,23,42,0.372);--k-ov-65:rgba(15,23,42,0.403);--k-ov-70:rgba(15,23,42,0.434);--k-ov-72:rgba(15,23,42,0.446);--k-ov-75:rgba(15,23,42,0.465);--k-ov-78:rgba(15,23,42,0.484);--k-ov-80:rgba(15,23,42,0.496);--k-ov-82:rgba(15,23,42,0.508);--k-ov-85:rgba(15,23,42,0.527);--k-ov-88:rgba(15,23,42,0.546);--k-ov-92:rgba(15,23,42,0.57);--k-ov-94:rgba(15,23,42,0.583);--k-ov-95:rgba(15,23,42,0.589);--k-ov-96:rgba(15,23,42,0.595);--k-sh-10:rgba(15,23,42,0.028);--k-sh-25:rgba(15,23,42,0.07);--k-sh-30:rgba(15,23,42,0.084);--k-sh-35:rgba(15,23,42,0.098);--k-sh-40:rgba(15,23,42,0.112);--k-sh-45:rgba(15,23,42,0.126);--k-sh-50:rgba(15,23,42,0.14);--k-sh-60:rgba(15,23,42,0.168);--k-sh-70:rgba(15,23,42,0.196);--k-sh-80:rgba(15,23,42,0.224);--k-sh-90:rgba(15,23,42,0.252);--k-t-777777:#475569;--k-t-888888:#475569;--k-t-999999:#475569;--k-t-aaaaaa:#1e293b;--k-t-b0b0b0:#1e293b;--k-t-bbbbbb:#1e293b;--k-t-c0c0c0:#1e293b;--k-t-cccccc:#1e293b;--k-t-d0d0d0:#0f172a;--k-t-dddddd:#0f172a;--k-t-e0e0e0:#0f172a;--k-t-e0e0ea:#0f172a;--k-t-e8e8f0:#0f172a;--k-t-eeeef0:#0f172a;--k-t-f0f0f0:#0f172a;--k-t-f0f0f4:#0f172a;--k-t-ffffff:#0f172a;--k-w-010:rgba(15,23,42,0.013);--k-w-012:rgba(15,23,42,0.015);--k-w-015:rgba(15,23,42,0.019);--k-w-020:rgba(15,23,42,0.025);--k-w-025:rgba(15,23,42,0.031);--k-w-030:rgba(15,23,42,0.037);--k-w-035:rgba(15,23,42,0.044);--k-w-040:rgba(15,23,42,0.05);--k-w-045:rgba(15,23,42,0.056);--k-w-050:rgba(15,23,42,0.062);--k-w-055:rgba(15,23,42,0.069);--k-w-060:rgba(15,23,42,0.075);--k-w-065:rgba(15,23,42,0.081);--k-w-070:rgba(15,23,42,0.088);--k-w-080:rgba(15,23,42,0.1);--k-w-090:rgba(15,23,42,0.112);--k-w-100:rgba(15,23,42,0.125);--k-w-110:rgba(15,23,42,0.138);--k-w-120:rgba(15,23,42,0.15);--k-w-130:rgba(15,23,42,0.163);--k-w-140:rgba(15,23,42,0.175);--k-w-150:rgba(15,23,42,0.188);--k-w-160:rgba(15,23,42,0.2);--k-w-180:rgba(15,23,42,0.225);--k-w-200:rgba(15,23,42,0.25);--k-w-250:rgba(15,23,42,0.312);--k-w-300:rgba(15,23,42,0.375);--k-w-350:rgba(15,23,42,0.438);--k-w-380:rgba(15,23,42,0.475);--k-w-400:rgba(15,23,42,0.5);--k-w-450:rgba(15,23,42,0.562);--k-w-600:rgba(15,23,42,0.75);--k-w-650:rgba(15,23,42,0.812);--k-w-750:rgba(15,23,42,0.938);--k-w-800:rgba(15,23,42,1.0);--k-w-850:rgba(15,23,42,1.0);--k-w-900:rgba(15,23,42,1.0);--muted:#64748b;--muted2:#7b8ba1;--orange:#c2410c;--pre:#7c3aed;--primary:#1e40af;--purple:#7c3aed;--recusado:#dc2626;--recusado-cli:#b91c1c;--red:#dc2626;--sub:#64748b;--surface:#ffffff;--surface2:#f8fafc;--surface3:#eef2f7;--teal:#0f766e;--text:#0f172a;--text-2:#334155;--text-3:#64748b;--text2:#334155;--triagem:#0369a1;--yellow:#a16207}
+
+html[data-theme="light"] body,html[data-orizon-tema="light"] body{background:var(--bg);color:var(--text);}
+html[data-theme="light"] ::placeholder{color:#94a3b8!important;opacity:1;}
+html[data-theme="light"] option,html[data-orizon-tema="light"] option{background:#ffffff;color:#0f172a;}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#cbd5e1;}
+html[data-theme="light"] ::-webkit-scrollbar-track{background:transparent;}
+html[data-theme="light"] input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #fff inset;-webkit-text-fill-color:#0f172a;}
+</style>
 </head>
 <body>
 <div class="wrapper">
@@ -138,7 +170,7 @@
     <button class="btn-pdf" onclick="gerarPDF()" id="btnPDF">🖨️ Salvar DISC em PDF</button>
     <button class="btn-cand" onclick="gerarPDFCandidato()" id="btnPDFCand">👤 PDF Candidato</button>
     <button class="btn-pdf" onclick="abrirPDFUnificado()" id="btnPDFUnif" style="background:linear-gradient(135deg,#6c3483,#a78bfa);">📄 PDF Unificado</button>
-    <button class="btn-pdf" onclick="gerarWord()" id="btnWord" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);">📄 Baixar Word</button>
+    <button class="btn-pdf" onclick="gerarWord()" id="btnWord" style="background:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));border:1px solid var(--k-w-250,var(--k-w-250,rgba(255,255,255,0.25)));">📄 Baixar Word</button>
     <a class="btn-hist" href="disc-historico.html" target="_blank">📋 Histórico dos Candidatos</a>
     <a class="btn-parecer" id="btnParecer" href="#" target="_blank" style="opacity:0.45;pointer-events:none;" title="Aguardando salvar...">⏳ Parecer Candidato</a>
   </div>
@@ -843,7 +875,7 @@ document.getElementById('cardPerfil').innerHTML = `
   <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.2rem;">
     <h4 style="margin-bottom:0;">🎯 Perfil Dominante</h4>
     <a id="btnParecerTopo" href="#" target="_blank"
-       style="display:inline-flex;align-items:center;gap:0.45rem;background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:11px;padding:0.55rem 1.1rem;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-decoration:none;opacity:0.45;pointer-events:none;transition:all 0.2s;white-space:nowrap;"
+       style="display:inline-flex;align-items:center;gap:0.45rem;background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:11px;padding:0.55rem 1.1rem;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer;text-decoration:none;opacity:0.45;pointer-events:none;transition:all 0.2s;white-space:nowrap;"
        title="Aguardando salvar...">⏳ Parecer Candidato</a>
   </div>
   <div style="text-align:center">
@@ -871,18 +903,18 @@ document.getElementById('cardEscala').innerHTML = `
 new Chart(document.getElementById('discChart').getContext('2d'),{
   type:'doughnut',
   data:{labels:['D','I','S','C'],datasets:[{data:[raw.D,raw.I,raw.S,raw.C],backgroundColor:['#e74c3c','#f39c12','#2ecc71','#3498db'],borderColor:'#161616',borderWidth:3,hoverOffset:6}]},
-  options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#f0f0f0',font:{family:'Sora',size:11},padding:12}}}}
+  options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:OZC('--k-t-f0f0f0','#f0f0f0'),font:{family:'Sora',size:11},padding:12}}}}
 });
 
 // Traits
 document.getElementById('traitsGrid').innerHTML = `
   <div class="result-card" style="margin-bottom:0;">
     <h4>💪 Pontos Fortes</h4>
-    <ul class="bullet-list">${perfil.forcas.map(f=>`<li><span class="dot" style="color:#2ecc71;">✓</span>${f}</li>`).join('')}</ul>
+    <ul class="bullet-list">${perfil.forcas.map(f=>`<li><span class="dot" style="color:var(--k-c-2ecc71,#2ecc71);">✓</span>${f}</li>`).join('')}</ul>
   </div>
   <div class="result-card" style="margin-bottom:0;">
     <h4>📈 Áreas de Desenvolvimento</h4>
-    <ul class="bullet-list">${perfil.melhorar.map(m=>`<li><span class="dot" style="color:#f39c12;">→</span>${m}</li>`).join('')}</ul>
+    <ul class="bullet-list">${perfil.melhorar.map(m=>`<li><span class="dot" style="color:var(--k-c-f39c12,#f39c12);">→</span>${m}</li>`).join('')}</ul>
   </div>`;
 
 // Pressão
@@ -890,11 +922,11 @@ document.getElementById('cardPressao').innerHTML = `
   <h4>⚡ Comportamento sob Pressão</h4>
   <div class="two-col">
     <div class="inner-box" style="border-color:rgba(231,76,60,0.25);">
-      <h6 style="color:#e74c3c;">Tendência sob estresse</h6>
+      <h6 style="color:var(--k-c-e74c3c,#e74c3c);">Tendência sob estresse</h6>
       <p>${perfil.pressao}</p>
     </div>
     <div class="inner-box" style="border-color:rgba(59,130,246,0.25);">
-      <h6 style="color:#2ecc71;">Diferencial positivo</h6>
+      <h6 style="color:var(--k-c-2ecc71,#2ecc71);">Diferencial positivo</h6>
       <p>${perfil.pressaoPositivo}</p>
     </div>
   </div>`;
@@ -904,12 +936,12 @@ document.getElementById('cardMotivadores').innerHTML = `
   <h4>⚡ Motivadores e Desmotivadores</h4>
   <div class="two-col">
     <div class="inner-box" style="border-color:rgba(59,130,246,0.25);">
-      <h6 style="color:#2ecc71;">O que energiza este perfil</h6>
-      <ul class="bullet-list">${perfil.motivadores.map(m=>`<li><span class="dot" style="color:#2ecc71;">✓</span>${m}</li>`).join('')}</ul>
+      <h6 style="color:var(--k-c-2ecc71,#2ecc71);">O que energiza este perfil</h6>
+      <ul class="bullet-list">${perfil.motivadores.map(m=>`<li><span class="dot" style="color:var(--k-c-2ecc71,#2ecc71);">✓</span>${m}</li>`).join('')}</ul>
     </div>
     <div class="inner-box" style="border-color:rgba(231,76,60,0.25);">
-      <h6 style="color:#e74c3c;">O que drena este perfil</h6>
-      <ul class="bullet-list">${perfil.desmotivadores.map(d=>`<li><span class="dot" style="color:#e74c3c;">✗</span>${d}</li>`).join('')}</ul>
+      <h6 style="color:var(--k-c-e74c3c,#e74c3c);">O que drena este perfil</h6>
+      <ul class="bullet-list">${perfil.desmotivadores.map(d=>`<li><span class="dot" style="color:var(--k-c-e74c3c,#e74c3c);">✗</span>${d}</li>`).join('')}</ul>
     </div>
   </div>`;
 
@@ -980,7 +1012,7 @@ document.getElementById('cardEstilos').innerHTML = `
     <h6 style="color:${perfil.cor};">Como se comunicar com este perfil</h6>
     <p>${estilosPara[dom]}</p>
   </div>
-  <div class="inner-box" style="border-color:rgba(255,255,255,0.1);">
+  <div class="inner-box" style="border-color:var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));">
     <h6 style="color:var(--muted);">Como este perfil se comunica</h6>
     <p>${estilosComo[dom]}</p>
   </div>`;
@@ -1151,7 +1183,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
 .pad{padding:11px 22px;}
 .r2{display:flex;gap:14px;}
 .col{flex:1;min-width:0;}
-.col+.col{border-left:1px solid #ebebeb;padding-left:14px;}
+.col+.col{border-left:1px solid var(--k-b-ebebeb,#ebebeb);padding-left:14px;}
 .st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid;padding-bottom:2px;margin-bottom:6px;}
 .bi{border-left:3px solid;padding:5px 9px;border-radius:0 3px 3px 0;margin-bottom:4px;}
 .bil{font-size:9.5px;font-weight:700;margin-bottom:1px;}
@@ -1170,9 +1202,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
 
 <!-- TOOLBAR -->
 <div class="nopr" style="background:#1e3a5f;padding:8px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:99;">
-<span style="color:#fff;font-size:13px;font-weight:700;">Relatório DISC — ${nome}</span>
+<span style="color:var(--k-t-ffffff,#fff);font-size:13px;font-weight:700;">Relatório DISC — ${nome}</span>
 <button onclick="window.print()" style="margin-left:auto;background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;">🖨️ Salvar como PDF</button>
-<button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕ Fechar</button>
+<button onclick="window.close()" style="background:var(--k-w-150,var(--k-w-150,rgba(255,255,255,0.15)));color:var(--k-t-ffffff,#fff);border:1px solid var(--k-w-300,var(--k-w-300,rgba(255,255,255,0.3)));border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕ Fechar</button>
 </div>
 
 <!-- ════════════ PÁGINA 1 — PERFIL DO CANDIDATO ════════════ -->
@@ -1182,14 +1214,14 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
   <div style="font-size:9px;opacity:.7;margin-top:1px;">RELATÓRIO DE PERFIL COMPORTAMENTAL DISC</div></div>
   <div style="font-size:9px;opacity:.7;text-align:right;line-height:1.7;"><div>${dataHoje}</div><div>Uso interno — Recrutamento</div></div>
 </div>
-<div style="background:${corPerfil};padding:8px 22px;color:#fff;display:flex;align-items:center;gap:10px;">
+<div style="background:${corPerfil};padding:8px 22px;color:var(--k-t-ffffff,#fff);display:flex;align-items:center;gap:10px;">
   <div style="font-size:20px;line-height:1;">${perfil.emoji}</div>
   <div><div style="font-size:13.5px;font-weight:900;">${perfil.nome} + ${perfilSec.nome} — ${comboNome}</div>
   <div style="font-size:9.5px;opacity:.88;margin-top:1px;">${perfil.subtitulo}</div></div>
 </div>
-<div style="background:#f4f4f4;padding:7px 22px;border-bottom:2px solid #ddd;display:flex;gap:0;">
+<div style="background:#f4f4f4;padding:7px 22px;border-bottom:2px solid var(--k-b-dddddd,#ddd);display:flex;gap:0;">
 ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:'Data',v:dataHoje.toUpperCase()}]
-.map(x=>`<div style="flex:1;padding-right:10px;"><div style="font-size:8.5px;color:#999;text-transform:uppercase;letter-spacing:.6px;">${x.l}</div><div style="font-weight:700;font-size:12px;color:#111;margin-top:1px;">${x.v}</div></div>`).join('')}
+.map(x=>`<div style="flex:1;padding-right:10px;"><div style="font-size:8.5px;color:var(--k-t-999999,#999);text-transform:uppercase;letter-spacing:.6px;">${x.l}</div><div style="font-weight:700;font-size:12px;color:#111;margin-top:1px;">${x.v}</div></div>`).join('')}
 </div>
 
 <div class="pad">
@@ -1203,22 +1235,22 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 <!-- RADAR + DONUT + ESCALA -->
 <div class="r2 mb12" style="align-items:flex-start;">
   <div style="flex:0 0 170px;text-align:center;">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;text-align:left;">Radar — Intensidade</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;text-align:left;">Radar — Intensidade</div>
     ${radarSVG()}
   </div>
   <div style="flex:0 0 130px;text-align:center;">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;text-align:left;">Proporção DISC</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;text-align:left;">Proporção DISC</div>
     ${donutSVG()}
     <div style="display:flex;flex-wrap:wrap;gap:3px;justify-content:center;margin-top:4px;">
-      ${['D','I','S','C'].map(f=>`<span style="font-size:9px;font-weight:700;color:${coresHex[f]};">${f}:${pct[f]}%</span>`).join('<span style="color:#ccc;font-size:9px;"> · </span>')}
+      ${['D','I','S','C'].map(f=>`<span style="font-size:9px;font-weight:700;color:${coresHex[f]};">${f}:${pct[f]}%</span>`).join('<span style="color:var(--k-t-cccccc,#ccc);font-size:9px;"> · </span>')}
     </div>
   </div>
-  <div style="flex:1;border-left:1px solid #ebebeb;padding-left:14px;">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Escala 0–100</div>
+  <div style="flex:1;border-left:1px solid var(--k-b-ebebeb,#ebebeb);padding-left:14px;">
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Escala 0–100</div>
     ${['D','I','S','C'].map(f=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;"><div style="width:100px;font-size:11px;font-weight:700;color:${cl[f]};flex-shrink:0;">${nm[f]}</div><div style="flex:1;height:7px;background:#e5e5e5;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct[f]}%;background:${cl[f]};border-radius:3px;"></div></div><div style="width:24px;font-size:11px;font-weight:700;color:${cl[f]};text-align:right;">${pct[f]}</div></div>`).join('')}
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;margin-top:10px;">Tendência por Área</div>
-    ${fitScores.map(v=>`<div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid #f2f2f2;padding:2.5px 0;"><div style="flex:1;font-size:10.5px;color:#333;">${v.n}</div><div style="font-size:10.5px;font-weight:700;color:${cF(v.s)};width:28px;text-align:right;">${v.s}%</div><div style="width:46px;height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden;margin-left:3px;"><div style="height:100%;width:${v.s}%;background:${cF(v.s)};"></div></div></div>`).join('')}
-    <p style="font-size:8.5px;color:#bbb;margin-top:3px;">12 áreas — afinidade comportamental.</p>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;margin-top:10px;">Tendência por Área</div>
+    ${fitScores.map(v=>`<div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--k-b-f2f2f2,#f2f2f2);padding:2.5px 0;"><div style="flex:1;font-size:10.5px;color:#333;">${v.n}</div><div style="font-size:10.5px;font-weight:700;color:${cF(v.s)};width:28px;text-align:right;">${v.s}%</div><div style="width:46px;height:4px;background:#e5e5e5;border-radius:2px;overflow:hidden;margin-left:3px;"><div style="height:100%;width:${v.s}%;background:${cF(v.s)};"></div></div></div>`).join('')}
+    <p style="font-size:8.5px;color:var(--k-t-bbbbbb,#bbb);margin-top:3px;">12 áreas — afinidade comportamental.</p>
   </div>
 </div>
 
@@ -1237,7 +1269,7 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 <!-- PRESSÃO + MOTIVADORES -->
 <div class="r2">
   <div class="col">
-    <div class="st" style="color:#c0392b;border-color:#c0392b;">Comportamento sob Pressão</div>
+    <div class="st" style="color:var(--k-c-c0392b,#c0392b);border-color:#c0392b;">Comportamento sob Pressão</div>
     <p style="font-size:11.5px;color:#333;line-height:1.45;margin-bottom:5px;">${perfil.pressao||''}</p>
     <div class="bi" style="border-color:#1e8449;background:#f0fbf4;">
       <div class="bil" style="color:#1e8449;">Diferencial positivo</div>
@@ -1247,8 +1279,8 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
   <div class="col">
     <div class="st" style="color:#1e8449;border-color:#1e8449;">O que energiza</div>
     ${(perfil.motivadores||[]).map(m=>`<div class="bul"><span style="color:#1e8449;flex-shrink:0;">✓</span>${m}</div>`).join('')}
-    <div class="st" style="color:#c0392b;border-color:#c0392b;margin-top:7px;">O que drena</div>
-    ${(perfil.desmotivadores||[]).map(d=>`<div class="bul"><span style="color:#c0392b;flex-shrink:0;">✗</span>${d}</div>`).join('')}
+    <div class="st" style="color:var(--k-c-c0392b,#c0392b);border-color:#c0392b;margin-top:7px;">O que drena</div>
+    ${(perfil.desmotivadores||[]).map(d=>`<div class="bul"><span style="color:var(--k-c-c0392b,#c0392b);flex-shrink:0;">✗</span>${d}</div>`).join('')}
   </div>
 </div>
 
@@ -1261,29 +1293,29 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
   <div style="font-size:14px;font-weight:900;letter-spacing:1px;">ORIZON</div>
   <div style="font-size:9px;opacity:.75;">${perfil.nome} + ${perfilSec.nome} — ${nome.toUpperCase()}</div>
 </div>
-<div style="background:${corPerfil};padding:4px 22px;color:#fff;font-size:9px;">Relatório DISC · ${dataHoje} · Análise Comportamental · Uso interno</div>
+<div style="background:${corPerfil};padding:4px 22px;color:var(--k-t-ffffff,#fff);font-size:9px;">Relatório DISC · ${dataHoje} · Análise Comportamental · Uso interno</div>
 <div class="pad">
 
 <!-- LIDERANÇA + COMUNICAÇÃO -->
 <div class="r2 mb12">
   <div class="col">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Estilo de Liderança</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Estilo de Liderança</div>
     <div class="bi" style="border-color:${corPerfil};background:${corPerfil}10;margin-bottom:6px;">
       <div class="bil" style="color:${corPerfil};">Como este perfil lidera</div>
       <div class="bit">${perfil.estiloLideranca||''}</div>
     </div>
-    <div class="bi" style="border-color:#888;background:#f8f8f8;">
+    <div class="bi" style="border-color:var(--k-b-888888,#888);background:#f8f8f8;">
       <div class="bil" style="color:#555;">Como prefere ser liderado</div>
       <div class="bit">${perfil.comoSerLiderado||''}</div>
     </div>
   </div>
   <div class="col">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Comunicação</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Comunicação</div>
     <div class="bi" style="border-color:${corPerfil};background:${corPerfil}10;margin-bottom:6px;">
       <div class="bil" style="color:${corPerfil};">Como se comunica</div>
       <div class="bit">${estilosComo[dom]||''}</div>
     </div>
-    <div class="bi" style="border-color:#888;background:#f8f8f8;">
+    <div class="bi" style="border-color:var(--k-b-888888,#888);background:#f8f8f8;">
       <div class="bil" style="color:#555;">Como comunicar com este perfil</div>
       <div class="bit">${estilosPara[dom]||''}</div>
     </div>
@@ -1298,13 +1330,13 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 
 <!-- QUADRANTE DISC -->
 <div class="mb12">
-  <div class="st" style="color:#555;border-color:#555;">Posicionamento no Quadrante DISC</div>
+  <div class="st" style="color:#555;border-color:var(--k-b-555555,#555);">Posicionamento no Quadrante DISC</div>
   <div style="display:flex;gap:14px;align-items:center;">
     ${quadranteSVG()}
     <div style="flex:1;">
       <p style="font-size:11px;color:#333;line-height:1.6;margin-bottom:8px;">O quadrante mostra onde o perfil <strong style="color:${corPerfil};">${dom}+${sec}</strong> se posiciona nas duas grandes dimensões do comportamento humano: <strong>ritmo</strong> (rápido vs. cauteloso) e <strong>foco</strong> (pessoas vs. tarefas).</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
-        <div style="background:#fdf0f0;border-left:3px solid #c0392b;padding:4px 8px;border-radius:0 4px 4px 0;"><div style="font-size:8.5px;font-weight:700;color:#c0392b;">D — Dominância</div><div style="font-size:10px;color:#555;">Rápido · Foco em tarefas</div></div>
+        <div style="background:#fdf0f0;border-left:3px solid #c0392b;padding:4px 8px;border-radius:0 4px 4px 0;"><div style="font-size:8.5px;font-weight:700;color:var(--k-c-c0392b,#c0392b);">D — Dominância</div><div style="font-size:10px;color:#555;">Rápido · Foco em tarefas</div></div>
         <div style="background:#fffbf0;border-left:3px solid #d68910;padding:4px 8px;border-radius:0 4px 4px 0;"><div style="font-size:8.5px;font-weight:700;color:#d68910;">I — Influência</div><div style="font-size:10px;color:#555;">Rápido · Foco em pessoas</div></div>
         <div style="background:#f0fbf4;border-left:3px solid #1e8449;padding:4px 8px;border-radius:0 4px 4px 0;"><div style="font-size:8.5px;font-weight:700;color:#1e8449;">S — Estabilidade</div><div style="font-size:10px;color:#555;">Cauteloso · Foco em pessoas</div></div>
         <div style="background:#eef5fb;border-left:3px solid #1a5276;padding:4px 8px;border-radius:0 4px 4px 0;"><div style="font-size:8.5px;font-weight:700;color:#1a5276;">C — Conformidade</div><div style="font-size:10px;color:#555;">Cauteloso · Foco em tarefas</div></div>
@@ -1315,7 +1347,7 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 
 <!-- COMPATIBILIDADE -->
 <div class="mb12">
-  <div class="st" style="color:#555;border-color:#555;">Compatibilidade com Outros Perfis DISC</div>
+  <div class="st" style="color:#555;border-color:var(--k-b-555555,#555);">Compatibilidade com Outros Perfis DISC</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
     ${['D','I','S','C'].map(f=>{
       const cs={D:'#c0392b',I:'#d68910',S:'#1e8449',C:'#1a5276'};
@@ -1331,8 +1363,8 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 
 <!-- SINAIS POSITIVOS E DE ALERTA + PONTOS DE ATENÇÃO -->
 <div>
-  <div class="st" style="color:#555;border-color:#555;">🔎 O que Observar Durante a Entrevista</div>
-  <p style="font-size:9.5px;color:#777;font-style:italic;margin-bottom:6px;">Sinais comportamentais típicos e pontos de atenção para o recrutador.</p>
+  <div class="st" style="color:#555;border-color:var(--k-b-555555,#555);">🔎 O que Observar Durante a Entrevista</div>
+  <p style="font-size:9.5px;color:var(--k-t-777777,#777);font-style:italic;margin-bottom:6px;">Sinais comportamentais típicos e pontos de atenção para o recrutador.</p>
   <!-- Sinais positivos e alerta -->
   <div style="display:flex;gap:10px;">
     <div style="flex:1;">
@@ -1340,7 +1372,7 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
       ${(perfil.sinaisPositivos||[]).map(s=>`<div style="font-size:11px;color:#333;padding:3px 0 3px 8px;border-left:3px solid #2ecc71;margin-bottom:4px;line-height:1.4;background:#f0fbf4;">${s}</div>`).join('')}
     </div>
     <div style="flex:1;">
-      <div style="font-size:9px;font-weight:700;color:#c0392b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;border-bottom:2px solid #c0392b;padding-bottom:2px;">⚠ Sinais de Alerta</div>
+      <div style="font-size:9px;font-weight:700;color:var(--k-c-c0392b,#c0392b);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;border-bottom:2px solid #c0392b;padding-bottom:2px;">⚠ Sinais de Alerta</div>
       ${(perfil.sinaisAlerta||[]).map(s=>`<div style="font-size:11px;color:#333;padding:3px 0 3px 8px;border-left:3px solid #e74c3c;margin-bottom:4px;line-height:1.4;background:#fdf5f5;">${s}</div>`).join('')}
     </div>
   </div>
@@ -1361,31 +1393,31 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
   <div style="font-size:14px;font-weight:900;letter-spacing:1px;">ORIZON</div>
   <div style="font-size:9px;opacity:.75;">${perfil.nome} + ${perfilSec.nome} — ${nome.toUpperCase()}</div>
 </div>
-<div style="background:${corPerfil};padding:4px 22px;color:#fff;font-size:9px;">Relatório DISC · ${dataHoje} · Ferramentas de Seleção · Uso interno</div>
+<div style="background:${corPerfil};padding:4px 22px;color:var(--k-t-ffffff,#fff);font-size:9px;">Relatório DISC · ${dataHoje} · Ferramentas de Seleção · Uso interno</div>
 <div class="pad">
 
 <!-- RESUMO EXECUTIVO -->
 <div class="mb12" style="background:#f6fbee;border:1.5px solid #3b82f644;border-radius:6px;padding:9px 13px;">
-  <div style="font-size:9px;font-weight:900;color:#1e3a5f;text-transform:uppercase;letter-spacing:.9px;margin-bottom:7px;border-bottom:2px solid #3b82f6;padding-bottom:3px;">📋 Resumo Executivo — Página de Entrevista</div>
+  <div style="font-size:9px;font-weight:900;color:var(--k-c-1e3a5f,#1e3a5f);text-transform:uppercase;letter-spacing:.9px;margin-bottom:7px;border-bottom:2px solid #3b82f6;padding-bottom:3px;">📋 Resumo Executivo — Página de Entrevista</div>
   <div style="display:flex;gap:12px;align-items:flex-start;">
     <div style="flex:1;">
-      <div style="font-size:8.5px;font-weight:700;color:#1e3a5f;margin-bottom:3px;text-transform:uppercase;">Candidato</div>
+      <div style="font-size:8.5px;font-weight:700;color:var(--k-c-1e3a5f,#1e3a5f);margin-bottom:3px;text-transform:uppercase;">Candidato</div>
       <div style="font-size:12px;font-weight:900;color:#111;">${nome.toUpperCase()}</div>
       <div style="font-size:10px;color:#555;margin-top:1px;">Vaga: ${vagaAtual}</div>
       <div style="font-size:10px;color:#555;">Data: ${dataHoje}</div>
     </div>
     <div style="flex:1;">
-      <div style="font-size:8.5px;font-weight:700;color:#1e3a5f;margin-bottom:3px;text-transform:uppercase;">Perfil Dominante</div>
+      <div style="font-size:8.5px;font-weight:700;color:var(--k-c-1e3a5f,#1e3a5f);margin-bottom:3px;text-transform:uppercase;">Perfil Dominante</div>
       <div style="font-size:13px;font-weight:900;color:${corPerfil};">${perfil.emoji} ${perfil.nome} + ${perfilSec.nome}</div>
       <div style="font-size:10px;color:#555;margin-top:1px;">${comboNome}</div>
     </div>
     <div style="flex:1.2;">
-      <div style="font-size:8.5px;font-weight:700;color:#1e3a5f;margin-bottom:4px;text-transform:uppercase;">Escala DISC</div>
+      <div style="font-size:8.5px;font-weight:700;color:var(--k-c-1e3a5f,#1e3a5f);margin-bottom:4px;text-transform:uppercase;">Escala DISC</div>
       ${['D','I','S','C'].map(f=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:14px;font-size:9px;font-weight:700;color:${cl[f]};">${f}</span><div style="flex:1;height:5px;background:#e5e5e5;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct[f]}%;background:${cl[f]};border-radius:3px;"></div></div><span style="font-size:9px;font-weight:700;color:${cl[f]};width:22px;text-align:right;">${pct[f]}</span></div>`).join('')}
     </div>
     <div style="flex:1.2;">
-      <div style="font-size:8.5px;font-weight:700;color:#1e3a5f;margin-bottom:4px;text-transform:uppercase;">Top 3 Áreas</div>
-      ${fitScores.slice(0,3).map((v,i)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;"><span style="font-size:9px;color:#888;width:10px;">${i+1}.</span><span style="flex:1;font-size:9.5px;color:#333;">${v.n}</span><span style="font-size:9px;font-weight:700;color:${cF(v.s)};">${v.s}%</span></div>`).join('')}
+      <div style="font-size:8.5px;font-weight:700;color:var(--k-c-1e3a5f,#1e3a5f);margin-bottom:4px;text-transform:uppercase;">Top 3 Áreas</div>
+      ${fitScores.slice(0,3).map((v,i)=>`<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;"><span style="font-size:9px;color:var(--k-t-888888,#888);width:10px;">${i+1}.</span><span style="flex:1;font-size:9.5px;color:#333;">${v.n}</span><span style="font-size:9px;font-weight:700;color:${cF(v.s)};">${v.s}%</span></div>`).join('')}
     </div>
   </div>
 </div>
@@ -1393,7 +1425,7 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 <!-- PERGUNTAS SUGERIDAS -->
 <div class="mb12">
   <div class="st" style="color:#6c3483;border-color:#6c3483;">💬 Perguntas Sugeridas para a Entrevista</div>
-  <p style="font-size:9.5px;color:#777;font-style:italic;margin-bottom:7px;">Baseadas no perfil comportamental — adapte ao contexto da vaga.</p>
+  <p style="font-size:9.5px;color:var(--k-t-777777,#777);font-style:italic;margin-bottom:7px;">Baseadas no perfil comportamental — adapte ao contexto da vaga.</p>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
     ${(perguntasSelecionadas||[]).map((q,i)=>`
     <div style="border-left:3px solid #9b59b6;background:#f9f5ff;padding:7px 10px;border-radius:0 4px 4px 0;">
@@ -1409,9 +1441,9 @@ ${obsTexto
       <div class="st" style="color:#1e40af;border-color:#1e40af;">📝 Observações do Recrutador</div>
       <p style="font-size:12px;color:#333;line-height:1.6;white-space:pre-wrap;margin-top:4px;">${obsTexto}</p>
     </div>`
-  : `<div class="mb12" style="background:#f9f9f9;border-left:4px solid #ccc;border-radius:0 6px 6px 0;padding:10px 14px;min-height:80px;">
-      <div class="st" style="color:#999;border-color:#ccc;">📝 Observações do Recrutador</div>
-      <p style="font-size:10.5px;color:#bbb;font-style:italic;margin-top:4px;">Nenhuma observação registrada para este candidato.</p>
+  : `<div class="mb12" style="background:#f9f9f9;border-left:4px solid var(--k-b-cccccc,#ccc);border-radius:0 6px 6px 0;padding:10px 14px;min-height:80px;">
+      <div class="st" style="color:var(--k-t-999999,#999);border-color:var(--k-b-cccccc,#ccc);">📝 Observações do Recrutador</div>
+      <p style="font-size:10.5px;color:var(--k-t-bbbbbb,#bbb);font-style:italic;margin-top:4px;">Nenhuma observação registrada para este candidato.</p>
     </div>`
 }
 
@@ -1426,8 +1458,8 @@ ${obsTexto
     </div>
   </div>
   <div style="flex:0 0 90px;text-align:center;">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(resultURL)}" width="90" height="90" style="border-radius:6px;border:1px solid #ddd;" onerror="this.style.display='none'"/>
-    <div style="font-size:8px;color:#999;margin-top:3px;line-height:1.4;">Abrir resultado<br/>online</div>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(resultURL)}" width="90" height="90" style="border-radius:6px;border:1px solid var(--k-b-dddddd,#ddd);" onerror="this.style.display='none'"/>
+    <div style="font-size:8px;color:var(--k-t-999999,#999);margin-top:3px;line-height:1.4;">Abrir resultado<br/>online</div>
   </div>
 </div>
 
@@ -1498,7 +1530,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
 .pad{padding:11px 22px;}
 .r2{display:flex;gap:14px;}
 .col{flex:1;min-width:0;}
-.col+.col{border-left:1px solid #ebebeb;padding-left:14px;}
+.col+.col{border-left:1px solid var(--k-b-ebebeb,#ebebeb);padding-left:14px;}
 .st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;border-bottom:2px solid;padding-bottom:2px;margin-bottom:6px;}
 .bi{border-left:3px solid;padding:5px 9px;border-radius:0 3px 3px 0;margin-bottom:4px;}
 .bil{font-size:9.5px;font-weight:700;margin-bottom:1px;}
@@ -1508,9 +1540,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
 @media print{@page{margin:0;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.nopr{display:none!important;}.pg{width:100%;}}
 </style></head><body>
 <div class="nopr" style="background:#1e3a5f;padding:8px 20px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:99;">
-<span style="color:#fff;font-size:13px;font-weight:700;">Resultado DISC — ${nome} (Versão Candidato)</span>
+<span style="color:var(--k-t-ffffff,#fff);font-size:13px;font-weight:700;">Resultado DISC — ${nome} (Versão Candidato)</span>
 <button onclick="window.print()" style="margin-left:auto;background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:6px 18px;font-size:13px;font-weight:700;cursor:pointer;">🖨️ Salvar como PDF</button>
-<button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕ Fechar</button>
+<button onclick="window.close()" style="background:var(--k-w-150,var(--k-w-150,rgba(255,255,255,0.15)));color:var(--k-t-ffffff,#fff);border:1px solid var(--k-w-300,var(--k-w-300,rgba(255,255,255,0.3)));border-radius:7px;padding:6px 12px;font-size:13px;cursor:pointer;">✕ Fechar</button>
 </div>
 <div class="pg">
 <div style="background:#1e3a5f;padding:12px 22px;color:#fff;display:flex;justify-content:space-between;align-items:flex-start;">
@@ -1518,32 +1550,32 @@ body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-heig
   <div style="font-size:9px;opacity:.7;margin-top:1px;">RESULTADO DO PERFIL COMPORTAMENTAL DISC</div></div>
   <div style="font-size:9px;opacity:.7;text-align:right;line-height:1.7;"><div>${dataHoje}</div><div>Resultado do candidato</div></div>
 </div>
-<div style="background:${corPerfil};padding:8px 22px;color:#fff;display:flex;align-items:center;gap:10px;">
+<div style="background:${corPerfil};padding:8px 22px;color:var(--k-t-ffffff,#fff);display:flex;align-items:center;gap:10px;">
   <div style="font-size:20px;">${perfil.emoji}</div>
   <div><div style="font-size:13.5px;font-weight:900;">${perfil.nome} — ${comboNome}</div>
   <div style="font-size:9.5px;opacity:.88;margin-top:1px;">${perfil.subtitulo}</div></div>
 </div>
-<div style="background:#f4f4f4;padding:7px 22px;border-bottom:2px solid #ddd;display:flex;gap:0;">
+<div style="background:#f4f4f4;padding:7px 22px;border-bottom:2px solid var(--k-b-dddddd,#ddd);display:flex;gap:0;">
 ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:'Data',v:dataHoje.toUpperCase()}]
-.map(x=>`<div style="flex:1;padding-right:10px;"><div style="font-size:8.5px;color:#999;text-transform:uppercase;letter-spacing:.6px;">${x.l}</div><div style="font-weight:700;font-size:12px;color:#111;margin-top:1px;">${x.v}</div></div>`).join('')}
+.map(x=>`<div style="flex:1;padding-right:10px;"><div style="font-size:8.5px;color:var(--k-t-999999,#999);text-transform:uppercase;letter-spacing:.6px;">${x.l}</div><div style="font-weight:700;font-size:12px;color:#111;margin-top:1px;">${x.v}</div></div>`).join('')}
 </div>
 <div class="pad">
 <div style="border-left:4px solid ${corPerfil};background:#f6fbee;padding:7px 11px;border-radius:0 5px 5px 0;margin-bottom:11px;font-size:11.5px;color:#333;line-height:1.55;">${perfil.descricao}</div>
 <div class="r2 mb12" style="align-items:flex-start;">
   <div style="flex:0 0 185px;text-align:center;">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;text-align:left;">Gráfico Radar</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;text-align:left;">Gráfico Radar</div>
     ${radarSVG2()}
   </div>
-  <div style="flex:1;border-left:1px solid #ebebeb;padding-left:14px;">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Escala 0–100</div>
+  <div style="flex:1;border-left:1px solid var(--k-b-ebebeb,#ebebeb);padding-left:14px;">
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Escala 0–100</div>
     ${['D','I','S','C'].map(f=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;"><div style="width:100px;font-size:11px;font-weight:700;color:${cl[f]};flex-shrink:0;">${nm[f]}</div><div style="flex:1;height:6px;background:#e5e5e5;border-radius:3px;overflow:hidden;"><div style="height:100%;width:${pct[f]}%;background:${cl[f]};border-radius:3px;"></div></div><div style="width:20px;font-size:11px;font-weight:700;color:${cl[f]};text-align:right;">${pct[f]}</div></div>`).join('')}
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;margin-top:9px;">Seus Pontos Fortes</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;margin-top:9px;">Seus Pontos Fortes</div>
     ${(perfil.forcas||[]).map(x=>`<div class="bul"><span style="color:#1e8449;flex-shrink:0;">✓</span>${x}</div>`).join('')}
   </div>
 </div>
 <div class="r2 mb12">
   <div class="col">
-    <div class="st" style="color:#c0392b;border-color:#c0392b;">Comportamento sob Pressão</div>
+    <div class="st" style="color:var(--k-c-c0392b,#c0392b);border-color:#c0392b;">Comportamento sob Pressão</div>
     <p style="font-size:11.5px;color:#333;line-height:1.45;margin-bottom:5px;">${perfil.pressao||''}</p>
     <div class="bi" style="border-color:#1e8449;background:#f0fbf4;"><div class="bil" style="color:#1e8449;">Diferencial positivo</div><div class="bit">${perfil.pressaoPositivo||''}</div></div>
   </div>
@@ -1559,16 +1591,16 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
   <div style="font-size:14px;font-weight:900;">ORIZON</div>
   <div style="font-size:9px;opacity:.75;">${nome.toUpperCase()} — Resultado DISC</div>
 </div>
-<div style="background:${corPerfil};padding:4px 22px;color:#fff;font-size:9px;">Resultado DISC · ${dataHoje}</div>
+<div style="background:${corPerfil};padding:4px 22px;color:var(--k-t-ffffff,#fff);font-size:9px;">Resultado DISC · ${dataHoje}</div>
 <div class="pad">
 <div class="r2 mb12">
   <div class="col">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Como você se Comunica</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Como você se Comunica</div>
     <div class="bi" style="border-color:${corPerfil};background:#f6fbee;"><div class="bil" style="color:${corPerfil};">Seu estilo de comunicação</div><div class="bit">${estilosComo[dom]||''}</div></div>
     <div class="bi" style="border-color:#1e40af;background:#f6fbee;"><div class="bil" style="color:#1e40af;">Como comunicar melhor com outros</div><div class="bit">${estilosPara[dom]||''}</div></div>
   </div>
   <div class="col">
-    <div class="st" style="color:#1e3a5f;border-color:#1e3a5f;">Ambiente Ideal para Você</div>
+    <div class="st" style="color:var(--k-c-1e3a5f,#1e3a5f);border-color:#1e3a5f;">Ambiente Ideal para Você</div>
     <div class="bi" style="border-color:#1e40af;background:#f6fbee;"><div class="bit">${perfil.ambienteIdeal||''}</div></div>
     <div class="st" style="color:#b36200;border-color:#b36200;margin-top:8px;">Áreas de Desenvolvimento</div>
     ${(perfil.melhorar||[]).map(x=>`<div class="bul"><span style="color:#b36200;flex-shrink:0;">→</span>${x}</div>`).join('')}
@@ -1576,14 +1608,14 @@ ${[{l:'Candidato',v:nome.toUpperCase()},{l:'Vaga',v:vagaAtual.toUpperCase()},{l:
 </div>
 <div class="mb12">
   <div class="st" style="color:#6c3483;border-color:#6c3483;">Perguntas Que Podem Surgir na Entrevista</div>
-  <p style="font-size:10px;color:#888;margin-bottom:6px;font-style:italic;">Baseadas no seu perfil comportamental — prepare respostas com exemplos concretos.</p>
+  <p style="font-size:10px;color:var(--k-t-888888,#888);margin-bottom:6px;font-style:italic;">Baseadas no seu perfil comportamental — prepare respostas com exemplos concretos.</p>
   ${(perguntasSelecionadas||[]).map((q,i)=>`<div style="font-size:11.5px;color:#333;padding:5px 0 5px 10px;border-left:3px solid #9b59b6;margin-bottom:5px;line-height:1.45;"><span style="font-size:9px;font-weight:700;color:#9b59b6;display:block;margin-bottom:1px;">PERGUNTA ${i+1}</span>${q}</div>`).join('')}
 </div>
 <div style="background:#fff8e7;border:1px solid #e0a000;border-radius:5px;padding:9px 12px;">
 <p style="font-size:11.5px;color:#7a4e00;line-height:1.55;"><strong>ℹ️ Sobre este resultado:</strong> O teste DISC traça tendências comportamentais com base nas suas respostas. Ele é um instrumento de autoconhecimento e apoio ao processo seletivo, não uma avaliação de capacidade técnica ou inteligência.</p>
 </div>
 </div>
-<div style="background:#eee;padding:7px 24px;border-top:2px solid #ddd;display:flex;justify-content:space-between;font-size:10px;color:#999;">
+<div style="background:#eee;padding:7px 24px;border-top:2px solid var(--k-b-dddddd,#ddd);display:flex;justify-content:space-between;font-size:10px;color:var(--k-t-999999,#999);">
 <span>Orizon · Guaíba/RS</span><span>Resultado gerado automaticamente</span><span>${dataHoje}</span>
 </div>
 </div>

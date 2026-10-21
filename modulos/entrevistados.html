@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script id="orizon-tema-boot">(function(){var K="orizon_tema";function ap(t){document.documentElement.setAttribute("data-theme",t==="light"?"light":"dark");}try{var t=localStorage.getItem(K);if(t==="light"||t==="dark")ap(t);}catch(e){}window.addEventListener("storage",function(e){if(e.key===K&&(e.newValue==="light"||e.newValue==="dark"))ap(e.newValue);});window.addEventListener("message",function(e){var d=e.data;if(d&&d.orizonTema)ap(d.orizonTema);});})();window.OZC=function(n,f){try{var v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v||f;}catch(e){return f;}};(function(){var T=null;function P(c){var m=c&&c.match(/rgba?\(([^)]+)\)/);if(!m)return null;var a=m[1].split(',').map(parseFloat);return{r:a[0],g:a[1],b:a[2],a:a.length>3?a[3]:1};}
+function L(c){function f(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);}return .2126*f(c.r)+.7152*f(c.g)+.0722*f(c.b);}
+function R(a,b){var x=L(a),y=L(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+function BG(el){var ly=[],e=el;while(e&&e.nodeType===1){var cs=getComputedStyle(e);if(/gradient/.test(cs.backgroundImage))return null;var c=P(cs.backgroundColor);if(c&&c.a>0){ly.push(c);if(c.a>=.98)break;}e=e.parentElement;}
+var b={r:255,g:255,b:255};for(var i=ly.length-1;i>=0;i--){var l=ly[i];b={r:l.r*l.a+b.r*(1-l.a),g:l.g*l.a+b.g*(1-l.a),b:l.b*l.a+b.b*(1-l.a)};}return b;}
+function DK(c,bg){var r=c.r/255,g=c.g/255,b=c.b/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),h=0,s=0,l=(mx+mn)/2,d=mx-mn;
+if(d){s=l>.5?d/(2-mx-mn):d/(mx+mn);if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;}
+function hu(p,q,t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}
+var o=c;for(var i=0;i<16;i++){l=Math.max(0,l-.035);var q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;o=s?{r:hu(p,q,h+1/3)*255,g:hu(p,q,h)*255,b:hu(p,q,h-1/3)*255}:{r:l*255,g:l*255,b:l*255};if(R(o,bg)>=4.5)break;}return o;}
+function restore(){var n=document.querySelectorAll('[data-oz-orig]');for(var i=0;i<n.length;i++){var el=n[i],v=el.getAttribute('data-oz-orig').split('|');if(v[0])el.style.setProperty('color',v[0],v[1]||'');else el.style.removeProperty('color');el.removeAttribute('data-oz-orig');}}
+function run(){T=null;var de=document.documentElement;if(de.getAttribute('data-theme')!=='light'){restore();return;}
+if(!document.body)return;var els=document.body.getElementsByTagName('*');
+for(var i=0;i<els.length;i++){var el=els[i],tg=el.tagName;if(tg==='SCRIPT'||tg==='STYLE'||tg==='OPTION'||tg==='CANVAS'||tg==='SVG'||el.hasAttribute('data-oz-orig'))continue;
+var has=false;for(var k=el.firstChild;k;k=k.nextSibling){if(k.nodeType===3&&k.nodeValue.trim().length>0){has=true;break;}}if(!has)continue;
+var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')continue;var fg=P(cs.color);if(!fg||fg.a<.5)continue;var bg=BG(el);if(!bg||L(bg)<.45)continue;
+if(R(fg,bg)>=3.6)continue;var nc=DK(fg,bg);el.setAttribute('data-oz-orig',el.style.getPropertyValue('color')+'|'+el.style.getPropertyPriority('color'));
+el.style.setProperty('color','rgb('+Math.round(nc.r)+','+Math.round(nc.g)+','+Math.round(nc.b)+')','important');}}
+function sch(){if(T)return;T=setTimeout(run,160);}
+function init(){run();try{new MutationObserver(sch).observe(document.body,{childList:true,subtree:true,characterData:true});}catch(e){}
+try{new MutationObserver(function(){run();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();window.addEventListener('load',sch);})();</script>
+
 <script src="../guard.js"></script>
 <script src="../supabase-config.js"></script>
 <meta charset="UTF-8"/>
@@ -33,8 +55,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 .sub{font-size:0.8rem;color:var(--muted);}
 .btn{font-family:inherit;font-size:0.78rem;font-weight:700;border-radius:11px;padding:0.52rem 1.1rem;border:1px solid;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:0.4rem;}
 .btn-accent{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent;}.btn-accent:hover{opacity:0.88;}
-.btn-ghost{background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.09);}.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text);}
-.btn-blue{background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.25);}.btn-blue:hover{background:rgba(52,152,219,0.18);}
+.btn-ghost{background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));color:var(--muted);border-color:var(--k-w-090,var(--k-w-090,rgba(255,255,255,0.09)));}.btn-ghost:hover{background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));color:var(--text);}
+.btn-blue{background:rgba(52,152,219,0.1);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.25);}.btn-blue:hover{background:rgba(52,152,219,0.18);}
 .btn-amber{background:rgba(245,158,11,0.1);color:var(--accent);border-color:rgba(245,158,11,0.25);}.btn-amber:hover{background:rgba(245,158,11,0.18);}
 
 /* STATS BAR */
@@ -42,7 +64,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 .stat-item{display:flex;flex-direction:column;gap:0.1rem;}
 .stat-val{font-size:1.3rem;font-weight:900;color:var(--accent);line-height:1;}
 .stat-lbl{font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
-.stat-div{width:1px;height:32px;background:rgba(255,255,255,0.07);}
+.stat-div{width:1px;height:32px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));}
 .stat-disc{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;}
 .stat-disc-item{display:flex;flex-direction:column;align-items:center;gap:0.05rem;}
 .stat-disc-val{font-size:0.9rem;font-weight:900;}
@@ -50,30 +72,30 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 
 /* FILTROS */
 .filtros-wrap{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.2rem;}
-.filtros-wrap input,.filtros-wrap select{background:#131313;border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:0.52rem 0.85rem;color:#f0f0f0;font-family:inherit;font-size:0.8rem;outline:none;transition:border-color 0.2s;}
+.filtros-wrap input,.filtros-wrap select{background:var(--k-bg-131313,#131313);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:9px;padding:0.52rem 0.85rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:inherit;font-size:0.8rem;outline:none;transition:border-color 0.2s;}
 .filtros-wrap input:focus,.filtros-wrap select:focus{border-color:var(--accent);}
 .filtros-wrap input{flex:1;min-width:200px;max-width:320px;}
 .filtros-wrap select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.7rem center;padding-right:2rem;}
-.filtros-wrap select option{background:#161616;color:#f0f0f0;}
+.filtros-wrap select option{background:var(--k-bg-161616,#161616);color:var(--k-t-f0f0f0,#f0f0f0);}
 .count-txt{font-size:0.72rem;color:var(--muted);align-self:center;margin-left:auto;}
 
 /* SEÇÃO CARD */
 .secao-card{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:1rem;transition:border-color 0.2s;}
 .secao-card:hover{border-color:var(--border2);}
 .secao-hdr{display:flex;align-items:center;gap:0.85rem;padding:1rem 1.1rem;border-left:3px solid var(--accent);cursor:pointer;user-select:none;}
-.secao-hdr:hover{background:rgba(255,255,255,0.015);}
+.secao-hdr:hover{background:var(--k-w-015,var(--k-w-015,rgba(255,255,255,0.015)));}
 .secao-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .secao-nome{font-size:0.95rem;font-weight:800;color:var(--text);}
 .secao-meta{font-size:0.65rem;color:var(--muted);margin-top:0.08rem;}
 .secao-btn{font-family:inherit;font-size:0.68rem;font-weight:700;border-radius:8px;padding:0.3rem 0.7rem;border:1px solid;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
 .secao-btn:hover{opacity:0.8;}
-.secao-btn-icon{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.8rem;transition:all 0.15s;}
-.secao-btn-icon:hover{background:rgba(255,255,255,0.09);}
+.secao-btn-icon{background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.8rem;transition:all 0.15s;}
+.secao-btn-icon:hover{background:var(--k-w-090,var(--k-w-090,rgba(255,255,255,0.09)));}
 .secao-toggle{background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;transition:transform 0.22s;width:24px;text-align:center;}
 .secao-toggle.collapsed{transform:rotate(-90deg);}
 .secao-body{padding:0 1rem 0.85rem;display:flex;flex-direction:column;gap:0.55rem;}
 .secao-body.hidden{display:none;}
-.secao-empty{text-align:center;padding:1.2rem;font-size:0.78rem;color:var(--muted);border:1px dashed rgba(255,255,255,0.07);border-radius:12px;margin-top:0.2rem;}
+.secao-empty{text-align:center;padding:1.2rem;font-size:0.78rem;color:var(--muted);border:1px dashed var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:12px;margin-top:0.2rem;}
 .secao-add-btn-inline{font-family:inherit;font-size:0.7rem;font-weight:700;color:var(--accent);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:7px;padding:0.25rem 0.65rem;cursor:pointer;margin-top:0.4rem;}
 .secao-add-btn-inline:hover{background:rgba(245,158,11,0.14);}
 
@@ -84,8 +106,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 .empty-state p{font-size:0.8rem;line-height:1.6;max-width:380px;margin:0 auto 1.2rem;}
 
 /* CANDIDATO CARD */
-.cand-card{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:0.85rem 0.95rem;position:relative;transition:border-color 0.18s;}
-.cand-card:hover{border-color:rgba(255,255,255,0.13);}
+.cand-card{background:var(--k-w-025,var(--k-w-025,rgba(255,255,255,0.025)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:13px;padding:0.85rem 0.95rem;position:relative;transition:border-color 0.18s;}
+.cand-card:hover{border-color:var(--k-w-130,var(--k-w-130,rgba(255,255,255,0.13)));}
 .cand-card-inner{display:flex;align-items:flex-start;gap:0.8rem;}
 .cand-avatar{width:38px;height:38px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
 .cand-info{flex:1;min-width:0;}
@@ -95,31 +117,31 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 .chip{font-size:0.65rem;font-weight:700;padding:0.16rem 0.55rem;border-radius:99px;border:1px solid;}
 .fit-bar-row{display:flex;align-items:center;gap:0.4rem;margin-top:0.28rem;}
 .fit-bar-lbl{font-size:0.56rem;font-weight:700;width:50px;flex-shrink:0;}
-.fit-bar-track{flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;}
+.fit-bar-track{flex:1;height:4px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:99px;overflow:hidden;}
 .fit-bar-fill{height:100%;border-radius:99px;}
 .fit-bar-pct{font-size:0.62rem;font-weight:700;width:28px;text-align:right;}
-.cand-foot{display:flex;gap:0.28rem;flex-wrap:wrap;margin-top:0.6rem;padding-top:0.55rem;border-top:1px solid rgba(255,255,255,0.05);}
+.cand-foot{display:flex;gap:0.28rem;flex-wrap:wrap;margin-top:0.6rem;padding-top:0.55rem;border-top:1px solid var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));}
 .btn-sm{font-family:inherit;font-size:0.64rem;font-weight:700;border-radius:7px;padding:0.22rem 0.5rem;border:1px solid;cursor:pointer;transition:all 0.15s;text-decoration:none;display:inline-flex;align-items:center;gap:0.18rem;}
 .btn-sm:hover{opacity:0.8;}
 .cand-actions{position:absolute;top:0.55rem;right:0.55rem;display:flex;gap:0.25rem;}
 .cand-action-btn{background:none;border:1px solid transparent;border-radius:6px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.75rem;transition:all 0.15s;}
-.cand-action-btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12);}
+.cand-action-btn:hover{background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-color:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));}
 .cands-grid{display:flex;flex-direction:column;gap:0.55rem;}
 
 /* MODAL BASE */
-.overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;}
-.modal-box{background:#111;border:1px solid var(--border2);border-radius:22px;width:100%;max-width:460px;padding:1.8rem;position:relative;max-height:90vh;overflow-y:auto;}
-.modal-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:0.95rem;display:flex;align-items:center;justify-content:center;}
-.modal-close:hover{background:rgba(255,255,255,0.12);color:#fff;}
+.overlay{position:fixed;inset:0;z-index:9999;background:var(--k-ov-88,var(--k-bg-r0g0b0a88,rgba(0,0,0,0.88)));backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal-box{background:var(--k-bg-111111,#111);border:1px solid var(--border2);border-radius:22px;width:100%;max-width:460px;padding:1.8rem;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-close{position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--muted);font-size:0.95rem;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{background:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));color:var(--k-t-ffffff,#fff);}
 .modal-title{font-size:1rem;font-weight:900;margin-bottom:0.2rem;}
 .modal-sub{font-size:0.75rem;color:var(--muted);margin-bottom:1.2rem;line-height:1.55;}
 .field-lbl{font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:0.3rem;}
-.field-inp{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem 0.8rem;color:#f0f0f0;font-family:inherit;font-size:0.83rem;outline:none;transition:border-color 0.2s;}
+.field-inp{width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.6rem 0.8rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:inherit;font-size:0.83rem;outline:none;transition:border-color 0.2s;}
 .field-inp:focus{border-color:var(--accent);}
 .field-inp::placeholder{color:#555;}
 .field-inp.ta{resize:vertical;min-height:60px;font-size:0.76rem;line-height:1.5;}
-select.field-inp{background-color:#1a1a1a;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;appearance:none;cursor:pointer;}
-select.field-inp option{background:#1e1e1e;color:#f0f0f0;}
+select.field-inp{background-color:var(--k-bg-1a1a1a,#1a1a1a);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;appearance:none;cursor:pointer;}
+select.field-inp option{background:var(--k-bg-1e1e1e,#1e1e1e);color:var(--k-t-f0f0f0,#f0f0f0);}
 .save-btn{width:100%;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:10px;padding:0.7rem;font-family:inherit;font-size:0.85rem;font-weight:800;cursor:pointer;transition:opacity 0.2s;}
 .save-btn:hover{opacity:0.88;}
 .save-btn:disabled{opacity:0.4;cursor:not-allowed;}
@@ -128,22 +150,22 @@ select.field-inp option{background:#1e1e1e;color:#f0f0f0;}
 .cor-picker{display:flex;gap:0.45rem;flex-wrap:wrap;margin-top:0.4rem;}
 .cor-opt{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.15s;flex-shrink:0;}
 .cor-opt:hover{transform:scale(1.15);}
-.cor-opt.sel{border-color:#fff;transform:scale(1.1);}
+.cor-opt.sel{border-color:var(--k-b-ffffff,#fff);transform:scale(1.1);}
 
 /* MODAL PERFIL COMPLETO */
-.perfil-overlay{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto;}
+.perfil-overlay{position:fixed;inset:0;z-index:10000;background:var(--k-ov-92,var(--k-bg-r0g0b0a92,rgba(0,0,0,0.92)));backdrop-filter:blur(12px);display:none;align-items:flex-start;justify-content:center;padding:1rem;overflow-y:auto;}
 .perfil-overlay.open{display:flex;}
-.perfil-box{background:#0f0f0f;border:1px solid rgba(245,158,11,0.22);border-radius:22px;width:100%;max-width:860px;position:relative;margin:auto;}
-.perfil-hdr{padding:1.4rem 1.6rem 1rem;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:flex-start;gap:1rem;}
+.perfil-box{background:var(--k-bg-0f0f0f,#0f0f0f);border:1px solid rgba(245,158,11,0.22);border-radius:22px;width:100%;max-width:860px;position:relative;margin:auto;}
+.perfil-hdr{padding:1.4rem 1.6rem 1rem;border-bottom:1px solid var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));display:flex;align-items:flex-start;gap:1rem;}
 .perfil-avatar-lg{width:56px;height:56px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;}
 .perfil-nome{font-size:1.15rem;font-weight:900;margin-bottom:0.15rem;}
 .perfil-meta-sub{font-size:0.7rem;color:var(--muted);}
 .perfil-chips-hdr{display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.5rem;}
-.perfil-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
-.perfil-close:hover{background:rgba(255,255,255,0.12);color:#fff;}
+.perfil-close{position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--muted);font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.perfil-close:hover{background:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));color:var(--k-t-ffffff,#fff);}
 .perfil-vaga-banner{margin:0 1.4rem 0;background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.18);border-radius:12px;padding:0.65rem 1rem;display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;}
 /* ABAS */
-.perfil-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.06);padding:0 1.4rem;overflow-x:auto;scrollbar-width:none;}
+.perfil-tabs{display:flex;gap:0;border-bottom:1px solid var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));padding:0 1.4rem;overflow-x:auto;scrollbar-width:none;}
 .perfil-tabs::-webkit-scrollbar{display:none;}
 .tab-btn{font-family:inherit;font-size:0.72rem;font-weight:700;padding:0.75rem 1rem;background:none;border:none;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.18s;display:flex;align-items:center;gap:0.3rem;}
 .tab-btn:hover{color:var(--text);}
@@ -153,59 +175,59 @@ select.field-inp option{background:#1e1e1e;color:#f0f0f0;}
 .tab-content{display:none;}
 .tab-content.active{display:block;}
 /* SEÇÕES */
-.psec{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:13px;padding:1rem 1.1rem;margin-bottom:0.85rem;}
+.psec{background:var(--k-w-020,var(--k-w-020,rgba(255,255,255,0.02)));border:1px solid var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));border-radius:13px;padding:1rem 1.1rem;margin-bottom:0.85rem;}
 .psec-title{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:0.85rem;display:flex;align-items:center;gap:0.4rem;}
 .psec-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.55rem;}
 /* INPUTS */
 .pi-label{font-size:0.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:0.28rem;}
-.pi{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:0.55rem 0.75rem;color:var(--text);font-family:inherit;font-size:0.82rem;outline:none;transition:border-color 0.2s;}
+.pi{width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:9px;padding:0.55rem 0.75rem;color:var(--text);font-family:inherit;font-size:0.82rem;outline:none;transition:border-color 0.2s;}
 .pi:focus{border-color:var(--accent);}
 .pi::placeholder{color:var(--muted2);}
 .pi.ta{resize:vertical;min-height:70px;font-size:0.76rem;line-height:1.55;}
-select.pi{background-color:rgba(255,255,255,0.05);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;cursor:pointer;}
-select.pi option{background:#1a1a1a;}
+select.pi{background-color:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23666' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;cursor:pointer;}
+select.pi option{background:var(--k-bg-1a1a1a,#1a1a1a);}
 .pi-save-btn{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;border-radius:10px;padding:0.6rem 1.2rem;font-family:inherit;font-size:0.82rem;font-weight:800;cursor:pointer;transition:all 0.2s;width:100%;}
 .pi-save-btn:hover{opacity:0.88;}
 /* SCORES BARS */
 .sbar-row{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;}
 .sbar-lbl{font-size:0.62rem;font-weight:700;width:110px;flex-shrink:0;}
-.sbar-track{flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden;}
+.sbar-track{flex:1;height:6px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:99px;overflow:hidden;}
 .sbar-fill{height:100%;border-radius:99px;transition:width 0.7s ease;}
 .sbar-pct{font-size:0.68rem;font-weight:700;width:36px;text-align:right;}
 /* ACTION BUTTONS */
 .perfil-actions{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.7rem;}
-.pact-btn{display:flex;flex-direction:column;align-items:center;gap:0.2rem;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.09);border-radius:11px;padding:0.55rem 0.5rem;text-decoration:none;cursor:pointer;font-family:inherit;flex:1;min-width:58px;max-width:80px;transition:all 0.15s;}
-.pact-btn:hover{background:rgba(255,255,255,0.08);}
+.pact-btn{display:flex;flex-direction:column;align-items:center;gap:0.2rem;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border:1.5px solid var(--k-w-090,var(--k-w-090,rgba(255,255,255,0.09)));border-radius:11px;padding:0.55rem 0.5rem;text-decoration:none;cursor:pointer;font-family:inherit;flex:1;min-width:58px;max-width:80px;transition:all 0.15s;}
+.pact-btn:hover{background:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));}
 .pact-ico{font-size:1.3rem;line-height:1;}
 .pact-lbl{font-size:0.56rem;font-weight:700;text-align:center;white-space:nowrap;}
 /* MINI STATS */
 .mini-stat-row{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.85rem;}
-.mini-stat{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.6rem 0.85rem;flex:1;min-width:80px;}
+.mini-stat{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.6rem 0.85rem;flex:1;min-width:80px;}
 .mini-stat-val{font-size:1.1rem;font-weight:900;}
 .mini-stat-lbl{font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:0.1rem;}
 /* COMENTÁRIOS */
-.comment-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.75rem 0.9rem;margin-bottom:0.5rem;}
+.comment-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.75rem 0.9rem;margin-bottom:0.5rem;}
 .comment-author{font-size:0.65rem;font-weight:800;color:var(--accent);}
 .comment-date{font-size:0.6rem;color:var(--muted);}
-.comment-text{font-size:0.78rem;color:#ccc;line-height:1.6;margin-top:0.3rem;}
+.comment-text{font-size:0.78rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;margin-top:0.3rem;}
 /* TIMELINE */
 .tl-item{display:flex;gap:0.85rem;padding-bottom:0.8rem;}
 .tl-dot{width:24px;height:24px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:0.65rem;flex-shrink:0;}
 .tl-titulo{font-size:0.8rem;font-weight:700;}
 .tl-meta{font-size:0.62rem;color:var(--muted);}
 /* TAGS */
-.tag-ok{display:inline-flex;align-items:center;gap:0.2rem;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.22);border-radius:99px;padding:0.12rem 0.5rem;font-size:0.63rem;font-weight:700;color:#2ecc71;}
-.tag-warn{display:inline-flex;align-items:center;gap:0.2rem;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.22);border-radius:99px;padding:0.12rem 0.5rem;font-size:0.63rem;font-weight:700;color:#f39c12;}
+.tag-ok{display:inline-flex;align-items:center;gap:0.2rem;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.22);border-radius:99px;padding:0.12rem 0.5rem;font-size:0.63rem;font-weight:700;color:var(--k-c-2ecc71,#2ecc71);}
+.tag-warn{display:inline-flex;align-items:center;gap:0.2rem;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.22);border-radius:99px;padding:0.12rem 0.5rem;font-size:0.63rem;font-weight:700;color:var(--k-c-f39c12,#f39c12);}
 /* COMP TAGS */
 .comp-tag{font-size:0.7rem;font-weight:700;padding:0.28rem 0.7rem;border-radius:99px;border:1px solid;cursor:pointer;transition:all 0.15s;user-select:none;}
 .comp-tag.sel{background:rgba(59,130,246,0.15);color:var(--accent);border-color:rgba(59,130,246,0.35);}
-.comp-tag:not(.sel){background:rgba(255,255,255,0.04);color:var(--muted);border-color:rgba(255,255,255,0.1);}
-.area-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.5rem 0.7rem;cursor:pointer;transition:all 0.15s;text-align:center;}
+.comp-tag:not(.sel){background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));color:var(--muted);border-color:var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));}
+.area-card{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:10px;padding:0.5rem 0.7rem;cursor:pointer;transition:all 0.15s;text-align:center;}
 .area-card.sel{background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);}
 .area-ico{font-size:1.2rem;margin-bottom:0.2rem;}
 .area-lbl{font-size:0.62rem;font-weight:700;}
 /* NOTA do recrutador */
-.nota-area{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:0.6rem 0.8rem;color:#f0f0f0;font-family:inherit;font-size:0.78rem;outline:none;resize:vertical;min-height:70px;line-height:1.5;transition:border-color 0.2s;}
+.nota-area{width:100%;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:9px;padding:0.6rem 0.8rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:inherit;font-size:0.78rem;outline:none;resize:vertical;min-height:70px;line-height:1.5;transition:border-color 0.2s;}
 .nota-area:focus{border-color:var(--accent);}
 .nota-area::placeholder{color:#555;}
 .link-btn{display:inline-flex;align-items:center;gap:0.3rem;font-family:inherit;font-size:0.7rem;font-weight:700;border-radius:8px;padding:0.28rem 0.65rem;border:1px solid;cursor:pointer;text-decoration:none;transition:all 0.15s;}
@@ -223,7 +245,7 @@ select.pi option{background:#1a1a1a;}
 .add-cand-list{max-height:320px;overflow-y:auto;margin:0.8rem 0;display:flex;flex-direction:column;gap:0.45rem;scrollbar-width:thin;scrollbar-color:rgba(245,158,11,0.3) transparent;}
 .add-cand-list::-webkit-scrollbar{width:3px;}
 .add-cand-list::-webkit-scrollbar-thumb{background:rgba(245,158,11,0.3);border-radius:99px;}
-.add-cand-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.6rem 0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.7rem;transition:all 0.15s;}
+.add-cand-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.6rem 0.8rem;cursor:pointer;display:flex;align-items:center;gap:0.7rem;transition:all 0.15s;}
 .add-cand-item:hover{background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.25);}
 .add-cand-item.selected{background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.4);}
 .add-cand-av{width:30px;height:30px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;}
@@ -231,24 +253,24 @@ select.pi option{background:#1a1a1a;}
 .add-cand-sub{font-size:0.62rem;color:var(--muted);}
 .add-cand-check{margin-left:auto;font-size:0.9rem;opacity:0;}
 .add-cand-item.selected .add-cand-check{opacity:1;}
-.add-busca{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:0.5rem 0.75rem;color:#f0f0f0;font-family:inherit;font-size:0.78rem;outline:none;margin-bottom:0.6rem;}
+.add-busca{width:100%;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:9px;padding:0.5rem 0.75rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:inherit;font-size:0.78rem;outline:none;margin-bottom:0.6rem;}
 .add-busca:focus{border-color:var(--accent);}
 .add-busca::placeholder{color:#555;}
 
 
 /* PARECER FINAL — senha modal */
-.pf-pwd-overlay{position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.95);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:1rem;}
-.pf-pwd-box{background:#0e0e0e;border:1px solid rgba(167,139,250,0.4);border-radius:20px;padding:2rem;width:100%;max-width:380px;text-align:center;position:relative;}
+.pf-pwd-overlay{position:fixed;inset:0;z-index:12000;background:var(--k-ov-95,var(--k-bg-r0g0b0a95,rgba(0,0,0,0.95)));backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:1rem;}
+.pf-pwd-box{background:var(--k-bg-0e0e0e,#0e0e0e);border:1px solid rgba(167,139,250,0.4);border-radius:20px;padding:2rem;width:100%;max-width:380px;text-align:center;position:relative;}
 .pf-pwd-ico{font-size:2.2rem;margin-bottom:0.75rem;}
-.pf-pwd-title{font-size:0.95rem;font-weight:900;color:#f0f0f0;margin-bottom:0.15rem;}
+.pf-pwd-title{font-size:0.95rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);margin-bottom:0.15rem;}
 .pf-pwd-sub{font-size:0.72rem;color:#666;margin-bottom:1.3rem;line-height:1.5;}
-.pf-pwd-inp{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(167,139,250,0.3);border-radius:10px;padding:0.75rem 1rem;color:#f0f0f0;font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;letter-spacing:4px;text-align:center;outline:none;transition:border-color 0.2s;}
+.pf-pwd-inp{width:100%;background:var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));border:1px solid rgba(167,139,250,0.3);border-radius:10px;padding:0.75rem 1rem;color:var(--k-t-f0f0f0,#f0f0f0);font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;letter-spacing:4px;text-align:center;outline:none;transition:border-color 0.2s;}
 .pf-pwd-inp:focus{border-color:#a78bfa;}
 .pf-pwd-inp.shake{animation:pfShake 0.4s ease;}
 @keyframes pfShake{0%,100%{transform:translateX(0);}20%,60%{transform:translateX(-6px);}40%,80%{transform:translateX(6px);}}
 .pf-btn-primary{width:100%;background:linear-gradient(135deg,#5b21b6,#a78bfa);color:#fff;border:none;border-radius:11px;padding:0.78rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;transition:all 0.2s;}
 .pf-btn-primary:hover{opacity:0.88;}
-.pf-btn-ghost{background:rgba(255,255,255,0.04);color:#666;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:0.7rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;}
+.pf-btn-ghost{background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));color:#666;border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:11px;padding:0.7rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;}
 
 /* TOAST */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#000;font-family:'Sora',sans-serif;font-size:0.83rem;font-weight:800;padding:0.65rem 1.5rem;border-radius:99px;opacity:0;pointer-events:none;transition:all 0.3s;z-index:99999;}
@@ -259,17 +281,17 @@ select.pi option{background:#1a1a1a;}
 .badge-secao{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.58rem;font-weight:700;padding:0.12rem 0.5rem;border-radius:99px;border:1px solid;}
 
 /* MODAL EQUIPE */
-.equipe-member{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:11px;padding:0.7rem 0.9rem;display:flex;align-items:center;gap:0.75rem;transition:border-color 0.15s;}
-.equipe-member:hover{border-color:rgba(255,255,255,0.15);}
+.equipe-member{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:11px;padding:0.7rem 0.9rem;display:flex;align-items:center;gap:0.75rem;transition:border-color 0.15s;}
+.equipe-member:hover{border-color:var(--k-w-150,var(--k-w-150,rgba(255,255,255,0.15)));}
 .equipe-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;font-weight:800;font-size:0.85rem;}
-.equipe-nome{font-size:0.84rem;font-weight:800;color:#f0f0f0;}
+.equipe-nome{font-size:0.84rem;font-weight:800;color:var(--k-t-f0f0f0,#f0f0f0);}
 .equipe-cargo{font-size:0.65rem;color:var(--muted);margin-top:0.05rem;}
-.equipe-atividades{font-size:0.68rem;color:#bbb;margin-top:0.28rem;line-height:1.5;border-top:1px solid rgba(255,255,255,0.05);padding-top:0.28rem;}
+.equipe-atividades{font-size:0.68rem;color:var(--k-t-bbbbbb,#bbb);margin-top:0.28rem;line-height:1.5;border-top:1px solid var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));padding-top:0.28rem;}
 .equipe-add-form{background:rgba(245,158,11,0.04);border:1px solid rgba(245,158,11,0.18);border-radius:13px;padding:1rem;margin-top:0.6rem;}
 .equipe-add-form-title{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:0.7rem;}
 .equipe-tag{display:inline-flex;align-items:center;gap:0.25rem;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:99px;padding:0.15rem 0.55rem;font-size:0.65rem;font-weight:700;color:var(--accent);margin:0.1rem;cursor:default;}
 .equipe-tag .rm{cursor:pointer;opacity:0.5;margin-left:0.1rem;font-size:0.75rem;transition:opacity 0.15s;}
-.equipe-tag .rm:hover{opacity:1;color:#e74c3c;}
+.equipe-tag .rm:hover{opacity:1;color:var(--k-c-e74c3c,#e74c3c);}
 
 /* LOADING */
 .loading-wrap{text-align:center;padding:3rem;color:var(--muted);font-size:0.82rem;}
@@ -278,7 +300,7 @@ select.pi option{background:#1a1a1a;}
 
 /* MOVER MODAL */
 .mover-secao-list{display:flex;flex-direction:column;gap:0.4rem;margin:0.8rem 0;}
-.mover-secao-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:0.7rem 0.9rem;cursor:pointer;display:flex;align-items:center;gap:0.7rem;transition:all 0.15s;}
+.mover-secao-item{background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:10px;padding:0.7rem 0.9rem;cursor:pointer;display:flex;align-items:center;gap:0.7rem;transition:all 0.15s;}
 .mover-secao-item:hover{background:rgba(245,158,11,0.07);border-color:rgba(245,158,11,0.25);}
 .mover-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 
@@ -305,6 +327,16 @@ select.pi option{background:#1a1a1a;}
   .page{padding:1.2rem 1rem 5rem;}
   .perfil-box{max-width:95vw;}
 }
+</style>
+<style id="orizon-light-css">/* MODO CLARO — paleta própria (sem filtro de inversão) */
+html[data-theme="light"],html[data-orizon-tema="light"]{color-scheme:light;--C:#0369a1;--D:#dc2626;--I:#c2410c;--S:#15803d;--accent:#b45309;--accent2:#4d7c0f;--aprovado:#2563eb;--bg:#f1f5f9;--bg2:#f8fafc;--blue:#0369a1;--border:rgba(15,23,42,0.10);--border-a:rgba(37,99,235,0.30);--border2:rgba(15,23,42,0.16);--border3:rgba(15,23,42,0.24);--card:#ffffff;--card2:#f8fafc;--card3:#f1f5f9;--cyan:#0e7490;--entrevista:#c2410c;--finalista:#15803d;--green:#15803d;--green-d:#dbeafe;--green-glow:rgba(37,99,235,0.12);--k-b-000000:#e2e8f0;--k-b-090909:#e2e8f0;--k-b-222222:#e2e8f0;--k-b-2a2a2a:#cbd5e1;--k-b-333333:#cbd5e1;--k-b-444444:#cbd5e1;--k-b-555555:#94a3b8;--k-b-666666:#94a3b8;--k-b-888888:#94a3b8;--k-b-999999:#94a3b8;--k-b-bbbbbb:#94a3b8;--k-b-cccccc:#94a3b8;--k-b-dddddd:#94a3b8;--k-b-e0e0e0:#94a3b8;--k-b-ebebeb:#94a3b8;--k-b-eeeeee:#94a3b8;--k-b-f0f0f0:#94a3b8;--k-b-f2f2f2:#94a3b8;--k-b-ffffff:#94a3b8;--k-bg-000000:#f1f5f9;--k-bg-080808:#f1f5f9;--k-bg-080810:#f1f5f9;--k-bg-090909:#f1f5f9;--k-bg-0a0a0a:#f1f5f9;--k-bg-0b0b14:#ffffff;--k-bg-0e0e0e:#ffffff;--k-bg-0e0e14:#ffffff;--k-bg-0e0e18:#ffffff;--k-bg-0e0f11:#ffffff;--k-bg-0f0f0f:#ffffff;--k-bg-111111:#ffffff;--k-bg-111317:#ffffff;--k-bg-12161e:#f8fafc;--k-bg-131313:#ffffff;--k-bg-141414:#ffffff;--k-bg-141518:#ffffff;--k-bg-151515:#ffffff;--k-bg-161616:#f8fafc;--k-bg-161618:#f8fafc;--k-bg-161622:#f8fafc;--k-bg-1a1a1a:#f8fafc;--k-bg-1a1b1f:#f8fafc;--k-bg-1e1e1e:#f1f5f9;--k-bg-222222:#f1f5f9;--k-bg-r0g0b0a85:rgba(241,245,249,0.85);--k-bg-r0g0b0a88:rgba(241,245,249,0.88);--k-bg-r0g0b0a92:rgba(241,245,249,0.92);--k-bg-r0g0b0a94:rgba(241,245,249,0.94);--k-bg-r0g0b0a95:rgba(241,245,249,0.95);--k-bg-r0g0b0a96:rgba(241,245,249,0.96);--k-bg-r10g10b10a97:rgba(241,245,249,0.97);--k-bg-r10g10b10a99:rgba(241,245,249,0.99);--k-bg-r12g20b5a100:rgba(255,255,255,1.0);--k-bg-r13g13b13a97:rgba(255,255,255,0.97);--k-bg-r6g6b8a92:rgba(241,245,249,0.92);--k-bg-r7g7b9a97:rgba(241,245,249,0.97);--k-bg-r8g12b3a100:rgba(241,245,249,1.0);--k-bg-r8g14b3a100:rgba(241,245,249,1.0);--k-bg-r9g9b9a95:rgba(241,245,249,0.95);--k-bg-r9g9b9a97:rgba(241,245,249,0.97);--k-c-1e3a5f:#1d4ed8;--k-c-2563eb:#1d4ed8;--k-c-25d366:#128c7e;--k-c-2ecc71:#15803d;--k-c-3498db:#0369a1;--k-c-3b82f6:#2563eb;--k-c-4fa8e8:#0369a1;--k-c-4fc87a:#15803d;--k-c-60a5fa:#2563eb;--k-c-8b5cf6:#6d28d9;--k-c-93c5fd:#1d4ed8;--k-c-a78bfa:#7c3aed;--k-c-c0392b:#b91c1c;--k-c-c4b5fd:#6d28d9;--k-c-e05252:#dc2626;--k-c-e74c3c:#dc2626;--k-c-e8943a:#c2410c;--k-c-f1c40f:#a16207;--k-c-f39c12:#b45309;--k-c-f59e0b:#b45309;--k-c-f5c518:#a16207;--k-c-f97316:#c2410c;--k-c-fbbf24:#b45309;--k-ov-07:rgba(15,23,42,0.043);--k-ov-12:rgba(15,23,42,0.074);--k-ov-18:rgba(15,23,42,0.112);--k-ov-20:rgba(15,23,42,0.124);--k-ov-25:rgba(15,23,42,0.155);--k-ov-30:rgba(15,23,42,0.186);--k-ov-35:rgba(15,23,42,0.217);--k-ov-40:rgba(15,23,42,0.248);--k-ov-60:rgba(15,23,42,0.372);--k-ov-65:rgba(15,23,42,0.403);--k-ov-70:rgba(15,23,42,0.434);--k-ov-72:rgba(15,23,42,0.446);--k-ov-75:rgba(15,23,42,0.465);--k-ov-78:rgba(15,23,42,0.484);--k-ov-80:rgba(15,23,42,0.496);--k-ov-82:rgba(15,23,42,0.508);--k-ov-85:rgba(15,23,42,0.527);--k-ov-88:rgba(15,23,42,0.546);--k-ov-92:rgba(15,23,42,0.57);--k-ov-94:rgba(15,23,42,0.583);--k-ov-95:rgba(15,23,42,0.589);--k-ov-96:rgba(15,23,42,0.595);--k-sh-10:rgba(15,23,42,0.028);--k-sh-25:rgba(15,23,42,0.07);--k-sh-30:rgba(15,23,42,0.084);--k-sh-35:rgba(15,23,42,0.098);--k-sh-40:rgba(15,23,42,0.112);--k-sh-45:rgba(15,23,42,0.126);--k-sh-50:rgba(15,23,42,0.14);--k-sh-60:rgba(15,23,42,0.168);--k-sh-70:rgba(15,23,42,0.196);--k-sh-80:rgba(15,23,42,0.224);--k-sh-90:rgba(15,23,42,0.252);--k-t-777777:#475569;--k-t-888888:#475569;--k-t-999999:#475569;--k-t-aaaaaa:#1e293b;--k-t-b0b0b0:#1e293b;--k-t-bbbbbb:#1e293b;--k-t-c0c0c0:#1e293b;--k-t-cccccc:#1e293b;--k-t-d0d0d0:#0f172a;--k-t-dddddd:#0f172a;--k-t-e0e0e0:#0f172a;--k-t-e0e0ea:#0f172a;--k-t-e8e8f0:#0f172a;--k-t-eeeef0:#0f172a;--k-t-f0f0f0:#0f172a;--k-t-f0f0f4:#0f172a;--k-t-ffffff:#0f172a;--k-w-010:rgba(15,23,42,0.013);--k-w-012:rgba(15,23,42,0.015);--k-w-015:rgba(15,23,42,0.019);--k-w-020:rgba(15,23,42,0.025);--k-w-025:rgba(15,23,42,0.031);--k-w-030:rgba(15,23,42,0.037);--k-w-035:rgba(15,23,42,0.044);--k-w-040:rgba(15,23,42,0.05);--k-w-045:rgba(15,23,42,0.056);--k-w-050:rgba(15,23,42,0.062);--k-w-055:rgba(15,23,42,0.069);--k-w-060:rgba(15,23,42,0.075);--k-w-065:rgba(15,23,42,0.081);--k-w-070:rgba(15,23,42,0.088);--k-w-080:rgba(15,23,42,0.1);--k-w-090:rgba(15,23,42,0.112);--k-w-100:rgba(15,23,42,0.125);--k-w-110:rgba(15,23,42,0.138);--k-w-120:rgba(15,23,42,0.15);--k-w-130:rgba(15,23,42,0.163);--k-w-140:rgba(15,23,42,0.175);--k-w-150:rgba(15,23,42,0.188);--k-w-160:rgba(15,23,42,0.2);--k-w-180:rgba(15,23,42,0.225);--k-w-200:rgba(15,23,42,0.25);--k-w-250:rgba(15,23,42,0.312);--k-w-300:rgba(15,23,42,0.375);--k-w-350:rgba(15,23,42,0.438);--k-w-380:rgba(15,23,42,0.475);--k-w-400:rgba(15,23,42,0.5);--k-w-450:rgba(15,23,42,0.562);--k-w-600:rgba(15,23,42,0.75);--k-w-650:rgba(15,23,42,0.812);--k-w-750:rgba(15,23,42,0.938);--k-w-800:rgba(15,23,42,1.0);--k-w-850:rgba(15,23,42,1.0);--k-w-900:rgba(15,23,42,1.0);--muted:#64748b;--muted2:#7b8ba1;--orange:#c2410c;--pre:#7c3aed;--primary:#763605;--purple:#7c3aed;--recusado:#dc2626;--recusado-cli:#b91c1c;--red:#dc2626;--sub:#64748b;--surface:#ffffff;--surface2:#f8fafc;--surface3:#eef2f7;--teal:#0f766e;--text:#0f172a;--text-2:#334155;--text-3:#64748b;--text2:#334155;--triagem:#0369a1;--yellow:#a16207}
+
+html[data-theme="light"] body,html[data-orizon-tema="light"] body{background:var(--bg);color:var(--text);}
+html[data-theme="light"] ::placeholder{color:#94a3b8!important;opacity:1;}
+html[data-theme="light"] option,html[data-orizon-tema="light"] option{background:#ffffff;color:#0f172a;}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#cbd5e1;}
+html[data-theme="light"] ::-webkit-scrollbar-track{background:transparent;}
+html[data-theme="light"] input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #fff inset;-webkit-text-fill-color:#0f172a;}
 </style>
 </head>
 <body>
@@ -337,10 +369,10 @@ select.pi option{background:#1a1a1a;}
     </div>
     <div class="stat-div"></div>
     <div class="stat-disc">
-      <div class="stat-disc-item"><div class="stat-disc-val" id="statD" style="color:#e74c3c;">0</div><div class="stat-disc-lbl" style="color:#e74c3c;">D</div></div>
-      <div class="stat-disc-item"><div class="stat-disc-val" id="statI" style="color:#f39c12;">0</div><div class="stat-disc-lbl" style="color:#f39c12;">I</div></div>
-      <div class="stat-disc-item"><div class="stat-disc-val" id="statS" style="color:#2ecc71;">0</div><div class="stat-disc-lbl" style="color:#2ecc71;">S</div></div>
-      <div class="stat-disc-item"><div class="stat-disc-val" id="statC" style="color:#3498db;">0</div><div class="stat-disc-lbl" style="color:#3498db;">C</div></div>
+      <div class="stat-disc-item"><div class="stat-disc-val" id="statD" style="color:var(--k-c-e74c3c,#e74c3c);">0</div><div class="stat-disc-lbl" style="color:var(--k-c-e74c3c,#e74c3c);">D</div></div>
+      <div class="stat-disc-item"><div class="stat-disc-val" id="statI" style="color:var(--k-c-f39c12,#f39c12);">0</div><div class="stat-disc-lbl" style="color:var(--k-c-f39c12,#f39c12);">I</div></div>
+      <div class="stat-disc-item"><div class="stat-disc-val" id="statS" style="color:var(--k-c-2ecc71,#2ecc71);">0</div><div class="stat-disc-lbl" style="color:var(--k-c-2ecc71,#2ecc71);">S</div></div>
+      <div class="stat-disc-item"><div class="stat-disc-val" id="statC" style="color:var(--k-c-3498db,#3498db);">0</div><div class="stat-disc-lbl" style="color:var(--k-c-3498db,#3498db);">C</div></div>
     </div>
   </div>
 
@@ -413,7 +445,7 @@ select.pi option{background:#1a1a1a;}
     <p class="modal-sub" id="mAddSub">Selecione um ou mais candidatos do Banco de Talentos para adicionar à seção.</p>
     <div style="margin-bottom:0.85rem;">
       <label class="field-lbl">Seção de destino</label>
-      <select id="mAddSecao" class="field-inp" style="background-color:#1a1a1a;background-image:url\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;appearance:none;cursor:pointer;">
+      <select id="mAddSecao" class="field-inp" style="background-color:var(--k-bg-1a1a1a,#1a1a1a);background-image:url\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23777' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 0.75rem center;padding-right:2.2rem;-webkit-appearance:none;appearance:none;cursor:pointer;">
         <option value="">Selecione uma seção…</option>
       </select>
     </div>
@@ -427,9 +459,9 @@ select.pi option{background:#1a1a1a;}
     <div class="add-cand-list" id="mAddList"></div>
     <div style="display:flex;gap:0.6rem;margin-top:0.5rem;">
       <button onclick="confirmarAddCand()" class="save-btn" style="flex:1;">✅ Adicionar selecionados</button>
-      <button onclick="fecharModalAddCand()" style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.7rem 1rem;font-family:inherit;font-size:0.8rem;cursor:pointer;">Cancelar</button>
+      <button onclick="fecharModalAddCand()" style="background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));color:var(--muted);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.7rem 1rem;font-family:inherit;font-size:0.8rem;cursor:pointer;">Cancelar</button>
     </div>
-    <div id="mAddMsg" style="display:none;text-align:center;font-size:0.7rem;color:#2ecc71;margin-top:0.4rem;font-weight:700;"></div>
+    <div id="mAddMsg" style="display:none;text-align:center;font-size:0.7rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.4rem;font-weight:700;"></div>
   </div>
 </div>
 
@@ -437,7 +469,7 @@ select.pi option{background:#1a1a1a;}
 <div class="overlay" id="modalEquipe" style="display:none;" onclick="if(event.target===this)fecharEquipe()">
   <div class="modal-box" style="max-width:520px;">
     <button class="modal-close" onclick="fecharEquipe()">✕</button>
-    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#a78bfa;margin-bottom:0.3rem;">Processo Seletivo</div>
+    <div style="font-size:0.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--k-c-a78bfa,#a78bfa);margin-bottom:0.3rem;">Processo Seletivo</div>
     <div class="modal-title">👥 Equipe Responsável</div>
     <p class="modal-sub" id="equipeSubtitle">Recrutadores e entrevistadores envolvidos nesta vaga.</p>
 
@@ -469,7 +501,7 @@ select.pi option{background:#1a1a1a;}
     </div>
 
     <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
-      <button onclick="fecharEquipe()" style="flex:1;background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem;font-family:inherit;font-size:0.8rem;cursor:pointer;">Fechar</button>
+      <button onclick="fecharEquipe()" style="flex:1;background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));color:var(--muted);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.6rem;font-family:inherit;font-size:0.8rem;cursor:pointer;">Fechar</button>
     </div>
     <div id="equipeSecaoId" style="display:none;"></div>
   </div>
@@ -481,9 +513,9 @@ select.pi option{background:#1a1a1a;}
     <button class="modal-close" onclick="fecharModalMover()">X</button>
     <div style="font-size:1.6rem;text-align:center;margin-bottom:0.3rem;">📂</div>
     <div class="modal-title" style="text-align:center;">Organizar candidato</div>
-    <p class="modal-sub" style="text-align:center;margin-bottom:0.2rem;"><strong id="mMoverNome" style="color:#f0f0f0;">-</strong></p>
+    <p class="modal-sub" style="text-align:center;margin-bottom:0.2rem;"><strong id="mMoverNome" style="color:var(--k-t-f0f0f0,#f0f0f0);">-</strong></p>
     <div id="mMoverCandId" style="display:none;"></div>
-    <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:0.85rem;">
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));margin-bottom:0.85rem;">
       <button id="tabMoverBtn" onclick="switchMoverTab('mover')" style="flex:1;font-family:inherit;font-size:0.75rem;font-weight:700;padding:0.6rem;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);cursor:pointer;">Mover para vaga</button>
       <button id="tabCopiarBtn" onclick="switchMoverTab('copiar')" style="flex:1;font-family:inherit;font-size:0.75rem;font-weight:700;padding:0.6rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;">Copiar para multiplas vagas</button>
     </div>
@@ -492,13 +524,13 @@ select.pi option{background:#1a1a1a;}
       <div class="mover-secao-list" id="mMoverLista"></div>
     </div>
     <div id="tabCopiarConteudo" style="display:none;">
-      <div style="font-size:0.62rem;color:#3b82f6;margin-bottom:0.6rem;font-weight:700;">Marque todas as vagas onde este candidato deve aparecer:</div>
+      <div style="font-size:0.62rem;color:var(--k-c-3b82f6,#3b82f6);margin-bottom:0.6rem;font-weight:700;">Marque todas as vagas onde este candidato deve aparecer:</div>
       <div id="mCopiarLista" style="display:flex;flex-direction:column;gap:0.4rem;max-height:300px;overflow-y:auto;margin-bottom:0.85rem;scrollbar-width:thin;scrollbar-color:rgba(59,130,246,0.3) transparent;"></div>
-      <button onclick="confirmarCopiarMultiplas()" style="width:100%;background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(59,130,246,0.35));color:#3b82f6;border:1px solid rgba(59,130,246,0.4);border-radius:10px;padding:0.7rem;font-family:inherit;font-size:0.82rem;font-weight:800;cursor:pointer;">Confirmar selecao</button>
+      <button onclick="confirmarCopiarMultiplas()" style="width:100%;background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(59,130,246,0.35));color:var(--k-c-3b82f6,#3b82f6);border:1px solid rgba(59,130,246,0.4);border-radius:10px;padding:0.7rem;font-family:inherit;font-size:0.82rem;font-weight:800;cursor:pointer;">Confirmar selecao</button>
     </div>
-    <div style="display:flex;gap:0.6rem;margin-top:0.75rem;padding-top:0.65rem;border-top:1px solid rgba(255,255,255,0.06);">
-      <button onclick="removerDoEntrevistados()" style="flex:1;background:rgba(231,76,60,0.08);color:#e74c3c;border:1px solid rgba(231,76,60,0.22);border-radius:10px;padding:0.6rem;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">Devolver ao Banco</button>
-      <button onclick="fecharModalMover()" style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:0.6rem 0.9rem;font-family:inherit;font-size:0.78rem;cursor:pointer;">Cancelar</button>
+    <div style="display:flex;gap:0.6rem;margin-top:0.75rem;padding-top:0.65rem;border-top:1px solid var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));">
+      <button onclick="removerDoEntrevistados()" style="flex:1;background:rgba(231,76,60,0.08);color:var(--k-c-e74c3c,#e74c3c);border:1px solid rgba(231,76,60,0.22);border-radius:10px;padding:0.6rem;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">Devolver ao Banco</button>
+      <button onclick="fecharModalMover()" style="background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));color:var(--muted);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:10px;padding:0.6rem 0.9rem;font-family:inherit;font-size:0.78rem;cursor:pointer;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -510,7 +542,7 @@ select.pi option{background:#1a1a1a;}
 
     <!-- HEADER -->
     <div class="perfil-hdr">
-      <div class="perfil-avatar-lg" id="perfilAv" style="border-color:#888;">⬜</div>
+      <div class="perfil-avatar-lg" id="perfilAv" style="border-color:var(--k-b-888888,#888);">⬜</div>
       <div style="flex:1;min-width:0;">
         <div class="perfil-nome" id="perfilNome">—</div>
         <div class="perfil-meta-sub" id="perfilMeta">—</div>
@@ -523,12 +555,12 @@ select.pi option{background:#1a1a1a;}
     <div class="perfil-vaga-banner" id="perfilVagaBanner" style="display:none;">
       <span style="font-size:1rem;">🎤</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:0.65rem;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:1px;">Entrevistado para</div>
-        <div style="font-size:0.88rem;font-weight:800;color:#f0f0f0;" id="bannerSecaoNome">—</div>
-        <div style="font-size:0.65rem;color:#aaa;margin-top:0.05rem;" id="bannerEmpresa"></div>
+        <div style="font-size:0.65rem;font-weight:700;color:var(--k-c-f59e0b,#f59e0b);text-transform:uppercase;letter-spacing:1px;">Entrevistado para</div>
+        <div style="font-size:0.88rem;font-weight:800;color:var(--k-t-f0f0f0,#f0f0f0);" id="bannerSecaoNome">—</div>
+        <div style="font-size:0.65rem;color:var(--k-t-aaaaaa,#aaa);margin-top:0.05rem;" id="bannerEmpresa"></div>
       </div>
       <div style="display:flex;gap:0.4rem;flex-shrink:0;" id="bannerContatos"></div>
-      <button onclick="fecharPerfil();setTimeout(()=>abrirModalMover(_perfilAtual?.id,_perfilAtual?.nome),150);" style="background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:0.3rem 0.65rem;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;flex-shrink:0;">↕️ Mover</button>
+      <button onclick="fecharPerfil();setTimeout(()=>abrirModalMover(_perfilAtual?.id,_perfilAtual?.nome),150);" style="background:rgba(245,158,11,0.12);color:var(--k-c-f59e0b,#f59e0b);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:0.3rem 0.65rem;font-family:inherit;font-size:0.7rem;font-weight:700;cursor:pointer;flex-shrink:0;">↕️ Mover</button>
     </div>
 
     <!-- ABAS -->
@@ -562,14 +594,14 @@ select.pi option{background:#1a1a1a;}
           <div id="perfilForcas"></div>
         </div>
         <div class="psec" id="parecerVisaoWrap" style="display:none;border-color:rgba(245,158,11,0.25);">
-          <div class="psec-title" style="color:#f59e0b;">📋 Parecer Final</div>
+          <div class="psec-title" style="color:var(--k-c-f59e0b,#f59e0b);">📋 Parecer Final</div>
           <div id="parecerVisaoConteudo"></div>
         </div>
         <div class="psec">
           <div class="psec-title">📝 Nota do Recrutador (privada)</div>
           <textarea class="nota-area" id="perfilNota" placeholder="Anotações sobre a entrevista, impressões, próximos passos…"></textarea>
           <button onclick="salvarNota(_perfilAtual?.id)" style="margin-top:0.45rem;width:100%;background:rgba(245,158,11,0.12);color:var(--accent);border:1px solid rgba(245,158,11,0.3);border-radius:9px;padding:0.45rem;font-family:inherit;font-size:0.75rem;font-weight:700;cursor:pointer;">💾 Salvar nota</button>
-          <div id="notaSaveMsg" style="display:none;text-align:center;font-size:0.68rem;color:#2ecc71;margin-top:0.3rem;font-weight:700;">✓ Nota salva!</div>
+          <div id="notaSaveMsg" style="display:none;text-align:center;font-size:0.68rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.3rem;font-weight:700;">✓ Nota salva!</div>
         </div>
       </div>
 
@@ -585,13 +617,13 @@ select.pi option{background:#1a1a1a;}
             <div><label class="pi-label">📧 E-mail</label>
               <div style="display:flex;gap:0.3rem;">
                 <input class="pi" type="email" id="pEmail" placeholder="candidato@email.com" style="flex:1;min-width:0;"/>
-                <button onclick="var e=document.getElementById('pEmail').value.trim();if(e)window.open('mailto:'+e);else mostrarToast('Preencha o e-mail',true);" style="background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">✉️</button>
+                <button onclick="var e=document.getElementById('pEmail').value.trim();if(e)window.open('mailto:'+e);else mostrarToast('Preencha o e-mail',true);" style="background:rgba(52,152,219,0.15);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">✉️</button>
               </div>
             </div>
             <div><label class="pi-label">📲 WhatsApp</label>
               <div style="display:flex;gap:0.3rem;">
                 <input class="pi" id="pTel" placeholder="(51) 9 9999-9999" maxlength="16" oninput="mascaraTelP(this)" style="flex:1;min-width:0;"/>
-                <button onclick="var n=document.getElementById('pTel').value.replace(/\D/g,'');if(n)window.top.open('https://wa.me/55'+n);else mostrarToast('Preencha o telefone',true);" style="background:rgba(37,211,102,0.15);color:#25D366;border:1px solid rgba(37,211,102,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">💬</button>
+                <button onclick="var n=document.getElementById('pTel').value.replace(/\D/g,'');if(n)window.top.open('https://wa.me/55'+n);else mostrarToast('Preencha o telefone',true);" style="background:rgba(37,211,102,0.15);color:var(--k-c-25d366,#25D366);border:1px solid rgba(37,211,102,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">💬</button>
               </div>
             </div>
           </div>
@@ -599,13 +631,13 @@ select.pi option{background:#1a1a1a;}
             <div><label class="pi-label">🔗 LinkedIn</label>
               <div style="display:flex;gap:0.3rem;">
                 <input class="pi" type="url" id="pLinkedin" placeholder="https://linkedin.com/in/…" style="flex:1;min-width:0;"/>
-                <button onclick="var l=document.getElementById('pLinkedin').value.trim();if(l)window.open(l);" style="background:rgba(167,139,250,0.15);color:#a78bfa;border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">🔗</button>
+                <button onclick="var l=document.getElementById('pLinkedin').value.trim();if(l)window.open(l);" style="background:rgba(167,139,250,0.15);color:var(--k-c-a78bfa,#a78bfa);border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">🔗</button>
               </div>
             </div>
             <div><label class="pi-label">📄 Currículo (link)</label>
               <div style="display:flex;gap:0.3rem;">
                 <input class="pi" type="url" id="pCurriculo" placeholder="https://drive.google.com/…" style="flex:1;min-width:0;"/>
-                <button onclick="var c=document.getElementById('pCurriculo').value.trim();if(c)window.open(c);" style="background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">📄</button>
+                <button onclick="var c=document.getElementById('pCurriculo').value.trim();if(c)window.open(c);" style="background:rgba(52,152,219,0.15);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">📄</button>
               </div>
             </div>
           </div>
@@ -689,13 +721,13 @@ select.pi option{background:#1a1a1a;}
           <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.18);border-radius:9px;padding:0.5rem 0.75rem;margin-bottom:0.55rem;">
             <input type="checkbox" id="pDocCompleta" style="accent-color:#2ecc71;width:15px;height:15px;cursor:pointer;flex-shrink:0;"/>
             <div>
-              <div style="font-size:0.76rem;font-weight:700;color:#2ecc71;">📁 Documentação completa</div>
+              <div style="font-size:0.76rem;font-weight:700;color:var(--k-c-2ecc71,#2ecc71);">📁 Documentação completa</div>
               <div style="font-size:0.6rem;color:var(--muted);">Marque quando o candidato tiver toda a documentação entregue</div>
             </div>
           </label>
         </div>
         <button class="pi-save-btn" onclick="salvarDadosPerfil()">💾 Salvar todos os dados</button>
-        <div id="dadosSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:#2ecc71;margin-top:0.4rem;font-weight:700;">✓ Salvo com sucesso!</div>
+        <div id="dadosSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.4rem;font-weight:700;">✓ Salvo com sucesso!</div>
       </div>
 
       <!-- ABA COMPETÊNCIAS -->
@@ -727,7 +759,7 @@ select.pi option{background:#1a1a1a;}
           </div>
         </div>
         <button class="pi-save-btn" onclick="salvarCompetenciasP()">💾 Salvar competências</button>
-        <div id="compSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:#2ecc71;margin-top:0.4rem;font-weight:700;">✓ Competências salvas!</div>
+        <div id="compSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.4rem;font-weight:700;">✓ Competências salvas!</div>
       </div>
 
       <!-- ABA HISTÓRICO -->
@@ -793,10 +825,10 @@ select.pi option{background:#1a1a1a;}
         </div>
         <div class="psec">
           <div class="psec-title">⚡ Importar resultado por link</div>
-          <p style="font-size:0.7rem;color:#777;margin-bottom:0.6rem;line-height:1.55;">Cole o link do resultado de entrevista ou DISC.</p>
+          <p style="font-size:0.7rem;color:var(--k-t-777777,#777);margin-bottom:0.6rem;line-height:1.55;">Cole o link do resultado de entrevista ou DISC.</p>
           <textarea class="pi ta" id="pUrlImport" placeholder="https://orizonrs.github.io/…?nome=…" style="min-height:60px;" oninput="previewImportP(this.value)"></textarea>
-          <div id="pImportPreview" style="display:none;margin-top:0.4rem;font-size:0.72rem;color:#3b82f6;"></div>
-          <button onclick="importarUrlP()" style="margin-top:0.5rem;background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:9px;padding:0.55rem;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;width:100%;">⚡ Importar e salvar</button>
+          <div id="pImportPreview" style="display:none;margin-top:0.4rem;font-size:0.72rem;color:var(--k-c-3b82f6,#3b82f6);"></div>
+          <button onclick="importarUrlP()" style="margin-top:0.5rem;background:rgba(52,152,219,0.15);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:9px;padding:0.55rem;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;width:100%;">⚡ Importar e salvar</button>
         </div>
       </div>
 
@@ -818,15 +850,15 @@ select.pi option{background:#1a1a1a;}
             <div><label class="pi-label">Link Fit Cultural</label><input type="url" class="pi" id="sLinkFitP" placeholder="https://…"/></div>
           </div>
           <button class="pi-save-btn" onclick="salvarScoresP()">💾 Salvar scores</button>
-          <div id="scoresSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:#2ecc71;margin-top:0.4rem;font-weight:700;">✓ Scores salvos!</div>
+          <div id="scoresSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.4rem;font-weight:700;">✓ Scores salvos!</div>
         </div>
       </div>
 
       <!-- ABA PARECER FINAL -->
       <div class="tab-content" id="tab-parecer">
         <div class="psec" style="border-color:rgba(245,158,11,0.25);">
-          <div class="psec-title" style="color:#f59e0b;">📋 Parecer Final do Candidato</div>
-          <p style="font-size:0.73rem;color:#888;margin-bottom:0.9rem;line-height:1.6;">Registre o parecer final e anexe o documento oficial de avaliação do candidato após a entrevista.</p>
+          <div class="psec-title" style="color:var(--k-c-f59e0b,#f59e0b);">📋 Parecer Final do Candidato</div>
+          <p style="font-size:0.73rem;color:var(--k-t-888888,#888);margin-bottom:0.9rem;line-height:1.6;">Registre o parecer final e anexe o documento oficial de avaliação do candidato após a entrevista.</p>
 
           <div style="margin-bottom:0.7rem;">
             <label class="pi-label">🏆 Resultado final</label>
@@ -850,7 +882,7 @@ select.pi option{background:#1a1a1a;}
             <label class="pi-label">📎 Documento de Parecer (link — Drive, Dropbox, OneDrive…)</label>
             <div style="display:flex;gap:0.4rem;">
               <input class="pi" type="url" id="parecerDocUrl" placeholder="https://drive.google.com/file/…" style="flex:1;min-width:0;"/>
-              <button onclick="var u=document.getElementById('parecerDocUrl').value.trim();if(u)window.open(u);else mostrarToast('Cole o link do documento primeiro',true);" style="background:rgba(52,152,219,0.15);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.7rem;font-size:1rem;cursor:pointer;flex-shrink:0;">📄</button>
+              <button onclick="var u=document.getElementById('parecerDocUrl').value.trim();if(u)window.open(u);else mostrarToast('Cole o link do documento primeiro',true);" style="background:rgba(52,152,219,0.15);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0 0.7rem;font-size:1rem;cursor:pointer;flex-shrink:0;">📄</button>
             </div>
             <div style="font-size:0.6rem;color:#555;margin-top:0.25rem;">Cole o link do arquivo PDF ou documento de parecer formal do candidato</div>
           </div>
@@ -860,7 +892,7 @@ select.pi option{background:#1a1a1a;}
             <div style="display:flex;gap:0.4rem;">
               <input class="pi" id="parecerDocNome2" placeholder="Nome do documento" style="flex:1;min-width:0;"/>
               <input class="pi" type="url" id="parecerDocUrl2" placeholder="Link" style="flex:2;min-width:0;"/>
-              <button onclick="var u=document.getElementById('parecerDocUrl2').value.trim();if(u)window.open(u);else mostrarToast('Cole o link',true);" style="background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">🔗</button>
+              <button onclick="var u=document.getElementById('parecerDocUrl2').value.trim();if(u)window.open(u);else mostrarToast('Cole o link',true);" style="background:rgba(59,130,246,0.12);color:var(--k-c-3b82f6,#3b82f6);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:0 0.6rem;font-size:1rem;cursor:pointer;flex-shrink:0;">🔗</button>
             </div>
           </div>
 
@@ -876,17 +908,17 @@ select.pi option{background:#1a1a1a;}
 
           <!-- Visualização do parecer salvo -->
           <div id="parecerSalvoWrap" style="display:none;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:0.85rem 1rem;margin-bottom:0.75rem;">
-            <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#f59e0b;margin-bottom:0.5rem;">Parecer salvo anteriormente</div>
+            <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--k-c-f59e0b,#f59e0b);margin-bottom:0.5rem;">Parecer salvo anteriormente</div>
             <div id="parecerSalvoConteudo"></div>
           </div>
 
           <button id="parecerSaveBtn" class="pi-save-btn" onclick="salvarParecerFinal()" style="background:linear-gradient(135deg,#b45309,#f59e0b);">📋 Salvar Parecer Final</button>
-          <div id="parecerSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:#2ecc71;margin-top:0.4rem;font-weight:700;">✓ Parecer salvo com sucesso!</div>
+          <div id="parecerSaveMsg" style="display:none;text-align:center;font-size:0.7rem;color:var(--k-c-2ecc71,#2ecc71);margin-top:0.4rem;font-weight:700;">✓ Parecer salvo com sucesso!</div>
 
           <!-- Ação rápida: devolver ao banco -->
-          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.06);">
-            <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#e74c3c;margin-bottom:0.5rem;">⚡ Ação rápida</div>
-            <button onclick="fecharPerfil();setTimeout(()=>{ if(_perfilAtual) abrirModalMover(_perfilAtual.id,_perfilAtual.nome); },150);" style="width:100%;background:rgba(231,76,60,0.08);color:#e74c3c;border:1px solid rgba(231,76,60,0.22);border-radius:9px;padding:0.55rem;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;">↩️ Devolver este candidato ao Banco de Talentos</button>
+          <div style="margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));">
+            <div style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--k-c-e74c3c,#e74c3c);margin-bottom:0.5rem;">⚡ Ação rápida</div>
+            <button onclick="fecharPerfil();setTimeout(()=>{ if(_perfilAtual) abrirModalMover(_perfilAtual.id,_perfilAtual.nome); },150);" style="width:100%;background:rgba(231,76,60,0.08);color:var(--k-c-e74c3c,#e74c3c);border:1px solid rgba(231,76,60,0.22);border-radius:9px;padding:0.55rem;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;">↩️ Devolver este candidato ao Banco de Talentos</button>
           </div>
         </div>
       </div>
@@ -900,12 +932,12 @@ select.pi option{background:#1a1a1a;}
   <div class="modal-box" style="max-width:380px;text-align:center;">
     <button class="modal-close" onclick="fecharDelSecao()">✕</button>
     <div style="font-size:2rem;margin-bottom:0.5rem;">🗂️</div>
-    <div class="modal-title" style="color:#f39c12;">Excluir seção?</div>
-    <p class="modal-sub">A seção <strong id="delSecaoNome" style="color:#f0f0f0;">—</strong> será removida. Os candidatos voltam para o Banco de Talentos.</p>
+    <div class="modal-title" style="color:var(--k-c-f39c12,#f39c12);">Excluir seção?</div>
+    <p class="modal-sub">A seção <strong id="delSecaoNome" style="color:var(--k-t-f0f0f0,#f0f0f0);">—</strong> será removida. Os candidatos voltam para o Banco de Talentos.</p>
     <div id="delSecaoId" style="display:none;"></div>
     <div style="display:flex;gap:0.7rem;">
-      <button onclick="executarDelSecao()" style="flex:1;background:rgba(243,156,18,0.15);color:#f39c12;border:1px solid rgba(243,156,18,0.3);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.85rem;font-weight:800;cursor:pointer;">🗑️ Sim, excluir</button>
-      <button onclick="fecharDelSecao()" style="background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancelar</button>
+      <button onclick="executarDelSecao()" style="flex:1;background:rgba(243,156,18,0.15);color:var(--k-c-f39c12,#f39c12);border:1px solid rgba(243,156,18,0.3);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.85rem;font-weight:800;cursor:pointer;">🗑️ Sim, excluir</button>
+      <button onclick="fecharDelSecao()" style="background:var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));color:var(--muted);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancelar</button>
     </div>
   </div>
 </div>
@@ -921,19 +953,19 @@ select.pi option{background:#1a1a1a;}
       <label style="font-size:0.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:0.45rem;">Tipo de mensagem</label>
       <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
         <button onclick="selecionarTemplatEmail('aprovado')" id="tmplAprov"
-          style="flex:1;min-width:100px;background:rgba(59,130,246,0.08);color:#2ecc71;border:2px solid rgba(59,130,246,0.2);border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:0.5;">
+          style="flex:1;min-width:100px;background:rgba(59,130,246,0.08);color:var(--k-c-2ecc71,#2ecc71);border:2px solid rgba(59,130,246,0.2);border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:0.5;">
           <span style="font-size:1.2rem;line-height:1;">✅</span>
           <span>Aprovado</span>
           <span style="font-size:0.58rem;font-weight:600;opacity:0.7;">Avançou de etapa</span>
         </button>
         <button onclick="selecionarTemplatEmail('reprovado')" id="tmplReprov"
-          style="flex:1;min-width:100px;background:rgba(231,76,60,0.14);color:#e74c3c;border:2px solid rgba(231,76,60,0.4);border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:1;">
+          style="flex:1;min-width:100px;background:rgba(231,76,60,0.14);color:var(--k-c-e74c3c,#e74c3c);border:2px solid rgba(231,76,60,0.4);border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:1;">
           <span style="font-size:1.2rem;line-height:1;">❌</span>
           <span>Não selecionado</span>
           <span style="font-size:0.58rem;font-weight:600;opacity:0.7;">Retorno negativo</span>
         </button>
         <button onclick="selecionarTemplatEmail('personalizado')" id="tmplCustom"
-          style="flex:1;min-width:100px;background:rgba(255,255,255,0.04);color:#bbb;border:2px solid rgba(255,255,255,0.09);border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:0.5;">
+          style="flex:1;min-width:100px;background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));color:var(--k-t-bbbbbb,#bbb);border:2px solid var(--k-w-090,var(--k-w-090,rgba(255,255,255,0.09)));border-radius:11px;padding:0.6rem 0.5rem;font-family:inherit;font-size:0.74rem;font-weight:800;cursor:pointer;transition:all 0.18s;display:flex;flex-direction:column;align-items:center;gap:0.15rem;opacity:0.5;">
           <span style="font-size:1.2rem;line-height:1;">✏️</span>
           <span>Personalizado</span>
           <span style="font-size:0.58rem;font-weight:600;opacity:0.7;">Escrever do zero</span>
@@ -942,23 +974,23 @@ select.pi option{background:#1a1a1a;}
     </div>
 
     <div style="margin-bottom:0.6rem;">
-      <label style="font-size:0.75rem;color:#888;display:block;margin-bottom:0.3rem;">Assunto</label>
+      <label style="font-size:0.75rem;color:var(--k-t-888888,#888);display:block;margin-bottom:0.3rem;">Assunto</label>
       <input id="emailMassaAssunto" class="field-inp" placeholder="Assunto do e-mail" style="width:100%;"/>
     </div>
 
     <div style="margin-bottom:0.75rem;">
-      <label style="font-size:0.75rem;color:#888;display:block;margin-bottom:0.3rem;">Mensagem</label>
+      <label style="font-size:0.75rem;color:var(--k-t-888888,#888);display:block;margin-bottom:0.3rem;">Mensagem</label>
       <textarea id="emailMassaCorpo" rows="7" class="field-inp" placeholder="Mensagem..." style="width:100%;resize:vertical;font-family:inherit;line-height:1.6;"></textarea>
     </div>
 
-    <div style="background:rgba(52,152,219,0.06);border:1px solid rgba(52,152,219,0.18);border-radius:9px;padding:0.6rem 0.8rem;margin-bottom:0.75rem;font-size:0.75rem;color:#888;">
-      <strong style="color:#3498db;">📋 Destinatários (cópia oculta):</strong>
-      <div id="emailMassaDestinatarios" style="margin-top:0.3rem;color:#bbb;line-height:1.7;"></div>
+    <div style="background:rgba(52,152,219,0.06);border:1px solid rgba(52,152,219,0.18);border-radius:9px;padding:0.6rem 0.8rem;margin-bottom:0.75rem;font-size:0.75rem;color:var(--k-t-888888,#888);">
+      <strong style="color:var(--k-c-3498db,#3498db);">📋 Destinatários (cópia oculta):</strong>
+      <div id="emailMassaDestinatarios" style="margin-top:0.3rem;color:var(--k-t-bbbbbb,#bbb);line-height:1.7;"></div>
     </div>
 
     <div style="display:flex;gap:0.6rem;">
-      <button onclick="enviarEmailMassa()" style="flex:2;background:linear-gradient(135deg,rgba(52,152,219,0.2),rgba(52,152,219,0.35));color:#3498db;border:1px solid rgba(52,152,219,0.4);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;">📤 Abrir no cliente de e-mail</button>
-      <button onclick="fecharEmailMassa()" style="background:rgba(255,255,255,0.06);color:#888;border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancelar</button>
+      <button onclick="enviarEmailMassa()" style="flex:2;background:linear-gradient(135deg,rgba(52,152,219,0.2),rgba(52,152,219,0.35));color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.4);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;">📤 Abrir no cliente de e-mail</button>
+      <button onclick="fecharEmailMassa()" style="background:var(--k-w-060,var(--k-w-060,rgba(255,255,255,0.06)));color:var(--k-t-888888,#888);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">Cancelar</button>
     </div>
     <p style="font-size:0.7rem;color:#555;margin-top:0.5rem;text-align:center;">Os e-mails serão enviados em cópia oculta (BCC) — cada candidato não vê os outros.</p>
   </div>
@@ -970,43 +1002,43 @@ select.pi option{background:#1a1a1a;}
     <button class="modal-close" onclick="fecharRetornoNeg()">✕</button>
     <div style="text-align:center;margin-bottom:1rem;">
       <div style="font-size:2.4rem;margin-bottom:0.4rem;">📨</div>
-      <div style="font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#e74c3c;margin-bottom:0.3rem;">Ação em Massa</div>
+      <div style="font-size:0.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--k-c-e74c3c,#e74c3c);margin-bottom:0.3rem;">Ação em Massa</div>
       <div class="modal-title">Retorno Negativo</div>
-      <p class="modal-sub" style="margin-bottom:0;">Você está prestes a enviar um e-mail de <strong style="color:#e74c3c;">não selecionado</strong> para os candidatos da seção:</p>
+      <p class="modal-sub" style="margin-bottom:0;">Você está prestes a enviar um e-mail de <strong style="color:var(--k-c-e74c3c,#e74c3c);">não selecionado</strong> para os candidatos da seção:</p>
     </div>
 
     <div style="background:rgba(231,76,60,0.07);border:1px solid rgba(231,76,60,0.22);border-radius:13px;padding:0.9rem 1.1rem;margin-bottom:1.1rem;">
-      <div style="font-size:0.72rem;font-weight:800;color:#e74c3c;margin-bottom:0.55rem;">📁 <span id="rnSecaoNome">—</span></div>
+      <div style="font-size:0.72rem;font-weight:800;color:var(--k-c-e74c3c,#e74c3c);margin-bottom:0.55rem;">📁 <span id="rnSecaoNome">—</span></div>
       <div style="display:flex;gap:1rem;flex-wrap:wrap;">
         <div style="display:flex;flex-direction:column;gap:0.08rem;">
-          <span style="font-size:1.4rem;font-weight:900;color:#f0f0f0;line-height:1;" id="rnTotal">0</span>
+          <span style="font-size:1.4rem;font-weight:900;color:var(--k-t-f0f0f0,#f0f0f0);line-height:1;" id="rnTotal">0</span>
           <span style="font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Candidatos</span>
         </div>
-        <div style="width:1px;background:rgba(255,255,255,0.07);"></div>
+        <div style="width:1px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));"></div>
         <div style="display:flex;flex-direction:column;gap:0.08rem;">
-          <span style="font-size:1.4rem;font-weight:900;color:#2ecc71;line-height:1;" id="rnComEmail">0</span>
+          <span style="font-size:1.4rem;font-weight:900;color:var(--k-c-2ecc71,#2ecc71);line-height:1;" id="rnComEmail">0</span>
           <span style="font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Com e-mail</span>
         </div>
-        <div style="width:1px;background:rgba(255,255,255,0.07);"></div>
+        <div style="width:1px;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));"></div>
         <div style="display:flex;flex-direction:column;gap:0.08rem;">
-          <span style="font-size:1.4rem;font-weight:900;color:#777;line-height:1;" id="rnSemEmail">0</span>
+          <span style="font-size:1.4rem;font-weight:900;color:var(--k-t-777777,#777);line-height:1;" id="rnSemEmail">0</span>
           <span style="font-size:0.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;">Sem e-mail</span>
         </div>
       </div>
     </div>
 
-    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:1.1rem;font-size:0.75rem;color:#888;line-height:1.6;">
-      ℹ️ Será aberto o editor de e-mail com o template de <strong style="color:#ccc;">retorno negativo</strong> pré-preenchido. Você ainda poderá revisar e editar o texto antes de enviar.
+    <div style="background:var(--k-w-020,var(--k-w-020,rgba(255,255,255,0.02)));border:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:1.1rem;font-size:0.75rem;color:var(--k-t-888888,#888);line-height:1.6;">
+      ℹ️ Será aberto o editor de e-mail com o template de <strong style="color:var(--k-t-cccccc,#ccc);">retorno negativo</strong> pré-preenchido. Você ainda poderá revisar e editar o texto antes de enviar.
     </div>
 
     <div style="display:flex;gap:0.6rem;">
       <button onclick="confirmarRetornoNegativo()"
-        style="flex:2;background:linear-gradient(135deg,rgba(180,40,30,0.5),rgba(231,76,60,0.4));color:#e74c3c;border:1px solid rgba(231,76,60,0.4);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;transition:all 0.18s;"
+        style="flex:2;background:linear-gradient(135deg,rgba(180,40,30,0.5),rgba(231,76,60,0.4));color:var(--k-c-e74c3c,#e74c3c);border:1px solid rgba(231,76,60,0.4);border-radius:11px;padding:0.75rem;font-family:inherit;font-size:0.88rem;font-weight:800;cursor:pointer;transition:all 0.18s;"
         onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
         📨 Continuar para o e-mail
       </button>
       <button onclick="fecharRetornoNeg()"
-        style="background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">
+        style="background:var(--k-w-050,var(--k-w-050,rgba(255,255,255,0.05)));color:var(--muted);border:1px solid var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));border-radius:11px;padding:0.75rem 1rem;font-family:inherit;font-size:0.82rem;cursor:pointer;">
         Cancelar
       </button>
     </div>
@@ -1394,16 +1426,16 @@ CREATE POLICY "public_all" ON entrevistados_notas  FOR ALL USING (true) WITH CHE
     aviso.id = 'avisoTabelas';
     aviso.style.cssText = 'background:#1a1a1a;border:1.5px solid #f39c12;border-radius:12px;padding:1rem 1.2rem;margin:0.75rem 0;font-size:0.82rem;color:#f0f0f0;';
     aviso.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-      <span style="color:#f39c12;font-weight:700;">⚠️ Tabelas não encontradas no Supabase</span>
-      <button onclick="this.closest('#avisoTabelas').remove()" style="background:none;border:none;color:#888;cursor:pointer;font-size:1rem;">✕</button>
+      <span style="color:var(--k-c-f39c12,#f39c12);font-weight:700;">⚠️ Tabelas não encontradas no Supabase</span>
+      <button onclick="this.closest('#avisoTabelas').remove()" style="background:none;border:none;color:var(--k-t-888888,#888);cursor:pointer;font-size:1rem;">✕</button>
     </div>
-    <p style="color:#bbb;margin-bottom:0.6rem;">Os dados estão sendo salvos só neste navegador. Para salvar na nuvem (funciona em qualquer dispositivo), crie as tabelas no Supabase:</p>
-    <textarea readonly onclick="this.select()" style="width:100%;height:180px;background:#111;border:1px solid #333;border-radius:8px;padding:0.5rem;color:#3b82f6;font-family:monospace;font-size:0.72rem;resize:none;">${sql}</textarea>
+    <p style="color:var(--k-t-bbbbbb,#bbb);margin-bottom:0.6rem;">Os dados estão sendo salvos só neste navegador. Para salvar na nuvem (funciona em qualquer dispositivo), crie as tabelas no Supabase:</p>
+    <textarea readonly onclick="this.select()" style="width:100%;height:180px;background:var(--k-bg-111111,#111);border:1px solid var(--k-b-333333,#333);border-radius:8px;padding:0.5rem;color:var(--k-c-3b82f6,#3b82f6);font-family:monospace;font-size:0.72rem;resize:none;">${sql}</textarea>
     <div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;">
-      <button onclick="navigator.clipboard.writeText(document.querySelector('#avisoTabelas textarea').value).then(()=>mostrarToast('SQL copiado!'))" style="background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">📋 Copiar SQL</button>
-      <a href="https://supabase.com/dashboard" target="_blank" style="background:rgba(52,152,219,0.1);color:#3498db;border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;text-decoration:none;">🔗 Abrir Supabase</a>
-      <button onclick="diagnosticarSupabase()" style="background:rgba(243,156,18,0.1);color:#f39c12;border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">🔍 Ver erro real</button>
-      <button onclick="document.getElementById('avisoTabelas').remove();init();" style="background:rgba(59,130,246,0.1);color:#2ecc71;border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">🔄 Testar novamente</button>
+      <button onclick="navigator.clipboard.writeText(document.querySelector('#avisoTabelas textarea').value).then(()=>mostrarToast('SQL copiado!'))" style="background:rgba(59,130,246,0.1);color:var(--k-c-3b82f6,#3b82f6);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">📋 Copiar SQL</button>
+      <a href="https://supabase.com/dashboard" target="_blank" style="background:rgba(52,152,219,0.1);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;text-decoration:none;">🔗 Abrir Supabase</a>
+      <button onclick="diagnosticarSupabase()" style="background:rgba(243,156,18,0.1);color:var(--k-c-f39c12,#f39c12);border:1px solid rgba(243,156,18,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">🔍 Ver erro real</button>
+      <button onclick="document.getElementById('avisoTabelas').remove();init();" style="background:rgba(59,130,246,0.1);color:var(--k-c-2ecc71,#2ecc71);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:0.3rem 0.8rem;font-size:0.75rem;cursor:pointer;">🔄 Testar novamente</button>
     </div>`;
     const wrap = document.getElementById('secoesWrap');
     if(wrap) wrap.parentNode.insertBefore(aviso, wrap);
@@ -1428,7 +1460,7 @@ async function init(){
     const wrap = document.getElementById('secoesWrap');
     if(wrap) wrap.innerHTML = `<div class="empty-state">
       <div class="empty-state-ico">⚠️</div>
-      <h3 style="color:#e74c3c;">Erro ao carregar</h3>
+      <h3 style="color:var(--k-c-e74c3c,#e74c3c);">Erro ao carregar</h3>
       <p>Não foi possível conectar ao servidor.<br>${e.message}</p>
       <button class="btn btn-accent" onclick="location.reload()" style="margin-top:1rem;">🔄 Tentar novamente</button>
     </div>`;
@@ -1484,8 +1516,8 @@ function renderSecoes(){
     if(semSecaoCandsSemSecoes.length){
       // Tem candidatos sem seção — mostra painel deles + botão criar seção
       wrap.innerHTML = `<div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:0.9rem 1.2rem;margin-bottom:1rem;">
-        <div style="font-size:0.75rem;font-weight:700;color:#f59e0b;margin-bottom:0.3rem;">📥 ${semSecaoCandsSemSecoes.length} candidato${semSecaoCandsSemSecoes.length>1?'s':''} aguardando organização</div>
-        <div style="font-size:0.7rem;color:#888;margin-bottom:0.85rem;">Foram movidos do Banco de Talentos mas ainda não têm uma seção. Crie uma seção para organizá-los.</div>
+        <div style="font-size:0.75rem;font-weight:700;color:var(--k-c-f59e0b,#f59e0b);margin-bottom:0.3rem;">📥 ${semSecaoCandsSemSecoes.length} candidato${semSecaoCandsSemSecoes.length>1?'s':''} aguardando organização</div>
+        <div style="font-size:0.7rem;color:var(--k-t-888888,#888);margin-bottom:0.85rem;">Foram movidos do Banco de Talentos mas ainda não têm uma seção. Crie uma seção para organizá-los.</div>
         <button class="btn btn-accent" onclick="abrirModalNovaSecao()" style="margin-bottom:0.85rem;">📁 Criar primeira seção</button>
         <div class="cands-grid">${semSecaoCandsSemSecoes.map(c=>candCardSemSecao(c)).join('')}</div>
       </div>`;
@@ -1521,15 +1553,15 @@ function renderSecoes(){
 
   // Painel "Sem seção" — candidatos movidos do banco mas não organizados ainda
   const semSecaoHtml = (!secFil && semSecaoCands.length) ? `
-    <div class="secao-card" style="border-color:rgba(255,255,255,0.12);margin-bottom:1rem;">
-      <div class="secao-hdr" style="border-left-color:#666;" onclick="toggleSecao('__sem_secao__')">
+    <div class="secao-card" style="border-color:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));margin-bottom:1rem;">
+      <div class="secao-hdr" style="border-left-color:var(--k-b-666666,#666);" onclick="toggleSecao('__sem_secao__')">
         <div class="secao-dot" style="background:#555;"></div>
         <div style="flex:1;min-width:0;">
-          <div class="secao-nome" style="color:#aaa;">📥 Sem seção</div>
+          <div class="secao-nome" style="color:var(--k-t-aaaaaa,#aaa);">📥 Sem seção</div>
           <div class="secao-meta">${semSecaoCands.length} candidato${semSecaoCands.length!==1?'s':''} · Movidos do Banco, aguardando organização</div>
         </div>
         <div style="display:flex;gap:0.35rem;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">
-          <button onclick="abrirModalNovaSecaoEOrganizar()" class="secao-btn" style="background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.3);">📁 Criar seção</button>
+          <button onclick="abrirModalNovaSecaoEOrganizar()" class="secao-btn" style="background:rgba(245,158,11,0.12);color:var(--k-c-f59e0b,#f59e0b);border-color:rgba(245,158,11,0.3);">📁 Criar seção</button>
         </div>
         <button class="secao-toggle${_collapsos['__sem_secao__']!==false?' collapsed':''}" onclick="event.stopPropagation();toggleSecao('__sem_secao__')">▼</button>
       </div>
@@ -1564,8 +1596,8 @@ function renderSecaoCard(secao, cands){
   let empresaHtml = '';
   if(secao.empresa){
     let contLinks = '';
-    if(secao.email_empresa) contLinks += `<a href="mailto:${esc(secao.email_empresa)}" style="font-size:0.6rem;color:#3498db;text-decoration:none;" title="${esc(secao.email_empresa)}">📧</a>`;
-    if(secao.contato_empresa){ const n=secao.contato_empresa.replace(/\D/g,''); contLinks += `<a href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="font-size:0.6rem;color:#25D366;text-decoration:none;" title="${esc(secao.contato_empresa)}">💬</a>`; }
+    if(secao.email_empresa) contLinks += `<a href="mailto:${esc(secao.email_empresa)}" style="font-size:0.6rem;color:var(--k-c-3498db,#3498db);text-decoration:none;" title="${esc(secao.email_empresa)}">📧</a>`;
+    if(secao.contato_empresa){ const n=secao.contato_empresa.replace(/\D/g,''); contLinks += `<a href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="font-size:0.6rem;color:var(--k-c-25d366,#25D366);text-decoration:none;" title="${esc(secao.contato_empresa)}">💬</a>`; }
     empresaHtml = `<div style="display:flex;align-items:center;gap:0.35rem;margin-top:0.12rem;flex-wrap:wrap;">
       <span style="font-size:0.62rem;color:${cor};font-weight:700;opacity:0.85;">🏢 ${esc(secao.empresa)}</span>
       ${contLinks}
@@ -1586,11 +1618,11 @@ function renderSecaoCard(secao, cands){
       </div>
       <div style="display:flex;gap:0.35rem;align-items:center;flex-shrink:0;" onclick="event.stopPropagation()">
         <button onclick="abrirAddCand('${esc(secao.id)}')" class="secao-btn" style="background:${cor}18;color:${cor};border-color:${cor}35;" title="Adicionar candidato">+ Cand.</button>
-        <button onclick="abrirRetornoNegativo('${esc(secao.id)}')" class="secao-btn" style="background:rgba(231,76,60,0.1);color:#e74c3c;border-color:rgba(231,76,60,0.28);" title="Enviar retorno negativo em massa para todos os candidatos desta seção">📨 Retorno Neg.</button>
-        <button onclick="abrirEquipe('${esc(secao.id)}')" class="secao-btn-icon" title="Equipe responsável pelo processo seletivo" style="color:#a78bfa;">👥</button>
-        <button onclick="abrirEmailMassa('${esc(secao.id)}')" class="secao-btn-icon" title="Enviar e-mail personalizado para candidatos desta seção" style="color:#3498db;">📧</button>
+        <button onclick="abrirRetornoNegativo('${esc(secao.id)}')" class="secao-btn" style="background:rgba(231,76,60,0.1);color:var(--k-c-e74c3c,#e74c3c);border-color:rgba(231,76,60,0.28);" title="Enviar retorno negativo em massa para todos os candidatos desta seção">📨 Retorno Neg.</button>
+        <button onclick="abrirEquipe('${esc(secao.id)}')" class="secao-btn-icon" title="Equipe responsável pelo processo seletivo" style="color:var(--k-c-a78bfa,#a78bfa);">👥</button>
+        <button onclick="abrirEmailMassa('${esc(secao.id)}')" class="secao-btn-icon" title="Enviar e-mail personalizado para candidatos desta seção" style="color:var(--k-c-3498db,#3498db);">📧</button>
         <button onclick="editarSecao('${esc(secao.id)}')" class="secao-btn-icon" title="Editar seção">✏️</button>
-        <button onclick="confirmarDelSecao('${esc(secao.id)}')" class="secao-btn-icon" style="color:#e74c3c;" title="Excluir seção">🗑️</button>
+        <button onclick="confirmarDelSecao('${esc(secao.id)}')" class="secao-btn-icon" style="color:var(--k-c-e74c3c,#e74c3c);" title="Excluir seção">🗑️</button>
       </div>
       <button class="secao-toggle${collapsed?' collapsed':''}" id="tog-${esc(secao.id)}" onclick="event.stopPropagation();toggleSecao('${esc(secao.id)}')">▼</button>
     </div>
@@ -1619,27 +1651,27 @@ function candCardSemSecao(h){
 
   let chips = temDisc
     ? `<span class="chip" style="background:${cor}15;border-color:${cor}33;color:${cor};">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`
-    : `<span class="chip" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#666;">Sem DISC</span>`;
+    : `<span class="chip" style="background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border-color:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));color:#666;">Sem DISC</span>`;
   if(fit!=null) chips+=`<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%</span>`;
-  if(ader!=null) chips+=`<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.35);color:#a78bfa;" title="${isAderManual?'Manual':'Calculado'}">📊 ${ader}% vaga</span>`;
+  if(ader!=null) chips+=`<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.35);color:var(--k-c-a78bfa,#a78bfa);" title="${isAderManual?'Manual':'Calculado'}">📊 ${ader}% vaga</span>`;
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; chips+=`<span class="chip" style="background:${sc}15;border-color:${sc}33;color:${sc};">🧑‍💼 ${sr}%</span>`; }
 
   const parecerUrl = `disc-parecer.html?id=${encodeURIComponent(h.id)}&nome=${encodeURIComponent(h.nome||'')}&vaga=${encodeURIComponent(h.vaga||'')}&dom=${encodeURIComponent(h.dom||'D')}&sec=${encodeURIComponent(h.sec||'I')}&d=${encodeURIComponent(h.pct_d||'0')}&i=${encodeURIComponent(h.pct_i||'0')}&s=${encodeURIComponent(h.pct_s||'0')}&c=${encodeURIComponent(h.pct_c||'0')}&data=${encodeURIComponent(h.data||'')}&url=${encodeURIComponent(h.url||'')}&tel=${encodeURIComponent(h.tel_externo||'')}`;
-  let foot = `<button class="btn-sm" onclick="abrirPerfil('${esc(String(h.id))}')" style="background:rgba(245,158,11,0.1);color:#f59e0b;border-color:rgba(245,158,11,0.3);">👤 Perfil</button>`;
-  foot += `<button class="btn-sm" onclick="abrirModalMover('${esc(String(h.id))}','${esc(h.nome||'')}')" style="background:rgba(245,158,11,0.12);color:#f59e0b;border-color:rgba(245,158,11,0.3);">↕️ Mover para seção</button>`;
-  foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ window.top.open(parecerUrl,'_blank'); })" style="background:rgba(167,139,250,0.08);color:#a78bfa;border-color:rgba(167,139,250,0.2);">📋 Parecer</button>`;
-  if(h.url) foot+=`<a class="btn-sm" href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.22);">🧠 DISC</a>`;
-  if(h.curriculo_url) foot+=`<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);">📄 Currículo</a>`;
+  let foot = `<button class="btn-sm" onclick="abrirPerfil('${esc(String(h.id))}')" style="background:rgba(245,158,11,0.1);color:var(--k-c-f59e0b,#f59e0b);border-color:rgba(245,158,11,0.3);">👤 Perfil</button>`;
+  foot += `<button class="btn-sm" onclick="abrirModalMover('${esc(String(h.id))}','${esc(h.nome||'')}')" style="background:rgba(245,158,11,0.12);color:var(--k-c-f59e0b,#f59e0b);border-color:rgba(245,158,11,0.3);">↕️ Mover para seção</button>`;
+  foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ window.top.open(parecerUrl,'_blank'); })" style="background:rgba(167,139,250,0.08);color:var(--k-c-a78bfa,#a78bfa);border-color:rgba(167,139,250,0.2);">📋 Parecer</button>`;
+  if(h.url) foot+=`<a class="btn-sm" href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.1);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.22);">🧠 DISC</a>`;
+  if(h.curriculo_url) foot+=`<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.18);">📄 Currículo</a>`;
   if(h.link_externo) foot+=`<a class="btn-sm" href="${esc(h.link_externo)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(10,102,194,0.1);color:#0A66C2;border-color:rgba(10,102,194,0.25);">💼 LinkedIn</a>`;
-  if(h.email_externo) foot+=`<a class="btn-sm" href="mailto:${esc(h.email_externo)}" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);">✉️ E-mail</a>`;
-  if(h.tel_externo){ const n=h.tel_externo.replace(/\D/g,''); foot+=`<a class="btn-sm" href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.22);">💬 WhatsApp</a>`; }
-  foot += `<button class="btn-sm" onclick="devolverAoBanco('${esc(String(h.id))}','${esc(h.nome||'')}')" style="background:rgba(231,76,60,0.08);color:#e74c3c;border-color:rgba(231,76,60,0.2);" title="Devolver ao Banco de Talentos">↩️ Devolver</button>`;
+  if(h.email_externo) foot+=`<a class="btn-sm" href="mailto:${esc(h.email_externo)}" style="background:rgba(52,152,219,0.08);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.18);">✉️ E-mail</a>`;
+  if(h.tel_externo){ const n=h.tel_externo.replace(/\D/g,''); foot+=`<a class="btn-sm" href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.1);color:var(--k-c-25d366,#25D366);border-color:rgba(37,211,102,0.22);">💬 WhatsApp</a>`; }
+  foot += `<button class="btn-sm" onclick="devolverAoBanco('${esc(String(h.id))}','${esc(h.nome||'')}')" style="background:rgba(231,76,60,0.08);color:var(--k-c-e74c3c,#e74c3c);border-color:rgba(231,76,60,0.2);" title="Devolver ao Banco de Talentos">↩️ Devolver</button>`;
 
-  const rec = h.recomendacao_admin ? `<div style="font-size:0.7rem;color:#aaa;margin-top:0.4rem;line-height:1.45;background:rgba(255,255,255,0.03);border-radius:7px;padding:0.45rem 0.6rem;border-left:2px solid rgba(245,158,11,0.3);">💡 ${esc(h.recomendacao_admin.substring(0,140))}${h.recomendacao_admin.length>140?'…':''}</div>` : '';
+  const rec = h.recomendacao_admin ? `<div style="font-size:0.7rem;color:var(--k-t-aaaaaa,#aaa);margin-top:0.4rem;line-height:1.45;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border-radius:7px;padding:0.45rem 0.6rem;border-left:2px solid rgba(245,158,11,0.3);">💡 ${esc(h.recomendacao_admin.substring(0,140))}${h.recomendacao_admin.length>140?'…':''}</div>` : '';
 
-  return `<div class="cand-card" style="border-color:rgba(255,255,255,0.08);">
+  return `<div class="cand-card" style="border-color:var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));">
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDisc?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDisc?cor+'40':'rgba(255,255,255,0.12)'};color:${temDisc?cor:'#555'};">${temDisc?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${temDisc?cor+'15':'var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)))'};border-color:${temDisc?cor+'40':'var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)))'};color:${temDisc?cor:'#555'};">${temDisc?emoji:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')}${h.data?' · 📅 '+esc(h.data):''}${h.cidade?' · 📍 '+esc(h.cidade):''}</div>
@@ -1689,24 +1721,24 @@ function candCardEnt(h, secao){
   if(fitEst!=null){ const c=fitEst>=80?'#2ecc71':fitEst>=65?'#3b82f6':fitEst>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🧠 DISC</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fitEst}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fitEst}%</span></div>`; }
   if(h.fit_score){ const fs=parseInt(h.fit_score),c=fs>=80?'#2ecc71':fs>=65?'#3b82f6':fs>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">🤖 Fit</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fs}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fs}%</span></div>`; }
   else if(h.fit_manual){ const fm=parseInt(h.fit_manual),c='#3498db'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${c};">✏️ Man.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${fm}%;background:${c};"></div></div><span class="fit-bar-pct" style="color:${c};">${fm}%</span></div>`; }
-  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const tooltip=isAderManual?'Definido manualmente':(aderCalc.detalhes?'Ponderado: '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):'Calculado'); bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:#a78bfa;">📊 Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:#a78bfa;">${ader}%</span></div>`; }
+  if(ader!=null){ const aderGrad=isAderManual?'linear-gradient(90deg,#7c3aed,#a78bfa)':'linear-gradient(90deg,#5b21b6,#a78bfa)'; const tooltip=isAderManual?'Definido manualmente':(aderCalc.detalhes?'Ponderado: '+aderCalc.detalhes.map(p=>`${p.label} ${Math.round(p.peso/(aderCalc.detalhes.reduce((s,x)=>s+x.peso,0))*100)}%`).join(' + '):'Calculado'); bars+=`<div class="fit-bar-row" title="${tooltip}"><span class="fit-bar-lbl" style="color:var(--k-c-a78bfa,#a78bfa);">📊 Ader</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${ader}%;background:${aderGrad};"></div></div><span class="fit-bar-pct" style="color:var(--k-c-a78bfa,#a78bfa);">${ader}%</span></div>`; }
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; bars+=`<div class="fit-bar-row"><span class="fit-bar-lbl" style="color:${sc};">🧑‍💼 Rec.</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${sr}%;background:linear-gradient(90deg,#e67e22,#f39c12);"></div></div><span class="fit-bar-pct" style="color:${sc};">${sr}%</span></div>`; }
   if(h.pilar_livre_valor!=null){ const pl=parseInt(h.pilar_livre_valor),plc=pl>=80?'#2ecc71':pl>=65?'#3b82f6':pl>=45?'#f39c12':'#e74c3c',plnome=h.pilar_livre_nome||'Livre'; bars+=`<div class="fit-bar-row" title="${esc(plnome)}"><span class="fit-bar-lbl" style="color:${plc};overflow:hidden;text-overflow:ellipsis;">🔧 ${esc(plnome.substring(0,6))}</span><div class="fit-bar-track"><div class="fit-bar-fill" style="width:${pl}%;background:linear-gradient(90deg,#2563eb,#1d4ed8);"></div></div><span class="fit-bar-pct" style="color:${plc};">${pl}%</span></div>`; }
 
   // ── CHIPS ──
   let chips = temDisc
     ? `<span class="chip" style="background:${cor}15;border-color:${cor}33;color:${cor};">${esc(h.dom||'?')}+${esc(h.sec||'?')} · ${esc(combo)}</span>`
-    : `<span class="chip" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#666;">Sem DISC</span>`;
+    : `<span class="chip" style="background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border-color:var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)));color:#666;">Sem DISC</span>`;
   if(fit!=null) chips+=`<span class="chip" style="background:${fitCor}15;border-color:${fitCor}33;color:${fitCor};">Fit ${fit}%${fitSrc}</span>`;
-  else chips+=`<span class="chip" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);color:#555;">Sem entrevista</span>`;
-  if(ader!=null) chips+=`<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.35);color:#a78bfa;cursor:pointer;font-weight:800;" onclick="abrirPerfil('${esc(String(h.id))}')" title="${isAderManual?'Manual':'Calculado: DISC+Fit ponderados'}">📊 ${ader}%</span>`;
+  else chips+=`<span class="chip" style="background:var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)));border-color:var(--k-w-100,var(--k-w-100,rgba(255,255,255,0.1)));color:#555;">Sem entrevista</span>`;
+  if(ader!=null) chips+=`<span class="chip" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.35);color:var(--k-c-a78bfa,#a78bfa);cursor:pointer;font-weight:800;" onclick="abrirPerfil('${esc(String(h.id))}')" title="${isAderManual?'Manual':'Calculado: DISC+Fit ponderados'}">📊 ${ader}%</span>`;
   if(h.score_recrutador!=null){ const sr=parseInt(h.score_recrutador),sc=sr>=80?'#2ecc71':sr>=65?'#3b82f6':sr>=45?'#f39c12':'#e74c3c'; chips+=`<span class="chip" style="background:${sc}15;border-color:${sc}33;color:${sc};" title="Score do recrutador">🧑‍💼 ${sr}%</span>`; }
-  if(h.doc_completa) chips+=`<span class="chip" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:#2ecc71;">📁 Docs</span>`;
+  if(h.doc_completa) chips+=`<span class="chip" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--k-c-2ecc71,#2ecc71);">📁 Docs</span>`;
 
   // ── RECOMENDAÇÃO + NOTA ──
-  const rec = h.recomendacao_admin ? `<div style="font-size:0.7rem;color:#aaa;margin-top:0.4rem;line-height:1.45;background:rgba(255,255,255,0.03);border-radius:7px;padding:0.45rem 0.6rem;border-left:2px solid ${secCor}55;">💡 ${esc(h.recomendacao_admin.substring(0,140))}${h.recomendacao_admin.length>140?'…':''}</div>` : '';
+  const rec = h.recomendacao_admin ? `<div style="font-size:0.7rem;color:var(--k-t-aaaaaa,#aaa);margin-top:0.4rem;line-height:1.45;background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border-radius:7px;padding:0.45rem 0.6rem;border-left:2px solid ${secCor}55;">💡 ${esc(h.recomendacao_admin.substring(0,140))}${h.recomendacao_admin.length>140?'…':''}</div>` : '';
   const nota = _notas[String(h.id)]||'';
-  const notaPreview = nota ? `<div style="font-size:0.65rem;color:#888;margin-top:0.35rem;padding:0.3rem 0.55rem;background:rgba(255,255,255,0.02);border-radius:6px;border-left:2px solid ${secCor}55;line-height:1.45;">${esc(nota.substring(0,80))}${nota.length>80?'…':''}</div>` : '';
+  const notaPreview = nota ? `<div style="font-size:0.65rem;color:var(--k-t-888888,#888);margin-top:0.35rem;padding:0.3rem 0.55rem;background:var(--k-w-020,var(--k-w-020,rgba(255,255,255,0.02)));border-radius:6px;border-left:2px solid ${secCor}55;line-height:1.45;">${esc(nota.substring(0,80))}${nota.length>80?'…':''}</div>` : '';
 
   // ── BOTÕES ──
   const parecerUrl = `disc-parecer.html?id=${encodeURIComponent(h.id)}&nome=${encodeURIComponent(h.nome||'')}&vaga=${encodeURIComponent(h.vaga||'')}&dom=${encodeURIComponent(h.dom||'D')}&sec=${encodeURIComponent(h.sec||'I')}&d=${encodeURIComponent(h.pct_d||'0')}&i=${encodeURIComponent(h.pct_i||'0')}&s=${encodeURIComponent(h.pct_s||'0')}&c=${encodeURIComponent(h.pct_c||'0')}&data=${encodeURIComponent(h.data||'')}&url=${encodeURIComponent(h.url||'')}&tel=${encodeURIComponent(h.tel_externo||'')}`;
@@ -1714,7 +1746,7 @@ function candCardEnt(h, secao){
   const entResultUrl = h.url_resultado_fit || entFormUrl;
 
   let foot = `<button class="btn-sm" onclick="abrirPerfil('${esc(String(h.id))}')" style="background:rgba(245,158,11,0.1);color:${secCor};border-color:${secCor}33;">👤 Perfil</button>`;
-  foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ window.top.open('${esc(parecerUrl)}','_blank'); })" style="background:rgba(167,139,250,0.08);color:#a78bfa;border-color:rgba(167,139,250,0.2);">📋 Parecer</button>`;
+  foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ window.top.open('${esc(parecerUrl)}','_blank'); })" style="background:rgba(167,139,250,0.08);color:var(--k-c-a78bfa,#a78bfa);border-color:rgba(167,139,250,0.2);">📋 Parecer</button>`;
   // Botão Parecer Final — link direto se tiver documento salvo, ou abre aba
   if(h.parecer_final_link){
     const pfStatus = h.parecer_final_status;
@@ -1723,23 +1755,23 @@ function candCardEnt(h, secao){
     const pfLabel = {aprovado:'✅',aprovado_reserva:'🟡',finalista:'🟢',reprovado:'❌',desistiu:'🚪',contratado:'🏆'}[pfStatus]||'📋';
     foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ window.top.open('${esc(h.parecer_final_link)}','_blank'); })" title="${h.parecer_final_obs?esc(h.parecer_final_obs.substring(0,80)):''}" style="background:${pfCor}15;color:${pfCor};border-color:${pfCor}33;">${pfLabel} P. Final</button>`;
   } else {
-    foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ abrirPerfil('${esc(String(h.id))}');setTimeout(()=>mudarTabP('parecer'),400); })" style="background:rgba(245,158,11,0.06);color:#f59e0b;border-color:rgba(245,158,11,0.18);">📋 P. Final</button>`;
+    foot += `<button class="btn-sm" onclick="abrirSenhaParecer(()=>{ abrirPerfil('${esc(String(h.id))}');setTimeout(()=>mudarTabP('parecer'),400); })" style="background:rgba(245,158,11,0.06);color:var(--k-c-f59e0b,#f59e0b);border-color:rgba(245,158,11,0.18);">📋 P. Final</button>`;
   }
-  if(h.url) foot+=`<a class="btn-sm" href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.22);">🧠 DISC</a>`;
-  if(h.url_resultado_fit) foot+=`<a class="btn-sm" href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.22);">🎯 Fit</a>`;
-  if(h.entrevista_json||h.resumo_ia||h.url_resultado_fit) foot+=`<a class="btn-sm" href="${esc(entResultUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.1);color:#f39c12;border-color:rgba(243,156,18,0.22);">🎤 Entrevista</a>`;
-  else foot+=`<a class="btn-sm" href="${esc(entFormUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.05);color:#f39c12;border-color:rgba(243,156,18,0.12);">✍️ Entrevista</a>`;
-  if(h.curriculo_url) foot+=`<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);">📄 Currículo</a>`;
+  if(h.url) foot+=`<a class="btn-sm" href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.1);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.22);">🧠 DISC</a>`;
+  if(h.url_resultado_fit) foot+=`<a class="btn-sm" href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(59,130,246,0.1);color:var(--k-c-3b82f6,#3b82f6);border-color:rgba(59,130,246,0.22);">🎯 Fit</a>`;
+  if(h.entrevista_json||h.resumo_ia||h.url_resultado_fit) foot+=`<a class="btn-sm" href="${esc(entResultUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.1);color:var(--k-c-f39c12,#f39c12);border-color:rgba(243,156,18,0.22);">🎤 Entrevista</a>`;
+  else foot+=`<a class="btn-sm" href="${esc(entFormUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(243,156,18,0.05);color:var(--k-c-f39c12,#f39c12);border-color:rgba(243,156,18,0.12);">✍️ Entrevista</a>`;
+  if(h.curriculo_url) foot+=`<a class="btn-sm" href="${esc(h.curriculo_url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.08);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.18);">📄 Currículo</a>`;
   if(h.link_externo)  foot+=`<a class="btn-sm" href="${esc(h.link_externo)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(10,102,194,0.1);color:#0A66C2;border-color:rgba(10,102,194,0.22);">💼 LinkedIn</a>`;
-  if(h.email_externo) foot+=`<a class="btn-sm" href="mailto:${esc(h.email_externo)}" style="background:rgba(52,152,219,0.08);color:#3498db;border-color:rgba(52,152,219,0.18);">✉️ E-mail</a>`;
-  if(h.tel_externo){ const n=h.tel_externo.replace(/\D/g,''); foot+=`<a class="btn-sm" href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.1);color:#25D366;border-color:rgba(37,211,102,0.22);">💬 WhatsApp</a>`; }
+  if(h.email_externo) foot+=`<a class="btn-sm" href="mailto:${esc(h.email_externo)}" style="background:rgba(52,152,219,0.08);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.18);">✉️ E-mail</a>`;
+  if(h.tel_externo){ const n=h.tel_externo.replace(/\D/g,''); foot+=`<a class="btn-sm" href="https://wa.me/55${n}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.1);color:var(--k-c-25d366,#25D366);border-color:rgba(37,211,102,0.22);">💬 WhatsApp</a>`; }
 
   return `<div class="cand-card">
     <div class="cand-actions">
       <button class="cand-action-btn" onclick="abrirModalMover('${esc(String(h.id))}','${esc(h.nome||'')}')" title="Mover para outra seção">↕️</button>
     </div>
     <div class="cand-card-inner">
-      <div class="cand-avatar" style="background:${temDisc?cor+'15':'rgba(255,255,255,0.04)'};border-color:${temDisc?cor+'40':'rgba(255,255,255,0.12)'};color:${temDisc?cor:'#555'};">${temDisc?emoji:'?'}</div>
+      <div class="cand-avatar" style="background:${temDisc?cor+'15':'var(--k-w-040,var(--k-w-040,rgba(255,255,255,0.04)))'};border-color:${temDisc?cor+'40':'var(--k-w-120,var(--k-w-120,rgba(255,255,255,0.12)))'};color:${temDisc?cor:'#555'};">${temDisc?emoji:'?'}</div>
       <div class="cand-info">
         <div class="cand-nome" style="cursor:pointer;padding-right:3.5rem;" onclick="abrirPerfil('${esc(String(h.id))}')">${esc(h.nome||'—')}</div>
         <div class="cand-meta">📋 ${esc(h.vaga||'—')}${h.data?' · 📅 '+esc(h.data):''}${h.cidade?' · 📍 '+esc(h.cidade):''}</div>
@@ -1910,7 +1942,7 @@ function filtrarListaAdd(){
       <div class="add-cand-av" style="border-color:${cor};color:${cor};">${emoji}</div>
       <div style="flex:1;min-width:0;">
         <div class="add-cand-nome">${esc(c.nome||'—')}</div>
-        <div class="add-cand-sub">${esc(c.vaga||'—')} ${c.data?'· '+esc(c.data):''} ${jaAtrib&&atribSec?`<span style="color:${atribSec.cor||'#f59e0b'};font-weight:700;">· Já em: ${esc(atribSec.nome)}</span>`:''}${jaEntrevistado&&!jaAtrib?'<span style="color:#f59e0b;font-weight:700;"> · Entrevistado</span>':''}</div>
+        <div class="add-cand-sub">${esc(c.vaga||'—')} ${c.data?'· '+esc(c.data):''} ${jaAtrib&&atribSec?`<span style="color:${atribSec.cor||'var(--k-c-f59e0b,#f59e0b)'};font-weight:700;">· Já em: ${esc(atribSec.nome)}</span>`:''}${jaEntrevistado&&!jaAtrib?'<span style="color:var(--k-c-f59e0b,#f59e0b);font-weight:700;"> · Entrevistado</span>':''}</div>
       </div>
       <span class="add-cand-check">✅</span>
     </div>`;
@@ -1971,11 +2003,11 @@ function renderCopiarLista(){
   }
   lista.innerHTML = _secoes.map(s=>{
     const marcado = vagasAtuais.includes(s.id);
-    return `<label style="display:flex;align-items:center;gap:0.7rem;background:${marcado?'rgba(59,130,246,0.08)':'rgba(255,255,255,0.03)'};border:1px solid ${marcado?'rgba(59,130,246,0.3)':'rgba(255,255,255,0.08)'};border-radius:10px;padding:0.65rem 0.9rem;cursor:pointer;transition:all 0.15s;">
+    return `<label style="display:flex;align-items:center;gap:0.7rem;background:${marcado?'rgba(59,130,246,0.08)':'var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)))'};border:1px solid ${marcado?'rgba(59,130,246,0.3)':'var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)))'};border-radius:10px;padding:0.65rem 0.9rem;cursor:pointer;transition:all 0.15s;">
       <input type="checkbox" data-secao="${esc(s.id)}" ${marcado?'checked':''} style="width:16px;height:16px;accent-color:#3b82f6;cursor:pointer;flex-shrink:0;"/>
       <div class="mover-dot" style="background:${s.cor||'#f59e0b'};flex-shrink:0;"></div>
       <div style="flex:1;font-size:0.82rem;font-weight:700;">${esc(s.nome)}</div>
-      ${marcado?'<span style="font-size:0.65rem;color:#3b82f6;font-weight:700;">✓ atual</span>':''}
+      ${marcado?'<span style="font-size:0.65rem;color:var(--k-c-3b82f6,#3b82f6);font-weight:700;">✓ atual</span>':''}
     </label>`;
   }).join('');
 }
@@ -2031,7 +2063,7 @@ function abrirModalMover(candId, nome){
       const isAtual = vagasAtuais.includes(s.id);
       return `<div class="mover-secao-item${isAtual?' selected':''}" onclick="${isAtual?'':` moverParaSecao('${esc(s.id)}')`}" style="${isAtual?'opacity:0.55;cursor:default;':''}" title="${isAtual?'Vaga atual':''}">
         <div class="mover-dot" style="background:${s.cor||'#f59e0b'};"></div>
-        <div style="flex:1;"><div style="font-size:0.82rem;font-weight:700;">${esc(s.nome)}</div>${isAtual?'<div style="font-size:0.62rem;color:#3b82f6;">✓ Vinculado</div>':''}</div>
+        <div style="flex:1;"><div style="font-size:0.82rem;font-weight:700;">${esc(s.nome)}</div>${isAtual?'<div style="font-size:0.62rem;color:var(--k-c-3b82f6,#3b82f6);">✓ Vinculado</div>':''}</div>
         ${!isAtual?'<span style="font-size:0.7rem;color:var(--muted);">→</span>':''}
       </div>`;
     }).join('');
@@ -2084,9 +2116,9 @@ function preencherParecerFinal(h){
   if(wrap && cont && (resultado || texto || docUrl)){
     const resLabel = resultado ? (RESULTADOS[resultado]||resultado) : '';
     let html = '';
-    if(resLabel) html += `<div style="font-size:0.85rem;font-weight:800;color:#f59e0b;margin-bottom:0.4rem;">${resLabel}</div>`;
-    if(texto) html += `<div style="font-size:0.75rem;color:#ccc;line-height:1.6;margin-bottom:0.4rem;">${esc(texto)}</div>`;
-    if(docUrl) html += `<a href="${esc(docUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;font-weight:700;color:#3498db;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.22rem 0.6rem;text-decoration:none;">📄 Ver documento de parecer</a>`;
+    if(resLabel) html += `<div style="font-size:0.85rem;font-weight:800;color:var(--k-c-f59e0b,#f59e0b);margin-bottom:0.4rem;">${resLabel}</div>`;
+    if(texto) html += `<div style="font-size:0.75rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;margin-bottom:0.4rem;">${esc(texto)}</div>`;
+    if(docUrl) html += `<a href="${esc(docUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.7rem;font-weight:700;color:var(--k-c-3498db,#3498db);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.22rem 0.6rem;text-decoration:none;">📄 Ver documento de parecer</a>`;
     cont.innerHTML = html;
     wrap.style.display = 'block';
   } else if(wrap){
@@ -2103,8 +2135,8 @@ function preencherParecerFinal(h){
       const resCor = resCores[resultado]||'#f59e0b';
       let vHtml = '';
       if(resLabel) vHtml += `<div style="margin-bottom:0.6rem;"><span style="font-size:0.92rem;font-weight:900;color:${resCor};">${resLabel}</span></div>`;
-      if(texto) vHtml += `<div style="font-size:0.76rem;color:#bbb;line-height:1.65;margin-bottom:0.65rem;">${esc(texto)}</div>`;
-      if(docUrl) vHtml += `<a href="${esc(docUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;font-weight:700;color:#3498db;background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.28);border-radius:8px;padding:0.3rem 0.75rem;text-decoration:none;margin-bottom:0.3rem;">📄 Abrir Documento de Parecer</a>`;
+      if(texto) vHtml += `<div style="font-size:0.76rem;color:var(--k-t-bbbbbb,#bbb);line-height:1.65;margin-bottom:0.65rem;">${esc(texto)}</div>`;
+      if(docUrl) vHtml += `<a href="${esc(docUrl)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.72rem;font-weight:700;color:var(--k-c-3498db,#3498db);background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.28);border-radius:8px;padding:0.3rem 0.75rem;text-decoration:none;margin-bottom:0.3rem;">📄 Abrir Documento de Parecer</a>`;
       vHtml += `<div style="margin-top:0.5rem;"><button onclick="mudarTabP('parecer')" style="font-family:inherit;font-size:0.68rem;font-weight:700;color:var(--accent);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:7px;padding:0.22rem 0.6rem;cursor:pointer;">✏️ Editar parecer</button></div>`;
       vCont.innerHTML = vHtml;
       vWrap.style.display = 'block';
@@ -2263,7 +2295,7 @@ async function abrirPerfil(id){
   let chips='';
   if(h.dom) chips+=`<span class="chip" style="background:${cor}15;border-color:${cor}40;color:${cor};">${esc(h.dom)}+${esc(h.sec||'?')} · ${esc(combo)}</span>`;
   if(fit!=null) chips+=`<span class="chip" style="background:${fitCor}15;border-color:${fitCor}40;color:${fitCor};">Fit ${fit}%</span>`;
-  if(h.doc_completa) chips+=`<span class="chip" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:#2ecc71;">📁 Docs OK</span>`;
+  if(h.doc_completa) chips+=`<span class="chip" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--k-c-2ecc71,#2ecc71);">📁 Docs OK</span>`;
   document.getElementById('perfilChips').innerHTML=chips;
 
   // Botões de ação
@@ -2291,8 +2323,8 @@ async function abrirPerfil(id){
     document.getElementById('bannerSecaoNome').textContent=secao.nome;
     document.getElementById('bannerEmpresa').textContent=secao.empresa?'🏢 '+secao.empresa:'';
     let contBtns='';
-    if(secao.email_empresa) contBtns+=`<a href="mailto:${esc(secao.email_empresa)}" style="background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.28rem 0.6rem;font-size:0.68rem;font-weight:700;text-decoration:none;">📧 E-mail</a>`;
-    if(secao.contato_empresa){const n2=secao.contato_empresa.replace(/\D/g,'');contBtns+=`<a href="https://wa.me/55${n2}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.12);color:#25D366;border:1px solid rgba(37,211,102,0.25);border-radius:7px;padding:0.28rem 0.6rem;font-size:0.68rem;font-weight:700;text-decoration:none;">💬 WhatsApp</a>`;}
+    if(secao.email_empresa) contBtns+=`<a href="mailto:${esc(secao.email_empresa)}" style="background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.28rem 0.6rem;font-size:0.68rem;font-weight:700;text-decoration:none;">📧 E-mail</a>`;
+    if(secao.contato_empresa){const n2=secao.contato_empresa.replace(/\D/g,'');contBtns+=`<a href="https://wa.me/55${n2}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(37,211,102,0.12);color:var(--k-c-25d366,#25D366);border:1px solid rgba(37,211,102,0.25);border-radius:7px;padding:0.28rem 0.6rem;font-size:0.68rem;font-weight:700;text-decoration:none;">💬 WhatsApp</a>`;}
     document.getElementById('bannerContatos').innerHTML=contBtns;
   } else { banner.style.display='none'; }
 
@@ -2304,7 +2336,7 @@ async function abrirPerfil(id){
   if(fitVal)  ms+=`<div class="mini-stat"><div class="mini-stat-val" style="color:${corFitP(fitVal)};">${fitVal}%</div><div class="mini-stat-lbl">Fit Score</div></div>`;
   if(aderVal) ms+=`<div class="mini-stat"><div class="mini-stat-val" style="color:${corFitP(aderVal)};">${aderVal}%</div><div class="mini-stat-lbl">Aderência</div></div>`;
   if(recVal)  ms+=`<div class="mini-stat"><div class="mini-stat-val" style="color:${corFitP(recVal)};">${recVal}%</div><div class="mini-stat-lbl">Recrutador</div></div>`;
-  if(idadeAnos) ms+=`<div class="mini-stat"><div class="mini-stat-val" style="color:#a78bfa;">${idadeAnos}</div><div class="mini-stat-lbl">anos</div></div>`;
+  if(idadeAnos) ms+=`<div class="mini-stat"><div class="mini-stat-val" style="color:var(--k-c-a78bfa,#a78bfa);">${idadeAnos}</div><div class="mini-stat-lbl">anos</div></div>`;
   document.getElementById('perfilMiniStats').innerHTML=ms;
 
   // Scores bars
@@ -2320,7 +2352,7 @@ async function abrirPerfil(id){
   const nomes={D:'Dominância',I:'Influência',S:'Estabilidade',C:'Conformidade'};
   let dbars='';
   ['D','I','S','C'].forEach(k=>{const v=parseInt(h['pct_'+k.toLowerCase()]||0),c2=COR[k];dbars+=`<div class="sbar-row"><span class="sbar-lbl" style="color:${c2};">${EMO[k]} ${nomes[k]}</span><div class="sbar-track"><div class="sbar-fill" style="width:${v}%;background:${c2}80;"></div></div><span class="sbar-pct" style="color:${c2};">${v}%</span></div>`;});
-  if(h.url) dbars+=`<div style="margin-top:0.5rem;"><a href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" class="link-btn" style="background:rgba(52,152,219,0.1);color:#3498db;border-color:rgba(52,152,219,0.25);">🧠 Ver resultado DISC completo</a></div>`;
+  if(h.url) dbars+=`<div style="margin-top:0.5rem;"><a href="${esc(h.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" class="link-btn" style="background:rgba(52,152,219,0.1);color:var(--k-c-3498db,#3498db);border-color:rgba(52,152,219,0.25);">🧠 Ver resultado DISC completo</a></div>`;
   document.getElementById('perfilDiscBars').innerHTML=dbars;
 
   // Pontos fortes/atenção
@@ -2330,8 +2362,8 @@ async function abrirPerfil(id){
     const pf=(h.pontos_fortes||'').split(' | ').map(s=>s.trim()).filter(Boolean);
     const pa=(h.pontos_atencao||'').split(' | ').map(s=>s.trim()).filter(Boolean);
     let fhtml='';
-    if(pf.length) fhtml+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:0.3rem;">✅ Pontos Fortes</div><div style="display:flex;flex-wrap:wrap;gap:0.3rem;">${pf.map(t=>`<span class="tag-ok">✓ ${esc(t)}</span>`).join('')}</div></div>`;
-    if(pa.length) fhtml+=`<div><div style="font-size:0.6rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:0.3rem;">⚠️ Pontos de Atenção</div><div style="display:flex;flex-wrap:wrap;gap:0.3rem;">${pa.map(t=>`<span class="tag-warn">⚠ ${esc(t)}</span>`).join('')}</div></div>`;
+    if(pf.length) fhtml+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:var(--k-t-888888,#888);text-transform:uppercase;margin-bottom:0.3rem;">✅ Pontos Fortes</div><div style="display:flex;flex-wrap:wrap;gap:0.3rem;">${pf.map(t=>`<span class="tag-ok">✓ ${esc(t)}</span>`).join('')}</div></div>`;
+    if(pa.length) fhtml+=`<div><div style="font-size:0.6rem;font-weight:700;color:var(--k-t-888888,#888);text-transform:uppercase;margin-bottom:0.3rem;">⚠️ Pontos de Atenção</div><div style="display:flex;flex-wrap:wrap;gap:0.3rem;">${pa.map(t=>`<span class="tag-warn">⚠ ${esc(t)}</span>`).join('')}</div></div>`;
     document.getElementById('perfilForcas').innerHTML=fhtml;
   } else { fw.style.display='none'; }
 
@@ -2407,13 +2439,13 @@ function fecharPerfil(){
 function renderEntrevistaP(h){
   let html='';
   const fitVal=parseInt(h.fit_score||0);
-  if(fitVal){const c=corFitP(fitVal);html+=`<div style="display:flex;align-items:center;gap:1rem;padding:0.5rem 0;margin-bottom:0.7rem;"><div style="font-size:2rem;font-weight:900;color:${c};">${fitVal}%</div><div><div style="font-size:0.9rem;font-weight:800;">${h.fit_nivel||'Fit Score'}</div>${h.recomendacao_admin?`<div style="font-size:0.72rem;color:#aaa;margin-top:0.1rem;">${esc(h.recomendacao_admin)}</div>`:''}</div></div>`;}
-  if(h.resumo_ia) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:0.2rem;">Resumo IA</div><div style="font-size:0.78rem;color:#ccc;line-height:1.6;">${esc(h.resumo_ia)}</div></div>`;
-  if(h.pontos_fortes) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:#2ecc71;margin-bottom:0.15rem;">✅ Pontos Fortes</div><div style="font-size:0.78rem;color:#ccc;line-height:1.6;">${esc(h.pontos_fortes)}</div></div>`;
-  if(h.pontos_atencao) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:#f39c12;margin-bottom:0.15rem;">⚠️ Pontos de Atenção</div><div style="font-size:0.78rem;color:#ccc;line-height:1.6;">${esc(h.pontos_atencao)}</div></div>`;
+  if(fitVal){const c=corFitP(fitVal);html+=`<div style="display:flex;align-items:center;gap:1rem;padding:0.5rem 0;margin-bottom:0.7rem;"><div style="font-size:2rem;font-weight:900;color:${c};">${fitVal}%</div><div><div style="font-size:0.9rem;font-weight:800;">${h.fit_nivel||'Fit Score'}</div>${h.recomendacao_admin?`<div style="font-size:0.72rem;color:var(--k-t-aaaaaa,#aaa);margin-top:0.1rem;">${esc(h.recomendacao_admin)}</div>`:''}</div></div>`;}
+  if(h.resumo_ia) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:var(--k-t-888888,#888);text-transform:uppercase;margin-bottom:0.2rem;">Resumo IA</div><div style="font-size:0.78rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;">${esc(h.resumo_ia)}</div></div>`;
+  if(h.pontos_fortes) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:var(--k-c-2ecc71,#2ecc71);margin-bottom:0.15rem;">✅ Pontos Fortes</div><div style="font-size:0.78rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;">${esc(h.pontos_fortes)}</div></div>`;
+  if(h.pontos_atencao) html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:var(--k-c-f39c12,#f39c12);margin-bottom:0.15rem;">⚠️ Pontos de Atenção</div><div style="font-size:0.78rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;">${esc(h.pontos_atencao)}</div></div>`;
   let entrev=null;try{entrev=h.entrevista_json?JSON.parse(h.entrevista_json):null;}catch(e){}
-  if(entrev){const campos=[['📖 Trajetória','historia'],['🎯 Exp. com a vaga','exp_vaga'],['🧑‍💼 Diferencial','diferencial'],['💭 Motivação','motivacao'],['📌 Extras','extra']];campos.forEach(([l,k])=>{if(entrev[k])html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:0.2rem;">${l}</div><div style="font-size:0.78rem;color:#ccc;line-height:1.6;">${esc(entrev[k])}</div></div>`; });}
-  if(h.url_resultado_fit) html+=`<a href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" class="link-btn" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.25);margin-top:0.5rem;">🎯 Ver Fit Cultural completo</a>`;
+  if(entrev){const campos=[['📖 Trajetória','historia'],['🎯 Exp. com a vaga','exp_vaga'],['🧑‍💼 Diferencial','diferencial'],['💭 Motivação','motivacao'],['📌 Extras','extra']];campos.forEach(([l,k])=>{if(entrev[k])html+=`<div style="margin-bottom:0.6rem;"><div style="font-size:0.6rem;font-weight:700;color:var(--k-t-888888,#888);text-transform:uppercase;margin-bottom:0.2rem;">${l}</div><div style="font-size:0.78rem;color:var(--k-t-cccccc,#ccc);line-height:1.6;">${esc(entrev[k])}</div></div>`; });}
+  if(h.url_resultado_fit) html+=`<a href="${esc(h.url_resultado_fit)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" class="link-btn" style="background:rgba(59,130,246,0.1);color:var(--k-c-3b82f6,#3b82f6);border-color:rgba(59,130,246,0.25);margin-top:0.5rem;">🎯 Ver Fit Cultural completo</a>`;
   document.getElementById('perfilEntrevistaConteudo').innerHTML=html||'<p style="font-size:0.78rem;color:#555;text-align:center;padding:1.5rem 0;">Sem dados de entrevista disponíveis.</p>';
 }
 
@@ -2479,9 +2511,9 @@ function rmCompLivreP(i){_pCompLivres.splice(i,1);renderCompLivresP();}
 function renderDocsP(){
   const lista=document.getElementById('perfilDocsLista');
   if(!lista) return;
-  lista.innerHTML=_pDocs.length?_pDocs.map((d,i)=>`<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:9px;padding:0.55rem 0.8rem;display:flex;align-items:center;gap:0.6rem;"><div style="flex:1;min-width:0;"><div style="font-size:0.8rem;font-weight:700;">${esc(d.nome)}</div>${d.url?`<a href="${esc(d.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="font-size:0.65rem;color:#3498db;text-decoration:none;">${esc(d.url.substring(0,50))}${d.url.length>50?'…':''}</a>`:''}</div>${d.url?`<a href="${esc(d.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.22rem 0.5rem;font-size:0.65rem;font-weight:700;text-decoration:none;flex-shrink:0;">🔗 Abrir</a>`:''}<button onclick="remDocP(${i})" style="background:none;border:none;color:rgba(231,76,60,0.3);cursor:pointer;font-size:0.85rem;flex-shrink:0;">✕</button></div>`).join(''):'<p style="font-size:0.74rem;color:#555;">Nenhum documento anexado.</p>';
+  lista.innerHTML=_pDocs.length?_pDocs.map((d,i)=>`<div style="background:var(--k-w-030,var(--k-w-030,rgba(255,255,255,0.03)));border:1px solid var(--k-w-080,var(--k-w-080,rgba(255,255,255,0.08)));border-radius:9px;padding:0.55rem 0.8rem;display:flex;align-items:center;gap:0.6rem;"><div style="flex:1;min-width:0;"><div style="font-size:0.8rem;font-weight:700;">${esc(d.nome)}</div>${d.url?`<a href="${esc(d.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="font-size:0.65rem;color:var(--k-c-3498db,#3498db);text-decoration:none;">${esc(d.url.substring(0,50))}${d.url.length>50?'…':''}</a>`:''}</div>${d.url?`<a href="${esc(d.url)}" target="_blank" onclick="window.top.open(this.href,'_blank');return false;" style="background:rgba(52,152,219,0.12);color:var(--k-c-3498db,#3498db);border:1px solid rgba(52,152,219,0.25);border-radius:7px;padding:0.22rem 0.5rem;font-size:0.65rem;font-weight:700;text-decoration:none;flex-shrink:0;">🔗 Abrir</a>`:''}<button onclick="remDocP(${i})" style="background:none;border:none;color:rgba(231,76,60,0.3);cursor:pointer;font-size:0.85rem;flex-shrink:0;">✕</button></div>`).join(''):'<p style="font-size:0.74rem;color:#555;">Nenhum documento anexado.</p>';
   const cl=document.getElementById('perfilDocChecklist');
-  if(cl) cl.innerHTML=DOC_CHECKLIST.map(d=>`<label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.78rem;background:rgba(255,255,255,0.02);border-radius:7px;padding:0.35rem 0.5rem;"><input type="checkbox" style="accent-color:#f59e0b;cursor:pointer;" ${_pDocChecklist[d]?'checked':''} onchange="_pDocChecklist['${d}']=this.checked;"/> ${esc(d)}</label>`).join('');
+  if(cl) cl.innerHTML=DOC_CHECKLIST.map(d=>`<label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.78rem;background:var(--k-w-020,var(--k-w-020,rgba(255,255,255,0.02)));border-radius:7px;padding:0.35rem 0.5rem;"><input type="checkbox" style="accent-color:#f59e0b;cursor:pointer;" ${_pDocChecklist[d]?'checked':''} onchange="_pDocChecklist['${d}']=this.checked;"/> ${esc(d)}</label>`).join('');
 }
 function adicionarDocP(){
   const nome=(document.getElementById('docNomeNovo')?.value||'').trim();
@@ -2716,13 +2748,13 @@ function filtrarCandidatosEquipe(){
     const emo = EMO[c.dom]||'👤';
     return `<div onclick="toggleCandEquipe('${String(c.id)}','${esc(c.nome||'?')}')"
       style="display:flex;align-items:center;gap:0.55rem;padding:0.45rem 0.65rem;border-radius:9px;cursor:pointer;
-             background:${sel?'rgba(167,139,250,0.12)':'rgba(255,255,255,0.03)'};
-             border:1px solid ${sel?'rgba(167,139,250,0.4)':'rgba(255,255,255,0.07)'};
+             background:${sel?'rgba(167,139,250,0.12)':'var(--k-w-030,rgba(255,255,255,0.03))'};
+             border:1px solid ${sel?'rgba(167,139,250,0.4)':'var(--k-w-070,rgba(255,255,255,0.07))'};
              transition:all 0.15s;">
       <div style="width:26px;height:26px;border-radius:50%;background:${cor}18;border:1.5px solid ${cor}44;color:${cor};display:flex;align-items:center;justify-content:center;font-size:0.78rem;flex-shrink:0;">${emo}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:0.8rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.nome||'—')}</div>
-        ${c.vaga?`<div style="font-size:0.62rem;color:#777;">${esc(c.vaga)}</div>`:''}
+        ${c.vaga?`<div style="font-size:0.62rem;color:var(--k-t-777777,#777);">${esc(c.vaga)}</div>`:''}
       </div>
       <div style="font-size:0.85rem;transition:opacity 0.15s;opacity:${sel?1:0.2};">
         ${sel?'✅':'⬜'}
@@ -2746,7 +2778,7 @@ function renderCandsSelecionadosEq(){
   const entries = Object.entries(_eqCandsSelecionados);
   if(!entries.length){ wrap.innerHTML=''; return; }
   wrap.innerHTML = entries.map(([id,nome])=>
-    `<span class="equipe-tag" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.3);color:#a78bfa;">
+    `<span class="equipe-tag" style="background:rgba(167,139,250,0.12);border-color:rgba(167,139,250,0.3);color:var(--k-c-a78bfa,#a78bfa);">
       👤 ${esc(nome)}
       <span class="rm" onclick="toggleCandEquipe('${id}','${esc(nome)}')">✕</span>
     </span>`
@@ -2757,7 +2789,7 @@ function renderEquipe(secaoId){
   const membros = carregarEquipeSecao(secaoId);
   const lista = document.getElementById('equipeLista');
   if(!membros.length){
-    lista.innerHTML=`<div style="text-align:center;padding:1.5rem;font-size:0.78rem;color:var(--muted);border:1px dashed rgba(255,255,255,0.07);border-radius:11px;">
+    lista.innerHTML=`<div style="text-align:center;padding:1.5rem;font-size:0.78rem;color:var(--muted);border:1px dashed var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border-radius:11px;">
       Nenhum membro adicionado ainda.<br>
       <span style="font-size:0.65rem;opacity:0.6;">Adicione recrutadores, gestores e entrevistadores.</span>
     </div>`;
@@ -2779,17 +2811,17 @@ function renderEquipe(secaoId){
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
           <div class="equipe-nome">${esc(m.nome)}</div>
-          ${candCount?`<span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);color:#a78bfa;border-radius:99px;font-size:0.6rem;font-weight:700;padding:0.1rem 0.45rem;">${candCount} candidato${candCount!==1?'s':''}</span>`:''}
+          ${candCount?`<span style="background:rgba(167,139,250,0.15);border:1px solid rgba(167,139,250,0.3);color:var(--k-c-a78bfa,#a78bfa);border-radius:99px;font-size:0.6rem;font-weight:700;padding:0.1rem 0.45rem;">${candCount} candidato${candCount!==1?'s':''}</span>`:''}
         </div>
         ${m.cargo?`<div class="equipe-cargo">🏷️ ${esc(m.cargo)}</div>`:''}
         ${candsNomes.length?`<div class="equipe-atividades" style="margin-top:0.3rem;">
-          ${candsNomes.map(n=>`<span class="equipe-tag" style="background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2);color:#c4b5fd;">👤 ${esc(n)}</span>`).join('')}
+          ${candsNomes.map(n=>`<span class="equipe-tag" style="background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2);color:var(--k-c-c4b5fd,#c4b5fd);">👤 ${esc(n)}</span>`).join('')}
         </div>`:''}
         ${m.adicionado_em?`<div style="font-size:0.58rem;color:#555;margin-top:0.22rem;">Adicionado em ${m.adicionado_em}</div>`:''}
       </div>
       <button onclick="removerMembroEquipe(${i})" title="Remover membro"
         style="background:none;border:1px solid transparent;border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(231,76,60,0.35);font-size:0.85rem;flex-shrink:0;transition:all 0.15s;"
-        onmouseover="this.style.background='rgba(231,76,60,0.1)';this.style.color='#e74c3c';this.style.borderColor='rgba(231,76,60,0.3)';"
+        onmouseover="this.style.background='rgba(231,76,60,0.1)';this.style.color='var(--k-c-e74c3c,#e74c3c)';this.style.borderColor='rgba(231,76,60,0.3)';"
         onmouseout="this.style.background='none';this.style.color='rgba(231,76,60,0.35)';this.style.borderColor='transparent';">✕</button>
     </div>`;
   }).join('');
@@ -2916,7 +2948,7 @@ function abrirEmailMassa(secaoId){
   // Lista de destinatários
   const destHtml = comEmail.length > 0
     ? comEmail.map(c=>`<span style="background:rgba(52,152,219,0.1);border:1px solid rgba(52,152,219,0.2);border-radius:5px;padding:0.1rem 0.4rem;margin:0.1rem;display:inline-block;">${esc(c.nome||'?')} &lt;${esc(c.email_externo)}&gt;</span>`).join(' ')
-    : '<span style="color:#e74c3c;">Nenhum candidato com e-mail cadastrado nesta seção.</span>';
+    : '<span style="color:var(--k-c-e74c3c,#e74c3c);">Nenhum candidato com e-mail cadastrado nesta seção.</span>';
   document.getElementById('emailMassaDestinatarios').innerHTML = destHtml;
 
   // Template padrão: reprovado
@@ -2934,12 +2966,12 @@ function selecionarTemplatEmail(tipo, vagaNome){
   const borderMap = {
     aprovado:    '2px solid rgba(59,130,246,0.7)',
     reprovado:   '2px solid rgba(231,76,60,0.75)',
-    personalizado:'2px solid rgba(255,255,255,0.3)',
+    personalizado:'2px solid var(--k-w-300,rgba(255,255,255,0.3))',
   };
   const bgMap = {
     aprovado:    'rgba(59,130,246,0.18)',
     reprovado:   'rgba(231,76,60,0.2)',
-    personalizado:'rgba(255,255,255,0.08)',
+    personalizado:'var(--k-w-080,rgba(255,255,255,0.08))',
   };
   ['aprovado','reprovado','personalizado'].forEach(t=>{
     const btn = document.getElementById(idMap[t]);
@@ -2947,7 +2979,7 @@ function selecionarTemplatEmail(tipo, vagaNome){
     const isSelected = t === tipo;
     btn.style.opacity = isSelected ? '1' : '0.45';
     btn.style.border  = isSelected ? borderMap[t] : borderMap[t].replace('0.7','0.2').replace('0.75','0.22').replace('0.3','0.1');
-    btn.style.background = isSelected ? bgMap[t] : (t==='aprovado'?'rgba(59,130,246,0.06)':t==='reprovado'?'rgba(231,76,60,0.07)':'rgba(255,255,255,0.03)');
+    btn.style.background = isSelected ? bgMap[t] : (t==='aprovado'?'rgba(59,130,246,0.06)':t==='reprovado'?'rgba(231,76,60,0.07)':'var(--k-w-030,rgba(255,255,255,0.03))');
     btn.style.transform = isSelected ? 'scale(1.02)' : 'scale(1)';
   });
 
@@ -3062,14 +3094,14 @@ function fecharSenhaParecer(){
 <!-- ══ MODAL SENHA PARECER FINAL ══ -->
 <div class="pf-pwd-overlay" id="modalSenhaParecer" style="display:none;" onclick="if(event.target===this)fecharSenhaParecer()">
   <div class="pf-pwd-box">
-    <button onclick="fecharSenhaParecer()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.07);border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:#777;font-size:0.95rem;display:flex;align-items:center;justify-content:center;">✕</button>
+    <button onclick="fecharSenhaParecer()" style="position:absolute;top:1rem;right:1rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--k-t-777777,#777);font-size:0.95rem;display:flex;align-items:center;justify-content:center;">✕</button>
     <div class="pf-pwd-ico">🔐</div>
     <div class="pf-pwd-title">Acesso Restrito</div>
     <div class="pf-pwd-sub">O Parecer Final é um documento protegido.<br>Digite a senha para continuar.</div>
     <input type="password" id="pfPwdInput" class="pf-pwd-inp" placeholder="••••••••" maxlength="32"
       onkeydown="if(event.key==='Enter')verificarSenhaParecer()"
       oninput="document.getElementById('pfPwdErro').textContent=''"/>
-    <div id="pfPwdErro" style="min-height:1.2rem;font-size:0.72rem;color:#e74c3c;margin:0.5rem 0 0.75rem;font-weight:700;"></div>
+    <div id="pfPwdErro" style="min-height:1.2rem;font-size:0.72rem;color:var(--k-c-e74c3c,#e74c3c);margin:0.5rem 0 0.75rem;font-weight:700;"></div>
     <div style="display:flex;gap:0.6rem;">
       <button onclick="verificarSenhaParecer()" class="pf-btn-primary" style="flex:2;">Entrar →</button>
       <button onclick="fecharSenhaParecer()" class="pf-btn-ghost" style="flex:1;">Cancelar</button>
