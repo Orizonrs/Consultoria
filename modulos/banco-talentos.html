@@ -103,6 +103,22 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 .cand-foot-label{font-size:0.44rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#333;margin-bottom:0.12rem;margin-top:0.35rem;display:flex;align-items:center;gap:0.35rem;}
 .cand-foot-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.04);}
 .cand-foot-label:first-child{margin-top:0;}
+/* ── Ações em menus (dropdown) ── */
+.act-wrap{margin-top:0.45rem;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.05);}
+.act-bar{display:flex;flex-direction:column;gap:0.3rem;}
+.act-bar .act-main{width:100%;height:30px;justify-content:center;background:#2f6fe0!important;color:#fff!important;border:none!important;border-radius:8px;font-size:0.7rem;font-weight:800;box-sizing:border-box;}
+.act-row{display:flex;gap:0.3rem;}
+.act-grp{flex:1 1 0;min-width:0;height:30px;display:flex;align-items:center;justify-content:center;gap:0.3rem;font-family:inherit;font-size:0.66rem;font-weight:700;color:#d3dae9;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.act-grp:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.18);}
+.act-grp.open{background:rgba(59,130,246,0.13);border-color:#3b82f6;color:#fff;}
+.act-n{font-size:0.56rem;font-weight:700;color:#7d889f;background:rgba(255,255,255,0.07);border-radius:5px;padding:0 0.3rem;}
+.act-chev{font-size:0.6rem;color:#7d889f;}
+.act-grp.open .act-chev{color:#6aa6ff;}
+.act-pop{position:fixed;z-index:99999;min-width:230px;max-width:min(300px,calc(100vw - 16px));max-height:min(70vh,460px);overflow-y:auto;background:#12161e;border:1px solid #2a3140;border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(0,0,0,0.55);}
+.act-pop-h{font-size:0.5rem;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#6f7a91;padding:0.4rem 0.6rem 0.3rem;}
+.act-pop .btn-sm{display:flex!important;width:100%;height:auto;justify-content:flex-start;text-align:left;gap:0.55rem;padding:0.5rem 0.65rem;box-sizing:border-box;font-size:0.74rem;font-weight:600;border:none!important;border-radius:8px;background:transparent!important;color:#d3dae9!important;white-space:nowrap;}
+.act-pop .btn-sm:hover{background:#1a2030!important;opacity:1;transform:none;}
+.act-pop .btn-sm img{width:16px!important;height:16px!important;}
 .btn-sm{font-family:inherit;font-size:0.64rem;font-weight:700;border-radius:6px;padding:0.22rem 0.5rem;border:1px solid;cursor:pointer;transition:all 0.15s;text-decoration:none;display:inline-flex;align-items:center;gap:0.18rem;}
 .btn-sm:hover{opacity:0.8;transform:translateY(-1px);}
 .cands-grid{display:flex;flex-direction:column;gap:0.55rem;}
@@ -1204,6 +1220,35 @@ let _dupIdsCache   = new Set();
 let _multiCache    = {}; // id -> [{ id, nome, vaga }] de outras candidaturas da mesma pessoa
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ═══ MENUS DE AÇÕES (dropdown dos cards) ═══
+function fecharMenuAcoes(){
+  const p=document.getElementById('actPop'); if(p) p.remove();
+  document.querySelectorAll('.act-grp.open').forEach(b=>b.classList.remove('open'));
+}
+function abrirMenuAcoes(ev,btn){
+  ev.stopPropagation(); ev.preventDefault();
+  const jaAberto=btn.classList.contains('open');
+  fecharMenuAcoes();
+  if(jaAberto) return;
+  const wrap=btn.closest('.act-wrap'); if(!wrap) return;
+  const src=wrap.querySelector('.act-src[data-g="'+btn.dataset.g+'"]'); if(!src) return;
+  const pop=document.createElement('div');
+  pop.id='actPop'; pop.className='act-pop';
+  pop.innerHTML='<div class="act-pop-h">'+(btn.dataset.t||'')+'</div>'+src.innerHTML;
+  pop.addEventListener('click',e=>{ if(e.target.closest('.btn-sm')) setTimeout(fecharMenuAcoes,0); e.stopPropagation(); });
+  document.body.appendChild(pop);
+  btn.classList.add('open');
+  const r=btn.getBoundingClientRect(), w=pop.offsetWidth, hp=pop.offsetHeight;
+  const left=Math.min(Math.max(8,r.left),window.innerWidth-w-8);
+  let top=r.bottom+6;
+  if(top+hp>window.innerHeight-8) top=Math.max(8,r.top-hp-6);
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+}
+document.addEventListener('click',fecharMenuAcoes);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharMenuAcoes(); });
+window.addEventListener('resize',fecharMenuAcoes);
+window.addEventListener('scroll',e=>{ const p=document.getElementById('actPop'); if(p && e.target && p.contains(e.target)) return; fecharMenuAcoes(); },true);
 
 function toggleFootBtns(btn){
   const body = btn.nextElementSibling;
@@ -3094,6 +3139,7 @@ footBtns += h.recomendacao_doc_url
   const _g2 = [];
   // Grupo 3: Comunicação
   const _g3 = [];
+  let _btnTri = '';
 
   // Parse dos botões já montados em footBtns (são strings HTML)
   // Reconstruímos diretamente os grupos aqui:
@@ -3119,7 +3165,7 @@ footBtns += h.recomendacao_doc_url
   _g2.push(`<button class="btn-sm" onclick="moverParaEntrevistaPendente('${esc(h.id)}','${esc(h.nome||'')}','${esc(h.vaga||'')}')" style="background:rgba(245,158,11,0.18);color:#fbbf24;border-color:rgba(245,158,11,0.45);font-weight:800;" title="Adicionar à lista Entrevista Pendente"><img src="imagens/pendencis2.png" style="${_IS}" alt=""> → Entrevista?</button>`);
   if(!h.no_banco) _g2.push(`<button class="btn-sm" onclick="moverParaBanco('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(167,139,250,0.12);color:#a78bfa;border-color:rgba(167,139,250,0.3);"><img src="imagens/banco2.png" style="${_IS}" alt=""> → Banco</button>`);
   else _g2.push(`<span class="btn-sm" style="background:rgba(59,130,246,0.07);color:#3b82f6;border-color:rgba(59,130,246,0.2);cursor:default;opacity:0.7;">✅ No Banco</span>`);
-  _g2.push(`<button class="btn-sm" onclick="abrirMiniPipe('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(59,130,246,0.15);color:#3b82f6;border-color:rgba(59,130,246,0.4);font-weight:800;"><img src="imagens/triagem2.png" style="${_IS}" alt=""> → Triagem</button>`);
+  _btnTri=`<button class="btn-sm" onclick="abrirMiniPipe('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(59,130,246,0.15);color:#3b82f6;border-color:rgba(59,130,246,0.4);font-weight:800;"><img src="imagens/triagem2.png" style="${_IS}" alt=""> → Triagem</button>`;
   _g2.push(`<button class="btn-sm" onclick="abrirModalCargoMoverCopiar('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(59,130,246,0.12);color:#3b82f6;border-color:rgba(59,130,246,0.3);font-weight:800;"><img src="imagens/cargo2.png" style="${_IS}" alt=""> → Cargo</button>`);
   _g2.push(`<button class="btn-sm" onclick="event.stopPropagation();abrirEnviarVaga('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(167,139,250,0.12);color:#c4b5fd;border-color:rgba(167,139,250,0.35);font-weight:800;" title="Enviar para Parecer Empresa">🏢 P. Empresa</button>`);
   if(!jaEmInbox) _g2.push(`<button class="btn-sm" onclick="moverParaInbox('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(79,168,232,0.12);color:#4fa8e8;border-color:rgba(79,168,232,0.35);font-weight:800;" title="Mover para Caixa de Entrada — organizar para distribuição">📥 C. Entrada</button>`);
@@ -3151,11 +3197,19 @@ footBtns += h.recomendacao_doc_url
     : `<button class="btn-sm" onclick="abrirModalRecomendacao('${esc(h.id)}','${esc(h.nome||'')}')" style="background:rgba(245,158,11,0.06);color:#f59e0b;border-color:rgba(245,158,11,0.18);"><img src="imagens/recomendacao2.png" style="${_IS}" alt=""> + Recomendação</button>`);
 
   const footBtnsHtml = `
-    <div class="cand-foot-label">👤 Perfil & Avaliação</div>
-    <div class="cand-foot-group">${_g1.join('')}</div>
-    <div class="cand-foot-label">🚀 Movimentação</div>
-    <div class="cand-foot-group">${_g2.join('')}</div>
-    ${_g3.length ? `<div class="cand-foot-label">💬 Comunicação</div><div class="cand-foot-group">${_g3.join('')}</div>` : ''}
+    <div class="act-wrap">
+      <div class="act-bar">
+        ${_btnTri ? _btnTri.replace('class="btn-sm"','class="btn-sm act-main"') : ''}
+        <div class="act-row">
+          <button type="button" class="act-grp" data-g="1" data-t="Perfil e avaliação" onclick="__MG__abrirMenuAcoes(event,this)"><span>👤 Avaliar</span><span class="act-n">${_g1.length}</span><span class="act-chev">▾</span></button>
+          <button type="button" class="act-grp" data-g="2" data-t="Movimentação" onclick="__MG__abrirMenuAcoes(event,this)"><span>🚀 Mover</span><span class="act-n">${_g2.length}</span><span class="act-chev">▾</span></button>
+          ${_g3.length ? `<button type="button" class="act-grp" data-g="3" data-t="Comunicação" onclick="__MG__abrirMenuAcoes(event,this)"><span>💬 Contato</span><span class="act-n">${_g3.length}</span><span class="act-chev">▾</span></button>` : ''}
+        </div>
+      </div>
+      <div class="act-src" data-g="1" hidden>${_g1.join('')}</div>
+      <div class="act-src" data-g="2" hidden>${_g2.join('')}</div>
+      <div class="act-src" data-g="3" hidden>${_g3.join('')}</div>
+    </div>
   `;
 
   const temDiscReal = _temDiscReal;
@@ -3286,12 +3340,7 @@ footBtns += h.recomendacao_doc_url
       <div class="cand-foot-body collapsed" style="max-height:0;">
         <div style="padding:0.2rem 0 0.35rem;">${bars}</div>
       </div>` : ''}
-      <button class="cand-foot-toggle" onclick="${_massaGuard}toggleFootBtns(this)" title="Mostrar/ocultar ações">
-        <span class="ft-chev">▼</span> Ações
-      </button>
-      <div class="cand-foot-body collapsed" style="max-height:0;">
-        ${footBtnsHtml}
-      </div>
+      ${footBtnsHtml.split('__MG__').join(_massaGuard)}
     </div>
   </div>`;
 }
