@@ -167,7 +167,12 @@ html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;m
 
 /* MODAL PERFIL — copiado do disc-admin */
 .perfil-overlay{position:fixed;inset:0;z-index:9999;background:var(--k-ov-88,var(--k-bg-r0g0b0a88,rgba(0,0,0,0.88)));backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:1rem;overflow:hidden;}
-.perfil-box{background:var(--k-bg-111111,#111);border:1px solid rgba(59,130,246,0.22);border-radius:20px;width:100%;max-width:700px;position:relative;display:flex;flex-direction:column;max-height:calc(100vh - 2rem);min-height:0;}
+.perfil-box{background:var(--k-bg-111111,#111);border:1px solid rgba(59,130,246,0.22);border-radius:20px;width:100%;max-width:1080px;position:relative;display:flex;flex-direction:column;max-height:calc(100vh - 2rem);min-height:0;transition:max-width .25s ease,border-radius .25s ease;}
+.perfil-overlay.is-full{padding:0;}
+.perfil-overlay.is-full .perfil-box{max-width:100%;height:100vh;max-height:100vh;border-radius:0;border:none;}
+.perfil-overlay.is-full .perfil-body{padding:1.2rem 2.2rem 2rem;}
+.perfil-expand-btn{position:absolute;top:0.85rem;right:3.1rem;background:var(--k-w-070,rgba(255,255,255,0.07));border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--k-t-777777,#777);font-size:0.95rem;display:flex;align-items:center;justify-content:center;z-index:1;transition:background .15s,color .15s;}
+.perfil-expand-btn:hover{background:var(--k-w-120,rgba(255,255,255,0.12));color:#fff;}
 .perfil-hdr{padding:0.85rem 1.4rem 0.75rem;border-bottom:1px solid var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));display:flex;align-items:center;gap:0.9rem;flex-shrink:0;}
 .perfil-avatar-lg{width:48px;height:48px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
 .perfil-body{padding:1rem 1.4rem 1.4rem;display:flex;flex-direction:column;gap:0.85rem;overflow-y:auto;flex:1;min-height:0;scrollbar-width:thin;scrollbar-color:rgba(59,130,246,0.3) transparent;}
@@ -257,7 +262,7 @@ select.perfil-inp:focus{background-color:var(--k-bg-1e1e1e,#1e1e1e);border-color
 .modal-status-dot.entrevista{background:#f39c12;box-shadow:0 0 8px rgba(243,156,18,0.6);}.modal-status-dot.entrevista.off{background:rgba(243,156,18,0.1);border-color:rgba(243,156,18,0.3);}
 .modal-status-dot.curriculo{background:#2ecc71;box-shadow:0 0 8px rgba(46,204,113,0.6);}.modal-status-dot.curriculo.off{background:rgba(46,204,113,0.1);border-color:rgba(46,204,113,0.3);}
 .modal-status-dot.parecer{background:#a78bfa;box-shadow:0 0 8px rgba(167,139,250,0.6);}.modal-status-dot.parecer.off{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);}
-.modal-status-wrap{position:absolute;top:0.85rem;right:2.8rem;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.modal-status-wrap{position:absolute;top:0.85rem;right:5.9rem;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
 .modal-status-pend-badge{font-size:0.52rem;font-weight:800;color:var(--k-c-e74c3c,#e74c3c);background:rgba(231,76,60,0.12);border:1px solid rgba(231,76,60,0.3);border-radius:99px;padding:0.08rem 0.45rem;text-align:center;animation:pendPulse 2s ease infinite;}
 @keyframes pendPulse{0%,100%{opacity:1;}50%{opacity:0.55;}}
 
@@ -354,6 +359,8 @@ select.perfil-inp:focus{background-color:var(--k-bg-1e1e1e,#1e1e1e);border-color
   .status-contato-sel{font-size:0.6rem;padding:0.08rem 0.45rem;}
 
   /* Modal perfil */
+  .perfil-expand-btn{display:none;}
+  .modal-status-wrap{right:2.8rem !important;}
   .perfil-overlay{padding:0.5rem;}
   .perfil-box{max-height:calc(100vh - 1rem);border-radius:16px;}
   .perfil-hdr{padding:0.9rem 1rem 0.8rem;gap:0.7rem;}
@@ -776,6 +783,7 @@ Equipe Orizon</textarea>
 <!-- MODAL PERFIL -->
 <div class="perfil-overlay" id="modalPerfil" style="display:none;" onclick="if(event.target===this)fecharPerfil()">
   <div class="perfil-box">
+    <button class="perfil-expand-btn" id="btnPerfilFull" onclick="togglePerfilTelaCheia()" title="Abrir em tela cheia">⛶</button>
     <button onclick="fecharPerfil()" style="position:absolute;top:0.85rem;right:0.85rem;background:var(--k-w-070,var(--k-w-070,rgba(255,255,255,0.07)));border:none;border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--k-t-777777,#777);font-size:0.95rem;display:flex;align-items:center;justify-content:center;z-index:1;">✕</button>
     <!-- BOLINHAS DE PENDÊNCIA — canto superior direito do modal -->
     <div class="modal-status-wrap" id="pModalStatusWrap">
@@ -786,7 +794,7 @@ Equipe Orizon</textarea>
     <div class="perfil-hdr">
       <div class="perfil-avatar-lg" id="pAvatar" style="border-color:var(--k-b-888888,#888);color:var(--k-t-888888,#888);">⬜</div>
       <div style="flex:1;min-width:0;">
-        <div id="pNome" style="font-size:1rem;font-weight:900;padding-right:2rem;"></div>
+        <div id="pNome" style="font-size:1rem;font-weight:900;padding-right:9rem;"></div>
         <div id="pMeta" style="font-size:0.7rem;color:var(--k-t-777777,#777);margin-top:0.1rem;"></div>
       </div>
     </div>
@@ -3477,10 +3485,31 @@ footBtns += h.recomendacao_doc_url
 }
 
 // ═══ MODAL PERFIL — igual ao disc-admin ═══
+/* ── Perfil: alternar tela cheia ── */
+function aplicarPerfilTelaCheia(on){
+  const ov=document.getElementById('modalPerfil');
+  const btn=document.getElementById('btnPerfilFull');
+  if(!ov) return;
+  ov.classList.toggle('is-full',!!on);
+  if(btn){ btn.textContent = on ? '🗗' : '⛶'; btn.title = on ? 'Sair da tela cheia' : 'Abrir em tela cheia'; }
+}
+function togglePerfilTelaCheia(){
+  const on=!document.getElementById('modalPerfil').classList.contains('is-full');
+  aplicarPerfilTelaCheia(on);
+  try{ localStorage.setItem('bt_perfil_full', on?'1':'0'); }catch(e){}
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    const ov=document.getElementById('modalPerfil');
+    if(ov && ov.style.display!=='none' && ov.classList.contains('is-full')){ e.stopImmediatePropagation(); togglePerfilTelaCheia(); }
+  }
+},true);
+
 function abrirPerfil(id){
   const h = _allCands.find(x=>String(x.id)===String(id));
   if(!h) return;
   _perfilAtual = h;
+  try{ aplicarPerfilTelaCheia(localStorage.getItem('bt_perfil_full')==='1'); }catch(e){ aplicarPerfilTelaCheia(false); }
   const _mTemDiscReal = !!(h.dom||h.disc_perfil||h.url||(h.pct_d&&parseFloat(h.pct_d)>0));
   const _pdaRegModal  = encontrarPDA(h);
   const _mTemPdaReal  = !_mTemDiscReal && !!_pdaRegModal;
