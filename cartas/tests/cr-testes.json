@@ -1,0 +1,3565 @@
+{
+ "sistema": "Orizon Documentos",
+ "rodada": "Orizon Documentos R46",
+ "legenda": "auto=roda em tests/run-tests.js; manual=conferir no navegador",
+ "testes": [
+  {
+   "id": "T-01",
+   "regra": "RT-01",
+   "desc": "Existe configuração única",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "assets/cr-config.js"
+   }
+  },
+  {
+   "id": "T-02",
+   "regra": "RT-01",
+   "desc": "Nenhuma página declara SB_URL/SB_KEY",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": "*.html",
+    "text": [
+     "const SB_URL",
+     "const SB_KEY"
+    ]
+   }
+  },
+  {
+   "id": "T-03",
+   "regra": "RT-02",
+   "desc": "Sem const global repetido entre scripts da mesma página",
+   "auto": true,
+   "check": {
+    "type": "noRedeclare",
+    "pages": "*.html"
+   }
+  },
+  {
+   "id": "T-04",
+   "regra": "RT-03",
+   "desc": "Páginas protegidas carregam config antes do auth",
+   "auto": true,
+   "check": {
+    "type": "orderBefore",
+    "pages": [
+     "index.html",
+     "index-cartas.html",
+     "index-contratos.html",
+     "novo-contrato.html",
+     "nova-carta.html",
+     "assinar-carta.html",
+     "visualizar-assinado.html"
+    ],
+    "first": "assets/cr-config.js",
+    "then": "assets/cr-auth.js"
+   }
+  },
+  {
+   "id": "T-05",
+   "regra": "RT-03",
+   "desc": "Login grava sessão no supabase-js",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "login.html",
+    "text": "auth.setSession"
+   }
+  },
+  {
+   "id": "T-06",
+   "regra": "RT-04",
+   "desc": "Páginas com menu usam o shell e não têm menu escrito à mão",
+   "auto": true,
+   "check": {
+    "type": "shellOnly",
+    "pages": [
+     "index.html",
+     "index-cartas.html",
+     "index-contratos.html",
+     "novo-contrato.html",
+     "nova-carta.html",
+     "assinar-carta.html"
+    ]
+   }
+  },
+  {
+   "id": "T-07",
+   "regra": "RT-04",
+   "desc": "Todo destino do menu existe",
+   "auto": true,
+   "check": {
+    "type": "menuTargets"
+   }
+  },
+  {
+   "id": "T-08",
+   "regra": "RT-06",
+   "desc": "cr-name-fix.js removido e sem referências",
+   "auto": true,
+   "check": {
+    "type": "removed",
+    "file": "cr-name-fix.js"
+   }
+  },
+  {
+   "id": "T-09",
+   "regra": "RT-05",
+   "desc": "cr-core.css contém tema claro e abas",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-core.css",
+    "text": "[data-theme=\"light\"]"
+   }
+  },
+  {
+   "id": "T-10",
+   "regra": "RT-03",
+   "desc": "login-carta.html só redireciona",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "login-carta.html",
+    "text": "url=login.html"
+   }
+  },
+  {
+   "id": "T-11",
+   "regra": "RT-07",
+   "desc": "Arquivo de testes é JSON válido",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/cr-testes.json"
+   }
+  },
+  {
+   "id": "T-12",
+   "regra": "RT-02",
+   "desc": "Sintaxe JS válida em todas as páginas e assets",
+   "auto": true,
+   "check": {
+    "type": "jsSyntax"
+   }
+  },
+  {
+   "id": "T-13",
+   "regra": "RN-08",
+   "desc": "validarCPF acerta válidos e inválidos",
+   "auto": true,
+   "check": {
+    "type": "unit",
+    "fn": "validarCPF",
+    "cases": [
+     [
+      "529.982.247-25",
+      true
+     ],
+     [
+      "111.111.111-11",
+      false
+     ],
+     [
+      "529.982.247-24",
+      false
+     ],
+     [
+      "",
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "id": "T-14",
+   "regra": "RN-08",
+   "desc": "validarCNPJ acerta válidos e inválidos",
+   "auto": true,
+   "check": {
+    "type": "unit",
+    "fn": "validarCNPJ",
+    "cases": [
+     [
+      "11.222.333/0001-81",
+      true
+     ],
+     [
+      "11.111.111/1111-11",
+      false
+     ],
+     [
+      "11.222.333/0001-82",
+      false
+     ]
+    ]
+   }
+  },
+  {
+   "id": "T-15",
+   "regra": "RN-03",
+   "desc": "Novo contrato usa numeração sequencial (não timestamp)",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "novo-contrato.html",
+    "text": "numero_contrato: await proximoNumero()"
+   }
+  },
+  {
+   "id": "T-16",
+   "regra": "RN-08",
+   "desc": "Novo contrato valida antes do passo 2",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "novo-contrato.html",
+    "text": "if (!validarDados()) return;"
+   }
+  },
+  {
+   "id": "T-17",
+   "regra": "RN-04",
+   "desc": "Links de contrato apontam para assinar-contrato.html",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "novo-contrato.html",
+     "index-contratos.html"
+    ],
+    "text": [
+     "assinar.html?t="
+    ]
+   }
+  },
+  {
+   "id": "T-18",
+   "regra": "RN-04",
+   "desc": "Página de destino do link existe",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "assinar-contrato.html"
+   }
+  },
+  {
+   "id": "T-19",
+   "regra": "RT-04",
+   "desc": "Painel de contratos tem abas por status",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "index-contratos.html",
+    "text": "function setTab("
+   }
+  },
+  {
+   "id": "T-20",
+   "regra": "RT-04",
+   "desc": "Menu tem Aguardando e Assinados",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-shell.js",
+    "text": "#aguardando"
+   }
+  },
+  {
+   "id": "T-21",
+   "regra": "RT-01",
+   "desc": "EmailJS configurado em cr-config.js",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-config.js",
+    "text": "EMAILJS"
+   }
+  },
+  {
+   "id": "T-22",
+   "regra": "RN-04",
+   "desc": "SQL de assinatura existe",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "sql/cr-schema.sql"
+   }
+  },
+  {
+   "id": "T-23",
+   "regra": "RN-06",
+   "desc": "SQL calcula hash SHA-256 no servidor",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "sql/cr-schema.sql",
+    "text": "encode(sha256("
+   }
+  },
+  {
+   "id": "T-24",
+   "regra": "RN-01",
+   "desc": "SQL calcula status parcial/assinado",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "sql/cr-schema.sql",
+    "text": "when pend = 0 then 'assinado' when ass > 0 then 'parcial'"
+   }
+  },
+  {
+   "id": "T-25",
+   "regra": "RN-04",
+   "desc": "SQL bloqueia cancelado e expirado",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "sql/cr-schema.sql",
+    "text": "return json_build_object('erro', 'expirado')"
+   }
+  },
+  {
+   "id": "T-26",
+   "regra": "RN-10",
+   "desc": "SQL ativa RLS e tira execução do público",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "sql/cr-schema.sql",
+    "text": "enable row level security"
+   }
+  },
+  {
+   "id": "T-27",
+   "regra": "RN-10",
+   "desc": "Página pública NÃO acessa tabelas direto",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "assinar-contrato.html"
+    ],
+    "text": [
+     ".from('"
+    ]
+   }
+  },
+  {
+   "id": "T-28",
+   "regra": "RN-04",
+   "desc": "Página pública usa as 3 funções por token",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assinar-contrato.html",
+    "text": [
+     "cr_ler_por_token",
+     "cr_assinar",
+     "cr_recusar"
+    ]
+   }
+  },
+  {
+   "id": "T-29",
+   "regra": "RN-03",
+   "desc": "Numeração usa contador atômico (RPC)",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "novo-contrato.html",
+    "text": "cr_proximo_numero"
+   }
+  },
+  {
+   "id": "T-30",
+   "regra": "RN-10",
+   "desc": "Página pública não carrega a sessão de admin (sem cr-auth)",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "assinar-contrato.html"
+    ],
+    "text": [
+     "cr-auth.js"
+    ]
+   }
+  },
+  {
+   "id": "T-31",
+   "regra": "RT-06",
+   "desc": "Cancelamento virou redirecionamento para nova-carta",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "nova-carta-cancelamento.html",
+    "text": "nova-carta.html?tipo=carta_cancelamento"
+   }
+  },
+  {
+   "id": "T-32",
+   "regra": "RN-07",
+   "desc": "Nova carta grava no histórico ao emitir",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "emitirCarta",
+     "from('cr_cartas').insert"
+    ]
+   }
+  },
+  {
+   "id": "T-33",
+   "regra": "RN-07",
+   "desc": "gerar() usa emitirCarta",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "nova-carta.html",
+    "text": "await emitirCarta(d, _tipo);"
+   }
+  },
+  {
+   "id": "T-34",
+   "regra": "RN-07",
+   "desc": "SQL guarda dados completos da carta",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "sql/cr-schema.sql",
+    "text": "add column if not exists dados jsonb"
+   }
+  },
+  {
+   "id": "T-35",
+   "regra": "RT-04",
+   "desc": "Painel de cartas tem abas por tipo e duplicar",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-cartas.html",
+    "text": [
+     "function setTabC(",
+     "nova-carta.html?dup="
+    ]
+   }
+  },
+  {
+   "id": "T-36",
+   "regra": "RT-04",
+   "desc": "Menu sem item de cancelamento separado",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "assets/cr-shell.js"
+    ],
+    "text": [
+     "nova-carta-cancelamento.html"
+    ]
+   }
+  },
+  {
+   "id": "T-37",
+   "regra": "RN-10",
+   "desc": "Link da carta usa token, sem dados na URL",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assinar-carta.html",
+    "text": [
+     "cr_carta_criar_link",
+     "?t=${tk}"
+    ]
+   }
+  },
+  {
+   "id": "T-38",
+   "regra": "RN-10",
+   "desc": "assinar.html lê a carta por token via RPC",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assinar.html",
+    "text": "cr_carta_ler_link"
+   }
+  },
+  {
+   "id": "T-39",
+   "regra": "RN-10",
+   "desc": "SQL com funções de link de carta e cr_config",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "cr_carta_criar_link",
+     "cr_carta_ler_link",
+     "create table if not exists cr_config"
+    ]
+   }
+  },
+  {
+   "id": "T-40",
+   "regra": "RT-04",
+   "desc": "Configurações no menu único",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-shell.js",
+    "text": "configuracoes.html"
+   }
+  },
+  {
+   "id": "T-41",
+   "regra": "RT-01",
+   "desc": "configuracoes.html usa cr-config e não declara chave própria",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "configuracoes.html"
+    ],
+    "text": [
+     "supabase.co",
+     "eyJhbGci"
+    ]
+   }
+  },
+  {
+   "id": "T-42",
+   "regra": "RT-05",
+   "desc": "Login respeita o tema salvo",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "login.html",
+    "text": [
+     "cr_theme",
+     "html[data-theme=\"light\"]"
+    ]
+   }
+  },
+  {
+   "id": "T-43",
+   "regra": "RN-07",
+   "desc": "Carta pré-carrega a assinatura salva da Orizon",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assinar-carta.html",
+    "text": "Assinatura salva"
+   }
+  },
+  {
+   "id": "T-44",
+   "regra": "RN-06",
+   "desc": "SQL grava assinatura da carta com hash no servidor",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "cr_carta_assinar",
+     "hash_conteudo",
+     "sha256("
+    ]
+   }
+  },
+  {
+   "id": "T-45",
+   "regra": "RN-06",
+   "desc": "assinar.html chama cr_carta_assinar antes de mostrar sucesso",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assinar.html",
+    "text": "cr_carta_assinar"
+   }
+  },
+  {
+   "id": "T-46",
+   "regra": "RN-07",
+   "desc": "Painel marca carta assinada",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "index-cartas.html",
+    "text": "c.status === 'assinada'"
+   }
+  },
+  {
+   "id": "T-47",
+   "regra": "RT-04",
+   "desc": "Vencimentos no menu único",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-shell.js",
+    "text": "vencimentos.html"
+   }
+  },
+  {
+   "id": "T-48",
+   "regra": "RT-01",
+   "desc": "vencimentos.html usa cr-config e escapa texto",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "vencimentos.html",
+    "text": [
+     "assets/cr-config.js",
+     "const esc ="
+    ]
+   }
+  },
+  {
+   "id": "T-49",
+   "regra": "RT-01",
+   "desc": "vencimentos.html sem chave própria",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "vencimentos.html"
+    ],
+    "text": [
+     "supabase.co",
+     "eyJhbGci"
+    ]
+   }
+  },
+  {
+   "id": "T-50",
+   "regra": "M16",
+   "desc": "Helper de CSV com proteção contra injeção de fórmula",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "window.exportarCSV",
+     "/^[=+\\-@\\t\\r]/"
+    ]
+   }
+  },
+  {
+   "id": "T-51",
+   "regra": "M16",
+   "desc": "Painéis exportam a lista filtrada",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-contratos.html",
+    "text": [
+     "function exportar()",
+     "window._visivel"
+    ]
+   }
+  },
+  {
+   "id": "T-52",
+   "regra": "M16",
+   "desc": "Painel de cartas exporta a lista filtrada",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-cartas.html",
+    "text": [
+     "function exportar()",
+     "window._visivel"
+    ]
+   }
+  },
+  {
+   "id": "T-53",
+   "regra": "RN-10",
+   "desc": "CSV de contratos sem CPF e e-mail",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "index-contratos.html"
+    ],
+    "text": [
+     "c.cpf",
+     "c.email_candidato"
+    ]
+   }
+  },
+  {
+   "id": "T-54",
+   "regra": "M18",
+   "desc": "Script de acessibilidade existe com foco visível e skip link",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-a11y.js",
+    "text": [
+     ":focus-visible",
+     "cr-skip",
+     "aria-current"
+    ]
+   }
+  },
+  {
+   "id": "T-55",
+   "regra": "M18",
+   "desc": "Páginas principais carregam cr-a11y.js",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-cartas.html",
+    "text": [
+     "assets/cr-a11y.js"
+    ]
+   }
+  },
+  {
+   "id": "T-56",
+   "regra": "M18",
+   "desc": "Página pública de assinatura carrega cr-a11y.js",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assinar.html",
+    "text": [
+     "assets/cr-a11y.js"
+    ]
+   }
+  },
+  {
+   "id": "T-57",
+   "regra": "M18",
+   "desc": "Tema claro com contraste melhor no texto secundário",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-core.css",
+    "text": "--muted2:#5a6a80;"
+   }
+  },
+  {
+   "id": "T-58",
+   "regra": "M17",
+   "desc": "SQL do log é somente-inclusão (só função grava; app só lê)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_log",
+     "function cr_log(",
+     "revoke all on cr_log from anon, authenticated",
+     "grant select on cr_log to authenticated"
+    ]
+   }
+  },
+  {
+   "id": "T-59",
+   "regra": "M17",
+   "desc": "Usuário e e-mail vêm do servidor, não do cliente",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "auth.uid()",
+     "auth.jwt() ->> 'email'"
+    ]
+   }
+  },
+  {
+   "id": "T-60",
+   "regra": "M17",
+   "desc": "Helper logAcao e ações registradas",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "window.logAcao",
+     "emitiu_carta",
+     "exportou_csv",
+     "'logout'"
+    ]
+   }
+  },
+  {
+   "id": "T-61",
+   "regra": "M17",
+   "desc": "Criar/cancelar contrato e excluir carta registram",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "novo-contrato.html",
+    "text": "criou_contrato"
+   }
+  },
+  {
+   "id": "T-62",
+   "regra": "M17",
+   "desc": "Cancelamento registra",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "index-contratos.html",
+    "text": "cancelou_contrato"
+   }
+  },
+  {
+   "id": "T-63",
+   "regra": "M17",
+   "desc": "Exclusão de carta registra",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "index-cartas.html",
+    "text": "excluiu_carta"
+   }
+  },
+  {
+   "id": "T-64",
+   "regra": "M17",
+   "desc": "Login registra",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "login.html",
+    "text": "p_acao:'login'"
+   }
+  },
+  {
+   "id": "T-65",
+   "regra": "RT-04",
+   "desc": "Histórico no menu único",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assets/cr-shell.js",
+    "text": "historico.html"
+   }
+  },
+  {
+   "id": "T-66",
+   "regra": "RN-10",
+   "desc": "Log sem CPF no detalhe",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "historico.html",
+     "assets/cr-utils.js"
+    ],
+    "text": [
+     "logAcao('criou_contrato', 'contrato', ct.cpf",
+     "c.cpf"
+    ]
+   }
+  },
+  {
+   "id": "M-01",
+   "regra": "RT-03",
+   "desc": "Entrar em login.html e cair em index.html sem voltar ao login",
+   "auto": false,
+   "esperado": "Painel Geral abre e permanece"
+  },
+  {
+   "id": "M-02",
+   "regra": "RT-03",
+   "desc": "Sair da conta e tentar abrir index.html direto",
+   "auto": false,
+   "esperado": "Redireciona para login.html"
+  },
+  {
+   "id": "M-03",
+   "regra": "RT-04",
+   "desc": "Navegar por todos os itens do menu",
+   "auto": false,
+   "esperado": "Item ativo destacado em cada página; nome e iniciais do usuário aparecem"
+  },
+  {
+   "id": "M-04",
+   "regra": "RT-05",
+   "desc": "Alternar modo claro/escuro e recarregar",
+   "auto": false,
+   "esperado": "Tema persiste; sidebar legível nos dois"
+  },
+  {
+   "id": "M-05",
+   "regra": "RN-07",
+   "desc": "Hub mostra KPIs (cartas, contratos, estágios, mês)",
+   "auto": false,
+   "esperado": "Números carregam sem erro no console"
+  },
+  {
+   "id": "M-06",
+   "regra": "RN-07",
+   "desc": "Painéis de cartas e contratos listam registros",
+   "auto": false,
+   "esperado": "Lista carrega; filtros e busca funcionam"
+  },
+  {
+   "id": "M-07",
+   "regra": "RT-04",
+   "desc": "Painel de Contratos: clicar nas abas e no menu 'Aguardando'/'Assinados'",
+   "auto": false,
+   "esperado": "Lista filtra; contadores batem; aba ativa e menu ativo coincidem"
+  },
+  {
+   "id": "M-08",
+   "regra": "RN-08",
+   "desc": "Novo Contrato: sub-abas Candidato/Empresa/Condições/Supervisor/Atividades",
+   "auto": false,
+   "esperado": "Troca de aba mantém os dados; CLT esconde Atividades"
+  },
+  {
+   "id": "M-09",
+   "regra": "RN-08",
+   "desc": "Digitar CPF e CNPJ inválidos e avançar",
+   "auto": false,
+   "esperado": "Aviso vermelho e volta para a sub-aba do campo"
+  },
+  {
+   "id": "M-10",
+   "regra": "RN-03",
+   "desc": "Criar 2 contratos TCE seguidos",
+   "auto": false,
+   "esperado": "Números TCE-2026-000N e N+1, sem repetir"
+  },
+  {
+   "id": "M-11",
+   "regra": "RN-04",
+   "desc": "Tela de links: WhatsApp, Copiar e E-mail",
+   "auto": false,
+   "esperado": "E-mail chega com o link; link abre a página de implantação"
+  },
+  {
+   "id": "M-12",
+   "regra": "RT-05",
+   "desc": "Painel de contratos no celular (largura < 720px)",
+   "auto": false,
+   "esperado": "Tabela vira cartões com rótulos"
+  },
+  {
+   "id": "M-13",
+   "regra": "RN-04",
+   "desc": "Rodar sql/cr-schema.sql no SQL Editor do Supabase",
+   "auto": false,
+   "esperado": "Executa sem erro; reexecutar também não dá erro"
+  },
+  {
+   "id": "M-14",
+   "regra": "RN-01",
+   "desc": "Criar contrato com 2 signatários; abrir o link de um em aba anônima e assinar",
+   "auto": false,
+   "esperado": "Assinatura grava; painel mostra 'Parcial'"
+  },
+  {
+   "id": "M-15",
+   "regra": "RN-01",
+   "desc": "Assinar o segundo signatário",
+   "auto": false,
+   "esperado": "Painel mostra 'Assinado'; hash e IP aparecem em visualizar-assinado"
+  },
+  {
+   "id": "M-16",
+   "regra": "RN-02",
+   "desc": "Reabrir link já assinado; cancelar um contrato e abrir seu link",
+   "auto": false,
+   "esperado": "'Você já assinou' / 'contrato cancelado'"
+  },
+  {
+   "id": "M-17",
+   "regra": "RN-04",
+   "desc": "Usar signatário com expira_em no passado",
+   "auto": false,
+   "esperado": "'Este link expirou'"
+  },
+  {
+   "id": "M-18",
+   "regra": "RN-10",
+   "desc": "Em aba anônima, tentar ler tabelas pela API com a chave anon",
+   "auto": false,
+   "esperado": "Acesso negado/vazio (RLS)"
+  },
+  {
+   "id": "M-19",
+   "regra": "RN-07",
+   "desc": "Gerar uma carta de recomendação e abrir o Painel de Cartas",
+   "auto": false,
+   "esperado": "Carta aparece na lista com número REC-2026-000N; KPIs do hub sobem"
+  },
+  {
+   "id": "M-20",
+   "regra": "RN-07",
+   "desc": "Gerar cancelamento e recesso (menu antigo/URL antiga abre nova-carta)",
+   "auto": false,
+   "esperado": "Redireciona; documentos entram nas abas Cancelamento e Recesso"
+  },
+  {
+   "id": "M-21",
+   "regra": "RN-07",
+   "desc": "Clicar 📄 em uma carta do painel",
+   "auto": false,
+   "esperado": "Nova Carta abre com o tipo e os campos preenchidos; ao gerar sai número novo"
+  },
+  {
+   "id": "M-22",
+   "regra": "RN-07",
+   "desc": "Clicar 👁️ em carta antiga e em carta nova",
+   "auto": false,
+   "esperado": "Ambas abrem no visualizar.html"
+  },
+  {
+   "id": "M-23",
+   "regra": "RN-10",
+   "desc": "Emitir carta com envio ao estagiário e abrir o link recebido (sem login)",
+   "auto": false,
+   "esperado": "URL tem só ?t=...; página mostra a carta e permite assinar; link expirado mostra 'inválido'"
+  },
+  {
+   "id": "M-24",
+   "regra": "RT-03",
+   "desc": "Configurações: salvar assinatura, dados padrão e mensagem; recarregar",
+   "auto": false,
+   "esperado": "Valores voltam preenchidos; Nova Carta usa os padrões; Carta + Assinatura preenche responsável"
+  },
+  {
+   "id": "M-25",
+   "regra": "RN-03",
+   "desc": "Teste ponta a ponta: contrato (criar→assinar 2 partes→assinado) e carta (emitir→painel→duplicar)",
+   "auto": false,
+   "esperado": "Status e números corretos nos painéis"
+  },
+  {
+   "id": "M-26",
+   "regra": "RT-06",
+   "desc": "Celular: painéis, nova carta, assinar.html e configuracoes",
+   "auto": false,
+   "esperado": "Sem rolagem lateral; tabelas viram cartões"
+  },
+  {
+   "id": "M-27",
+   "regra": "RT-05",
+   "desc": "Login no tema claro e no escuro",
+   "auto": false,
+   "esperado": "Texto legível e campos visíveis nos dois temas (cores fixas restantes podem precisar de ajuste)"
+  },
+  {
+   "id": "M-28",
+   "regra": "RN-07",
+   "desc": "Salvar assinatura em Configurações e abrir Carta + Assinatura",
+   "auto": false,
+   "esperado": "Canvas já vem com a assinatura em azul e o responsável preenchido; PDF sai com a assinatura"
+  },
+  {
+   "id": "M-29",
+   "regra": "RN-06",
+   "desc": "Estagiário assina pelo link; reabrir o mesmo link",
+   "auto": false,
+   "esperado": "1ª vez: sucesso e hash do servidor; 2ª: 'documento já foi assinado'"
+  },
+  {
+   "id": "M-30",
+   "regra": "RN-07",
+   "desc": "Painel de Cartas após a assinatura",
+   "auto": false,
+   "esperado": "Número da carta aparece com ✅"
+  },
+  {
+   "id": "M-31",
+   "regra": "M14",
+   "desc": "Contrato assinado com término em até 30 dias",
+   "auto": false,
+   "esperado": "Aparece na aba Término com o prazo em dias; vencido aparece em vermelho"
+  },
+  {
+   "id": "M-32",
+   "regra": "M14",
+   "desc": "Estágio assinado com início há ~11–12 meses",
+   "auto": false,
+   "esperado": "Aparece na aba 12 meses; contrato cancelado nunca aparece"
+  },
+  {
+   "id": "M-33",
+   "regra": "M14",
+   "desc": "Contrato enviado/parcial criado há mais de 5 dias",
+   "auto": false,
+   "esperado": "Aparece em Parados; mudar os campos de dias refaz a lista"
+  },
+  {
+   "id": "M-34",
+   "regra": "M16",
+   "desc": "Painel de Contratos: filtrar uma aba/busca e clicar ⬇️ CSV; abrir no Excel",
+   "auto": false,
+   "esperado": "Só as linhas filtradas; acentos corretos; colunas separadas; sem CPF/e-mail"
+  },
+  {
+   "id": "M-35",
+   "regra": "M16",
+   "desc": "Painel de Cartas: ⬇️ CSV com aba Recesso ativa",
+   "auto": false,
+   "esperado": "Só cartas de recesso, com status (emitida/assinada)"
+  },
+  {
+   "id": "M-36",
+   "regra": "M18",
+   "desc": "Navegar só com Tab em Nova Carta e Assinar",
+   "auto": false,
+   "esperado": "Foco azul sempre visível; 'Pular para o conteúdo' aparece no 1º Tab; ordem lógica"
+  },
+  {
+   "id": "M-37",
+   "regra": "M18",
+   "desc": "Leitor de tela (NVDA/VoiceOver) em um painel e no assinar.html",
+   "auto": false,
+   "esperado": "Menu anunciado como navegação, página atual indicada, campos com rótulo, toasts lidos"
+  },
+  {
+   "id": "M-38",
+   "regra": "M18",
+   "desc": "Tema claro: ler textos secundários, tabelas e badges",
+   "auto": false,
+   "esperado": "Legíveis; se algum ficar fraco, informar a tela para ajuste"
+  },
+  {
+   "id": "M-39",
+   "regra": "M17",
+   "desc": "Fazer login, emitir uma carta, criar e cancelar um contrato, excluir uma carta, exportar CSV e sair",
+   "auto": false,
+   "esperado": "Todas as ações aparecem em Histórico de acessos com seu e-mail, data e hora"
+  },
+  {
+   "id": "M-40",
+   "regra": "M17",
+   "desc": "Tentar editar/apagar o log pelo console (_sb.from('cr_log').delete())",
+   "auto": false,
+   "esperado": "Bloqueado pelo banco; nada some"
+  },
+  {
+   "id": "T-67",
+   "regra": "M15",
+   "desc": "Tela novo-movimento.html existe e usa o menu único",
+   "auto": true,
+   "check": {
+    "type": "shellOnly",
+    "pages": [
+     "novo-movimento.html"
+    ]
+   }
+  },
+  {
+   "id": "T-68",
+   "regra": "RT-02",
+   "desc": "novo-movimento.html sem const/let repetido entre scripts",
+   "auto": true,
+   "check": {
+    "type": "noRedeclare",
+    "pages": [
+     "novo-movimento.html",
+     "index-contratos.html",
+     "vencimentos.html"
+    ]
+   }
+  },
+  {
+   "id": "T-69",
+   "regra": "M15",
+   "desc": "SQL: função cr_criar_movimento, colunas de vínculo e permissão só para logado",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "cr_criar_movimento",
+     "contrato_origem_id",
+     "tipo_mov",
+     "alteracoes",
+     "grant execute on function cr_criar_movimento(bigint, text, date, text, jsonb) to authenticated",
+     "revoke all on function cr_criar_movimento"
+    ]
+   }
+  },
+  {
+   "id": "T-70",
+   "regra": "RN-04",
+   "desc": "SQL: função de movimento NÃO é liberada para visitante (anon)",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "sql/cr-schema.sql"
+    ],
+    "text": [
+     "cr_criar_movimento(bigint, text, date, text, jsonb) to anon"
+    ]
+   }
+  },
+  {
+   "id": "T-71",
+   "regra": "M15",
+   "desc": "Página de assinatura recebe o nº do contrato de origem (cr_ler_por_token)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "'origem', (select numero_contrato from cr_contratos where id = c.contrato_origem_id)"
+    ]
+   }
+  },
+  {
+   "id": "T-72",
+   "regra": "M15",
+   "desc": "Painel de contratos: selo de movimento, botão 🔁 e colunas no CSV",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-contratos.html",
+    "text": [
+     "movBadge(c)",
+     "novo-movimento.html?origem=",
+     "'Movimento'",
+     "'Contrato de origem'"
+    ]
+   }
+  },
+  {
+   "id": "T-73",
+   "regra": "M15",
+   "desc": "Vencimentos usa só a versão vigente e conta 12 meses do original",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "vencimentos.html",
+    "text": [
+     "movSuperado(_ct, c)",
+     "movRaiz(_ct, c).periodo_inicio",
+     "tipo_mov !== 'rescisao'"
+    ]
+   }
+  },
+  {
+   "id": "T-74",
+   "regra": "M15",
+   "desc": "Assinar contrato mostra a faixa do movimento (de → para)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assinar-contrato.html",
+    "text": [
+     "data.origem",
+     "c.tipo_mov",
+     "a.de"
+    ]
+   }
+  },
+  {
+   "id": "T-75",
+   "regra": "M15",
+   "desc": "PDF/visualização do assinado mostra o vínculo com o original",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "mkMovimento(c)",
+     "_origemNum",
+     "contrato_origem_id"
+    ]
+   }
+  },
+  {
+   "id": "T-76",
+   "regra": "M17",
+   "desc": "Histórico conhece as 3 ações novas",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "historico.html",
+    "text": [
+     "criou_aditivo",
+     "criou_renovacao",
+     "criou_rescisao"
+    ]
+   }
+  },
+  {
+   "id": "T-77",
+   "regra": "M15",
+   "desc": "Regras do cliente (cadeia, vigente, rescindido, alerta 2 anos): tests/mov-test.js",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/mov-test.js"
+   }
+  },
+  {
+   "id": "T-78",
+   "regra": "M15",
+   "desc": "Testes SQL reais e de tela existem (rodar à parte: precisam de PostgreSQL / jsdom)",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/sql/m15-teste.sql"
+   }
+  },
+  {
+   "id": "T-79",
+   "regra": "M15",
+   "desc": "Script de tela jsdom existe",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/mov-ui-test.js"
+   }
+  },
+  {
+   "id": "M-41",
+   "regra": "M15",
+   "desc": "Rodar o sql/cr-schema.sql de novo no Supabase (antes: backup). Depois, no painel, abrir um contrato ASSINADO e clicar 🔁",
+   "auto": false,
+   "esperado": "Abre novo-movimento.html com o contrato de origem; contrato não assinado NÃO mostra o botão 🔁"
+  },
+  {
+   "id": "M-42",
+   "regra": "M15",
+   "desc": "Criar um ADITIVO mudando só a bolsa; abrir cada link de assinatura e assinar com todos",
+   "auto": false,
+   "esperado": "Número ADT-ano-0001; assinar-contrato mostra a faixa “Aditivo ao contrato nº …” com bolsa de → para; ao fim, status Assinado; o original continua como estava (com selo “Substituído”)"
+  },
+  {
+   "id": "M-43",
+   "regra": "M15",
+   "desc": "Com o aditivo ainda aguardando, tentar criar outro movimento sobre o mesmo contrato (abrir novo-movimento.html?origem=ID na mão)",
+   "auto": false,
+   "esperado": "Tela bloqueia: “já tem um movimento em andamento”. Cancelando o aditivo no painel, libera de novo"
+  },
+  {
+   "id": "M-44",
+   "regra": "M15",
+   "desc": "Criar RENOVAÇÃO com novo término e assinar; conferir Vencimentos",
+   "auto": false,
+   "esperado": "Início = dia seguinte ao término anterior; o original some de “Término do contrato”; 12 meses continuam contados do início do ORIGINAL; aviso amarelo se passar de 2 anos"
+  },
+  {
+   "id": "M-45",
+   "regra": "M15",
+   "desc": "Criar RESCISÃO (data + motivo) e assinar; depois tentar aditivo sobre ela",
+   "auto": false,
+   "esperado": "Selo ⛔ Rescindido no original; rescisão não aparece em Vencimentos; nenhum novo movimento é aceito"
+  },
+  {
+   "id": "M-46",
+   "regra": "M15",
+   "desc": "Abrir o PDF (visualizar-assinado) de um aditivo e de uma rescisão assinados",
+   "auto": false,
+   "esperado": "Banner “Aditivo ao …/Rescisão do …”, seção com nº do original, data de efeito, motivo e de → para"
+  },
+  {
+   "id": "M-47",
+   "regra": "M17",
+   "desc": "Conferir Histórico de acessos após criar os 3 movimentos",
+   "auto": false,
+   "esperado": "Linhas “Criou aditivo/renovação/rescisão” com seu e-mail e o nº do movimento"
+  },
+  {
+   "id": "M-48",
+   "regra": "M15",
+   "desc": "CSV do Painel de Contratos",
+   "auto": false,
+   "esperado": "Colunas “Movimento” e “Contrato de origem” preenchidas; sem CPF/e-mail"
+  },
+  {
+   "id": "M-49",
+   "regra": "M15",
+   "desc": "Celular: abrir novo-movimento.html (as 3 abas e o formulário do aditivo)",
+   "auto": false,
+   "esperado": "Sem rolagem lateral; campos legíveis; botão alcançável (não verificado visualmente nesta rodada)"
+  },
+  {
+   "id": "T-80",
+   "regra": "M19",
+   "desc": "Config única tem BASE_URL e BASE_URL_FIXA",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-config.js",
+    "text": [
+     "BASE_URL_FIXA",
+     "CR_CONFIG.BASE_URL",
+     "SB_URL",
+     "EMAILJS"
+    ]
+   }
+  },
+  {
+   "id": "T-81",
+   "regra": "M19",
+   "desc": "Nenhuma página calcula o endereço dos links por conta própria",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "index-contratos.html",
+     "novo-contrato.html",
+     "novo-movimento.html"
+    ],
+    "text": [
+     "window.location.origin + window.location.pathname",
+     "const BASE_URL = location.origin"
+    ]
+   }
+  },
+  {
+   "id": "T-82",
+   "regra": "RT-01",
+   "desc": "URL/chave do Supabase só em assets/cr-config.js",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": "*.html",
+    "text": [
+     "supabase.co'",
+     "supabase.co\""
+    ]
+   }
+  },
+  {
+   "id": "T-83",
+   "regra": "M19",
+   "desc": "Teste ponta a ponta SQL existe (criar → assinar → status → auditoria)",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/sql/e2e-contrato.sql"
+   }
+  },
+  {
+   "id": "M-50",
+   "regra": "M19",
+   "desc": "Preencher BASE_URL_FIXA em assets/cr-config.js com o endereço público do sistema; abrir o sistema por outro endereço (ex.: localhost) e criar um contrato",
+   "auto": false,
+   "esperado": "Os links de WhatsApp/e-mail/copiar saem com o endereço público, não com o localhost"
+  },
+  {
+   "id": "M-51",
+   "regra": "M19",
+   "desc": "Ponta a ponta no Supabase real: criar contrato com 2 signatários, abrir cada link em janela anônima, assinar, voltar ao painel",
+   "auto": false,
+   "esperado": "Status Aguardando → Parcial → Assinado sozinho; PDF abre com hash; Histórico e auditoria preenchidos"
+  },
+  {
+   "id": "T-84",
+   "regra": "4.5",
+   "desc": "Página pública verificar.html existe e não usa login nem menu",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "verificar.html"
+   }
+  },
+  {
+   "id": "T-85",
+   "regra": "4.5",
+   "desc": "verificar.html chama só a função cr_verificar_documento (sem ler tabela)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "verificar.html",
+    "text": [
+     "cr_verificar_documento",
+     "rpc("
+    ]
+   }
+  },
+  {
+   "id": "T-86",
+   "regra": "RN-10",
+   "desc": "verificar.html público: sem cr-auth.js e sem cr-shell.js",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "verificar.html"
+    ],
+    "text": [
+     "cr-auth.js",
+     "cr-shell.js",
+     ".from("
+    ]
+   }
+  },
+  {
+   "id": "T-87",
+   "regra": "4.5",
+   "desc": "SQL: cr_verificar_documento com grant para anon e chave = hash de 64 hex",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "cr_verificar_documento(p_hash text)",
+     "grant execute on function cr_verificar_documento(text) to anon, authenticated",
+     "^[0-9a-f]{64}$"
+    ]
+   }
+  },
+  {
+   "id": "T-88",
+   "regra": "4.5",
+   "desc": "PDF assinado usa o hash do servidor e mostra o QR de verificação",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "c.hash_documento",
+     "sig.hash_assinatura",
+     "window.crQrSvg(verUrl)",
+     "verificar.html?h="
+    ]
+   }
+  },
+  {
+   "id": "T-89",
+   "regra": "4.5",
+   "desc": "Hash curto calculado na tela (genHash) foi removido do PDF",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "visualizar-assinado.html"
+    ],
+    "text": [
+     "genHash",
+     "Hash Final"
+    ]
+   }
+  },
+  {
+   "id": "T-90",
+   "regra": "4.4",
+   "desc": "Trilha do PDF lê cr_auditoria (IP gravado no servidor)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "from('cr_auditoria')",
+     "_audit"
+    ]
+   }
+  },
+  {
+   "id": "T-91",
+   "regra": "4.5",
+   "desc": "Biblioteca de QR (MIT) incluída localmente, sem CDN, e helper crQrSvg",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-qr.js",
+    "text": [
+     "Kazuhiko Arase",
+     "MIT license",
+     "window.crQrSvg"
+    ]
+   }
+  },
+  {
+   "id": "T-92",
+   "regra": "4.5",
+   "desc": "Testes de banco e de tela da R15 existem",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/sql/verificar-teste.sql"
+   }
+  },
+  {
+   "id": "T-93",
+   "regra": "4.5",
+   "desc": "Teste de tela da R15 existe (jsdom)",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/verif-ui-test.js"
+   }
+  },
+  {
+   "id": "M-52",
+   "regra": "4.5",
+   "desc": "Rodar sql/cr-schema.sql de novo (idempotente). Abrir o PDF de um contrato TOTALMENTE assinado (visualizar-assinado.html?id=…)",
+   "auto": false,
+   "esperado": "Última página: Hash SHA-256 com 64 caracteres e QR; o hash de cada assinatura também tem 64 caracteres (bate com o que o Supabase gravou em cr_signatarios.hash_assinatura)"
+  },
+  {
+   "id": "M-53",
+   "regra": "4.5",
+   "desc": "Com BASE_URL_FIXA preenchida com o endereço público, imprimir/salvar PDF e escanear o QR com o celular",
+   "auto": false,
+   "esperado": "Abre verificar.html já consultando e mostra \"Documento autêntico\" com número, vigência e partes por papel — sem nome, CPF ou e-mail"
+  },
+  {
+   "id": "M-54",
+   "regra": "4.5",
+   "desc": "Em verificar.html, digitar um código com 1 caractere trocado e um código curto",
+   "auto": false,
+   "esperado": "\"Código não encontrado\" para o trocado e \"Código inválido\" para o curto"
+  },
+  {
+   "id": "M-55",
+   "regra": "4.5",
+   "desc": "Abrir o PDF de contrato parcial e de contrato antigo (assinado antes da R4); imprimir o PDF e conferir se saem 3 páginas, sem página em branco",
+   "auto": false,
+   "esperado": "Parcial: sem QR e com aviso; antigo: aviso \"anterior ao registro de hash\"; impressão: 3 páginas"
+  },
+  {
+   "id": "T-94",
+   "regra": "4.4",
+   "desc": "Detalhe do contrato tem as 4 abas (Resumo, Signatários, Linha do tempo, Arquivo)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "data-tab=\"resumo\"",
+     "data-tab=\"signatarios\"",
+     "data-tab=\"auditoria\"",
+     "['arquivo', '📄 Arquivo'",
+     "function abaDetalhe"
+    ]
+   }
+  },
+  {
+   "id": "M-56",
+   "regra": "4.4",
+   "desc": "Abrir visualizar-assinado.html?id=… no computador e no celular; clicar nas 4 abas; abrir direto com #auditoria e #arquivo na URL",
+   "auto": false,
+   "esperado": "Cada aba mostra só o seu cartão (contador em Signatários e Linha do tempo); no celular \"Arquivo\" mostra o documento e as outras abas escondem o documento; imprimir continua saindo em 3 páginas"
+  },
+  {
+   "id": "T-95",
+   "regra": "5.1",
+   "desc": "Nova Carta tem as 4 etapas (Tipo · Dados · Texto · Pré-visualizar e emitir) com navegação",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "nova-carta.html",
+    "text": [
+     "const ETAPAS = ['Tipo', 'Dados', 'Texto', 'Pré-visualizar e emitir']",
+     "function irEtapa",
+     "function validarDados",
+     "data-step=\"4\"",
+     "function restaurarTexto"
+    ]
+   }
+  },
+  {
+   "id": "T-96",
+   "regra": "5.1",
+   "desc": "emitir (gerar) valida os dados antes de numerar/gravar",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "nova-carta.html",
+    "text": [
+     "const eV = validarDados(); if (eV)",
+     "await emitirCarta(d, _tipo);"
+    ]
+   }
+  },
+  {
+   "id": "T-97",
+   "regra": "5.1",
+   "desc": "Texto editável entra nos 4 modelos do documento (escapado) e não vai por HTML cru",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar.html",
+    "text": [
+     "function escT",
+     "escT(d.texto_livre)"
+    ]
+   }
+  },
+  {
+   "id": "M-57",
+   "regra": "5.1",
+   "desc": "Nova Carta: percorrer Tipo → Dados → Texto → Emitir nos 4 tipos; tentar avançar sem nome e (TCE) sem curso; editar o texto da recomendação e restaurar; emitir",
+   "auto": false,
+   "esperado": "Bloqueia com aviso nos casos inválidos; texto automático aparece com o nome e só é enviado se editado; no cancelamento/recesso/TCE o texto escrito aparece como observação final antes da data; emitir numera, grava no histórico e abre o PDF"
+  },
+  {
+   "id": "T-98",
+   "regra": "P8",
+   "desc": "cr-typo-fix.css removido e nenhuma página o referencia",
+   "auto": true,
+   "check": {
+    "type": "removed",
+    "file": "cr-typo-fix.css"
+   }
+  },
+  {
+   "id": "T-99",
+   "regra": "P8",
+   "desc": "Nenhuma página referencia cr-typo-fix (nem assets/cr-typo-fix.css)",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": "*.html",
+    "text": [
+     "cr-typo-fix"
+    ]
+   }
+  },
+  {
+   "id": "M-58",
+   "regra": "P8",
+   "desc": "Abrir assinar.html (link de carta), assinar-contrato.html, visualizar.html e visualizar-assinado.html no navegador, claro e escuro",
+   "auto": false,
+   "esperado": "Visual idêntico ao de antes (o CSS removido já não carregava: as páginas apontavam para assets/cr-typo-fix.css, mas o arquivo estava na raiz)"
+  },
+  {
+   "id": "T-100",
+   "regra": "RN-04",
+   "desc": "sql/cr-schema.sql tem cr_renovar_link (prorroga ou gera link novo; só logado)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create or replace function cr_renovar_link",
+     "revoke all on function cr_renovar_link(bigint, int, boolean) from public",
+     "grant execute on function cr_renovar_link(bigint, int, boolean) to authenticated",
+     "'novo_link'",
+     "'prorrogou_link'"
+    ]
+   }
+  },
+  {
+   "id": "T-101",
+   "regra": "RN-04",
+   "desc": "Regras do cliente do prazo do link (linkValidade, renovarLink) — 15 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/link-test.js"
+   }
+  },
+  {
+   "id": "T-102",
+   "regra": "RN-04",
+   "desc": "Painel de contratos tem prorrogar, link novo, aviso de link vencido e trata contrato cancelado",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-contratos.html",
+    "text": [
+     "onclick=\"renovar(",
+     "linkValidade(",
+     "link vencido",
+     "Contrato cancelado — o link está desativado",
+     "id=\"prazoRenovar\""
+    ]
+   }
+  },
+  {
+   "id": "T-103",
+   "regra": "M2",
+   "desc": "Novo Contrato deixa escolher a validade dos links e grava expira_em",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "id=\"prazoLink\"",
+     "expira_em:   new Date(Date.now() + prazoLinkDias()"
+    ]
+   }
+  },
+  {
+   "id": "T-104",
+   "regra": "RN-04",
+   "desc": "E-mail de assinatura não diz mais \"não expira\" (usa o prazo real)",
+   "auto": true,
+   "check": {
+    "type": "notContainsAny",
+    "pages": [
+     "assets/cr-utils.js"
+    ],
+    "text": [
+     "expires: 'não expira'"
+    ]
+   }
+  },
+  {
+   "id": "T-105",
+   "regra": "RN-06",
+   "desc": "Trilha do PDF e Histórico conhecem novo_link e prorrogou_link",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "ev === 'novo_link'",
+     "ev === 'prorrogou_link'"
+    ]
+   }
+  },
+  {
+   "id": "T-106",
+   "regra": "RN-06",
+   "desc": "Histórico de acessos rotula novo_link e prorrogou_link",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "historico.html",
+    "text": [
+     "novo_link:",
+     "prorrogou_link:"
+    ]
+   }
+  },
+  {
+   "id": "M-59",
+   "regra": "M2",
+   "desc": "SQL da R19 no Supabase real + criar contrato com prazo de 7 dias; no painel 🔗 conferir \"Link expira em 7 dias\" para cada pendente",
+   "auto": false,
+   "esperado": "Cada signatário pendente mostra o prazo; o PDF/Histórico não mostram o token"
+  },
+  {
+   "id": "M-60",
+   "regra": "M2",
+   "desc": "No 🔗: ⏱️ Prorrogar (30 dias) e abrir o MESMO link em outra janela anônima",
+   "auto": false,
+   "esperado": "Link continua o mesmo, prazo novo na tela, assinatura funciona"
+  },
+  {
+   "id": "M-61",
+   "regra": "M2",
+   "desc": "No 🔗: 🔄 Novo link; abrir o link ANTIGO e depois o NOVO em janela anônima",
+   "auto": false,
+   "esperado": "Antigo mostra link inválido; novo abre e assina; WhatsApp/e-mail já levam o link novo e a data de validade"
+  },
+  {
+   "id": "M-62",
+   "regra": "M2",
+   "desc": "No Supabase, deixar um expira_em no passado (ou criar com prazo e esperar), voltar ao painel",
+   "auto": false,
+   "esperado": "Contrato aparece com selo \"⏰ link vencido\"; o link abre como expirado; prorrogar ou novo link resolve"
+  },
+  {
+   "id": "M-63",
+   "regra": "RN-02",
+   "desc": "Cancelar um contrato e abrir o 🔗 dele",
+   "auto": false,
+   "esperado": "Mostra \"Contrato cancelado — o link está desativado\", sem copiar/WhatsApp/prorrogar"
+  },
+  {
+   "id": "M-64",
+   "regra": "RN-06",
+   "desc": "Abrir o detalhe (visualizar-assinado) de um contrato em que se gerou link novo e o Histórico de acessos",
+   "auto": false,
+   "esperado": "Linha do tempo: \"Novo link de assinatura gerado para …\"; Histórico: \"Gerou novo link de assinatura\" com seu usuário"
+  },
+  {
+   "id": "T-107",
+   "regra": "P8",
+   "desc": "cr-core.css tem sobrescritas do tema claro para tabelas (td, strong, th) e título do painel",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-core.css",
+    "text": [
+     "[data-theme=\"light\"] table td{color:#334155 !important}",
+     "[data-theme=\"light\"] table td strong{color:#0f172a !important}",
+     "[data-theme=\"light\"] table th{color:#475569 !important"
+    ]
+   }
+  },
+  {
+   "id": "M-65",
+   "regra": "P8",
+   "desc": "Tema claro: abrir Painel de Contratos, Painel de Cartas, Histórico, Vencimentos e Detalhe do contrato",
+   "esperado": "Nomes, empresas, datas e cabeçalhos das tabelas legíveis. AINDA pode haver cor fixa ilegível fora das tabelas (título do cabeçalho da página, botão CSV, \"Ver Todos\", faixa superior): a auditoria completa de contraste segue pendente (R11)",
+   "auto": false
+  },
+  {
+   "id": "T-108",
+   "regra": "M12",
+   "desc": "Regras do cliente de reabrir assinatura e duplicar contrato (reabrirSignatario, contratoParaDuplicar) — 19 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/reabrir-test.js"
+   }
+  },
+  {
+   "id": "T-109",
+   "regra": "M12",
+   "desc": "SQL tem cr_reabrir_signatario: só logado, só recusado, não mexe em cancelado/assinado, grava auditoria e cr_log",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "function cr_reabrir_signatario(p_signatario bigint, p_dias int default 15)",
+     "if s.status <> 'recusado' then return json_build_object('erro', 'nao_recusado')",
+     "'reabriu_assinatura'",
+     "grant execute on function cr_reabrir_signatario(bigint, int) to authenticated"
+    ]
+   }
+  },
+  {
+   "id": "T-110",
+   "regra": "M12",
+   "desc": "Painel de contratos: botão Reabrir assinatura no recusado e botão 📑 Duplicar",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "index-contratos.html",
+    "text": [
+     "onclick=\"reabrir(${s.id})\"",
+     "async function reabrir(sigId)",
+     "novo-contrato.html?dup=${c.id}",
+     "s.status === 'pendente' || s.status === 'recusado'"
+    ]
+   }
+  },
+  {
+   "id": "T-111",
+   "regra": "M12",
+   "desc": "Novo contrato lê ?dup=ID, copia dados sem o candidato e registra duplicou_contrato",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "async function duplicarDeUrl()",
+     "get('dup')",
+     "contratoParaDuplicar(c, ss)",
+     "logAcao('duplicou_contrato'"
+    ]
+   }
+  },
+  {
+   "id": "T-112",
+   "regra": "RN-06",
+   "desc": "Trilha do PDF e Histórico de acessos rotulam reabriu_assinatura (e duplicou_contrato no Histórico)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "historico.html",
+    "text": [
+     "reabriu_assinatura:",
+     "duplicou_contrato:"
+    ]
+   }
+  },
+  {
+   "id": "T-113",
+   "regra": "RN-06",
+   "desc": "Detalhe do contrato (linha do tempo) conhece reabriu_assinatura",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "visualizar-assinado.html",
+    "text": [
+     "ev === 'reabriu_assinatura'"
+    ]
+   }
+  },
+  {
+   "id": "M-66",
+   "regra": "M12",
+   "desc": "Rodar sql/cr-schema.sql (R20) no Supabase. Fazer um signatário recusar pelo link, depois abrir o 🔗 do contrato e clicar \"↩️ Reabrir assinatura\"",
+   "auto": false,
+   "esperado": "Pede confirmação com o prazo; vira Pendente com link novo; o motivo da recusa some da tela; o link antigo mostra inválido; o novo permite assinar"
+  },
+  {
+   "id": "M-67",
+   "regra": "M12",
+   "desc": "Depois de reabrir, abrir o detalhe do contrato e o Histórico de acessos",
+   "auto": false,
+   "esperado": "A recusa antiga continua registrada; aparece \"Assinatura de <nome> reaberta após recusa (link novo)\"; nenhum token aparece em texto"
+  },
+  {
+   "id": "M-68",
+   "regra": "M12",
+   "desc": "Tentar reabrir em contrato cancelado e em contrato já assinado (o botão não deve aparecer; se forçar pelo console, o servidor recusa)",
+   "auto": false,
+   "esperado": "Mensagem de erro clara; nada muda no banco"
+  },
+  {
+   "id": "M-69",
+   "regra": "M12",
+   "desc": "No painel, clicar 📑 num contrato normal",
+   "auto": false,
+   "esperado": "Abre Novo Contrato com empresa, valores, supervisor e signatários extras preenchidos; nome, CPF, e-mail e matrícula do candidato vazios; início = hoje; aviso \"Dados copiados de ...\"; Histórico registra \"Duplicou contrato\""
+  },
+  {
+   "id": "M-70",
+   "regra": "M12",
+   "desc": "Concluir e criar o contrato duplicado",
+   "auto": false,
+   "esperado": "Número novo, status Rascunho/Enviado normal, sem nenhuma ligação com o original; o original não mudou"
+  },
+  {
+   "id": "T-114",
+   "regra": "M13",
+   "desc": "Regras do rascunho (rascunhoSalvar/Ler/Limpar): sem CPF, validade de 7 dias, corrompido descartado, storage bloqueado — 21 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/rascunho-test.js"
+   }
+  },
+  {
+   "id": "T-115",
+   "regra": "M13",
+   "desc": "Novo Contrato: banner Restaurar/Descartar, salvamento com debounce e limpeza ao criar",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "id=\"bannerRascunho\"",
+     "function iniciarRascunho()",
+     "function restaurarRascunho()",
+     "function descartarRascunho()",
+     "apagarRascunhoCriado();",
+     "function _escRascunho(t)"
+    ]
+   }
+  },
+  {
+   "id": "T-116",
+   "regra": "M13",
+   "desc": "cr-utils guarda o CPF fora do rascunho",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "if (k !== 'cpf') campos",
+     "window.RASCUNHO_VALIDADE_DIAS = 7"
+    ]
+   }
+  },
+  {
+   "id": "M-71",
+   "regra": "M13",
+   "desc": "Em Novo Contrato, preencher empresa, cargo e valor, fechar a aba e abrir de novo",
+   "auto": false,
+   "esperado": "Aparece \"Há um rascunho de ... salvo em ...\"; Restaurar devolve tudo menos o CPF (digitar de novo); o status \"Rascunho salvo às ...\" aparece ao digitar"
+  },
+  {
+   "id": "M-72",
+   "regra": "M13",
+   "desc": "Criar o contrato até o fim e abrir Novo Contrato de novo",
+   "auto": false,
+   "esperado": "Sem banner de rascunho; formulário em branco"
+  },
+  {
+   "id": "M-73",
+   "regra": "M13",
+   "desc": "Entrar com outro usuário no mesmo navegador e abrir Novo Contrato",
+   "auto": false,
+   "esperado": "Não aparece o rascunho do outro usuário"
+  },
+  {
+   "id": "M-74",
+   "regra": "M13",
+   "desc": "Clicar em Descartar no banner e recarregar",
+   "auto": false,
+   "esperado": "Banner não volta"
+  },
+  {
+   "id": "T-117",
+   "regra": "M9",
+   "desc": "Pontos de atenção (parseJornada, avisosContrato): jornada, duração máx. 2 anos, recesso, 3 partes, bolsa, apólice, CLT — 28 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/avisos-test.js"
+   }
+  },
+  {
+   "id": "T-118",
+   "regra": "M9",
+   "desc": "Novo Contrato exibe os pontos de atenção (resumo, signatários e confirmação) sem bloquear",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "function renderAvisos()",
+     "avisosContrato({ tipo: _tipo",
+     "class=\"avisos-legais\"",
+     "document.addEventListener('input', renderAvisos)"
+    ]
+   }
+  },
+  {
+   "id": "M-75",
+   "regra": "M9",
+   "desc": "Novo Contrato (estágio): digitar jornada 8h/dia · 44h/sem e término 3 anos depois do início",
+   "auto": false,
+   "esperado": "Caixa amarela \"Pontos de atenção\" no resumo com jornada e duração; mesmo assim dá para avançar e criar"
+  },
+  {
+   "id": "M-76",
+   "regra": "M9",
+   "desc": "Ir à etapa 2 sem instituição, sem bolsa e sem apólice; adicionar a instituição",
+   "auto": false,
+   "esperado": "Etapa 2 lista o que falta; ao adicionar a Instituição esse alerta some; a confirmação repete os que restarem"
+  },
+  {
+   "id": "M-77",
+   "regra": "M9",
+   "desc": "Conferir os textos dos alertas com o jurídico (art. 3º, 9º, 10, 11, 12 e 13 da Lei 11.788; CF art. 7º XIII para CLT)",
+   "auto": false,
+   "esperado": "Texto e limites aprovados, ou ajustados em avisosContrato (assets/cr-utils.js)"
+  },
+  {
+   "id": "M-78",
+   "regra": "M9",
+   "desc": "Tema claro e celular (420 px): olhar a caixa de pontos de atenção",
+   "auto": false,
+   "esperado": "Texto legível nos dois temas; caixa não estoura a largura"
+  },
+  {
+   "id": "T-119",
+   "regra": "M18",
+   "desc": "Tema claro: variáveis de contraste (--slate, --dim, --soft, --on-green) e fundo do formulário do login",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-core.css",
+    "text": [
+     "--slate:#475569",
+     "--dim:#5a6a80",
+     "--soft:#334155",
+     "--on-green:#fff",
+     "[data-theme=\"light\"] .topbar{background:rgba(255,255,255,.94)"
+    ]
+   }
+  },
+  {
+   "id": "T-120",
+   "regra": "M18",
+   "desc": "Login no tema claro não usa mais fundo preto fixo no lado do formulário",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "login.html",
+    "text": "html[data-theme=\"light\"] .login-form-side{background:#fff}"
+   }
+  },
+  {
+   "id": "M-79",
+   "regra": "M18",
+   "desc": "Rodar a auditoria de contraste: NODE_PATH=$(npm root -g) node tests/contraste-audit.js ambos (precisa de Playwright + Chromium; npm i -g playwright)",
+   "auto": false,
+   "esperado": "\"Nenhuma falha de contraste medida\" e código de saída 0"
+  },
+  {
+   "id": "M-80",
+   "regra": "M18",
+   "desc": "Olhar no navegador, tema claro e escuro: login, menu lateral (rodapé com usuário e Sair), Painel de Contratos com os selos, modal 🔗, Novo Contrato, Visualizar assinado",
+   "auto": false,
+   "esperado": "Todo texto legível; rodapé do menu sem bloco cinza; botão Entrar do login legível depois de marcar \"Não sou um robô\""
+  },
+  {
+   "id": "T-121",
+   "regra": "M18",
+   "desc": "visualizar.html: barra de ações quebra linha no celular (sem rolagem horizontal)",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "visualizar.html",
+    "text": "@media(max-width:560px){.toolbar{flex-wrap:wrap;gap:.5rem}"
+   }
+  },
+  {
+   "id": "M-81",
+   "regra": "M18",
+   "desc": "Rodar a auditoria de largura: NODE_PATH=$(npm root -g) node tests/mobile-audit.js [--shots] (Playwright + Chromium)",
+   "auto": false,
+   "esperado": "\"Nenhuma página estoura a largura de 420 px\" e saída 0"
+  },
+  {
+   "id": "T-122",
+   "regra": "M11",
+   "desc": "Ordem de assinatura e lembretes (sigAguardando, precisaLembrete, lembreteInfo, registrarLembrete, e-mail) — 39 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/ordem-test.js"
+   }
+  },
+  {
+   "id": "T-123",
+   "regra": "M11",
+   "desc": "SQL R26: coluna ordem_assinatura/ordem, cr_sig_bloqueador, aguardando_vez em cr_assinar/cr_recusar, cr_registrar_lembrete só para logado",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "ordem_assinatura",
+     "cr_sig_bloqueador",
+     "'aguardando_vez'",
+     "cr_registrar_lembrete",
+     "grant execute on function cr_registrar_lembrete(bigint, text) to authenticated;",
+     "revoke all on function cr_sig_bloqueador(bigint) from public;"
+    ]
+   }
+  },
+  {
+   "id": "T-124",
+   "regra": "M11",
+   "desc": "Novo Contrato: seletor de ordem, setas ▲ ▼, e só envia ordem_assinatura/ordem quando é sequencial",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "id=\"ordemAss\"",
+     "function moverSig(",
+     "if (seq) contrato.ordem_assinatura = 'sequencial';",
+     "...(seq ? { ordem: i + 1 } : {})"
+    ]
+   }
+  },
+  {
+   "id": "T-125",
+   "regra": "M11",
+   "desc": "Página de assinatura do contrato mostra \"ainda não é a sua vez\" e não liga o canvas nesse caso",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assinar-contrato.html",
+    "text": [
+     "me.aguardando",
+     "Ainda não é a sua vez",
+     "!me.aguardando"
+    ]
+   }
+  },
+  {
+   "id": "M-82",
+   "regra": "M11",
+   "desc": "Fazer backup e rodar sql/cr-schema.sql INTEIRO (R26) no SQL Editor do Supabase (zxivd…)",
+   "auto": false,
+   "esperado": "Sem erro; cr_contratos ganha ordem_assinatura (padrão 'livre'); cr_signatarios ganha ordem, lembrete_em, lembretes_qtd; existem cr_sig_bloqueador e cr_registrar_lembrete"
+  },
+  {
+   "id": "M-83",
+   "regra": "M11",
+   "desc": "Novo Contrato: escolher \"Um de cada vez\", reordenar com ▲ ▼ (adicione um supervisor) e criar",
+   "auto": false,
+   "esperado": "Lista numerada 1º/2º/3º; a tela de links mostra a ordem e \"só poderá assinar depois de …\""
+  },
+  {
+   "id": "M-84",
+   "regra": "M11",
+   "desc": "Abrir o link do 2º signatário ANTES do 1º assinar",
+   "auto": false,
+   "esperado": "Vê o contrato, aparece \"Ainda não é a sua vez\" com o nome de quem falta, sem área de assinatura e sem botão Assinar/Recusar"
+  },
+  {
+   "id": "M-85",
+   "regra": "M11",
+   "desc": "1º assina; o 2º recarrega o mesmo link e assina; depois o 3º",
+   "auto": false,
+   "esperado": "Cada um libera o seguinte; status do contrato vai a Parcial e, no último, a Assinado"
+  },
+  {
+   "id": "M-86",
+   "regra": "M11",
+   "desc": "Painel de Contratos → 🔗 de um contrato parado: clicar em \"🔔 Lembrar por WhatsApp\" e em \"🔔 Lembrar por e-mail\"",
+   "auto": false,
+   "esperado": "WhatsApp abre com a mensagem \"Lembrete: o documento … aguarda a sua assinatura\"; e-mail chega com \"LEMBRETE —\" no título (o corpo vem do modelo do EmailJS); o contador \"N lembretes · último hoje\" sobe a cada um"
+  },
+  {
+   "id": "M-87",
+   "regra": "M11",
+   "desc": "Abrir Detalhe do contrato (linha do tempo) e Histórico de acessos depois de lembrar",
+   "auto": false,
+   "esperado": "Aparece \"Lembrete enviado para … por WhatsApp/e-mail (nº N)\" e \"Registrou lembrete de assinatura\""
+  },
+  {
+   "id": "M-88",
+   "regra": "M11",
+   "desc": "Criar contrato com \"Todos juntos\" e abrir um contrato antigo (anterior à R26)",
+   "auto": false,
+   "esperado": "Todos assinam em qualquer ordem, sem numeração; nada mudou para contratos antigos"
+  },
+  {
+   "id": "M-89",
+   "regra": "M11",
+   "desc": "Contrato parado há 3 dias ou mais (ou mude CR_CONFIG.LEMBRETE_DIAS para 1 em assets/cr-config.js e espere 1 dia)",
+   "auto": false,
+   "esperado": "Selo laranja \"🔔 lembrar <nome>\" na coluna Status; some depois de registrar um lembrete; não aparece para quem está fora da vez nem com link vencido"
+  },
+  {
+   "id": "T-126",
+   "regra": "M8",
+   "desc": "Busca de CNPJ (enderecoDoCNPJ, buscarCNPJ): formatação, 404, queda, rede — 10 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/cnpj-test.js"
+   }
+  },
+  {
+   "id": "T-127",
+   "regra": "M8",
+   "desc": "Novo Contrato: botão Buscar CNPJ preenche só campos vazios",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "id=\"btnCnpj\"",
+     "async function preencherPorCNPJ()",
+     "!v('empresa').value.trim()",
+     "!v('endereco_emp').value.trim()"
+    ]
+   }
+  },
+  {
+   "id": "M-90",
+   "regra": "M8",
+   "desc": "Novo Contrato → digitar um CNPJ real e clicar em 🔎 Buscar",
+   "auto": false,
+   "esperado": "Razão social e endereço aparecem (se estavam vazios); empresa baixada/inapta gera aviso de situação; sem internet ou 404 mostra mensagem e nada muda"
+  },
+  {
+   "id": "M-91",
+   "regra": "M8",
+   "desc": "Conferir o endereço preenchido contra o cartão CNPJ (a base pública pode estar desatualizada)",
+   "auto": false,
+   "esperado": "Endereço confere, ou é corrigido à mão antes de criar o contrato"
+  },
+  {
+   "id": "T-128",
+   "regra": "M7",
+   "desc": "Empresas já usadas (empresasRecentes, empresaPorNome, camposDaEmpresa): dedup, mais recente vence, só campos vazios — 13 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/empresas-test.js"
+   }
+  },
+  {
+   "id": "T-129",
+   "regra": "M7",
+   "desc": "Novo Contrato: sugestões de empresa e preenchimento ao escolher",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "id=\"lista-empresas\"",
+     "onchange=\"aplicarEmpresaUsada()\"",
+     "async function carregarEmpresasUsadas()",
+     "camposDaEmpresa(emp,"
+    ]
+   }
+  },
+  {
+   "id": "M-92",
+   "regra": "M7",
+   "desc": "Novo Contrato → começar a digitar o nome de uma empresa que já teve contrato e escolher na lista",
+   "auto": false,
+   "esperado": "CNPJ, endereço e supervisor (nome e cargo) do contrato mais recente dessa empresa entram nos campos vazios; o que você já digitou não muda; aparece aviso para conferir"
+  },
+  {
+   "id": "M-93",
+   "regra": "M7",
+   "desc": "Escrever uma empresa nova (que nunca teve contrato) e, depois, abrir a tela sem permissão de leitura/sem internet",
+   "auto": false,
+   "esperado": "Empresa nova: nada é preenchido. Sem a lista: o formulário funciona como antes (só sem sugestões)"
+  },
+  {
+   "id": "T-130",
+   "regra": "M9",
+   "desc": "Supervisor com 10+ estagiários ativos (supervisorAtivos + regra supervisor_max): um por candidato, rescisão/cancelado/terminado não contam — 19 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/supervisor-test.js"
+   }
+  },
+  {
+   "id": "T-131",
+   "regra": "M9",
+   "desc": "Novo Contrato: carrega os contratos de estágio e atualiza o aviso ao digitar supervisor/empresa/CNPJ",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "async function carregarContratosEstagio()",
+     "supervisorAtivos(_contratosEstagio, ref)",
+     "id=\"supervisor_nome\" placeholder=\"Ex.: João Santos\" oninput=\"atualizarResumo()\"",
+     "maskCNPJ(this);atualizarResumo()"
+    ]
+   }
+  },
+  {
+   "id": "M-94",
+   "regra": "M9",
+   "desc": "Novo Contrato de estágio → empresa e supervisor que já têm 10 estagiários ativos em contratos feitos aqui",
+   "auto": false,
+   "esperado": "Aparece o alerta amarelo 'O supervisor informado já acompanha 10 estagiários… art. 9º, III'; trocar o nome do supervisor faz o alerta sumir; não impede criar o contrato"
+  },
+  {
+   "id": "M-95",
+   "regra": "M9",
+   "desc": "Conferir com o jurídico a regra do art. 9º, III (máx. 10 estagiários simultâneos por supervisor) e o que o sistema conta como 'ativo'",
+   "auto": false,
+   "esperado": "Jurídico confirma a regra e o critério (um por candidato; fora: rescisão, cancelado, término passado)"
+  },
+  {
+   "id": "T-132",
+   "regra": "M7",
+   "desc": "Cadastro de empresas, funções puras (formatarCNPJ, chaveEmpresa, mesclarEmpresas, empresasParaImportar, erroEmpresa) — 24 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/cadastro-empresas-test.js"
+   }
+  },
+  {
+   "id": "T-133",
+   "regra": "M7",
+   "desc": "SQL do cadastro (seção 13): tabela cr_empresas, cr_cnpj_valido, trigger, RLS, sem acesso do visitante",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_empresas",
+     "create or replace function cr_cnpj_valido(p text)",
+     "create trigger cr_empresas_antes_tg",
+     "alter table cr_empresas enable row level security",
+     "revoke all on cr_empresas from anon",
+     "cr_empresas_cnpj_uk"
+    ]
+   }
+  },
+  {
+   "id": "T-134",
+   "regra": "M7",
+   "desc": "Página empresas.html usa o menu único e está no menu; Novo Contrato lê o cadastro (cr_empresas) e os contratos",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "from('cr_empresas')",
+     "mesclarEmpresas(cadastro, recentes)",
+     "async function carregarEmpresasUsadas()"
+    ]
+   }
+  },
+  {
+   "id": "M-96",
+   "regra": "M7",
+   "desc": "BACKUP e depois rodar sql/cr-schema.sql INTEIRO no Supabase real (seção 13 cria cr_empresas). Abrir Empresas no menu",
+   "auto": false,
+   "esperado": "Script roda sem erro; a tela Empresas abre vazia (ou com aviso se o SQL não rodou); o menu 'Empresas' fica destacado"
+  },
+  {
+   "id": "M-97",
+   "regra": "M7",
+   "desc": "Empresas → Importar dos contratos; conferir endereço/supervisor/CNPJ importados",
+   "auto": false,
+   "esperado": "As empresas dos contratos aparecem no cadastro, sem repetir; CNPJ inválido de contrato antigo entra sem CNPJ e o aviso diz quantas; você corrige o que estiver errado"
+  },
+  {
+   "id": "M-98",
+   "regra": "M7",
+   "desc": "Empresas → criar, editar, desativar, reativar e excluir uma empresa de teste; tentar o mesmo CNPJ duas vezes",
+   "auto": false,
+   "esperado": "Cada ação funciona e some/volta da lista; CNPJ repetido mostra 'Já existe uma empresa cadastrada com este CNPJ'; CNPJ com dígito errado é recusado"
+  },
+  {
+   "id": "M-99",
+   "regra": "M7",
+   "desc": "Novo Contrato → digitar o nome de uma empresa do cadastro, de uma inativa e de uma que só existe em contratos",
+   "auto": false,
+   "esperado": "Ativa do cadastro preenche com os dados DO CADASTRO; inativa não é sugerida; a que só existe em contratos continua sendo sugerida"
+  },
+  {
+   "id": "M-100",
+   "regra": "M7",
+   "desc": "Empresas no celular (420 px) e no tema claro (a página nova NÃO entrou nas auditorias de contraste e de largura)",
+   "auto": false,
+   "esperado": "Sem rolagem horizontal da página; textos legíveis nos dois temas; botões ✏️ ⏸️ 🗑️ fáceis de tocar"
+  },
+  {
+   "id": "T-135",
+   "regra": "M7",
+   "desc": "Cadastro de instituições, funções puras (instituicoesRecentes, mesclarInstituicoes, instituicoesParaImportar, erroInstituicao) — 18 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/cadastro-instituicoes-test.js"
+   }
+  },
+  {
+   "id": "T-136",
+   "regra": "M7",
+   "desc": "SQL do cadastro (seção 14): tabela cr_instituicoes, trigger que reaproveita cr_cnpj_valido, RLS, sem acesso do visitante",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_instituicoes",
+     "create trigger cr_instituicoes_antes_tg",
+     "alter table cr_instituicoes enable row level security",
+     "revoke all on cr_instituicoes from anon",
+     "cr_instituicoes_cnpj_uk",
+     "cr_instituicoes_nome_uk"
+    ]
+   }
+  },
+  {
+   "id": "T-137",
+   "regra": "M7",
+   "desc": "Página instituicoes.html usa o menu único e está no menu; Novo Contrato sugere o nome (lista ligada ao campo Instituição, lê cr_instituicoes e os contratos)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "from('cr_instituicoes')",
+     "mesclarInstituicoes(cadastro, recentes)",
+     "async function carregarInstituicoesUsadas()",
+     "list=\"lista-instituicoes\""
+    ]
+   }
+  },
+  {
+   "id": "T-138",
+   "regra": "M7",
+   "desc": "Menu tem Instituições e o arquivo existe",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-shell.js",
+    "text": [
+     "['instituicoes.html', '🎓', 'Instituições']"
+    ]
+   }
+  },
+  {
+   "id": "T-139",
+   "regra": "M7",
+   "desc": "instituicoes.html usa só o menu único (cr-shell.js), sem sidebar copiada",
+   "auto": true,
+   "check": {
+    "type": "shellOnly",
+    "pages": [
+     "instituicoes.html"
+    ]
+   }
+  },
+  {
+   "id": "M-101",
+   "regra": "M7",
+   "desc": "BACKUP e depois rodar sql/cr-schema.sql INTEIRO no Supabase real (seção 14 cria cr_instituicoes). Abrir Instituições no menu",
+   "auto": false,
+   "esperado": "Script roda sem erro; a tela Instituições abre vazia (ou com aviso se o SQL não rodou); o menu 'Instituições' fica destacado"
+  },
+  {
+   "id": "M-102",
+   "regra": "M7",
+   "desc": "Instituições → Importar dos contratos; conferir os nomes importados",
+   "auto": false,
+   "esperado": "As instituições dos contratos de estágio aparecem só com o nome, sem repetir; grafias diferentes da mesma instituição aparecem como itens separados e você junta/corrige"
+  },
+  {
+   "id": "M-103",
+   "regra": "M7",
+   "desc": "Instituições → criar, editar, desativar, reativar e excluir uma instituição de teste; tentar o mesmo CNPJ duas vezes e o mesmo nome sem CNPJ",
+   "auto": false,
+   "esperado": "Cada ação funciona e some/volta da lista; CNPJ repetido mostra 'Já existe uma instituição cadastrada com este CNPJ'; nome repetido sem CNPJ também é recusado; CNPJ com dígito errado é recusado"
+  },
+  {
+   "id": "M-104",
+   "regra": "M7",
+   "desc": "Novo Contrato (estágio) → clicar no campo Instituição e digitar parte de uma do cadastro, de uma inativa e de uma que só existe em contratos",
+   "auto": false,
+   "esperado": "Ativa do cadastro e a que só existe em contratos aparecem na lista; a inativa não; escolher só preenche o nome (nenhum outro campo muda); você ainda pode digitar um nome livre"
+  },
+  {
+   "id": "M-105",
+   "regra": "M7",
+   "desc": "Rodar tests/contraste-audit.js e tests/mobile-audit.js (a página Instituições entrou nas duas, mas NÃO rodaram na R31) e ver Instituições no celular (420 px) e no tema claro",
+   "auto": false,
+   "esperado": "0 falhas de contraste, sem rolagem horizontal da página; botões ✏️ ⏸️ 🗑️ fáceis de tocar"
+  },
+  {
+   "id": "T-140",
+   "regra": "M7",
+   "desc": "Cadastro de candidatos, funções puras + RN-10 (log só com ação e id) — 22 verificações",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/cadastro-candidatos-test.js"
+   }
+  },
+  {
+   "id": "T-141",
+   "regra": "M7",
+   "desc": "SQL do cadastro (seção 15): cr_candidatos, cr_cpf_valido no servidor, trigger, RLS, sem acesso do visitante",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_candidatos",
+     "create or replace function cr_cpf_valido",
+     "cr_candidatos_cpf_uk",
+     "alter table cr_candidatos enable row level security",
+     "revoke all on cr_candidatos from anon"
+    ]
+   }
+  },
+  {
+   "id": "T-142",
+   "regra": "M7",
+   "desc": "Novo Contrato lê cr_candidatos e preenche só campos vazios",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "novo-contrato.html",
+    "text": [
+     "from('cr_candidatos')",
+     "list=\"lista-candidatos\"",
+     "aplicarCandidatoCadastro",
+     "camposDoCandidato"
+    ]
+   }
+  },
+  {
+   "id": "T-143",
+   "regra": "M7",
+   "desc": "Menu tem Candidatos",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-shell.js",
+    "text": [
+     "['candidatos.html', '🧑‍🎓', 'Candidatos']"
+    ]
+   }
+  },
+  {
+   "id": "T-144",
+   "regra": "M7",
+   "desc": "candidatos.html usa só o menu único (cr-shell.js)",
+   "auto": true,
+   "check": {
+    "type": "shellOnly",
+    "pages": [
+     "candidatos.html"
+    ]
+   }
+  },
+  {
+   "id": "M-106",
+   "regra": "M7",
+   "desc": "Rodar o SQL (seção 15) no Supabase real; abrir Candidatos; cadastrar com CPF válido; tentar CPF inválido e repetido",
+   "auto": false,
+   "esperado": "Cadastra; inválido e repetido são recusados com mensagem sem repetir o CPF; lista mostra CPF mascarado"
+  },
+  {
+   "id": "M-107",
+   "regra": "RN-10",
+   "desc": "Cadastrar/editar/excluir candidato e abrir Histórico de acessos",
+   "auto": false,
+   "esperado": "Aparecem só as ações (cadastrou/editou/excluiu), sem nome nem CPF"
+  },
+  {
+   "id": "M-108",
+   "regra": "M7",
+   "desc": "No Novo Contrato digitar o nome de um candidato cadastrado (e de um homônimo)",
+   "auto": false,
+   "esperado": "Preenche CPF, e-mail, curso, semestre, instituição e matrícula só nos vazios; homônimos: avisa e não preenche"
+  },
+  {
+   "id": "M-109",
+   "regra": "M18",
+   "desc": "Rodar tests/contraste-audit.js e tests/mobile-audit.js com candidatos.html",
+   "auto": false,
+   "esperado": "0 falhas de contraste e nenhum estouro de largura (não rodados na R32)"
+  },
+  {
+   "id": "T-145",
+   "regra": "M5",
+   "desc": "SQL dos perfis (seção 16): cr_perfis, cr_e_admin com partida segura, cr_definir_perfil, políticas de exclusão/configuração/histórico só admin",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_perfis",
+     "create or replace function cr_e_admin",
+     "create or replace function cr_definir_perfil",
+     "não é possível remover o último administrador",
+     "for delete to authenticated using (cr_e_admin())",
+     "create policy cr_log_sel on cr_log for select to authenticated using (cr_e_admin())"
+    ]
+   }
+  },
+  {
+   "id": "T-146",
+   "regra": "M5",
+   "desc": "Telas pedem perfil de admin antes de excluir cadastros e de gravar configuração",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "configuracoes.html",
+    "text": [
+     "exigirAdmin('alterar as configurações')",
+     "cr_definir_perfil"
+    ]
+   }
+  },
+  {
+   "id": "T-147",
+   "regra": "M5",
+   "desc": "Funções de perfil no cr-utils (falha aberta na tela; o servidor decide)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "window.crPerfil",
+     "window.ehAdmin",
+     "window.exigirAdmin",
+     "window.erroPerfil"
+    ]
+   }
+  },
+  {
+   "id": "M-110",
+   "regra": "M5",
+   "desc": "Rodar o SQL (seção 16) no Supabase real; em Configurações > Usuários definir o PRIMEIRO administrador (você mesmo); depois entrar com outro usuário",
+   "auto": false,
+   "esperado": "O outro usuário vira operador: vê o CPF, cria/edita, mas não exclui cadastro, não salva configuração e não vê o Histórico"
+  },
+  {
+   "id": "M-111",
+   "regra": "M5",
+   "desc": "Como operador, tentar excluir candidato/empresa/instituição e salvar uma configuração",
+   "auto": false,
+   "esperado": "Aviso 'Somente administradores...' e nada é apagado nem gravado"
+  },
+  {
+   "id": "M-112",
+   "regra": "M5",
+   "desc": "Como admin, tentar rebaixar o único administrador",
+   "auto": false,
+   "esperado": "Recusado: não é possível remover o último administrador"
+  },
+  {
+   "id": "T-148",
+   "regra": "M6",
+   "desc": "SQL da retenção e do titular (seção 17): resumo, aplicar, buscar, anonimizar titular, função interna de elegibilidade, bloqueio de movimento sobre contrato anonimizado",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "alter table cr_contratos add column if not exists anonimizado_em",
+     "create or replace function cr_retencao_resumo",
+     "create or replace function cr_retencao_aplicar",
+     "create or replace function cr_titular_buscar",
+     "create or replace function cr_titular_anonimizar",
+     "create or replace function cr_contratos_retencao",
+     "cr_bloqueia_mov_anonimizado_tg"
+    ]
+   }
+  },
+  {
+   "id": "T-149",
+   "regra": "M6",
+   "desc": "Regras do SQL e da tela de retenção (só admin, prazo 6-240, só terminados, log só com contagens, nada apagado, CPF fora de console/toast/URL) — node tests/retencao-test.js",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/retencao-test.js"
+   }
+  },
+  {
+   "id": "T-150",
+   "regra": "M6",
+   "desc": "Tela Configurações tem a aba Privacidade (LGPD) com ver-antes-de-aplicar, confirmação, aviso de irreversível e de jurídico",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "configuracoes.html",
+    "text": [
+     "data-p=\"lgpd\"",
+     "id=\"p-lgpd\"",
+     "cr_retencao_resumo",
+     "cr_retencao_aplicar",
+     "cr_titular_buscar",
+     "cr_titular_anonimizar",
+     "confirme com o jurídico"
+    ]
+   }
+  },
+  {
+   "id": "T-151",
+   "regra": "M6",
+   "desc": "erroRetencao no cr-utils (traduz sem repetir CPF)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "window.erroRetencao"
+    ]
+   }
+  },
+  {
+   "id": "T-152",
+   "regra": "M6",
+   "desc": "Histórico rotula retencao_aplicada e titular_anonimizado; visualizar-assinado avisa contrato anonimizado",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "historico.html",
+    "text": [
+     "retencao_aplicada",
+     "titular_anonimizado"
+    ]
+   }
+  },
+  {
+   "id": "T-153",
+   "regra": "M6",
+   "desc": "Teste SQL real da retenção (tests/sql/retencao-teste.sql) está no rodar-m15.sh",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": [
+     "retencao-teste.sql"
+    ]
+   }
+  },
+  {
+   "id": "M-113",
+   "regra": "M6",
+   "desc": "BACKUP. Rodar sql/cr-schema.sql inteiro no Supabase real. Entrar como ADMIN > Configurações > Privacidade (LGPD). Digitar um prazo bem longo (ex.: 240) e clicar em \"Ver o que entra\"",
+   "esperado": "Mostra contagens (provavelmente 0) sem alterar nada; \"Anonimizar agora\" continua desabilitado se for 0",
+   "auto": false
+  },
+  {
+   "id": "M-114",
+   "regra": "M6",
+   "desc": "Num contrato de TESTE terminado (assinado ou cancelado), usar um prazo que o inclua (só dá se ele for antigo: ajuste data no banco de teste), ver, aplicar e abrir o contrato em Visualizar Assinado",
+   "esperado": "Contrato mantém número/status/valores; nome, CPF, e-mail, assinaturas e IPs sumiram; aparece o aviso \"Dados pessoais anonimizados em ...\"; links antigos do contrato não abrem mais",
+   "auto": false
+  },
+  {
+   "id": "M-115",
+   "regra": "M6",
+   "desc": "Pedido do titular: criar um candidato e um contrato cancelado de TESTE com o mesmo CPF; Buscar; Anonimizar este titular",
+   "esperado": "Conta bate; contrato de teste anonimizado; candidato excluído da tela Candidatos; contrato em andamento do mesmo CPF (se criar um) NÃO é tocado; no Histórico a linha não mostra CPF",
+   "auto": false
+  },
+  {
+   "id": "M-116",
+   "regra": "M6",
+   "desc": "Entrar como OPERADOR > Configurações > Privacidade (LGPD)",
+   "esperado": "Só o aviso \"Somente administradores usam esta aba\"; chamar as funções direto pela API retorna erro de permissão",
+   "auto": false
+  },
+  {
+   "id": "M-117",
+   "regra": "M6",
+   "desc": "Tentar criar aditivo/rescisão a partir de um contrato anonimizado",
+   "esperado": "Recusado (contrato de origem anonimizado); nenhum documento novo é criado",
+   "auto": false
+  },
+  {
+   "id": "T-154",
+   "regra": "M10",
+   "desc": "SQL dos modelos (seção 18): tabela com versões, validação, publicar/ativar só admin, cópia do texto no contrato feita pelo servidor, trava da cópia, versões imutáveis",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "create table if not exists cr_modelos",
+     "create or replace function cr_modelo_validar",
+     "create or replace function cr_modelo_publicar",
+     "create or replace function cr_modelo_ativar",
+     "cr_modelo_snapshot_tg",
+     "cr_modelo_snapshot_trava_tg",
+     "cr_modelos_imutavel_tg",
+     "modelo_clausulas_texto"
+    ]
+   }
+  },
+  {
+   "id": "T-155",
+   "regra": "M10",
+   "desc": "Regras do SQL, funções puras (validar/renderizar/escape) e telas dos modelos; versão 1 = texto que era fixo no código — node tests/modelos-test.js",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/modelos-test.js"
+   }
+  },
+  {
+   "id": "T-156",
+   "regra": "M10",
+   "desc": "Tela Configurações tem a aba Modelos (publicar com confirmação, versões, voltar atrás, pré-visualização) e aviso de conferir com o jurídico",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "configuracoes.html",
+    "text": [
+     "data-p=\"mod\"",
+     "id=\"p-mod\"",
+     "cr_modelo_publicar",
+     "cr_modelo_ativar",
+     "conferido pelo jurídico",
+     "nunca muda um contrato já criado"
+    ]
+   }
+  },
+  {
+   "id": "T-157",
+   "regra": "M10",
+   "desc": "cr-utils tem modeloValidar, modeloRenderizar e erroModelo; visualizar-assinado usa a cópia do contrato e cai no texto fixo se não houver; Histórico rotula publicou_modelo/ativou_modelo",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "assets/cr-utils.js",
+    "text": [
+     "window.modeloValidar",
+     "window.modeloRenderizar",
+     "window.erroModelo",
+     "window.MODELO_VARIAVEIS"
+    ]
+   }
+  },
+  {
+   "id": "T-158",
+   "regra": "M10",
+   "desc": "Teste SQL real dos modelos (tests/sql/modelos-teste.sql) está no rodar-m15.sh",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": [
+     "modelos-teste.sql"
+    ]
+   }
+  },
+  {
+   "id": "M-118",
+   "regra": "M10",
+   "desc": "BACKUP. Rodar sql/cr-schema.sql inteiro no Supabase real. Entrar como ADMIN > Configurações > Modelos",
+   "esperado": "O editor mostra as 6 cláusulas atuais (versão 1, ATIVA). Nada mudou nos contratos existentes",
+   "auto": false
+  },
+  {
+   "id": "M-119",
+   "regra": "M10",
+   "desc": "Alterar uma frase, Pré-visualizar e Publicar como nova versão (confirmar)",
+   "esperado": "Versão 2 fica ATIVA; a v1 aparece com \"Tornar ativa\"; no Histórico aparece \"Publicou versão de modelo\" sem o texto",
+   "auto": false
+  },
+  {
+   "id": "M-120",
+   "regra": "M10",
+   "desc": "Criar um contrato de estágio NOVO e abrir em Visualizar Assinado (página 2); abrir também um contrato de estágio ANTIGO",
+   "esperado": "O novo mostra o texto da v2 e \"Modelo de cláusulas: versão 2\"; o antigo continua com o texto de sempre, sem rótulo de versão",
+   "auto": false
+  },
+  {
+   "id": "M-121",
+   "regra": "M10",
+   "desc": "Voltar a v1 (\"Tornar ativa\") e criar outro contrato; depois reabrir o contrato criado com a v2",
+   "esperado": "O novo nasce com v1; o da v2 continua na v2 (publicar/voltar não muda contrato criado)",
+   "auto": false
+  },
+  {
+   "id": "M-122",
+   "regra": "M10",
+   "desc": "Contrato assinado: criar um aditivo ou renovação a partir dele depois de publicar uma versão nova",
+   "esperado": "O aditivo mostra o MESMO texto de cláusulas do contrato original (não o da versão ativa)",
+   "auto": false
+  },
+  {
+   "id": "M-123",
+   "regra": "M10",
+   "desc": "Entrar como OPERADOR > Configurações > Modelos; digitar {{cpf}} no editor como admin",
+   "esperado": "Operador só lê (sem Publicar/Tornar ativa). Admin com {{cpf}} é recusado na tela e, se chamar a API direto, no servidor",
+   "auto": false
+  },
+  {
+   "id": "T-159",
+   "regra": "M16",
+   "desc": "Regras do SQL de anexos, funções puras e ligações das telas — node tests/anexos-test.js",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/anexos-test.js"
+   }
+  },
+  {
+   "id": "T-160",
+   "regra": "M16",
+   "desc": "Tela anexos.html (jsdom): lista, envio, download, exclusão só admin, erros do servidor, sem tabela, contrato anonimizado — node tests/anexos-ui-test.js (precisa jsdom)",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/anexos-ui-test.js"
+   }
+  },
+  {
+   "id": "T-161",
+   "regra": "M16",
+   "desc": "Teste SQL real dos anexos (tests/sql/anexos-teste.sql) está no rodar-m15.sh",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": [
+     "anexos-teste.sql"
+    ]
+   }
+  },
+  {
+   "id": "T-162",
+   "regra": "M16",
+   "desc": "A tela de anexos usa o menu único e existe no pacote",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "anexos.html"
+   }
+  },
+  {
+   "id": "T-163",
+   "regra": "M3",
+   "desc": "Regras puras do OTP, SQL (seção 20) e ligações das telas — node tests/otp-test.js",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/otp-test.js"
+   }
+  },
+  {
+   "id": "T-164",
+   "regra": "M3",
+   "desc": "Teste SQL do OTP (70 verificações + permissões) existe no pacote",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "tests/sql/otp-teste.sql"
+   }
+  },
+  {
+   "id": "T-165",
+   "regra": "M3",
+   "desc": "A tela pública valida o código pelo servidor (cr_otp_validar) antes de mostrar a assinatura",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "assinar-contrato.html",
+    "text": "cr_otp_validar"
+   }
+  },
+  {
+   "id": "T-166",
+   "regra": "M3",
+   "desc": "Módulo compartilhado do OTP existe no pacote",
+   "auto": true,
+   "check": {
+    "type": "fileExists",
+    "file": "assets/cr-otp.js"
+   }
+  },
+  {
+   "id": "M-124",
+   "regra": "M16",
+   "desc": "BACKUP. Rodar sql/cr-schema.sql inteiro no Supabase real. Painel de Contratos > 📎 de um contrato > escolher tipo e um PDF pequeno > Anexar",
+   "esperado": "O arquivo aparece na lista com formato, tamanho e começo do hash; Baixar devolve o mesmo arquivo",
+   "auto": false
+  },
+  {
+   "id": "M-125",
+   "regra": "M16",
+   "desc": "Renomear um .exe (ou um .txt) para .pdf e tentar anexar; depois um arquivo acima de 2 MB; depois o mesmo PDF duas vezes",
+   "esperado": "Os três são recusados com mensagem clara (o .exe renomeado é recusado pelo conteúdo); o repetido diz que já está anexado",
+   "auto": false
+  },
+  {
+   "id": "M-126",
+   "regra": "M16",
+   "desc": "Entrar como OPERADOR e tentar excluir um anexo; depois como ADMIN",
+   "esperado": "Operador anexa e baixa, mas excluir é recusado. Admin confirma e o anexo some",
+   "auto": false
+  },
+  {
+   "id": "M-127",
+   "regra": "M16",
+   "desc": "Contrato ASSINADO (PDF assinado aberto) > botão 📎 Anexos; incluir um anexo",
+   "esperado": "Aceita mesmo com o contrato assinado, e o hash do documento no PDF/verificação NÃO muda",
+   "auto": false
+  },
+  {
+   "id": "M-128",
+   "regra": "M16",
+   "desc": "Configurações > Privacidade: anonimizar um contrato que tenha anexos (ou pedido do titular); depois abrir 📎 desse contrato e conferir Histórico de acessos",
+   "esperado": "Os anexos foram apagados e a tela avisa contrato anonimizado; o Histórico mostra 'Anexou arquivo'/'Excluiu anexo' só com número do contrato, nunca o nome do arquivo",
+   "auto": false
+  },
+  {
+   "id": "M-129",
+   "regra": "M3",
+   "desc": "Rodar o SQL (backup antes). Novo Contrato > marcar 'Exigir código de 6 dígitos' > criar. Painel de Contratos > 🔗 de um signatário > 'Gerar código'",
+   "esperado": "O código de 6 dígitos aparece UMA vez, com copiar e WhatsApp (mensagem sem o link). Fechar e reabrir o 🔗 não mostra o código de novo; o estado mostra 'Código gerado, vale até…'",
+   "auto": false
+  },
+  {
+   "id": "M-130",
+   "regra": "M3",
+   "desc": "Abrir o link do signatário em janela anônima, SEM o código",
+   "esperado": "A página mostra só a caixa 'Confirme sua identidade'; a área de assinatura não aparece. Digitar código errado mostra 'Restam N tentativas'",
+   "auto": false
+  },
+  {
+   "id": "M-131",
+   "regra": "M3",
+   "desc": "Digitar o código certo e assinar",
+   "esperado": "A assinatura aparece, o contrato assina normalmente e o PDF/Linha do tempo mostra 'confirmou a identidade com o código' antes de 'assinou'. Usar o mesmo código de novo não funciona",
+   "auto": false
+  },
+  {
+   "id": "M-132",
+   "regra": "M3",
+   "desc": "Errar o código 5 vezes; depois gerar outro no painel",
+   "esperado": "No 5º erro a pessoa vê 'bloqueado'; o código certo antigo não destrava. Gerar outro código libera. Histórico/Linha do tempo mostram as falhas e o bloqueio, sem o código",
+   "auto": false
+  },
+  {
+   "id": "M-133",
+   "regra": "M3",
+   "desc": "Gerar código e depois 🔄 Novo link (ou reabrir quem recusou); depois ⏱️ Prorrogar em outro signatário com código",
+   "esperado": "Link novo/reabrir invalidam o código (precisa gerar outro); Prorrogar mantém o código valendo",
+   "auto": false
+  },
+  {
+   "id": "M-134",
+   "regra": "M3",
+   "desc": "Contrato SEM código, e um signatário com 'Dispensar código'",
+   "esperado": "Assinam só com o link, como antes. Conferir também que sem o SQL da R37 contratos sem código continuam assinando",
+   "auto": false
+  },
+  {
+   "id": "T-167",
+   "regra": "M10",
+   "desc": "Teste SQL real do modelo da carta (29 verificações + permissões) está no roteiro de execução",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": "modelos-carta-teste.sql"
+   }
+  },
+  {
+   "id": "T-168",
+   "regra": "M10",
+   "desc": "Seção 21 do SQL: só {{nome}} na recomendação, publicar valida por chave",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "-- 21) R38",
+     "cr_modelo_validar_chave",
+     "'texto_recomendacao'",
+     "check (chave in ('clausulas_tce', 'texto_recomendacao'))"
+    ]
+   }
+  },
+  {
+   "id": "T-169",
+   "regra": "M10",
+   "desc": "Verificações estáticas e funções puras do modelo da carta (32)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/modelos-carta-test.js"
+   }
+  },
+  {
+   "id": "T-170",
+   "regra": "M10",
+   "desc": "Modelos da R35 (cláusulas do TCE) continuam intactos",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/modelos-test.js"
+   }
+  },
+  {
+   "id": "T-171",
+   "regra": "M10",
+   "desc": "nova-carta lê o modelo ativo e grava o texto final na carta",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "nova-carta.html",
+    "text": [
+     "carregarModeloRec",
+     "modeloTextoPlano",
+     "modelo_versao",
+     "texto_editado"
+    ]
+   }
+  },
+  {
+   "id": "T-172",
+   "regra": "M10",
+   "desc": "Configurações tem o seletor de modelo (TCE / recomendação)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "configuracoes.html",
+    "text": [
+     "id=\"mod_chave\"",
+     "texto_recomendacao",
+     "modTrocar"
+    ]
+   }
+  },
+  {
+   "id": "M-135",
+   "regra": "M10",
+   "desc": "Configurações > Modelos > escolher 'Texto da Carta de Recomendação', editar o texto com {{nome}} e Publicar como nova versão",
+   "esperado": "Pede confirmação; vira a versão ATIVA da recomendação; a lista do TCE continua como estava. {{apolice}} neste modelo é recusado com aviso",
+   "auto": false
+  },
+  {
+   "id": "M-136",
+   "regra": "M10",
+   "desc": "Nova Carta > Recomendação: digitar um nome e ir à etapa 3",
+   "esperado": "O campo traz o texto do modelo ativo com o nome digitado; a nota mostra 'modelo vN'. Emitir: o PDF mostra esse texto",
+   "auto": false
+  },
+  {
+   "id": "M-137",
+   "regra": "M10",
+   "desc": "Publicar uma versão nova do modelo DEPOIS de emitir uma carta, e abrir a carta antiga (Histórico/Reimprimir)",
+   "esperado": "A carta antiga continua com o texto que tinha quando foi emitida; só cartas novas usam a versão nova. Voltar à versão anterior (Tornar ativa) também não muda cartas já emitidas",
+   "auto": false
+  },
+  {
+   "id": "M-138",
+   "regra": "M10",
+   "desc": "Duplicar uma carta de recomendação (a) com texto do modelo e (b) com texto editado à mão",
+   "esperado": "(a) usa o modelo ATIVO com o nome novo; (b) mantém o texto escrito à mão",
+   "auto": false
+  },
+  {
+   "id": "M-139",
+   "regra": "M10",
+   "desc": "SEM rodar o SQL da R38: abrir Nova Carta > Recomendação",
+   "esperado": "Funciona como antes (texto fixo, nenhum erro). Em Configurações, o modelo da recomendação avisa 'rode sql/cr-schema.sql (R38)'",
+   "auto": false
+  },
+  {
+   "id": "T-173",
+   "regra": "M16",
+   "desc": "Teste SQL real dos anexos em cartas (34 verificações + permissões) está no roteiro de execução",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": "anexos-carta-teste.sql"
+   }
+  },
+  {
+   "id": "T-174",
+   "regra": "M16",
+   "desc": "Seção 22 do SQL: tabela e funções de anexo de carta, anonimização apaga",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "-- 22) R39",
+     "cr_anexos_carta",
+     "cr_anexo_carta_adicionar",
+     "cr_anexo_carta_baixar",
+     "cr_anexo_carta_excluir",
+     "cr_anexos_carta_anonimizar_tg"
+    ]
+   }
+  },
+  {
+   "id": "T-175",
+   "regra": "M16",
+   "desc": "Verificações estáticas e mensagens dos anexos em cartas (22)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/anexos-carta-test.js"
+   }
+  },
+  {
+   "id": "T-176",
+   "regra": "M16",
+   "desc": "Anexos de contrato (R36) continuam intactos",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/anexos-test.js"
+   }
+  },
+  {
+   "id": "T-177",
+   "regra": "M16",
+   "desc": "anexos.html serve contrato e carta pelo mesmo código (ALVO)",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "anexos.html",
+    "text": [
+     "const ALVOS",
+     "cr_anexos_carta",
+     "ALVO.tabela",
+     "ALVO.add"
+    ]
+   }
+  },
+  {
+   "id": "T-178",
+   "regra": "M16",
+   "desc": "Painel de cartas tem o botão 📎 de anexos",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "index-cartas.html",
+    "text": "anexos.html?carta="
+   }
+  },
+  {
+   "id": "M-140",
+   "regra": "M16",
+   "desc": "Painel de Cartas > 📎 numa carta: anexar um PDF, um PNG e um JPEG",
+   "esperado": "Aparecem na lista com tipo, tamanho e hash; contador 'N de 10'; ⬇️ Baixar abre o mesmo arquivo",
+   "auto": false
+  },
+  {
+   "id": "M-141",
+   "regra": "M16",
+   "desc": "Anexar um arquivo .exe renomeado para .pdf, um arquivo > 2 MB e o MESMO arquivo duas vezes na mesma carta",
+   "esperado": "Os três são recusados com mensagem clara; o mesmo arquivo em OUTRA carta é aceito",
+   "auto": false
+  },
+  {
+   "id": "M-142",
+   "regra": "M16",
+   "desc": "Como operador (não admin): anexar e baixar numa carta; tentar 🗑️",
+   "esperado": "Anexa e baixa; excluir é barrado. Como admin: exclui após confirmar e o Histórico mostra só número da carta e categoria",
+   "auto": false
+  },
+  {
+   "id": "M-143",
+   "regra": "M16",
+   "desc": "Anonimizar uma carta (Configurações > Privacidade) que tem anexos; depois abrir 📎 dela",
+   "esperado": "Os anexos somem; a tela avisa 'Carta anonimizada' e não deixa anexar",
+   "auto": false
+  },
+  {
+   "id": "M-144",
+   "regra": "M16",
+   "desc": "SEM rodar o SQL da R39: abrir anexos.html?carta=ID",
+   "esperado": "Mostra 'rode sql/cr-schema.sql (R39)' e bloqueia o envio; anexos de CONTRATO continuam funcionando",
+   "auto": false
+  },
+  {
+   "id": "M-145",
+   "regra": "M16",
+   "desc": "Abrir 📎 de uma carta e de um contrato: conferir menu e botão Voltar",
+   "esperado": "Carta destaca 'Cartas' no menu e volta ao painel de cartas; contrato continua como antes",
+   "auto": false
+  },
+  {
+   "id": "T-179",
+   "regra": "M6",
+   "desc": "Teste SQL real da contagem de anexos na retenção/titular (30 verificações) está no roteiro de execução",
+   "auto": true,
+   "check": {
+    "type": "contains",
+    "file": "tests/sql/rodar-m15.sh",
+    "text": "retencao-anexos-teste.sql"
+   }
+  },
+  {
+   "id": "T-180",
+   "regra": "M6",
+   "desc": "Seção 17 do SQL: cr_contar_anexos (interna, sem grant) e contagens no resumo, aplicar, titular buscar e anonimizar",
+   "auto": true,
+   "check": {
+    "type": "containsAll",
+    "file": "sql/cr-schema.sql",
+    "text": [
+     "cr_contar_anexos(p_contratos bigint[], p_cartas bigint[])",
+     "'anexos_contratos'",
+     "'anexos_cartas'",
+     "anexos de cartas apagados"
+    ]
+   }
+  },
+  {
+   "id": "T-181",
+   "regra": "M6",
+   "desc": "Verificações estáticas da contagem de anexos na retenção (17)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/retencao-anexos-test.js"
+   }
+  },
+  {
+   "id": "T-183",
+   "regra": "M6",
+   "desc": "Retenção e titular da R34 continuam intactos (estático)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/retencao-test.js"
+   }
+  },
+  {
+   "id": "T-184",
+   "regra": "6.4",
+   "desc": "Recesso: padrão 30 dias editável; cartas antigas intactas (5)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/recesso-test.js"
+   }
+  },
+  {
+   "id": "T-185",
+   "regra": "M6",
+   "desc": "Lembrete mensal da retenção: só lê o histórico, só admin, limite de 30 dias; regra única em cr-utils.js (7)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/retencao-lembrete-test.js"
+   }
+  },
+  {
+   "id": "M-146",
+   "regra": "M6",
+   "desc": "Configurações > Privacidade, com contratos/cartas antigos que têm anexos: clicar em Ver",
+   "esperado": "Aparece a linha 'N de contrato(s) e N de carta(s) anexo(s) serão APAGADOS junto (não dá para recuperar)'; nada é apagado ao ver; os números batem com os 📎 dos contratos/cartas antigos",
+   "auto": false
+  },
+  {
+   "id": "M-147",
+   "regra": "M6",
+   "desc": "Aplicar a retenção (com backup) e conferir o resultado",
+   "esperado": "'Anexos apagados: N de contrato(s) e N de carta(s).' com os MESMOS números do Ver; abrir 📎 de um contrato anonimizado: lista vazia; Histórico mostra só números, nunca nome de arquivo",
+   "auto": false
+  },
+  {
+   "id": "M-148",
+   "regra": "M6",
+   "desc": "Pedido do titular: Buscar um CPF que tem contrato assinado com anexo e contrato EM ANDAMENTO com anexo",
+   "esperado": "Os anexos do contrato em andamento NÃO entram na contagem nem são apagados; a tela não repete o CPF; depois de anonimizar o anexo do em andamento continua lá",
+   "auto": false
+  },
+  {
+   "id": "M-149",
+   "regra": "M6",
+   "desc": "SEM rodar o SQL da R40: abrir Privacidade e clicar em Ver",
+   "esperado": "Nenhuma linha de anexos aparece (não aparece '0'); o resto da tela funciona como antes",
+   "auto": false
+  },
+  {
+   "id": "M-150",
+   "regra": "6.4",
+   "desc": "Nova Carta > Recesso: abrir e gerar sem mexer no número de dias; depois abrir uma carta de recesso JÁ emitida antes da R42",
+   "esperado": "A nova mostra 30 dias (no texto e no cartão) e o aviso de proporcionalidade; a antiga continua mostrando o número que foi gravado nela (ou 15 se não havia)",
+   "auto": false
+  },
+  {
+   "id": "M-151",
+   "regra": "M6",
+   "desc": "Configurações > Privacidade como admin: abrir a aba, com e sem retenção aplicada antes",
+   "esperado": "Sem registro: 'ainda não foi aplicada'. Aplicada há 30 dias ou mais: 'Está na hora de revisar'. Há menos: mostra os dias que faltam. Como operador: nenhum lembrete. Nada é apagado por abrir a aba",
+   "auto": false
+  },
+  {
+   "id": "T-186",
+   "regra": "M6",
+   "desc": "Painel Geral: lembrete da retenção só para admin, só quando vencido, só lê; link para a aba Privacidade (7)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/retencao-hub-test.js"
+   }
+  },
+  {
+   "id": "M-152",
+   "regra": "M6",
+   "desc": "Painel Geral como admin: abrir index.html com retenção nunca aplicada, aplicada há 30+ dias e aplicada há menos de 30",
+   "esperado": "Nunca aplicada e 30+ dias: faixa amarela com o lembrete e o link 'Abrir Privacidade (LGPD)', que abre Configurações já na aba Privacidade. Menos de 30 dias: nenhuma faixa. Como operador: nenhuma faixa. Nada é apagado por abrir o painel",
+   "auto": false
+  },
+  {
+   "id": "T-187",
+   "regra": "6.4",
+   "desc": "Recesso: aviso de coerência (dias x datas x contrato), só avisa e não interpreta a lei (9)",
+   "auto": true,
+   "check": {
+    "type": "node",
+    "file": "tests/recesso-aviso-test.js"
+   }
+  },
+  {
+   "id": "M-153",
+   "regra": "6.4",
+   "desc": "Nova Carta > Recesso (e Cancelamento): preencher início e fim do recesso com um número de dias diferente; depois ajustar; depois datas fora do contrato",
+   "esperado": "Faixa amarela diz quantos dias corridos o período tem x o número do campo; some ao acertar. Avisa fim antes do início e recesso fora do período do contrato. NUNCA bloqueia nem muda o número: a carta sai com o número do campo",
+   "auto": false
+  },
+  {
+   "id": "M-154",
+   "regra": "RN-10",
+   "desc": "No SQL Editor do Supabase real: rodar sql/cr-schema.sql inteiro (agora com a seção 23) e depois sql/diagnostico-supabase.sql",
+   "esperado": "Zero linhas FALTA e zero ATENÇÃO (INFO pode ter). Em especial: nenhuma função interna executável pelo visitante (anon) nem por usuário logado direto pela API. Depois repetir M-18 (curl com a chave anon) e o roteiro rápido para ver que nada quebrou",
+   "auto": false
+  }
+ ]
+}

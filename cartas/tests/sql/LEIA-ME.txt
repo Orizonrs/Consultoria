@@ -1,0 +1,64 @@
+TESTE SQL REAL (R13)
+====================
+O que é: roda sql/cr-schema.sql INTEIRO e depois 40 verificações + 2 de permissão das regras do M15
+(aditivo / renovação / rescisão) num PostgreSQL de verdade. NÃO é o Supabase de produção.
+
+Como rodar (num PostgreSQL local, banco vazio de teste — NUNCA no banco de produção):
+  createdb orizon_teste
+  sh tests/sql/rodar-m15.sh orizon_teste
+Resultado esperado (2 linhas):
+  NOTICE:  M15 SQL: 40 verificações OK
+  NOTICE:  M15 SQL: permissões OK (anon bloqueado, sem login bloqueado)
+Se alguma regra falhar, aparece "FALHOU [Txx ...]" e o script para.
+
+Arquivos:
+  stub-supabase.sql  papéis anon/authenticated, auth.uid()/auth.jwt() e as 2 tabelas-base (cr_contratos, cr_signatarios)
+  m15-teste.sql      os casos (inclui assinar de verdade pelo cr_assinar até o contrato virar "assinado")
+  rodar-m15.sh       stub + schema + teste
+
+Limite honesto: o stub imita o Supabase, não é ele. Políticas RLS, cabeçalhos HTTP (IP/dispositivo) e o PostgREST
+só são conferidos de verdade no teste manual com o Supabase real (M-41 a M-48).
+
+Testes de tela (jsdom):   npm i jsdom  &&  node tests/mov-ui-test.js
+Testes das regras do cliente (sem dependências):  node tests/mov-test.js   (também roda dentro de node tests/run-tests.js)
+
+R14: e2e-contrato.sql (ponta a ponta no banco, 21 verificações) roda no mesmo comando e imprime
+  "E2E SQL: 19 verificações OK ..." e "E2E SQL: visitante não lê tabelas direto OK".
+
+R15: verificar-teste.sql (13 verificações + permissão do anon) roda no mesmo comando e imprime
+  "VERIFICAR SQL: 13 verificações OK ..." e "VERIFICAR SQL: anon executa a função OK".
+Teste de tela da R15:  npm i jsdom  &&  node tests/verif-ui-test.js   (a linha "Error: rede" no meio é o caso de erro de rede, esperado)
+
+R19: link-prazo-teste.sql (23 verificações + permissão do anon) roda no mesmo comando e imprime
+  "LINK PRAZO SQL: 23 verificações OK ..." e "LINK PRAZO SQL: anon bloqueado ... OK".
+Testes de tela/JS da R19:  node tests/link-test.js (sem dependências)  ·  npm i jsdom && node tests/link-ui-test.js
+
+R26: ordem-teste.sql (17 verificações de ordem sequencial + 17 de lembrete + permissão do anon) roda no mesmo comando e imprime
+  "ORDEM SQL: 17 verificações OK ...", "LEMBRETE SQL: 17 verificações OK ..." e "ORDEM/LEMBRETE SQL: anon bloqueado nas funções internas OK".
+Testes R26 sem banco:  node tests/ordem-test.js (39)   |   com jsdom:  npm i jsdom && node tests/ordem-ui-test.js (28)
+
+R30: empresas-teste.sql (20 verificações + permissão do anon) roda no mesmo comando e imprime
+  "EMPRESAS SQL: 20 verificações OK ..." e "EMPRESAS SQL: anon bloqueado (tabela e função) OK". Pode rodar de novo na mesma base (apaga só o que cria).
+Teste de tela da R30:  npm i jsdom  &&  node tests/cadastro-empresas-ui-test.js   (as linhas de erro no meio são os casos de erro provocados de propósito)
+
+R34: retencao-teste.sql (36 verificações de retenção + 18 de pedido do titular + permissão do anon) roda no mesmo comando e imprime
+  "RETENCAO SQL: 36 verificações OK ...", "TITULAR SQL: 18 verificações OK ..." e "RETENCAO SQL: anon bloqueado OK".
+Testes R34 sem banco:  node tests/retencao-test.js (42)   |   com jsdom:  npm i jsdom && node tests/retencao-ui-test.js (36)
+
+R35: modelos-teste.sql (40 verificações dos modelos de cláusulas + permissão do anon) roda no mesmo comando e imprime
+  "MODELOS SQL: 40 verificações OK ..." e "MODELOS SQL: permissões OK (anon bloqueado)".
+Testes R35 sem banco:  node tests/modelos-test.js (39)   |   com jsdom:  npm i jsdom && node tests/modelos-ui-test.js (22)
+Auditorias de contraste e de largura (Playwright + Chromium):  NODE_PATH=$(npm root -g) node tests/contraste-audit.js ambos  |  node tests/mobile-audit.js
+
+R37: otp-teste.sql (70 verificações do código de confirmação + permissões) roda no mesmo comando e imprime
+  "OTP SQL: 70 verificações OK ..." e "OTP SQL: permissões OK (hash ilegível para anon e logado ...)".
+Testes R37 sem banco:  node tests/otp-test.js (60)   |   com jsdom:  npm i jsdom && node tests/otp-ui-test.js (36)
+
+R40: retencao-anexos-teste.sql (30 verificações: o resumo e o pedido do titular CONTAM os anexos, "aplicar" apaga exatamente o que contou, só contratos terminados, histórico sem nome de arquivo, tabela ausente = nulo) roda no mesmo comando e imprime
+  "RETENCAO ANEXOS SQL: 30 verificações OK ...".
+Testes R40 sem banco:  node tests/retencao-anexos-test.js (17)   |   com jsdom:  npm i jsdom && node tests/retencao-anexos-ui-test.js (18)
+R44 (sem SQL): node tests/retencao-hub-test.js (7)  |  com jsdom:  npm i jsdom && node tests/retencao-hub-ui-test.js (9)
+R45 (sem SQL): node tests/recesso-aviso-test.js (9)  |  com jsdom:  npm i jsdom && node tests/recesso-aviso-ui-test.js
+R46: stub-supabase.sql agora concede tudo ao anon/authenticated por padrão (como o Supabase real). Com isso 38 funções internas apareciam executáveis pelo visitante: a seção 23 do schema corrige.
+  O rodar-m15.sh termina com "DIAGNOSTICO SQL: schema completo sem FALTA/ATENÇÃO OK" (sql/diagnostico-supabase.sql, somente leitura, é o mesmo que você roda no SQL Editor do Supabase).
+

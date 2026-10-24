@@ -1,0 +1,33 @@
+// R22 (M9): teste de tela (jsdom) dos pontos de atenção em novo-contrato.html. Precisa: npm i jsdom. Rodar: node tests/avisos-ui-test.js
+const { JSDOM } = require('jsdom'), fs = require('fs'), path = require('path');
+const root = path.join(__dirname, '..'), html = fs.readFileSync(path.join(root, 'novo-contrato.html'), 'utf8');
+const utils = fs.readFileSync(path.join(root, 'assets/cr-utils.js'), 'utf8'), cfg = fs.readFileSync(path.join(root, 'assets/cr-config.js'), 'utf8');
+let falhas = 0; const ok = (n, c) => { if (!c) { falhas++; console.log('FALHOU', n); } else console.log('OK    ', n); };
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const dom = new JSDOM(html, { runScripts: 'dangerously', url: 'http://localhost/novo-contrato.html', beforeParse(w) { w.eval(cfg); } });
+  const w = dom.window; w.eval(utils); w.HTMLElement.prototype.scrollIntoView = () => {}; w.scrollTo = () => {};
+  w._sb = { auth: { getUser: async () => ({ data: { user: null } }) }, from: () => ({}), rpc: async () => ({ data: null, error: null }) };
+  await esperar(500); const D = w.document;
+  const caixas = () => [...D.querySelectorAll('.avisos-legais')], txt = () => caixas().map(e => e.textContent).join('');
+  const digitar = (id, val) => { const el = D.getElementById(id); el.value = val; el.dispatchEvent(new w.Event('input', { bubbles: true })); };
+  ok('há 3 áreas de alerta (resumo, signatários, confirmação)', caixas().length === 3);
+  ok('formulário em branco: nenhum alerta', txt().trim() === '');
+  digitar('jornada_horas', '8h/dia · 44h/sem');
+  ok('jornada acima do limite aparece ao digitar (resumo)', /Pontos de atenção/.test(caixas()[0].textContent) && /8 h por dia/.test(caixas()[0].textContent) && /44 h por semana/.test(caixas()[0].textContent));
+  ok('alerta tem estilo amarelo e não é erro', /eab308/.test(caixas()[0].innerHTML) && /não impedem criar/.test(caixas()[0].textContent));
+  digitar('jornada_horas', '6h/dia · 30h/sem'); ok('corrigir a jornada tira o alerta', txt().trim() === '');
+  digitar('periodo_inicio', '2026-01-01'); digitar('periodo_fim', '2029-01-01');
+  ok('duração acima de 2 anos', /acima de 2 anos/.test(caixas()[0].textContent));
+  digitar('periodo_fim', '2026-12-31'); ok('1 ano: só informação de recesso (ℹ️), sem ⚠️ de duração', /recesso de 30 dias/.test(caixas()[0].textContent) && !/acima de 2 anos/.test(caixas()[0].textContent));
+  w.irStep(2);
+  ok('etapa 2 aponta instituição, bolsa, apólice e concedente que faltam', /instituição de ensino/.test(caixas()[1].textContent) && /Bolsa não informada/.test(caixas()[1].textContent) && /Apólice/.test(caixas()[1].textContent) && /representa a empresa/.test(caixas()[1].textContent));
+  w.eval("_signatarios.push({ nome: 'IES', email: 'i@x.com', papel: 'instituicao', _manual: true }); renderSigList();");
+  ok('adicionar a instituição tira esse alerta', !/instituição de ensino/.test(caixas()[1].textContent) && /Bolsa não informada/.test(caixas()[1].textContent));
+  digitar('valor_bolsa', '900'); digitar('apolice_seguro', 'AP-1'); w.eval("_signatarios.push({ nome: 'Chefe', email: 'c@x.com', papel: 'supervisor', _manual: true }); renderSigList();");
+  ok('tudo preenchido: sobra só a informação de recesso', !/⚠️ /.test(caixas()[1].textContent.replace('⚠️ Pontos', '')) && /recesso/.test(caixas()[1].textContent) && !/Bolsa não informada|Apólice/.test(caixas()[1].textContent));
+  w.irStep(3); ok('a confirmação também mostra os pontos de atenção', /recesso/.test(caixas()[2].textContent));
+  w.eval("setTipo('clt')"); digitar('jornada_horas', '9h/dia'); ok('CLT: regra de 8 h/dia, sem regras de estágio', /8 h\/dia/.test(caixas()[0].textContent) && !/recesso/.test(caixas()[0].textContent));
+  ok('alerta não bloqueia: validarDados continua só com as regras antigas', w.eval('typeof validarDados') === 'function');
+  console.log(falhas ? falhas + ' FALHARAM' : 'Todos OK'); process.exit(falhas ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });
