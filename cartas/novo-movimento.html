@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Movimentar contrato — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.mv-wrap{max-width:860px}
+.mv-orig{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem;font-size:.78rem}
+.mv-orig b{display:block;font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.12rem}
+.mv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.7rem}
+.mv-grid .full{grid-column:1/-1}
+.mv-hint{font-size:.7rem;color:var(--muted);line-height:1.5;margin:.2rem 0 .8rem}
+.mv-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--orange);border-radius:9px;padding:.6rem .8rem;font-size:.74rem;line-height:1.5;margin:.6rem 0;display:none}
+.mv-chg{outline:2px solid rgba(96,165,250,.45);outline-offset:-2px}
+.mv-block{background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.25);border-radius:var(--radius);padding:1rem;font-size:.8rem;line-height:1.6}
+.mv-link{background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:.7rem .88rem;margin-bottom:.55rem}
+.mv-link .u{font-family:var(--mono);font-size:.64rem;word-break:break-all;color:var(--muted);margin:.3rem 0}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><a href="index-contratos.html">Contratos</a><span style="opacity:.3">›</span><strong>Movimentar contrato</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content"><div class="mv-wrap" id="mvApp"><div class="empty"><span>⏳</span>Carregando…</div></div></div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const BASE_URL = window.CR_CONFIG.BASE_URL; // vem de assets/cr-config.js (M19)
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PAPEL = { candidato: 'Candidato/Colaborador', empresa_nexus: window.CR_BRAND.nome, empresa_cliente: 'Empresa', supervisor: 'Supervisor', instituicao: 'Instituição de Ensino' };
+const dd = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const brl = v => v == null || v === '' ? '—' : 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+const iso = d => String(d || '').slice(0, 10);
+const _q = new URLSearchParams(location.search);
+let _lista = [], _o = null, _tipo = ['aditivo', 'renovacao', 'rescisao'].includes(_q.get('tipo')) ? _q.get('tipo') : 'aditivo', _busy = false;
+// campos que o aditivo pode alterar (mesma lista do servidor)
+const CAMPOS = [['periodo_fim', 'Término', 'date'], ['valor_bolsa', 'Bolsa / Salário (R$)', 'number'], ['valor_vt', 'Vale-transporte/dia (R$)', 'number'], ['jornada_horas', 'Jornada', 'text'], ['cargo', 'Cargo / Função', 'text'], ['supervisor_nome', 'Supervisor', 'text'], ['supervisor_cargo', 'Cargo do supervisor', 'text'], ['atividades_plano', 'Plano de atividades', 'area']];
+
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+  const id = parseInt(_q.get('origem'), 10);
+  const { data, error } = await window._sb.from('cr_contratos').select('*');
+  if (error) { console.error('cr_contratos', error); toast('Erro ao carregar contratos', 'err'); mvApp.innerHTML = '<div class="empty"><span>⚠️</span>Erro ao carregar.</div>'; return; }
+  _lista = data || []; _o = _lista.find(c => c.id === id);
+  if (!_o) { mvApp.innerHTML = '<div class="empty"><span>🔎</span>Contrato não encontrado.<br/><a href="index-contratos.html" style="color:var(--accent)">← Voltar ao painel</a></div>'; return; }
+  render();
+})();
+
+function origemHtml() {
+  const c = _o, r = movRaiz(_lista, c);
+  return `<div class="card"><div class="card-label">Contrato de origem</div><div class="mv-orig">
+    <div><b>Nº</b><span style="font-family:var(--mono);color:var(--accent);font-weight:800">${esc(c.numero_contrato)}</span>${c.tipo_mov ? ` <span class="tag tag-purple">${MOV_LABEL[c.tipo_mov]}</span>` : ''}</div>
+    <div><b>${c.tipo === 'clt' ? 'Colaborador' : 'Estagiário'}</b>${esc(c.nome_candidato)}</div><div><b>Empresa</b>${esc(c.empresa)}</div>
+    <div><b>Período atual</b>${dd(c.periodo_inicio)} → ${dd(c.periodo_fim)}</div><div><b>Bolsa / Salário</b>${brl(c.valor_bolsa)}</div>
+    ${r && r.id !== c.id ? `<div><b>Contrato original</b>${esc(r.numero_contrato)}</div>` : ''}</div></div>`;
+}
+function render() {
+  const pode = movPode(_lista, _o);
+  if (!pode.ok) { mvApp.innerHTML = origemHtml() + `<div class="mv-block">🚫 ${esc(MOV_ERROS[pode.motivo] || pode.motivo)}<br/><a href="index-contratos.html" style="color:var(--accent)">← Voltar ao painel</a></div>`; return; }
+  const abas = ['aditivo', 'renovacao', 'rescisao'].filter(t => !(t === 'renovacao' && !_o.periodo_fim));
+  if (!abas.includes(_tipo)) _tipo = 'aditivo';
+  mvApp.innerHTML = origemHtml() + `<div class="cr-tabs" id="mvTabs">${abas.map(t => `<button type="button" class="cr-tab${t === _tipo ? ' active' : ''}" onclick="setTipo('${t}')">${MOV_ICO[t]} ${MOV_LABEL[t]}</button>`).join('')}</div>
+    <div class="card" id="mvForm">${formHtml()}</div>
+    <div class="mv-hint">O contrato de origem <b>não é alterado</b>: sai um documento novo (com número próprio), ligado a ele, que os mesmos signatários precisam assinar. Se ficar parado, é só cancelá-lo no painel.</div>`;
+  const f = document.getElementById('mvFim'); if (f) f.oninput = avisoDuracao;
+  document.querySelectorAll('#mvForm [data-campo]').forEach(i => i.addEventListener('input', marcar));
+}
+function setTipo(t) { _tipo = t; render(); }
+function formHtml() {
+  const c = _o, hoje = new Date().toISOString().slice(0, 10);
+  const btn = `<div style="margin-top:.9rem"><button class="btn btn-primary" id="mvGo" onclick="criar()">${MOV_ICO[_tipo]} Criar ${MOV_LABEL[_tipo].toLowerCase()} e gerar links de assinatura</button></div>`;
+  if (_tipo === 'rescisao') return `<div class="card-label">Rescisão</div><div class="mv-grid">
+    <div class="form-group"><label class="fl" for="mvData">Data de efeito <span class="req">*</span></label><input class="fi" type="date" id="mvData" min="${iso(c.periodo_inicio)}" ${c.periodo_fim ? `max="${iso(c.periodo_fim)}"` : ''} value="${hoje}"/></div>
+    <div class="form-group full"><label class="fl" for="mvMotivo">Motivo <span class="req">*</span></label><textarea class="fi" id="mvMotivo" rows="3" maxlength="500" placeholder="Ex.: conclusão do curso, pedido do estagiário, fim do projeto…"></textarea></div></div>
+    <div class="mv-hint">A rescisão encerra a cadeia: depois de assinada, o contrato não aceita mais aditivo nem renovação. Os dados são copiados do contrato de origem e o término passa a ser a data de efeito.</div>${btn}`;
+  if (_tipo === 'renovacao') return `<div class="card-label">Renovação</div><div class="mv-grid">
+    <div class="form-group"><label class="fl">Início da renovação</label><input class="fi" value="${dd(new Date(new Date(iso(c.periodo_fim) + 'T12:00:00').getTime() + 86400000).toISOString())}" disabled/></div>
+    <div class="form-group"><label class="fl" for="mvFim">Novo término <span class="req">*</span></label><input class="fi" type="date" id="mvFim" min="${iso(c.periodo_fim)}"/></div></div>
+    <div class="mv-warn" id="mvWarn"></div>
+    <div class="mv-hint">A renovação começa no dia seguinte ao término atual (${dd(c.periodo_fim)}) e mantém as demais condições. Para mudar valores junto, faça um aditivo depois que a renovação for assinada.</div>${btn}`;
+  return `<div class="card-label">Aditivo</div><div class="mv-hint">Altere só o que mudou — os campos alterados ficam destacados e são os únicos que vão para o aditivo (com "de → para" gravado pelo servidor).</div>
+    <div class="mv-grid">${CAMPOS.map(([k, l, t]) => { const v = c[k] == null ? '' : (t === 'date' ? iso(c[k]) : c[k]);
+      return `<div class="form-group${t === 'area' ? ' full' : ''}"><label class="fl" for="ad_${k}">${l}</label>${t === 'area' ? `<textarea class="fi" id="ad_${k}" data-campo="${k}" data-orig="${esc(v)}" rows="4">${esc(v)}</textarea>` : `<input class="fi" id="ad_${k}" data-campo="${k}" data-orig="${esc(v)}" type="${t}" ${t === 'number' ? 'step="0.01" min="0"' : ''} value="${esc(v)}"/>`}</div>`; }).join('')}
+    <div class="form-group"><label class="fl" for="mvData">Data de efeito</label><input class="fi" type="date" id="mvData" value="${hoje}"/></div>
+    <div class="form-group full"><label class="fl" for="mvMotivo">Motivo / observação</label><textarea class="fi" id="mvMotivo" rows="2" maxlength="500" placeholder="Ex.: reajuste da bolsa, mudança de supervisor…"></textarea></div></div>
+    <div class="mv-warn" id="mvWarn"></div>${btn}`;
+}
+function marcar(e) { const i = e.target; i.classList.toggle('mv-chg', String(i.value).trim() !== String(i.dataset.orig)); if (i.dataset.campo === 'periodo_fim') avisoDuracao(); }
+function avisoDuracao() {
+  const el = document.getElementById('mvWarn'); if (!el) return;
+  const v = _tipo === 'renovacao' ? document.getElementById('mvFim').value : (document.getElementById('ad_periodo_fim') || {}).value;
+  const m = movAlertaDuracao(_lista, _o, v); el.textContent = m; el.style.display = m ? 'block' : 'none';
+}
+async function criar() {
+  if (_busy) return;
+  const val = id => (document.getElementById(id) || {}).value || '';
+  let alt = {}, data = val('mvData') || null, motivo = val('mvMotivo').trim() || null;
+  if (_tipo === 'aditivo') {
+    CAMPOS.forEach(([k, , t]) => { const i = document.getElementById('ad_' + k), v = String(i.value).trim(); if (v !== String(i.dataset.orig).trim()) alt[k] = (t === 'number' && v !== '') ? Number(v) : v; });
+    if (!Object.keys(alt).length) return toast(MOV_ERROS.sem_alteracao, 'err');
+    if (alt.periodo_fim && _o.periodo_inicio && alt.periodo_fim < iso(_o.periodo_inicio)) return toast(MOV_ERROS.termo_antes_do_inicio, 'err');
+  } else if (_tipo === 'renovacao') {
+    const f = val('mvFim'); if (!f) return toast(MOV_ERROS.novo_termo_obrigatorio, 'err');
+    if (f <= iso(_o.periodo_fim)) return toast(MOV_ERROS.termo_nao_posterior, 'err');
+    alt = { periodo_fim: f }; data = null;
+  } else {
+    if (!data) return toast(MOV_ERROS.data_obrigatoria, 'err');
+    if (!motivo || motivo.length < 3) return toast(MOV_ERROS.motivo_obrigatorio, 'err');
+  }
+  if (!confirm('Criar ' + MOV_LABEL[_tipo].toLowerCase() + ' do contrato ' + _o.numero_contrato + '? Será gerado um novo documento para assinatura.')) return;
+  _busy = true; const b = document.getElementById('mvGo'); b.disabled = true; b.textContent = '⏳ Criando…';
+  try {
+    const { data: r, error } = await window._sb.rpc('cr_criar_movimento', { p_origem: _o.id, p_tipo: _tipo, p_data: data, p_motivo: motivo, p_alteracoes: alt });
+    if (error) throw error;
+    if (r.erro) { toast(MOV_ERROS[r.erro] || r.erro, 'err'); b.disabled = false; b.textContent = 'Tentar de novo'; _busy = false; return; }
+    const { data: sigs, error: e2 } = await window._sb.from('cr_signatarios').select('*').eq('contrato_id', r.id).order('id');
+    if (e2) throw e2;
+    toast('✅ ' + MOV_LABEL[_tipo] + ' criado: ' + r.numero); mostrarLinks(r, sigs || []);
+  } catch (e) {
+    console.error('cr_criar_movimento', e);
+    toast('Erro ao criar: ' + (e.message || e) + (/function .*cr_criar_movimento|schema cache/i.test(String(e.message)) ? ' — rode o sql/cr-schema.sql de novo no Supabase.' : ''), 'err');
+    b.disabled = false; b.textContent = 'Tentar de novo'; _busy = false;
+  }
+}
+function mostrarLinks(r, sigs) {
+  mvApp.innerHTML = `<div class="card"><div class="card-label">${MOV_ICO[r.tipo_mov]} ${MOV_LABEL[r.tipo_mov]} criado</div>
+    <div style="font-size:.8rem;margin-bottom:.8rem"><b style="font-family:var(--mono);color:var(--accent)">${esc(r.numero)}</b> · ${esc(r.titulo)}<br/><span style="color:var(--muted);font-size:.72rem">Envie o link a cada signatário. Quando todos assinarem, o status vira “Assinado” sozinho.</span></div>
+    ${sigs.map(s => { const url = `${BASE_URL}assinar-contrato.html?t=${s.token}`;
+      const wa = `https://wa.me/?text=${encodeURIComponent(`Olá ${s.nome}! Você foi convidado para assinar o documento "${r.titulo}". Acesse: ${url}`)}`;
+      return `<div class="mv-link"><div style="font-size:.8rem;font-weight:700">${esc(s.nome)} <span style="color:var(--muted);font-weight:400;font-size:.68rem">· ${esc(PAPEL[s.papel] || s.papel)}</span></div>
+        <div class="u">${esc(url)}</div><div style="display:flex;gap:.38rem;flex-wrap:wrap">
+        <a href="${esc(wa)}" target="_blank" rel="noopener" class="btn btn-green btn-sm" style="font-size:.63rem">📱 WhatsApp</a>${btnEmailAssinatura(s, r.titulo, url)}
+        <button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="copiarTexto('${esc(url)}',this)">📋 Copiar link</button></div></div>`; }).join('')}
+    <div style="margin-top:.8rem"><a class="btn btn-blue btn-sm" href="index-contratos.html#aguardando">⏳ Ver em “Aguardando”</a></div></div>`;
+}
+</script>
+</body>
+</html>

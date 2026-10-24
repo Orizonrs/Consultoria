@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Instituições — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.em-bar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem;align-items:center}
+.em-bar .fi{width:auto;min-width:150px}
+.em-form{padding:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-bottom:1rem}
+.em-form .full{grid-column:1/-1}
+.em-form label{display:block;font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.em-form .fi{width:100%;box-sizing:border-box}
+.em-row2{display:flex;gap:.4rem}
+.em-act{display:flex;gap:.3rem;flex-wrap:wrap}
+.em-note{font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+.in-inativa td{color:var(--muted)} /* sem opacity: a auditoria de contraste mede a cor, não a transparência */
+@media(max-width:640px){.em-form{grid-template-columns:1fr}}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Instituições</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span><button class="btn btn-primary btn-sm" type="button" id="btnNova" onclick="abrirForm()">➕ Nova instituição</button></div>
+  </div>
+  <div class="content">
+    <div class="card em-form-card" id="emFormCard" style="display:none;padding:0;margin-bottom:1rem">
+      <div class="panel-hd"><span class="panel-title" id="emFormTitulo">🎓 Nova instituição</span></div>
+      <div class="em-form">
+        <div class="full"><label for="f_nome">Nome da instituição *</label><input class="fi" id="f_nome" maxlength="200" autocomplete="off" placeholder="Ex.: UNISINOS"/></div>
+        <div><label for="f_cnpj">CNPJ</label>
+          <div class="em-row2"><input class="fi" id="f_cnpj" placeholder="00.000.000/0001-00" oninput="maskCNPJ(this)" style="flex:1"/><button type="button" class="btn btn-ghost btn-sm" id="btnCnpjEmp" onclick="buscarPorCNPJ()" title="Busca o nome e o endereço na base pública da Receita (BrasilAPI). Só preenche campos vazios.">🔎 Buscar</button></div></div>
+        <div><label for="f_end">Endereço</label><input class="fi" id="f_end" placeholder="Rua, nº, bairro, cidade/UF" maxlength="300"/></div>
+        <div class="full em-act"><button type="button" class="btn btn-primary btn-sm" id="btnSalvar" onclick="salvar()">💾 Salvar</button><button type="button" class="btn btn-ghost btn-sm" onclick="fecharForm()">Cancelar</button></div>
+      </div>
+    </div>
+
+    <div class="em-bar">
+      <select class="fi" id="fStatus" onchange="render()" aria-label="Filtrar por situação"><option value="ativas">Ativas</option><option value="inativas">Inativas</option><option value="todas">Todas</option></select>
+      <div class="search-box">🔍 <input id="busca" placeholder="Buscar nome ou CNPJ..." oninput="render()"/></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnImportar" onclick="importar()" title="Cadastra as instituições dos contratos de estágio já feitos que ainda não estão aqui (só o nome)">📥 Importar dos contratos</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="exportar()">⬇️ CSV</button>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Instituição</th><th>CNPJ</th><th>Endereço</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="emBody"></tbody></table>
+    </div>
+    <p class="em-note">Ao digitar a instituição no Novo Contrato (estágio), o nome do cadastro é sugerido para padronizar a grafia. Instituição <b>inativa</b> deixa de ser sugerida. O contrato guarda <b>só o nome</b>: CNPJ e endereço ficam aqui para consulta e ainda não entram no texto do contrato. Excluir uma instituição <b>não altera contratos já criados</b>. O CNPJ, se informado, é conferido no navegador e também no servidor. Hoje todo usuário logado pode ver e editar este cadastro (ainda não há perfis).</p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _ins = [], _vis = [], _editId = null, _tabelaOk = true;
+const $ = id => document.getElementById(id);
+
+function render() {
+  const st = $('fStatus').value, q = $('busca').value.toLowerCase().trim(), qd = q.replace(/\D/g, '');
+  _vis = _ins.filter(e => (st === 'todas' || (st === 'ativas') === !!e.ativo)
+    && (!q || String(e.nome).toLowerCase().includes(q) || (qd && String(e.cnpj || '').includes(qd))));
+  $('emBody').innerHTML = _vis.length ? _vis.map(e => `<tr class="${e.ativo ? '' : 'in-inativa'}">
+      <td><b>${esc(e.nome)}</b></td><td style="font-family:var(--mono);font-size:.7rem">${esc(formatarCNPJ(e.cnpj || '') || '—')}</td>
+      <td style="font-size:.74rem">${esc(e.endereco || '—')}</td>
+      <td><span class="tag ${e.ativo ? 'tag-green' : 'tag-gray'}">${e.ativo ? 'Ativa' : 'Inativa'}</span></td>
+      <td><div class="em-act">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="abrirForm(${Number(e.id)})" aria-label="Editar ${esc(e.nome)}">✏️</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="alternarAtivo(${Number(e.id)})" aria-label="${e.ativo ? 'Desativar' : 'Reativar'} ${esc(e.nome)}">${e.ativo ? '⏸️' : '▶️'}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="excluir(${Number(e.id)})" aria-label="Excluir ${esc(e.nome)}">🗑️</button></div></td></tr>`).join('')
+    : `<tr><td colspan="5"><div class="empty"><span>🎓</span>${!_tabelaOk ? 'A tabela de instituições ainda não existe: rode sql/cr-schema.sql (R31).' : _ins.length ? 'Nenhuma instituição nesta seleção.' : 'Nenhuma instituição cadastrada. Use “Nova instituição” ou “Importar dos contratos”.'}</div></td></tr>`;
+}
+async function carregar() {
+  const { data, error } = await window._sb.from('cr_instituicoes').select('*').order('nome', { ascending: true }).limit(2000);
+  if (error) { console.error('cr_instituicoes', error); _tabelaOk = false; toast(erroInstituicao(error).replace('salvar', 'ler'), 'err'); _ins = []; }
+  else { _tabelaOk = true; _ins = data || []; }
+  render();
+}
+function abrirForm(id) {
+  _editId = id || null; const e = id ? _ins.find(x => x.id === id) : null;
+  $('emFormTitulo').textContent = e ? '✏️ Editar instituição' : '🎓 Nova instituição';
+  $('f_nome').value = e ? e.nome : ''; $('f_cnpj').value = e ? formatarCNPJ(e.cnpj || '') : ''; $('f_end').value = e && e.endereco || '';
+  $('emFormCard').style.display = ''; $('f_nome').focus(); $('emFormCard').scrollIntoView && $('emFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fecharForm() { _editId = null; $('emFormCard').style.display = 'none'; }
+async function salvar() {
+  const v = id => $(id).value.trim(), nome = v('f_nome'), cnpj = v('f_cnpj');
+  if (!nome) { toast('O nome da instituição é obrigatório.', 'err'); $('f_nome').focus(); return; }
+  if (cnpj && !validarCNPJ(cnpj)) { toast('CNPJ inválido: confira os dígitos.', 'err'); $('f_cnpj').focus(); return; }
+  const row = { nome, cnpj: cnpj ? cnpj.replace(/\D/g, '') : null, endereco: v('f_end') || null };
+  const b = $('btnSalvar'); b.disabled = true;
+  const q = _editId ? window._sb.from('cr_instituicoes').update(row).eq('id', _editId) : window._sb.from('cr_instituicoes').insert(row);
+  const { error } = await q; b.disabled = false;
+  if (error) { console.error('salvar instituicao', error); toast(erroInstituicao(error), 'err'); return; }
+  logAcao(_editId ? 'editou_instituicao' : 'criou_instituicao', 'instituicao', nome);
+  toast(_editId ? 'Instituição atualizada ✓' : 'Instituição cadastrada ✓'); fecharForm(); await carregar();
+}
+async function alternarAtivo(id) {
+  const e = _ins.find(x => x.id === id); if (!e) return;
+  const { error } = await window._sb.from('cr_instituicoes').update({ ativo: !e.ativo }).eq('id', id);
+  if (error) { console.error('ativo', error); toast(erroInstituicao(error), 'err'); return; }
+  logAcao(e.ativo ? 'desativou_instituicao' : 'reativou_instituicao', 'instituicao', e.nome);
+  toast(e.ativo ? 'Instituição desativada: não será mais sugerida.' : 'Instituição reativada ✓'); await carregar();
+}
+async function excluir(id) {
+  const e = _ins.find(x => x.id === id); if (!e) return;
+  if (!(await exigirAdmin('excluir cadastros'))) return;
+  if (!confirm('Excluir a instituição "' + e.nome + '" do cadastro?\n\nOs contratos já criados NÃO são alterados. Para só parar de sugerir, use Desativar.')) return;
+  const { error } = await window._sb.from('cr_instituicoes').delete().eq('id', id);
+  if (error) { console.error('excluir', error); toast('Não foi possível excluir a instituição.', 'err'); return; }
+  logAcao('excluiu_instituicao', 'instituicao', e.nome); toast('Instituição excluída do cadastro.'); await carregar();
+}
+// Preenche nome e endereço pelo CNPJ, SÓ nos campos vazios (mesma regra do Novo Contrato e das Empresas)
+async function buscarPorCNPJ() {
+  const b = $('btnCnpjEmp'), old = b.textContent; b.disabled = true; b.textContent = '⏳';
+  const r = await buscarCNPJ($('f_cnpj').value); b.disabled = false; b.textContent = old;
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  const pre = [];
+  if (r.razao && !$('f_nome').value.trim()) { $('f_nome').value = r.razao; pre.push('nome'); }
+  if (r.endereco && !$('f_end').value.trim()) { $('f_end').value = r.endereco; pre.push('endereço'); }
+  const ativa = /ativa/i.test(r.situacao) || !r.situacao;
+  toast(pre.length ? '🔎 Preenchido: ' + pre.join(' e ') + (ativa ? '' : ' — atenção: situação ' + r.situacao) : 'Nada a preencher: os campos já tinham conteúdo.', ativa ? 'ok' : 'err');
+}
+// Cadastra as instituições dos contratos já feitos que ainda não estão no cadastro (uma a uma: um erro não derruba as outras). Só o nome: o contrato não guarda CNPJ/endereço da instituição.
+async function importar() {
+  const b = $('btnImportar'); b.disabled = true;
+  try {
+    const { data, error } = await window._sb.from('cr_contratos').select('instituicao,criado_em').order('criado_em', { ascending: false }).limit(1000);
+    if (error) throw error;
+    const novas = instituicoesParaImportar(instituicoesRecentes(data, 1000), _ins);
+    if (!novas.length) { toast('Nada a importar: todas as instituições dos contratos já estão no cadastro.'); return; }
+    if (!confirm('Cadastrar ' + novas.length + ' instituição' + (novas.length > 1 ? 'ões' : '') + ' encontrada' + (novas.length > 1 ? 's' : '') + ' nos contratos?\n\nEntram só com o nome (sem CNPJ e endereço); complete depois se quiser. Grafias diferentes da mesma instituição entram como instituições separadas: confira a lista.')) return;
+    let ok = 0, falhas = 0;
+    for (const n of novas) {
+      const { error: e2 } = await window._sb.from('cr_instituicoes').insert(n);
+      if (e2) { falhas++; console.error('importar', n.nome, e2); } else ok++;
+    }
+    logAcao('importou_instituicoes', 'instituicao', String(ok), falhas ? falhas + ' falharam' : null);
+    toast('📥 ' + ok + ' instituição' + (ok === 1 ? '' : 'ões') + ' importada' + (ok === 1 ? '' : 's') + (falhas ? ' · ' + falhas + ' não foram importadas' : ''), falhas ? 'err' : 'ok', 6000);
+    await carregar();
+  } catch (e) { console.error('importar', e); toast('Não foi possível importar. ' + erroInstituicao(e), 'err'); }
+  finally { b.disabled = false; }
+}
+function exportar() {
+  exportarCSV('instituicoes', [['Instituição', e => e.nome], ['CNPJ', e => formatarCNPJ(e.cnpj || '')], ['Endereço', e => e.endereco], ['Situação', e => e.ativo ? 'Ativa' : 'Inativa']], _vis);
+}
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  await carregar();
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+})();
+</script>
+</body>
+</html>

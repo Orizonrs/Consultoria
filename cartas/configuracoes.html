@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Configurações — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.cfg-pane{display:none}.cfg-pane.on{display:block}
+.cfg-sig{border:1px dashed var(--border2);border-radius:var(--radius);background:#fff;touch-action:none;max-width:100%}
+.cfg-note{font-size:.74rem;color:var(--muted);margin:.4rem 0 .8rem;line-height:1.5}
+.cfg-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.cfg-kv{font-family:var(--mono);font-size:.72rem;color:var(--muted);word-break:break-all}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Configurações</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+
+  <div class="content">
+    <div class="cr-tabs" id="cfgTabs">
+      <button type="button" class="cr-tab active" data-p="sig">✍️ Assinatura da Orizon</button>
+      <button type="button" class="cr-tab" data-p="pad">📐 Dados padrão</button>
+      <button type="button" class="cr-tab" data-p="msg">📨 E-mail / WhatsApp</button>
+      <button type="button" class="cr-tab" data-p="usr">👥 Usuários e perfis</button>
+      <button type="button" class="cr-tab" data-p="mod">📝 Modelos</button>
+      <button type="button" class="cr-tab" data-p="lgpd">🔒 Privacidade (LGPD)</button>
+    </div>
+
+    <!-- Assinatura -->
+    <div class="cfg-pane on card" id="p-sig">
+      <div class="card-label">Assinatura da Orizon</div>
+      <div class="grid-2">
+        <div class="form-group"><label class="fl">Nome do responsável</label><input class="fi" id="sig_nome" placeholder="Ex: Nome Sobrenome"/></div>
+        <div class="form-group"><label class="fl">Cargo</label><input class="fi" id="sig_cargo" placeholder="Ex: Diretora"/></div>
+      </div>
+      <label class="fl">Assinatura desenhada</label>
+      <canvas id="sigCv" class="cfg-sig" width="520" height="160"></canvas>
+      <p class="cfg-note">Desenhe com o mouse ou o dedo. Ao salvar, a assinatura fica guardada no banco (cr_config) e o nome/cargo preenchem as cartas automaticamente.</p>
+      <div class="cfg-row">
+        <button class="btn btn-ghost btn-sm" type="button" onclick="limparSig()">Limpar</button>
+        <button class="btn btn-primary btn-sm" type="button" onclick="salvarSig()">Salvar assinatura</button>
+      </div>
+    </div>
+
+    <!-- Dados padrão -->
+    <div class="cfg-pane card" id="p-pad">
+      <div class="card-label">Dados padrão dos documentos</div>
+      <div class="grid-2">
+        <div class="form-group"><label class="fl">Cidade de emissão</label><input class="fi" id="pad_cidade_emissao" placeholder="Guaíba/RS"/></div>
+        <div class="form-group"><label class="fl">Taxa administrativa (%)</label><input class="fi" id="pad_taxa_admin" type="number" step="0.01" placeholder="15"/></div>
+        <div class="form-group"><label class="fl">Jornada padrão</label><input class="fi" id="pad_jornada_horas" placeholder="6 horas diárias / 30h semanais"/></div>
+        <div class="form-group"><label class="fl">Apólice de seguro</label><input class="fi" id="pad_apolice_seguro" placeholder="Número e seguradora"/></div>
+        <div class="form-group"><label class="fl">Validade do link de assinatura (dias)</label><input class="fi" id="pad_validade_dias" type="number" min="1" max="60" placeholder="15"/></div>
+      </div>
+      <p class="cfg-note">Valores vazios usam o padrão que já existe no código. Alterar aqui vale para as próximas cartas, não para as já emitidas.</p>
+      <div class="cfg-row"><button class="btn btn-primary btn-sm" type="button" onclick="salvarPad()">Salvar dados padrão</button></div>
+    </div>
+
+    <!-- E-mail / WhatsApp -->
+    <div class="cfg-pane card" id="p-msg">
+      <div class="card-label">E-mail e WhatsApp</div>
+      <p class="cfg-note">Chaves do EmailJS ficam em <code>assets/cr-config.js</code> (arquivo único de configuração, RT-01) e não são editáveis por aqui.</p>
+      <div class="cfg-kv" id="msgInfo"></div>
+      <div class="form-group" style="margin-top:.9rem"><label class="fl">Mensagem de WhatsApp (use {nome}, {link})</label>
+        <textarea class="fi" id="msg_whats" rows="4" placeholder="Olá {nome}, segue o link para assinatura do documento: {link}"></textarea></div>
+      <div class="cfg-row"><button class="btn btn-primary btn-sm" type="button" onclick="salvarMsg()">Salvar mensagem</button></div>
+    </div>
+
+    <!-- Usuários -->
+    <div class="cfg-pane card" id="p-usr">
+      <div class="card-label">Usuários e perfis</div>
+      <div class="cfg-kv" id="usrInfo">Carregando…</div>
+      <div class="cfg-kv" id="perfilInfo"></div>
+      <div id="perfilAdmin" style="display:none;margin:.8rem 0">
+        <div class="cfg-kv" id="perfilLista" style="margin-bottom:.6rem"></div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <input class="fi" id="perfil_email" type="email" placeholder="e-mail do usuário (já criado no Supabase)" style="max-width:300px" autocomplete="off"/>
+          <select class="fi" id="perfil_tipo" style="width:auto"><option value="operador">Operador</option><option value="admin">Administrador</option></select>
+          <button type="button" class="btn btn-primary btn-sm" id="btnPerfil" onclick="definirPerfil()">Definir perfil</button>
+        </div>
+      </div>
+      <p class="cfg-note"><b>Perfis (R33):</b> o <b>operador</b> cria e edita contratos, cartas e cadastros e vê o CPF dos candidatos. O <b>administrador</b> também exclui cadastros, altera estas configurações, lê o Histórico de acessos e define perfis. Enquanto não houver nenhum administrador definido, todo usuário logado vale como administrador; ao definir o primeiro, os demais viram operadores. Hoje todo usuário logado acessa tudo (política RLS <code>cr_auth_all</code>, até rodar o SQL da R33). Os usuários são criados no painel do Supabase (Authentication). Quem ainda não tem perfil definido é operador.</p>
+    </div>
+    <!-- Modelos (R35) -->
+    <div class="cfg-pane card" id="p-mod">
+      <div class="card-label">Modelos de texto</div>
+      <label class="fl" for="mod_chave">Qual modelo</label>
+      <select class="fi" id="mod_chave" onchange="modTrocar()" style="max-width:26rem">
+        <option value="clausulas_tce">Cláusulas do TCE (estágio) — contratos digitais</option>
+        <option value="texto_recomendacao">Texto da Carta de Recomendação — cartas</option>
+      </select>
+      <p class="cfg-note" id="modExplica"></p>
+      <div id="modOperador" class="cfg-note" style="display:none">Somente administradores editam modelos. Você pode ver a versão ativa abaixo.</div>
+      <p class="cfg-note" id="modComoTce"><b>Como funciona:</b> você nunca edita uma versão antiga: <b>publica uma versão nova</b>, que passa a valer para os contratos criados <b>a partir de agora</b>. Cada contrato guarda uma cópia do texto da versão vigente no momento em que é criado (e a cópia entra no hash da assinatura), por isso publicar ou voltar para uma versão <b>nunca muda um contrato já criado</b>. Aditivos, renovações e rescisões usam o texto do contrato original. Contratos CLT e os criados antes da R35 seguem com o texto que já era fixo no sistema.</p>
+      <p class="cfg-note" id="modFormato"><b>Formato:</b> separe os parágrafos com uma linha em branco; use <code>**texto**</code> para negrito. <b>Variáveis</b> (sem dado pessoal): <code>{{apolice}}</code> <code>{{numero}}</code> <code>{{empresa}}</code> <code>{{agencia}}</code>. Qualquer outra <code>{{...}}</code> é recusada. <b>O conteúdo das cláusulas deve ser conferido pelo jurídico:</b> o sistema não valida o que a lei exige.</p>
+      <label class="fl" for="mod_texto">Texto (começa na versão ativa)</label>
+      <textarea class="fi" id="mod_texto" rows="14" style="width:100%;font-family:var(--mono);font-size:.78rem" oninput="modMudou()" spellcheck="true"></textarea>
+      <div class="cfg-kv" id="modAviso" style="white-space:pre-line;margin-top:.4rem"></div>
+      <div class="cfg-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnModPrev" onclick="modPrever()">Pré-visualizar</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnModPublicar" onclick="modPublicar()">Publicar como nova versão</button>
+      </div>
+      <div id="modPrev" style="display:none;margin-top:.8rem;padding:.8rem;border:1px solid var(--border);border-radius:8px;font-size:.8rem;line-height:1.7"></div>
+      <div class="card-label" style="margin-top:1.4rem">Versões</div>
+      <div id="modVersoes" class="cfg-kv" style="white-space:normal"></div>
+    </div>
+    <!-- Privacidade / LGPD (R34) -->
+    <div class="cfg-pane card" id="p-lgpd">
+      <div class="card-label">Privacidade e retenção (LGPD)</div>
+      <div id="lgpdOperador" class="cfg-note" style="display:none">Somente administradores usam esta aba.</div>
+      <div id="lgpdAdmin" style="display:none">
+        <p class="cfg-note"><b>Nada é apagado sozinho.</b> Você define o prazo, vê quantos registros entram e só então aplica. A anonimização <b>não exclui</b> o contrato: ele continua com número, empresa, datas, valores, status e hashes, mas perde nome, CPF, e-mail, matrícula, nome do supervisor, assinatura desenhada, IP, dispositivo e links. <b>Não dá para desfazer</b> (faça backup antes) e o hash guardado deixa de poder ser recalculado a partir do texto.</p>
+        <div class="cfg-note" id="retLembrete" style="display:none"></div>
+        <div class="card-label" style="margin-top:1rem">1) Prazo de retenção</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <label class="fl" for="ret_meses" style="margin:0">Guardar dados pessoais por (meses)</label>
+          <input class="fi" id="ret_meses" type="number" min="6" max="240" placeholder="6 a 240" style="max-width:120px" oninput="retMudou()"/>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnRetSalvar" onclick="retSalvar()">Salvar prazo</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btnRetVer" onclick="retVer()">Ver o que entra</button>
+        </div>
+        <p class="cfg-note">Entram só contratos <b>terminados</b> (assinado ou cancelado) cujo fim do período <b>e</b> última alteração já passaram do prazo, sem aditivo/rescisão em andamento; cartas criadas antes do prazo; links de carta vencidos há mais de 30 dias (apagados) e links assinados antigos (ficam só com o hash). <b>O prazo certo depende da sua obrigação legal: confirme com o jurídico.</b> Este sistema não decide isso.</p>
+        <div class="cfg-kv" id="retResumo" style="white-space:pre-line"></div>
+        <div class="cfg-row"><button type="button" class="btn btn-primary btn-sm" id="btnRetAplicar" onclick="retAplicar()" disabled>Anonimizar agora</button></div>
+        <div class="card-label" style="margin-top:1.4rem">2) Pedido do titular (LGPD art. 18)</div>
+        <p class="cfg-note">Quando uma pessoa pede a eliminação dos dados dela, informe o CPF. <b>Buscar</b> só conta o que existe. <b>Anonimizar</b> age já, sem esperar o prazo: contratos terminados, cartas e o cadastro de candidato (este é <b>excluído</b>). Contratos em andamento não são tocados: cancele antes. Nomes de outras pessoas do mesmo contrato (supervisor, Orizon) ficam. O CPF não vai para o histórico.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+          <label class="fl" for="tit_cpf" style="margin:0">CPF do titular</label>
+          <input class="fi" id="tit_cpf" placeholder="000.000.000-00" oninput="maskCPF(this);titMudou()" autocomplete="off" inputmode="numeric" style="max-width:190px"/>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnTitBuscar" onclick="titBuscar()">Buscar</button>
+        </div>
+        <div class="cfg-kv" id="titResumo" style="white-space:pre-line;margin-top:.5rem"></div>
+        <div class="cfg-row"><button type="button" class="btn btn-primary btn-sm" id="btnTitAplicar" onclick="titAplicar()" disabled>Anonimizar este titular</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const PAD = ['cidade_emissao','taxa_admin','jornada_horas','apolice_seguro','validade_dias'];
+let _cfg = {};
+function el(i){return document.getElementById(i);}
+document.querySelectorAll('#cfgTabs .cr-tab').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#cfgTabs .cr-tab').forEach(x => x.classList.toggle('active', x === b));
+  document.querySelectorAll('.cfg-pane').forEach(p => p.classList.toggle('on', p.id === 'p-' + b.dataset.p));
+});
+// R44: o Painel Geral leva direto para esta aba (configuracoes.html#privacidade)
+if (location.hash === '#privacidade') { const bt = document.querySelector('#cfgTabs .cr-tab[data-p="lgpd"]'); if (bt) bt.click(); }
+
+// ── canvas de assinatura ──
+const cv = el('sigCv'), cx = cv.getContext('2d'); let drw = false, temSig = false;
+cx.lineWidth = 2.4; cx.lineCap = 'round'; cx.strokeStyle = '#111';
+function pos(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return{x:(t.clientX-r.left)*cv.width/r.width,y:(t.clientY-r.top)*cv.height/r.height};}
+function ini(e){e.preventDefault();drw=true;const p=pos(e);cx.beginPath();cx.moveTo(p.x,p.y);}
+function mov(e){if(!drw)return;e.preventDefault();const p=pos(e);cx.lineTo(p.x,p.y);cx.stroke();temSig=true;}
+function fim(){drw=false;}
+['mousedown','touchstart'].forEach(n=>cv.addEventListener(n,ini,{passive:false}));
+['mousemove','touchmove'].forEach(n=>cv.addEventListener(n,mov,{passive:false}));
+['mouseup','mouseleave','touchend'].forEach(n=>cv.addEventListener(n,fim));
+function limparSig(){cx.clearRect(0,0,cv.width,cv.height);temSig=false;}
+function desenhar(src){const im=new Image();im.onload=()=>{cx.drawImage(im,0,0,cv.width,cv.height);temSig=true;};im.src=src;}
+
+// ── persistência (cr_config: chave/valor) ──
+async function salvarChave(chave, valor) {
+  if (!(await exigirAdmin('alterar as configurações'))) return false;
+  const { error } = await window._sb.from('cr_config').upsert({ chave, valor, atualizado_em: new Date().toISOString() });
+  if (error) { console.error('cr_config', error); toast('Erro ao salvar. Rode o SQL da R6.', 'err'); return false; }
+  logAcao('alterou_config', 'config', chave);
+  _cfg[chave] = valor; return true;
+}
+async function salvarSig() {
+  const nome = el('sig_nome').value.trim(), cargo = el('sig_cargo').value.trim();
+  if (!nome) { toast('Informe o nome do responsável.', 'err'); return; }
+  const img = temSig ? cv.toDataURL('image/png') : null;
+  if (await salvarChave('assinatura_orizon', { nome, cargo, img })) toast('Assinatura salva ✓');
+}
+async function salvarPad() {
+  const v = {}; PAD.forEach(k => { const x = el('pad_' + k).value.trim(); if (x) v[k] = x; });
+  if (v.validade_dias && (+v.validade_dias < 1 || +v.validade_dias > 60)) { toast('Validade entre 1 e 60 dias.', 'err'); return; }
+  if (await salvarChave('dados_padrao', v)) toast('Dados padrão salvos ✓');
+}
+async function salvarMsg() {
+  if (await salvarChave('mensagens', { whats: el('msg_whats').value })) toast('Mensagem salva ✓');
+}
+
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  const { data, error } = await window._sb.from('cr_config').select('chave,valor');
+  if (error) { console.error('cr_config', error); toast('Não foi possível ler as configurações (SQL da R6 rodou?)', 'err'); }
+  (data || []).forEach(r => _cfg[r.chave] = r.valor);
+  const s = _cfg.assinatura_orizon || {};
+  el('sig_nome').value = s.nome || ''; el('sig_cargo').value = s.cargo || ''; if (s.img) desenhar(s.img);
+  const d = _cfg.dados_padrao || {}; PAD.forEach(k => el('pad_' + k).value = d[k] || '');
+  el('msg_whats').value = (_cfg.mensagens || {}).whats || '';
+  const E = (window.CR_CONFIG || {}).EMAILJS || {};
+  el('msgInfo').textContent = 'EmailJS: ' + (E.SVC_ID && E.PUB_KEY ? 'configurado' : 'verifique cr-config.js') + ' · Projeto Supabase: ' + (CR_CONFIG.SB_URL || '').replace('https://', '').split('.')[0];
+  try { const { data: { user } } = await window._sb.auth.getUser(); el('usrInfo').textContent = user ? 'Logado como: ' + user.email : 'Sem sessão'; } catch (e) {}
+  await carregarPerfis();
+  await carregarLgpd();
+  await carregarModelos();
+})();
+
+// ── Modelos de texto (R35, M10). A regra é do servidor; a tela conduz e mostra o que acontece. ──
+let _modAtiva = null, _modLista = [];
+function modChave() { const s = el('mod_chave'); return (s && s.value === 'texto_recomendacao') ? 'texto_recomendacao' : 'clausulas_tce'; }
+function modTrocar() { el('mod_texto').value = ''; _modAtiva = null; _modLista = []; carregarModelos(); }
+function modTextoSobre() {
+  const rec = modChave() === 'texto_recomendacao';
+  el('modComoTce').style.display = rec ? 'none' : '';
+  el('modFormato').style.display = rec ? 'none' : '';
+  el('modExplica').style.display = rec ? '' : 'none';
+  el('modExplica').innerHTML = rec ? '<b>Como funciona:</b> este é o parágrafo que a <b>Carta de Recomendação</b> traz por padrão (a pessoa que emite a carta ainda pode editá-lo naquela carta). Você nunca edita uma versão antiga: <b>publica uma nova</b>, que vale para as cartas emitidas <b>a partir de agora</b>; cada carta guarda o texto que tinha quando foi emitida, então publicar ou voltar de versão <b>nunca muda uma carta já emitida</b>. <b>Variável:</b> só <code>{{nome}}</code> (o nome que já está na carta); qualquer outra <code>{{...}}</code> é recusada. Texto puro, sem formatação: entre 50 e 3.000 caracteres. Os textos de cancelamento, recesso e TCE em PDF <b>não</b> são editáveis aqui (têm conteúdo legal que o jurídico precisa decidir antes).' : '';
+}
+function modMudou() {
+  const ch = modChave(), t = el('mod_texto').value, e = window.modeloValidar(t, ch), av = [];
+  if (e) av.push('⚠️ ' + window.erroModelo(null, { erro: e }, ch));
+  else if (ch === 'clausulas_tce' && !/\{\{apolice\}\}/.test(t)) av.push('ℹ️ O texto não usa {{apolice}}: a cláusula do seguro não vai mostrar o número da apólice. (Só um aviso: confira com o jurídico.)');
+  else if (ch === 'texto_recomendacao' && !/\{\{nome\}\}/.test(t)) av.push('ℹ️ O texto não usa {{nome}}: a carta não vai citar o nome da pessoa neste parágrafo. (Só um aviso.)');
+  if (_modAtiva && t.trim() === String(_modAtiva.texto).trim()) av.push('Igual à versão ativa (v' + _modAtiva.versao + '): nada a publicar.');
+  el('modAviso').textContent = av.join('\n');
+  el('modPrev').style.display = 'none';
+}
+function modPrever() {
+  const p = el('modPrev');
+  const ch = modChave();
+  p.innerHTML = window.modeloRenderizar(el('mod_texto').value, ch === 'texto_recomendacao' ? { nome: 'Maria Exemplo da Silva' } : { apolice: '000123', numero: 'TCE-2026-0001', empresa: 'Empresa Exemplo Ltda', agencia: 'Orizon Consultoria e Gestão' }, ch);
+  p.style.display = '';
+}
+async function carregarModelos() {
+  const ch = modChave(); modTextoSobre();
+  const adm = await ehAdmin();
+  el('modOperador').style.display = adm ? 'none' : '';
+  el('mod_texto').readOnly = !adm; el('btnModPublicar').style.display = adm ? '' : 'none';
+  const { data, error } = await window._sb.from('cr_modelos').select('id,versao,texto,ativo,criado_em').eq('chave', ch).order('versao', { ascending: false });
+  if (error) { console.error('cr_modelos', error.code); el('modVersoes').textContent = window.erroModelo(error, null, ch); el('btnModPublicar').disabled = true; return; }
+  _modLista = data || []; _modAtiva = _modLista.find(x => x.ativo) || null;
+  el('btnModPublicar').disabled = false;
+  if (_modAtiva && !el('mod_texto').value) el('mod_texto').value = _modAtiva.texto;
+  const box = el('modVersoes'); box.textContent = '';
+  if (!_modLista.length) { box.textContent = 'Nenhuma versão: rode sql/cr-schema.sql (' + (ch === 'texto_recomendacao' ? 'R38' : 'R35') + ').'; return; }
+  _modLista.forEach(v => {
+    const d = document.createElement('div'); d.style.cssText = 'display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.25rem 0';
+    const lb = document.createElement('span'); lb.textContent = 'v' + v.versao + ' · ' + new Date(v.criado_em).toLocaleString('pt-BR') + (v.ativo ? ' · ATIVA' : ''); d.appendChild(lb);
+    const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn btn-ghost btn-sm'; b1.textContent = 'Carregar no editor'; b1.onclick = () => { el('mod_texto').value = v.texto; modMudou(); }; d.appendChild(b1);
+    if (adm && !v.ativo) { const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn btn-ghost btn-sm'; b2.textContent = 'Tornar ativa'; b2.onclick = () => modAtivar(v); d.appendChild(b2); }
+    box.appendChild(d);
+  });
+  modMudou();
+}
+async function modPublicar() {
+  if (!(await exigirAdmin('publicar modelos'))) return;
+  const ch = modChave(), t = el('mod_texto').value, e = window.modeloValidar(t, ch);
+  if (e) { toast(window.erroModelo(null, { erro: e }, ch), 'err'); return; }
+  if (!confirm('Publicar como NOVA versão? Vale para ' + (ch === 'texto_recomendacao' ? 'as cartas emitidas' : 'os contratos criados') + ' a partir de agora; ' + (ch === 'texto_recomendacao' ? 'as já emitidas' : 'os já criados') + ' não mudam. A versão não pode ser editada depois (só substituída por outra).')) return;
+  const b = el('btnModPublicar'); b.disabled = true;
+  const { data, error } = await window._sb.rpc('cr_modelo_publicar', { p_chave: ch, p_texto: t }); b.disabled = false;
+  if (error || (data && data.erro)) { if (error) console.error('cr_modelo_publicar', error.code); toast(window.erroModelo(error, data, ch), 'err'); return; }
+  toast('Versão ' + data.versao + ' publicada ✓'); el('mod_texto').value = ''; await carregarModelos();
+}
+async function modAtivar(v) {
+  if (!(await exigirAdmin('ativar modelos'))) return;
+  if (!confirm('Tornar a versão ' + v.versao + ' a ativa? Vale para ' + (modChave() === 'texto_recomendacao' ? 'cartas emitidas' : 'contratos criados') + ' a partir de agora; os já existentes não mudam.')) return;
+  const { data, error } = await window._sb.rpc('cr_modelo_ativar', { p_id: v.id });
+  if (error || (data && data.erro)) { if (error) console.error('cr_modelo_ativar', error.code); toast(window.erroModelo(error, data, modChave()), 'err'); return; }
+  toast('Versão ' + data.versao + ' ativada ✓'); el('mod_texto').value = ''; await carregarModelos();
+}
+
+// ── Privacidade / LGPD (R34, M6). A regra é do servidor; a tela só conduz: ver primeiro, depois aplicar. ──
+let _retVisto = null, _titVisto = null;
+// R40: linha de anexos. Campo ausente/nulo (SQL anterior à R40 ou tabela de anexos ainda não criada) => NÃO mostra número (não inventa 0)
+function linhaAnexos(d, ant) {
+  const c = d && d.anexos_contratos, k = d && d.anexos_cartas;
+  if (c == null && k == null) return '';
+  const partes = [];
+  if (c != null) partes.push(c + ' de contrato(s)');
+  if (k != null) partes.push(k + ' de carta(s)');
+  return ant ? '\n• ' + partes.join(' e ') + ' anexo(s) serão APAGADOS junto (não dá para recuperar)' : ' Anexos apagados: ' + partes.join(' e ') + '.';
+}
+function retMeses() { const n = parseInt(el('ret_meses').value, 10); return (n >= 6 && n <= 240) ? n : null; }
+function retMudou() { if (_retVisto !== retMeses()) { _retVisto = null; el('btnRetAplicar').disabled = true; } }
+function titMudou() { _titVisto = null; el('btnTitAplicar').disabled = true; el('titResumo').textContent = ''; }
+async function carregarLgpd() {
+  const adm = await ehAdmin();
+  el('lgpdAdmin').style.display = adm ? '' : 'none'; el('lgpdOperador').style.display = adm ? 'none' : '';
+  const r = _cfg.retencao || {}; if (r.meses) el('ret_meses').value = r.meses;
+  if (adm) await retLembrete();
+}
+// R43/R44: lembrete mensal (só aviso: não apaga nada). A regra mora em cr-utils.js (retLembreteBuscar) e é a mesma do Painel Geral; se não conseguir ler, esconde (não inventa).
+async function retLembrete() {
+  const box = el('retLembrete'); box.style.display = 'none';
+  const r = await retLembreteBuscar(); if (!r || !r.texto) return;
+  box.textContent = r.texto; box.style.display = '';
+}
+async function retSalvar() {
+  const n = retMeses(); if (!n) { toast(erroRetencao(null, { erro: 'meses_invalido' }), 'err'); el('ret_meses').focus(); return; }
+  if (await salvarChave('retencao', { meses: n })) toast('Prazo salvo ✓');
+}
+async function retVer() {
+  if (!(await exigirAdmin('ver a retenção'))) return;
+  const n = retMeses(); if (!n) { toast(erroRetencao(null, { erro: 'meses_invalido' }), 'err'); el('ret_meses').focus(); return; }
+  const { data, error } = await window._sb.rpc('cr_retencao_resumo', { p_meses: n });
+  if (error || !data || data.erro) { console.error('cr_retencao_resumo', error && error.code); toast(erroRetencao(error, data), 'err'); return; }
+  _retVisto = n;
+  el('retResumo').textContent = 'Com ' + n + ' meses entram agora:\n• ' + data.contratos + ' contrato(s)\n• ' + data.cartas + ' carta(s)\n• ' + data.links_vencidos + ' link(s) de carta vencido(s) (serão apagados)\n• ' + data.links_assinados + ' link(s) de carta assinado(s) antigo(s)' + linhaAnexos(data, true) + '\nJá anonimizados antes: ' + data.ja_anonimizados + ' contrato(s).';
+  el('btnRetAplicar').disabled = (data.contratos + data.cartas + data.links_vencidos + data.links_assinados) === 0;
+  if (el('btnRetAplicar').disabled) toast('Nada a anonimizar com este prazo.');
+}
+async function retAplicar() {
+  if (!(await exigirAdmin('anonimizar'))) return;
+  const n = retMeses(); if (!n || _retVisto !== n) { toast('Clique em "Ver o que entra" com este prazo antes.', 'err'); return; }
+  if (!confirm('Anonimizar AGORA o que passou de ' + n + ' meses? Não dá para desfazer. Você fez backup?')) return;
+  const b = el('btnRetAplicar'); b.disabled = true;
+  const { data, error } = await window._sb.rpc('cr_retencao_aplicar', { p_meses: n });
+  if (error || !data || data.erro) { console.error('cr_retencao_aplicar', error && error.code); toast(erroRetencao(error, data), 'err'); return; }
+  _retVisto = null;
+  el('retResumo').textContent = 'Concluído: ' + data.contratos + ' contrato(s) e ' + data.signatarios + ' assinatura(s) anonimizados, ' + data.cartas + ' carta(s), ' + data.links_apagados + ' link(s) apagado(s), ' + data.links_anonimizados + ' link(s) anonimizado(s).' + linhaAnexos(data, false);
+  toast('Anonimização concluída ✓'); retLembrete();
+}
+async function titBuscar() {
+  if (!(await exigirAdmin('buscar um titular'))) return;
+  const cpf = el('tit_cpf').value.trim(); if (!validarCPF(cpf)) { toast(erroRetencao(null, { erro: 'cpf_invalido' }), 'err'); el('tit_cpf').focus(); return; }
+  const { data, error } = await window._sb.rpc('cr_titular_buscar', { p_cpf: cpf });
+  if (error || !data || data.erro) { console.error('cr_titular_buscar', error && error.code); toast(erroRetencao(error, data), 'err'); return; }
+  _titVisto = cpf.replace(/\D/g, '');
+  el('titResumo').textContent = 'Encontrado: ' + data.contratos + ' contrato(s) terminado(s), ' + data.cartas + ' carta(s), ' + data.candidatos + ' cadastro(s) de candidato.' + linhaAnexos(data, true) + (data.contratos_andamento ? '\nATENÇÃO: ' + data.contratos_andamento + ' contrato(s) em andamento NÃO serão tocados. Cancele antes, se for o caso.' : '');
+  el('btnTitAplicar').disabled = (data.contratos + data.cartas + data.candidatos) === 0;
+  if (el('btnTitAplicar').disabled) toast('Nada a anonimizar para este CPF.');
+}
+async function titAplicar() {
+  if (!(await exigirAdmin('anonimizar um titular'))) return;
+  const cpf = el('tit_cpf').value.trim(); if (!_titVisto || _titVisto !== cpf.replace(/\D/g, '')) { toast('Clique em "Buscar" com este CPF antes.', 'err'); return; }
+  if (!confirm('Anonimizar os dados deste titular AGORA e EXCLUIR o cadastro de candidato? Não dá para desfazer. Você fez backup?')) return;
+  const b = el('btnTitAplicar'); b.disabled = true;
+  const { data, error } = await window._sb.rpc('cr_titular_anonimizar', { p_cpf: cpf });
+  if (error || !data || data.erro) { console.error('cr_titular_anonimizar', error && error.code); toast(erroRetencao(error, data), 'err'); return; }
+  _titVisto = null; el('tit_cpf').value = '';
+  el('titResumo').textContent = 'Concluído: ' + data.contratos + ' contrato(s), ' + data.cartas + ' carta(s) anonimizados e ' + data.candidatos + ' cadastro(s) de candidato excluído(s).' + linhaAnexos(data, false);
+  toast('Pedido do titular atendido ✓');
+}
+async function carregarPerfis() {
+  const adm = await ehAdmin();
+  el('perfilInfo').textContent = 'Seu perfil: ' + (adm ? 'administrador' : 'operador');
+  el('perfilAdmin').style.display = adm ? '' : 'none';
+  if (!adm) return;
+  const { data, error } = await window._sb.from('cr_perfis').select('email,perfil').order('email', { ascending: true });
+  if (error) { el('perfilLista').textContent = 'Perfis ainda não disponíveis (rode sql/cr-schema.sql, R33).'; return; }
+  el('perfilLista').textContent = (data || []).length ? (data || []).map(r => r.email + ' — ' + (r.perfil === 'admin' ? 'administrador' : 'operador')).join('\n') : 'Nenhum perfil definido: todos valem como administrador. Defina o primeiro administrador abaixo (pode ser você).';
+  el('perfilLista').style.whiteSpace = 'pre-line';
+}
+async function definirPerfil() {
+  const email = el('perfil_email').value.trim(), tipo = el('perfil_tipo').value;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Informe o e-mail do usuário.', 'err'); el('perfil_email').focus(); return; }
+  if (tipo === 'operador' && !confirm('Definir ' + email + ' como OPERADOR? Ele deixa de poder excluir cadastros, alterar configurações e ver o Histórico.')) return;
+  const b = el('btnPerfil'); b.disabled = true;
+  const { error } = await window._sb.rpc('cr_definir_perfil', { p_email: email, p_perfil: tipo }); b.disabled = false;
+  if (error) { console.error('cr_definir_perfil', error.code); toast(erroPerfil(error), 'err'); return; }
+  toast('Perfil definido ✓'); el('perfil_email').value = ''; await carregarPerfis();
+}
+</script>
+</body>
+</html>

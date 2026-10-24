@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="icon" href="../imagens/icone.png" type="image/png"/>
-<meta name="description" content="Contratos Digitais — Orizon Consultoria"/>
-<title>Contratos Digitais — Orizon Consultoria</title>
+<meta name="description" content="Contratos Digitais — Orizon Consultoria e Gestão"/>
+<title>Contratos Digitais — Orizon Consultoria e Gestão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
 <link rel="stylesheet" href="assets/cr-core.css"/>
-<link rel="stylesheet" href="assets/cr-typo-fix.css"/>
 <style>
 /* ── Welcome bar ── */
 .welcome-bar {
@@ -20,7 +18,7 @@
 }
 .wl-title { font-size: 1.08rem; font-weight: 900; margin-bottom: .16rem; }
 .wl-title em { color: var(--purple); font-style: normal; }
-.wl-sub { font-size: .78rem; color: #94a3b8; }
+.wl-sub { font-size: .78rem; color: var(--slate); }
 .wl-right { display: flex; gap: .45rem; flex-shrink: 0; flex-wrap: wrap; }
 
 /* ── Prontos para download ── */
@@ -30,14 +28,14 @@
   border-radius: var(--radius); padding: .95rem 1.15rem; margin-bottom: 1.3rem;
 }
 .ready-title { font-size: .82rem; font-weight: 800; color: var(--green); display: flex; align-items: center; gap: .38rem; }
-.ready-sub { font-size: .76rem; color: #94a3b8; margin-top: .12rem; }
+.ready-sub { font-size: .76rem; color: var(--slate); margin-top: .12rem; }
 .ready-card {
   background: rgba(0,0,0,.28); border: 1px solid rgba(46,204,113,.18);
   border-radius: 9px; padding: .7rem .95rem; margin-top: .65rem;
   display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
 }
 .ready-nome { font-size: .82rem; font-weight: 800; }
-.ready-meta { font-size: .76rem; color: #94a3b8; margin-top: .08rem; }
+.ready-meta { font-size: .76rem; color: var(--slate); margin-top: .08rem; }
 .countdown {
   display: inline-flex; align-items: center; gap: .28rem;
   font-size: .76rem; font-weight: 700; color: var(--orange);
@@ -67,50 +65,15 @@
   padding: .22rem .48px; white-space: nowrap; flex-shrink: 0;
 }
 .copy-btn:hover { background: rgba(96,165,250,.18); }
-.papel-label { font-size: .62rem; color: #94a3b8; margin-bottom: .18rem; }
+.papel-label { font-size: .62rem; color: var(--slate); margin-bottom: .18rem; }
 </style>
+<script src="assets/cr-brand.js"></script>
 </head>
 <body>
 <div class="app">
 
 <!-- ══ SIDEBAR ══ -->
-<aside class="sidebar">
-  <div class="sb-head">
-    <div class="sb-logo">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="7.5" stroke="white" stroke-width="2.2" fill="none" opacity=".9"/>
-          <circle cx="11" cy="11" r="3.2" fill="white" opacity=".85"/>
-          <path d="M11 3.5 L14 1" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
-        </svg>
-    </div>
-    <div>
-      <div class="sb-name">Orizon <em>Consultoria</em></div>
-      <div class="sb-sub">Contratos Digitais</div>
-    </div>
-  </div>
-  <nav class="sb-nav">
-    <a class="sb-back" href="index.html">← Hub Central</a>
-    <div class="sb-sep">Painel</div>
-    <a class="sb-item active" href="index-contratos.html"><span class="sb-ico">📁</span>Painel de Contratos</a>
-    <div class="sb-sep">Criar</div>
-    <a class="sb-item" href="novo-contrato.html"><span class="sb-ico">➕</span>Novo Contrato TCE</a>
-    <div class="sb-sep">Gerenciar</div>
-    <a class="sb-item" href="index-contratos.html"><span class="sb-ico">📂</span>Todos os Contratos</a>
-    <a class="sb-item" href="visualizar-assinado.html"><span class="sb-ico">👁</span>Visualizar Assinado</a>
-  </nav>
-  <div class="sb-foot">
-    <div class="sb-foot-user">
-      <div class="sb-av" id="sb-av-init">OR</div>
-      <div class="sb-user-info">
-        <div class="sb-uname" id="user-nome">—</div>
-        <div class="sb-uemail" id="user-email">—</div>
-      </div>
-    </div>
-    <button class="sb-logout" onclick="doLogout()" title="Sair">
-      <span class="sb-logout-ico">⏻</span> Sair da conta
-    </button>
-  </div>
-</aside>
+<aside class="sidebar" id="crSidebar"></aside>
 
 <!-- ══ MAIN ══ -->
 <div class="main">
@@ -169,7 +132,7 @@
         <span class="panel-title">📄 Contratos Emitidos</span>
         <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap">
           <div class="search-box">🔍<input id="busca" placeholder="Buscar nome ou empresa..." oninput="filtrar()"/></div>
-          <select id="filtroStatus" class="btn btn-ghost btn-sm" onchange="filtrar()" style="cursor:pointer">
+          <select id="filtroStatus" style="display:none" class="btn btn-ghost btn-sm" onchange="filtrar()" style="cursor:pointer">
             <option value="">Todos os status</option>
             <option value="enviado">Aguardando</option>
             <option value="parcial">Parcialmente</option>
@@ -215,13 +178,15 @@
 <div id="toast-ct"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="assets/cr-config.js"></script>
 <script src="assets/cr-auth.js"></script>
 <script src="assets/cr-utils.js"></script>
-<script src="assets/cr-name-fix.js"></script>
+<script src="assets/cr-otp.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
 <script>
-const SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
-const BASE_URL = window.location.origin + window.location.pathname.replace('index-contratos.html', '');
+const BASE_URL = window.CR_CONFIG.BASE_URL; // vem de assets/cr-config.js (M19)
 let _sb, _contratos = [], _signatarios = [];
 
 const STATUS_MAP = {
@@ -233,7 +198,7 @@ const STATUS_MAP = {
 };
 const PAPEL = {
   candidato:      'Candidato/Colaborador',
-  empresa_nexus:  'Orizon Consultoria',
+  empresa_nexus:  window.CR_BRAND.nome,
   empresa_cliente:'Empresa Contratante',
   instituicao:    'Instituição de Ensino',
   supervisor:     'Supervisor/Responsável',
@@ -256,7 +221,7 @@ async function carregar() {
       _sb.from('cr_signatarios').select('*')
     ]);
     _contratos = c || []; _signatarios = s || [];
-    renderKPIs(); renderTabela(_contratos); renderRecentes();
+    renderKPIs(); filtrar(); renderRecentes();
     clearInterval(window._timerRecentes);
     window._timerRecentes = setInterval(renderRecentes, 30000);
   } catch(e) {
@@ -315,7 +280,7 @@ function renderTabela(lista) {
     ).join('');
     const st = STATUS_MAP[c.status] || { cls: 'tag-gray', lbl: c.status };
     return `<tr>
-      <td><span style="font-size:.66rem;color:var(--accent);font-weight:800;font-family:var(--mono)">${c.numero_contrato || '—'}</span></td>
+      <td><span style="font-size:.66rem;color:var(--accent);font-weight:800;font-family:var(--mono)">${c.numero_contrato || '—'}</span>${movBadge(c)}</td>
       <td><strong>${c.nome_candidato || '—'}</strong><br/><span style="font-size:.68rem;color:var(--muted)">${c.cargo || ''}</span></td>
       <td><span class="tag ${c.tipo === 'clt' ? 'tag-blue' : 'tag-purple'}">${c.tipo === 'clt' ? '💼 CLT' : '🎓 Estágio'}</span></td>
       <td style="font-size:.76rem">${c.empresa || '—'}</td>
@@ -323,19 +288,30 @@ function renderTabela(lista) {
         <div class="sig-dots">${dots || '<span style="color:var(--muted);font-size:.65rem">—</span>'}</div>
         <div style="font-size:.62rem;color:var(--muted);margin-top:.18rem">${sigs.filter(s => s.status === 'assinado').length}/${sigs.length} assinaram</div>
       </td>
-      <td><span class="tag ${st.cls}">${st.lbl}</span></td>
+      <td><span class="tag ${st.cls}">${st.lbl}</span>${(() => { const p = precisaLembrete(c, _signatarios); return p.length ? `<div style="margin-top:.2rem"><span class="tag tag-orange" title="Sem movimento há ${window.CR_CONFIG.LEMBRETE_DIAS || 3} dias ou mais: ${_e(p.map(x => x.nome).join(', '))}. Abra 🔗 para lembrar.">🔔 lembrar ${p.length === 1 ? _e(p[0].nome.split(' ')[0]) : p.length + ' pessoas'}</span></div>` : ''; })()}${linkExpirado(c) ? '<div style="margin-top:.2rem"><span class="tag tag-red" title="Há signatário com link vencido: abra 🔗 para prorrogar ou gerar link novo">⏰ link vencido</span></div>' : ''}</td>
       <td style="font-size:.68rem;color:var(--muted)">${c.criado_em ? fmtDateShort(c.criado_em) : '—'}</td>
       <td><div style="display:flex;gap:.28rem;flex-wrap:wrap">
         <button class="btn btn-blue btn-sm" onclick="verLinks(${c.id})" title="Ver links">🔗</button>
+        <a class="btn btn-ghost btn-sm" href="anexos.html?id=${Number(c.id)}" title="Anexos do contrato (RG, comprovantes...)" aria-label="Anexos do contrato">📎</a>
+        ${movPode(_contratos, c).ok ? `<a class="btn btn-ghost btn-sm" href="novo-movimento.html?origem=${c.id}" title="Aditivo, renovação ou rescisão">🔁</a>` : ''}
+        ${c.tipo_mov ? '' : `<a class="btn btn-ghost btn-sm" href="novo-contrato.html?dup=${c.id}" title="Duplicar: novo contrato com a empresa, valores e signatários já preenchidos">📑</a>`}
         <button class="btn btn-ghost btn-sm" onclick="cancelar(${c.id})" ${c.status === 'assinado' ? 'disabled' : ''}>✕</button>
       </div></td>
     </tr>`;
   }).join('');
 }
 
+// M15: selo de movimento (aditivo/renovação/rescisão) e de contrato rescindido
+function movBadge(c) {
+  let h = '';
+  if (c.tipo_mov) { const o = _contratos.find(x => x.id === c.contrato_origem_id); h += `<div style="margin-top:.2rem"><span class="tag tag-purple" title="${MOV_LABEL[c.tipo_mov]}">${MOV_ICO[c.tipo_mov]} ${MOV_LABEL[c.tipo_mov]}</span><div style="font-size:.6rem;color:var(--muted);margin-top:.12rem">de ${o ? o.numero_contrato : '—'}</div></div>`; }
+  if (c.status === 'assinado' && movRescindido(_contratos, c)) h += `<div style="margin-top:.2rem"><span class="tag tag-gray">⛔ Rescindido</span></div>`;
+  else if (c.status === 'assinado' && movSuperado(_contratos, c)) h += `<div style="margin-top:.2rem"><span class="tag tag-gray" title="Existe versão mais recente assinada">↪ Substituído</span></div>`;
+  return h;
+}
 function filtrar() {
   const q  = document.getElementById('busca').value.toLowerCase();
-  const st = document.getElementById('filtroStatus').value;
+  const st = window._tab || '';
   const tp = document.getElementById('filtroTipo').value;
   let lista = _contratos;
   if (st) lista = lista.filter(c => c.status === st);
@@ -344,28 +320,65 @@ function filtrar() {
   renderTabela(lista);
 }
 
+function _e(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+// R19 (M2/M11): contrato em andamento com algum link já vencido (só avisa; reenvio é no modal 🔗)
+function linkExpirado(c) {
+  if (c.status !== 'enviado' && c.status !== 'parcial') return false;
+  return _signatarios.some(s => s.contrato_id === c.id && s.status === 'pendente' && linkValidade(s.expira_em).estado === 'expirado');
+}
 function verLinks(id) {
   const sigs = _signatarios.filter(s => s.contrato_id === id);
   const c    = _contratos.find(x => x.id === id);
+  const cancelado = c.status === 'cancelado';
+  const prazo = window._prazoRenovar || 15;
+  const podeRenovar = !cancelado && sigs.some(s => s.status === 'pendente' || s.status === 'recusado');
   document.getElementById('modalLinksContent').innerHTML = `
-    <div style="margin-bottom:.75rem;font-size:.76rem;color:var(--muted)">${c.titulo || ''}</div>
-    ${sigs.map(s => {
-      const url = `${BASE_URL}assinar.html?t=${s.token}`;
-      const wa  = `https://wa.me/?text=${encodeURIComponent(`Olá ${s.nome}! Você foi convidado para assinar "${c.titulo}". Acesse: ${url}`)}`;
-      return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:.7rem .88rem;margin-bottom:.55rem">
-        <div class="papel-label">${PAPEL[s.papel] || s.papel}</div>
-        <div style="font-size:.8rem;font-weight:700;margin-bottom:.38rem">${s.nome} <span style="color:var(--muted);font-weight:400;font-size:.68rem">&lt;${s.email}&gt;</span></div>
-        <span class="tag ${s.status === 'assinado' ? 'tag-green' : s.status === 'recusado' ? 'tag-red' : 'tag-orange'}" style="margin-bottom:.5rem;display:inline-flex">
-          ${s.status === 'assinado' ? '✅ Assinado' : s.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
-        </span>
-        ${s.status !== 'assinado' ? `
+    <div style="margin-bottom:.75rem;font-size:.76rem;color:var(--muted)">${_e(c.titulo)}${c.ordem_assinatura === 'sequencial' ? ' · <b>um de cada vez</b> (ordem de assinatura)' : ''}</div>
+    ${podeRenovar ? `<div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;margin-bottom:.7rem;font-size:.7rem;color:var(--muted)">
+      <label for="prazoRenovar">Prazo ao prorrogar ou gerar link novo:</label>
+      <select id="prazoRenovar" style="background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:.25rem .45rem;font-size:.72rem">
+        ${[7, 15, 30, 60].map(d => `<option value="${d}"${d === prazo ? ' selected' : ''}>${d} dias</option>`).join('')}
+      </select></div>` : ''}
+    ${[...sigs].sort((a, b) => c.ordem_assinatura === 'sequencial' ? ((a.ordem || 0) - (b.ordem || 0) || a.id - b.id) : 0).map(s => {
+      const url = `${BASE_URL}assinar-contrato.html?t=${s.token}`;
+      const val = linkValidade(s.expira_em);
+      const valCls = val.estado === 'expirado' ? 'tag-red' : val.estado === 'vencendo' ? 'tag-orange' : 'tag-gray';
+      const wa  = `https://wa.me/?text=${encodeURIComponent(`Olá ${s.nome}! Você foi convidado para assinar "${c.titulo}". Acesse: ${url}` + (s.expira_em ? ` (o link vale até ${fmtDateShort(s.expira_em)})` : '') + (s.otp_exigido ? ' Para assinar você vai precisar de um código de 6 dígitos, que enviaremos por outro canal.' : ''))}`;
+      let corpo;
+      if (s.status === 'assinado') corpo = `<div style="font-size:.68rem;color:var(--green);margin-top:.18rem">✅ Assinado em ${fmtDateTime(s.assinado_em)}</div>`;
+      else if (cancelado) corpo = `<div style="font-size:.68rem;color:var(--muted);margin-top:.18rem">⛔ Contrato cancelado — o link está desativado.</div>`;
+      else if (s.status === 'recusado') corpo = `<div style="font-size:.68rem;color:var(--red);margin-top:.18rem">❌ Recusou a assinatura${s.motivo_recusa ? ': ' + _e(s.motivo_recusa) : ''}</div>
+        <div style="margin-top:.4rem"><button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="reabrir(${s.id})" title="Gera um link novo e devolve a pessoa para a fila de assinatura">↩️ Reabrir assinatura</button></div>`;
+      else {
+        const aguarda = sigAguardando(c, _signatarios, s), li = lembreteInfo(s), venceu = val.estado === 'expirado';
+        const waL = `https://wa.me/?text=${encodeURIComponent(mensagemLembrete(s, c.titulo, url, s.expira_em))}`;
+        const lembrete = aguarda
+          ? `<div style="font-size:.68rem;color:var(--muted);margin-top:.4rem">⏸️ Ainda não é a vez: aguarda <b>${_e(aguarda)}</b> assinar. Lembrete só depois disso.</div>`
+          : venceu ? `<div style="font-size:.68rem;color:var(--muted);margin-top:.4rem">Link vencido: prorrogue ou gere link novo antes de lembrar.</div>`
+          : `<div style="display:flex;gap:.38rem;margin-top:.4rem;flex-wrap:wrap;align-items:center">
+              <a href="${waL}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="lembrarRegistrar(${s.id}, 'whatsapp')" title="Abre o WhatsApp com a mensagem de lembrete pronta e registra o envio">🔔 Lembrar por WhatsApp</a>
+              ${btnEmailLembrete(s, c.titulo, url)}
+              <span style="font-size:.64rem;color:var(--muted)">${_e(li.rotulo)}</span></div>`;
+        corpo = `
+        <div style="margin:.1rem 0 .4rem"><span class="tag ${valCls}" title="Validade do link de assinatura">⏰ Link ${val.rotulo}</span></div>
         <div class="link-box">
           <span>${url}</span>
           <button class="copy-btn" onclick="copiarTexto('${url}',this)">📋 Copiar</button>
         </div>
-        <div style="display:flex;gap:.38rem;margin-top:.38rem">
+        <div style="display:flex;gap:.38rem;margin-top:.38rem;flex-wrap:wrap">
           <a href="${wa}" target="_blank" class="btn btn-green btn-sm" style="font-size:.63rem">📱 WhatsApp</a>
-        </div>` : `<div style="font-size:.68rem;color:var(--green);margin-top:.18rem">✅ Assinado em ${fmtDateTime(s.assinado_em)}</div>`}
+          ${btnEmailAssinatura(s, c.titulo, url)}
+          <button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="renovar(${s.id}, false)" title="Mantém o mesmo link e estende o prazo">⏱️ Prorrogar</button>
+          <button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="renovar(${s.id}, true)" title="Cria um link novo; o atual deixa de funcionar">🔄 Novo link</button>
+        </div>${lembrete}${otpBloco(c, s, aguarda, venceu)}`;
+      }
+      return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:9px;padding:.7rem .88rem;margin-bottom:.55rem">
+        <div class="papel-label">${c.ordem_assinatura === 'sequencial' && s.ordem ? s.ordem + 'º · ' : ''}${PAPEL[s.papel] || s.papel}</div>
+        <div style="font-size:.8rem;font-weight:700;margin-bottom:.38rem">${_e(s.nome)} <span style="color:var(--muted);font-weight:400;font-size:.68rem">&lt;${_e(s.email)}&gt;</span></div>
+        <span class="tag ${s.status === 'assinado' ? 'tag-green' : s.status === 'recusado' ? 'tag-red' : 'tag-orange'}" style="margin-bottom:.5rem;display:inline-flex">
+          ${s.status === 'assinado' ? '✅ Assinado' : s.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}
+        </span>
+        ${corpo}
       </div>`;
     }).join('')}`;
   const dlBtn = document.getElementById('modalDownloadBtn');
@@ -374,18 +387,130 @@ function verLinks(id) {
   document.getElementById('modalLinks').classList.add('open');
 }
 
-function closeModal() { document.getElementById('modalLinks').classList.remove('open'); }
+// R37 (M3): código de confirmação (OTP). O código só aparece AQUI, uma vez, para quem o gerou (o servidor guarda só o hash);
+// fica em memória enquanto o painel de links estiver aberto. Deve ir por um canal DIFERENTE do link.
+function otpBloco(c, s, aguarda, venceu) {
+  const ot = otpEstado(s), u = window._otpUltimo && window._otpUltimo.id === s.id ? window._otpUltimo : null;
+  if (aguarda || venceu) return `<div style="margin-top:.5rem;padding-top:.45rem;border-top:1px dashed var(--border);font-size:.66rem;color:var(--muted)">🔐 ${_e(ot.rotulo)}. ${aguarda ? 'O código só pode ser gerado na vez da pessoa.' : 'Prorrogue ou gere link novo antes de gerar o código.'}</div>`;
+  const prazo = window._otpPrazo || 60;
+  return `<div style="margin-top:.5rem;padding-top:.45rem;border-top:1px dashed var(--border)">
+    <span class="tag ${ot.cls}" title="Código de 6 dígitos que a pessoa digita antes de assinar">🔐 ${_e(ot.rotulo)}</span>
+    <div style="display:flex;gap:.38rem;margin-top:.35rem;flex-wrap:wrap;align-items:center">
+      <label for="otpPrazo${s.id}" style="font-size:.64rem;color:var(--muted)">Validade:</label>
+      <select id="otpPrazo${s.id}" style="background:var(--card2);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:.2rem .4rem;font-size:.68rem">
+        ${OTP_PRAZOS.map(p => `<option value="${p[0]}"${p[0] === prazo ? ' selected' : ''}>${p[1]}</option>`).join('')}</select>
+      <button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="otpGerar(${s.id})" title="Gera um código de 6 dígitos (o anterior deixa de valer)">🔐 ${ot.exigido ? 'Gerar outro código' : 'Exigir e gerar código'}</button>
+      ${ot.exigido ? `<button class="btn btn-ghost btn-sm" style="font-size:.63rem" onclick="otpDispensar(${s.id})" title="Volta a valer só o link">Dispensar código</button>` : ''}
+    </div>
+    ${u ? `<div data-otp-codigo="${s.id}" style="margin-top:.45rem;padding:.55rem .7rem;border:1px solid var(--green);border-radius:9px">
+      <div style="font-size:.64rem;color:var(--muted)">Código gerado (aparece só agora — anote ou envie):</div>
+      <div style="font:700 1.5rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.25em">${_e(otpExibir(u.codigo))}</div>
+      <div style="font-size:.64rem;color:var(--muted);margin:.15rem 0 .35rem">Vale até ${_e(otpQuando(u.expira_em))}. Envie por um canal <b>diferente</b> do link (ex.: link por e-mail, código por WhatsApp).</div>
+      <div style="display:flex;gap:.38rem;flex-wrap:wrap">
+        <button class="copy-btn" onclick="copiarTexto('${_e(u.codigo)}',this)">📋 Copiar código</button>
+        <a href="https://wa.me/?text=${encodeURIComponent(otpMensagem(s, c.titulo, u.codigo, u.expira_em))}" target="_blank" class="btn btn-green btn-sm" style="font-size:.63rem">📱 Enviar código por WhatsApp</a>
+      </div></div>` : ''}
+  </div>`;
+}
+async function otpGerar(sigId) {
+  const s = _signatarios.find(x => x.id === sigId); if (!s) return;
+  const min = Number((document.getElementById('otpPrazo' + sigId) || {}).value) || window._otpPrazo || 60;
+  window._otpPrazo = min;
+  if (s.otp_emitido_em && !confirm('Gerar um código novo para ' + s.nome + '?\nO código anterior deixa de valer.')) return;
+  const r = await otpEmitir(sigId, min);
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  Object.assign(s, { otp_exigido: true, otp_emitido_em: new Date().toISOString(), otp_expira_em: r.expira_em, otp_tentativas: 0, otp_qtd: r.qtd });
+  window._otpUltimo = { id: sigId, codigo: r.codigo, expira_em: r.expira_em };
+  verLinks(s.contrato_id); filtrar();
+  toast('🔐 Código gerado para ' + s.nome + ' — envie por um canal diferente do link');
+}
+async function otpDispensar(sigId) {
+  const s = _signatarios.find(x => x.id === sigId); if (!s) return;
+  if (!confirm('Dispensar o código de ' + s.nome + '?\nA pessoa passa a assinar só com o link.')) return;
+  const r = await otpDefinir(sigId, false);
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  Object.assign(s, { otp_exigido: false, otp_emitido_em: null, otp_expira_em: null, otp_tentativas: 0 });
+  if (window._otpUltimo && window._otpUltimo.id === sigId) window._otpUltimo = null;
+  verLinks(s.contrato_id); filtrar();
+  toast('Código dispensado para ' + s.nome);
+}
+// R26 (M11): depois de registrar um lembrete (WhatsApp ou e-mail), atualiza a tela com a contagem do servidor
+window.aoLembrar = function(sigId, r) {
+  const s = _signatarios.find(x => x.id === sigId); if (!s) return;
+  s.lembrete_em = r.lembrete_em; s.lembretes_qtd = r.lembretes_qtd;
+  verLinks(s.contrato_id); filtrar();
+  toast('🔔 Lembrete registrado para ' + s.nome + ' (' + r.lembretes_qtd + 'º)');
+};
+// R20 (M12): reabrir quem recusou = link novo, volta a pendente (o histórico da recusa fica na linha do tempo)
+async function reabrir(sigId) {
+  const s = _signatarios.find(x => x.id === sigId); if (!s) return;
+  const dias = Number((document.getElementById('prazoRenovar') || {}).value) || window._prazoRenovar || 15;
+  window._prazoRenovar = dias;
+  if (!confirm('Reabrir a assinatura de ' + s.nome + '?\nSerá gerado um link novo (' + dias + ' dias) e a recusa deixa de valer; reenvie o link.')) return;
+  const r = await reabrirSignatario(sigId, dias);
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  Object.assign(s, { status: 'pendente', token: r.token, expira_em: r.expira_em, recusado_em: null, motivo_recusa: null });
+  verLinks(s.contrato_id); filtrar();
+  toast('↩️ Assinatura reaberta — reenvie o link para ' + s.nome);
+}
+// R19: prorrogar o prazo (mesmo link) ou gerar link novo (o antigo é revogado). A regra mora no servidor (cr_renovar_link).
+async function renovar(sigId, novo) {
+  const s = _signatarios.find(x => x.id === sigId); if (!s) return;
+  const dias = Number((document.getElementById('prazoRenovar') || {}).value) || window._prazoRenovar || 15;
+  window._prazoRenovar = dias;
+  if (novo && !confirm('Gerar um link novo para ' + s.nome + '?\nO link atual deixará de funcionar e o novo precisa ser reenviado.')) return;
+  const r = await renovarLink(sigId, dias, novo);
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  s.token = r.token; s.expira_em = r.expira_em;
+  verLinks(s.contrato_id); filtrar();
+  toast(novo ? '🔄 Novo link gerado — reenvie para ' + s.nome : '⏱️ Prazo prorrogado até ' + fmtDateShort(r.expira_em));
+}
+
+function closeModal() { window._otpUltimo = null; document.getElementById('modalLinks').classList.remove('open'); }
 
 async function cancelar(id) {
   if (!confirm('Cancelar este contrato? Os links de assinatura serão desativados.')) return;
   const { error } = await _sb.from('cr_contratos').update({ status: 'cancelado' }).eq('id', id);
   if (error) { toast('Erro ao cancelar', 'err'); return; }
+  const _cc = _contratos.find(c => c.id === id); logAcao('cancelou_contrato', 'contrato', _cc && _cc.numero_contrato);
   _contratos = _contratos.map(c => c.id === id ? { ...c, status: 'cancelado' } : c);
   renderKPIs(); filtrar();
   toast('Contrato cancelado');
 }
 
 document.getElementById('modalLinks').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── Abas por status (R3) ──
+window._tab = { '#aguardando': 'enviado', '#assinados': 'assinado' }[location.hash] || '';
+const _TABS = [['', 'Todos'], ['enviado', 'Aguardando'], ['parcial', 'Parciais'], ['assinado', 'Assinados'], ['cancelado', 'Cancelados']];
+function renderTabs() {
+  let bar = document.getElementById('crTabs');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'crTabs'; bar.className = 'cr-tabs'; const sb = document.querySelector('.search-box').parentElement; sb.parentElement.insertBefore(bar, sb); }
+  bar.innerHTML = _TABS.map(t => `<button type="button" class="cr-tab${t[0] === window._tab ? ' active' : ''}" onclick="setTab('${t[0]}')">${t[1]}<span class="n">${t[0] ? _contratos.filter(c => c.status === t[0]).length : _contratos.length}</span></button>`).join('');
+}
+function setTab(t) { window._tab = t; renderTabs(); filtrar(); history.replaceState(null, '', t === 'enviado' ? '#aguardando' : t === 'assinado' ? '#assinados' : location.pathname + location.search); window.dispatchEvent(new HashChangeEvent('hashchange')); }
+window.addEventListener('hashchange', () => { const t = { '#aguardando': 'enviado', '#assinados': 'assinado' }[location.hash] ?? ''; if (t !== window._tab) { window._tab = t; renderTabs(); filtrar(); } });
+const _renderKPIs = renderKPIs; renderKPIs = function () { _renderKPIs(); renderTabs(); };
+const _renderTabela = renderTabela; renderTabela = function (l) {
+  _renderTabela(l);
+  const th = [...document.querySelectorAll('#tbodyContratos')[0].closest('table').querySelectorAll('thead th')].map(x => x.textContent.trim());
+  const tb = document.getElementById('tbodyContratos'); tb.closest('table').classList.add('tbl-cards');
+  tb.querySelectorAll('tr').forEach(tr => tr.querySelectorAll('td').forEach((td, i) => td.setAttribute('data-label', th[i] || '')));
+};
+
+// ── Exportar CSV (M16): exporta o que está filtrado na tela; sem CPF/e-mail (LGPD) ──
+window._visivel = [];
+const _rt = renderTabela; renderTabela = function (l) { window._visivel = l; _rt(l); };
+function exportar() {
+  exportarCSV('contratos', [
+    ['Número', c => c.numero_contrato], ['Tipo', c => c.tipo === 'clt' ? 'CLT' : 'Estágio'], ['Status', c => c.status],
+    ['Candidato', c => c.nome_candidato], ['Empresa', c => c.empresa], ['Cargo', c => c.cargo],
+    ['Movimento', c => c.tipo_mov ? MOV_LABEL[c.tipo_mov] : ''], ['Contrato de origem', c => { const o = _contratos.find(x => x.id === c.contrato_origem_id); return o ? o.numero_contrato : ''; }],
+    ['Início', c => csvData(c.periodo_inicio)], ['Término', c => csvData(c.periodo_fim)],
+    ['Bolsa/Salário', c => c.valor_bolsa == null ? '' : String(c.valor_bolsa).replace('.', ',')], ['Criado em', c => csvData(c.criado_em)]
+  ], window._visivel);
+}
+(function () { const r = document.querySelector('.tb-right'); if (r) r.insertAdjacentHTML('afterbegin', '<button class="btn btn-ghost btn-sm" type="button" onclick="exportar()" title="Exportar a lista filtrada">⬇️ CSV</button>'); })();
 </script>
 </body>
 </html>

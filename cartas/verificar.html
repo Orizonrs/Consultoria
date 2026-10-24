@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Verificar documento — Orizon Consultoria e Gestão</title>
+<style>
+:root{--bg:#060606;--card:#0e0e0e;--c2:#131313;--acc:#60a5fa;--pri:#1e40af;--tx:#f0f4ff;--mu:#8a9ab8;--ok:#2ecc71;--er:#e74c3c;--wa:#f39c12;--bd:rgba(96,165,250,.2)}
+@media(prefers-color-scheme:light){:root{--bg:#f3f6fb;--card:#fff;--c2:#f1f5fa;--tx:#0f172a;--mu:#475569;--acc:#1d4ed8;--ok:#15803d;--er:#b91c1c;--wa:#b45309;--bd:rgba(30,64,175,.2)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 Sora,system-ui,sans-serif;padding:1rem}
+.w{max-width:680px;margin:0 auto}h1{font-size:1.2rem;margin:.2rem 0}.sub{color:var(--mu);font-size:.82rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1rem;margin:.9rem 0}
+.row{display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0;border-bottom:1px solid var(--bd);font-size:.85rem}.row:last-child{border-bottom:0}.row b{color:var(--mu);font-weight:600}.row span{text-align:right}
+.ok{color:var(--ok)}.er{color:var(--er)}.wa{color:var(--wa)}
+.hash{font-family:ui-monospace,monospace;font-size:.72rem;word-break:break-all;color:var(--acc)}
+input::placeholder{color:var(--mu)}input[type=text]{width:100%;padding:.65rem;border-radius:8px;border:1px solid var(--bd);background:var(--c2);color:var(--tx);font:inherit;font-family:ui-monospace,monospace;font-size:.8rem;margin:.4rem 0}
+.btn{border:0;border-radius:10px;padding:.7rem 1.1rem;font:700 .85rem Sora,system-ui;cursor:pointer;background:var(--pri);color:#fff}
+.nota{font-size:.75rem;color:var(--mu);line-height:1.6}
+</style><script src="assets/cr-brand.js"></script>
+</head><body><div class="w">
+<h1>🔎 Verificar autenticidade de documento</h1>
+<div class="sub">Orizon Consultoria e Gestão · Contratos digitais</div>
+<div class="card">
+  <label for="h">Código de verificação (hash SHA-256 impresso no documento, 64 caracteres)</label>
+  <input type="text" id="h" autocomplete="off" spellcheck="false" maxlength="80" placeholder="ex.: 9f86d081884c7d659a2feaa0c55ad015…">
+  <button class="btn" id="b" type="button">Verificar</button>
+</div>
+<div id="res" aria-live="polite"></div>
+<p class="nota">Esta página mostra apenas dados não pessoais (número, situação, vigência e papéis das partes). Ela confirma que o código foi emitido pela Orizon e em que situação o documento está <b>hoje</b>; compare o número e as datas com o documento que você tem em mãos. Nomes, CPF, e-mail e assinaturas não são exibidos aqui.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+// Página pública: acessa o banco SOMENTE pela função cr_verificar_documento (RN-10)
+const _sbPub = supabase.createClient(window.CR_CONFIG.SB_URL, window.CR_CONFIG.SB_KEY);
+const _res = document.getElementById('res'), _in = document.getElementById('h');
+const esc = x => String(x ?? '—').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dtl = d => d ? new Date(d).toLocaleString('pt-BR') : '—';
+const dd = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+const PAPEL = { candidato:'Candidato/Colaborador', empresa_nexus:'Orizon Consultoria e Gestão', empresa_cliente:'Empresa contratante', supervisor:'Supervisor', instituicao:'Instituição de ensino' };
+const STATUS = { assinado:'Totalmente assinado', parcial:'Assinatura parcial', enviado:'Aguardando assinaturas', cancelado:'Cancelado' };
+const MOV = { aditivo:'Aditivo', renovacao:'Renovação', rescisao:'Rescisão' };
+function caixa(cls, ico, titulo, corpo) { _res.innerHTML = `<div class="card"><h1 class="${cls}">${ico} ${esc(titulo)}</h1>${corpo || ''}</div>`; }
+function mostrar(d) {
+  if (d.erro === 'hash_invalido') return caixa('er', '⚠️', 'Código inválido', '<p class="nota">O código tem 64 caracteres (números 0–9 e letras a–f). Confira se copiou inteiro.</p>');
+  if (!d.encontrado) return caixa('er', '❌', 'Código não encontrado', '<p class="nota">Nenhum documento emitido pela Orizon tem este código. O documento pode ter sido alterado ou o código foi digitado errado.</p>');
+  if (d.nivel === 'assinatura') {
+    return caixa('ok', '✅', 'Assinatura autêntica', `<div class="row"><b>Contrato</b><span>${esc(d.numero)}</span></div><div class="row"><b>Parte</b><span>${esc(PAPEL[d.papel] || d.papel)}</span></div><div class="row"><b>Assinou em</b><span>${dtl(d.assinado_em)}</span></div><div class="row"><b>Situação do contrato</b><span>${esc(STATUS[d.status] || d.status)}</span></div><p class="nota">Este código identifica uma assinatura individual. O código do documento completo fica no certificado da última página.</p>`);
+  }
+  const cancel = d.status === 'cancelado', fim = d.status === 'assinado';
+  const tipo = (d.tipo_mov ? MOV[d.tipo_mov] + ' ao contrato ' + (d.origem || '') + ' — ' : '') + (d.tipo === 'clt' ? 'Contrato CLT' : 'Termo de Compromisso de Estágio');
+  const partes = (d.partes || []).map(p => `<div class="row"><b>${esc(PAPEL[p.papel] || p.papel)}</b><span class="${p.status === 'assinado' ? 'ok' : p.status === 'recusado' ? 'er' : 'wa'}">${p.status === 'assinado' ? '✅ ' + dtl(p.assinado_em) : p.status === 'recusado' ? '❌ Recusou' : '⏳ Pendente'}</span></div>`).join('');
+  const post = d.posterior ? `<p class="nota wa">⚠️ Existe um movimento posterior: <b>${esc(MOV[d.posterior.tipo_mov] || d.posterior.tipo_mov)}</b> nº ${esc(d.posterior.numero)} (${esc(STATUS[d.posterior.status] || d.posterior.status)}). ${d.posterior.tipo_mov === 'rescisao' ? 'O contrato foi encerrado.' : 'Este documento continua autêntico, mas pode não ser a versão vigente.'}</p>` : '';
+  caixa(cancel ? 'er' : fim ? 'ok' : 'wa', cancel ? '⛔' : fim ? '✅' : '⚠️', cancel ? 'Documento autêntico, porém CANCELADO' : fim ? 'Documento autêntico' : 'Documento encontrado',
+    `<div class="row"><b>Número</b><span>${esc(d.numero)}</span></div><div class="row"><b>Documento</b><span>${esc(tipo)}</span></div><div class="row"><b>Situação hoje</b><span>${esc(STATUS[d.status] || d.status)}</span></div><div class="row"><b>Vigência</b><span>${dd(d.inicio)} → ${dd(d.fim)}</span></div><div class="row"><b>Finalizado em</b><span>${dtl(d.finalizado_em)}</span></div>
+     <h2 style="font-size:.9rem;margin:1rem 0 .2rem">Partes</h2>${partes}${post}`);
+}
+async function verificar() {
+  const h = _in.value.trim();
+  if (!h) return;
+  _res.innerHTML = '<p class="nota">Consultando…</p>';
+  const { data, error } = await _sbPub.rpc('cr_verificar_documento', { p_hash: h });
+  if (error) { console.error(error); return caixa('er', '⚠️', 'Não foi possível consultar agora', '<p class="nota">Tente novamente em instantes.</p>'); }
+  mostrar(data);
+}
+document.getElementById('b').addEventListener('click', verificar);
+_in.addEventListener('keydown', e => { if (e.key === 'Enter') verificar(); });
+const _h0 = new URLSearchParams(location.search).get('h');
+if (_h0) { _in.value = _h0; verificar(); }
+</script></body></html>

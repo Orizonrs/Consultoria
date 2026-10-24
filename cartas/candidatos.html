@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Candidatos — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.em-bar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem;align-items:center}
+.em-bar .fi{width:auto;min-width:150px}
+.em-form{padding:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-bottom:1rem}
+.em-form .full{grid-column:1/-1}
+.em-form label{display:block;font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.em-form .fi{width:100%;box-sizing:border-box}
+.em-row2{display:flex;gap:.4rem}
+.em-act{display:flex;gap:.3rem;flex-wrap:wrap}
+.em-note{font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+@media(max-width:640px){.em-form{grid-template-columns:1fr}}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Candidatos</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span><button class="btn btn-primary btn-sm" type="button" id="btnNova" onclick="abrirForm()">➕ Novo candidato</button></div>
+  </div>
+  <div class="content">
+    <div class="card em-form-card" id="emFormCard" style="display:none;padding:0;margin-bottom:1rem">
+      <div class="panel-hd"><span class="panel-title" id="emFormTitulo">🧑‍🎓 Novo candidato</span></div>
+      <div class="em-form">
+        <div class="full"><label for="f_nome">Nome completo *</label><input class="fi" id="f_nome" maxlength="200" autocomplete="off" placeholder="Ex.: Maria da Silva"/></div>
+        <div><label for="f_cpf">CPF</label><input class="fi" id="f_cpf" placeholder="000.000.000-00" oninput="maskCPF(this)" autocomplete="off" inputmode="numeric"/></div>
+        <div><label for="f_email">E-mail</label><input class="fi" id="f_email" type="email" placeholder="candidato@email.com" maxlength="200" autocomplete="off"/></div>
+        <div><label for="f_curso">Curso</label><input class="fi" id="f_curso" placeholder="Ex.: Administração" maxlength="150"/></div>
+        <div><label for="f_sem">Semestre</label><input class="fi" id="f_sem" placeholder="Ex.: 4º semestre" maxlength="60"/></div>
+        <div><label for="f_inst">Instituição de ensino</label><input class="fi" id="f_inst" placeholder="Ex.: UNISINOS" maxlength="200"/></div>
+        <div><label for="f_mat">Matrícula</label><input class="fi" id="f_mat" placeholder="Ex.: 2023001234" maxlength="60"/></div>
+        <div class="full em-act"><button type="button" class="btn btn-primary btn-sm" id="btnSalvar" onclick="salvar()">💾 Salvar</button><button type="button" class="btn btn-ghost btn-sm" onclick="fecharForm()">Cancelar</button></div>
+      </div>
+    </div>
+
+    <div class="em-bar">
+      <div class="search-box">🔍 <input id="busca" placeholder="Buscar nome, CPF, e-mail, curso ou instituição..." oninput="render()"/></div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="exportar()" title="Exporta sem o CPF completo (só mascarado)">⬇️ CSV</button>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Candidato</th><th>CPF</th><th>Curso</th><th>Instituição</th><th>Matrícula</th><th>Ações</th></tr></thead><tbody id="emBody"></tbody></table>
+    </div>
+    <p class="em-note"><b>Dado pessoal (LGPD):</b> este cadastro guarda CPF e e-mail. Na lista o CPF aparece mascarado; o CPF completo só aparece ao editar. O CPF e o nome do candidato <b>não vão para o histórico de acessos</b>. Ao digitar o nome do candidato no Novo Contrato, os dados daqui preenchem só os campos vazios. Excluir é <b>definitivo</b> e não altera contratos já criados (cada contrato guarda o próprio texto). O CPF é conferido no navegador e também no servidor. Hoje <b>todo usuário logado</b> vê e edita este cadastro (ainda não há perfis de acesso).</p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _cand = [], _vis = [], _editId = null, _tabelaOk = true;
+const $ = id => document.getElementById(id);
+const SEM_LOG = null; // RN-10: nome e CPF do candidato NUNCA vão para o log; só a ação e, quando existe, o número interno
+
+function render() {
+  const q = $('busca').value.toLowerCase().trim(), qd = q.replace(/\D/g, '');
+  _vis = _cand.filter(e => !q || [e.nome, e.email, e.curso, e.instituicao, e.matricula].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && String(e.cpf || '').includes(qd)));
+  $('emBody').innerHTML = _vis.length ? _vis.map(e => `<tr>
+      <td><b>${esc(e.nome)}</b>${e.email ? '<br><span style="color:var(--muted);font-size:.7rem">' + esc(e.email) + '</span>' : ''}</td>
+      <td style="font-family:var(--mono);font-size:.7rem">${esc(mascararCPF(e.cpf) || '—')}</td>
+      <td style="font-size:.74rem">${esc(e.curso || '—')}${e.semestre ? '<br><span style="color:var(--muted)">' + esc(e.semestre) + '</span>' : ''}</td>
+      <td style="font-size:.74rem">${esc(e.instituicao || '—')}</td><td style="font-family:var(--mono);font-size:.7rem">${esc(e.matricula || '—')}</td>
+      <td><div class="em-act">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="abrirForm(${Number(e.id)})" aria-label="Editar ${esc(e.nome)}">✏️</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="excluir(${Number(e.id)})" aria-label="Excluir ${esc(e.nome)}">🗑️</button></div></td></tr>`).join('')
+    : `<tr><td colspan="6"><div class="empty"><span>🧑‍🎓</span>${!_tabelaOk ? 'A tabela de candidatos ainda não existe: rode sql/cr-schema.sql (R32).' : _cand.length ? 'Nenhum candidato nesta busca.' : 'Nenhum candidato cadastrado. Use “Novo candidato”.'}</div></td></tr>`;
+}
+async function carregar() {
+  const { data, error } = await window._sb.from('cr_candidatos').select('*').order('nome', { ascending: true }).limit(2000);
+  if (error) { console.error('cr_candidatos', error.code); _tabelaOk = false; toast(erroCandidato(error).replace('salvar', 'ler'), 'err'); _cand = []; }
+  else { _tabelaOk = true; _cand = data || []; }
+  render();
+}
+function abrirForm(id) {
+  _editId = id || null; const e = id ? _cand.find(x => x.id === id) : null;
+  $('emFormTitulo').textContent = e ? '✏️ Editar candidato' : '🧑‍🎓 Novo candidato';
+  $('f_nome').value = e ? e.nome : ''; $('f_cpf').value = e ? formatarCPF(e.cpf || '') : ''; $('f_email').value = e && e.email || '';
+  $('f_curso').value = e && e.curso || ''; $('f_sem').value = e && e.semestre || ''; $('f_inst').value = e && e.instituicao || ''; $('f_mat').value = e && e.matricula || '';
+  $('emFormCard').style.display = ''; $('f_nome').focus(); $('emFormCard').scrollIntoView && $('emFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fecharForm() { _editId = null; $('emFormCard').style.display = 'none'; ['f_nome','f_cpf','f_email','f_curso','f_sem','f_inst','f_mat'].forEach(i => $(i).value = ''); }
+async function salvar() {
+  const v = id => $(id).value.trim(), nome = v('f_nome'), cpf = v('f_cpf'), email = v('f_email');
+  if (!nome) { toast('O nome do candidato é obrigatório.', 'err'); $('f_nome').focus(); return; }
+  if (cpf && !validarCPF(cpf)) { toast('CPF inválido: confira os dígitos.', 'err'); $('f_cpf').focus(); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('E-mail inválido: confira o endereço.', 'err'); $('f_email').focus(); return; }
+  const row = { nome, cpf: cpf ? cpf.replace(/\D/g, '') : null, email: email || null, curso: v('f_curso') || null, semestre: v('f_sem') || null, instituicao: v('f_inst') || null, matricula: v('f_mat') || null };
+  const b = $('btnSalvar'); b.disabled = true;
+  const q = _editId ? window._sb.from('cr_candidatos').update(row).eq('id', _editId) : window._sb.from('cr_candidatos').insert(row);
+  const { error } = await q; b.disabled = false;
+  if (error) { console.error('salvar candidato', error.code); toast(erroCandidato(error), 'err'); return; }
+  logAcao(_editId ? 'editou_candidato' : 'criou_candidato', 'candidato', _editId ? 'id ' + _editId : SEM_LOG);
+  toast(_editId ? 'Candidato atualizado ✓' : 'Candidato cadastrado ✓'); fecharForm(); await carregar();
+}
+async function excluir(id) {
+  const e = _cand.find(x => x.id === id); if (!e) return;
+  if (!(await exigirAdmin('excluir cadastros'))) return;
+  if (!confirm('Excluir DEFINITIVAMENTE o candidato "' + e.nome + '" do cadastro?\n\nOs dados (inclusive CPF) são apagados daqui e não podem ser recuperados. Os contratos já criados NÃO são alterados.')) return;
+  const { error } = await window._sb.from('cr_candidatos').delete().eq('id', id);
+  if (error) { console.error('excluir', error.code); toast('Não foi possível excluir o candidato.', 'err'); return; }
+  logAcao('excluiu_candidato', 'candidato', 'id ' + id); toast('Candidato excluído do cadastro.'); await carregar();
+}
+// CSV SEM o CPF completo (arquivo solto circula fácil): só o mascarado
+function exportar() {
+  exportarCSV('candidatos', [['Nome', e => e.nome], ['CPF (mascarado)', e => mascararCPF(e.cpf)], ['E-mail', e => e.email], ['Curso', e => e.curso], ['Semestre', e => e.semestre], ['Instituição', e => e.instituicao], ['Matrícula', e => e.matricula]], _vis);
+}
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  await carregar();
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+})();
+</script>
+</body>
+</html>

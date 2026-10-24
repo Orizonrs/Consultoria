@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vencimentos — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.vc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin-bottom:1rem}
+.vc-kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem}
+.vc-kpi b{display:block;font-size:1.5rem;font-weight:900;color:var(--accent)}
+.vc-kpi span{font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.vc-bar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem;font-size:.78rem;color:var(--muted)}
+.vc-bar .fi{width:80px}
+.vc-late{color:var(--red);font-weight:800}.vc-soon{color:var(--orange);font-weight:800}
+@media(max-width:700px){.vc-kpis{grid-template-columns:1fr}}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Vencimentos</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content">
+    <div class="vc-kpis">
+      <div class="vc-kpi"><b id="kTer">0</b><span>Términos no prazo</span></div>
+      <div class="vc-kpi"><b id="kAni">0</b><span>Chegando aos 12 meses</span></div>
+      <div class="vc-kpi"><b id="kPar">0</b><span>Contratos parados</span></div>
+    </div>
+    <div class="vc-bar">
+      Janela de alerta (dias): <input class="fi" id="jan" type="number" min="1" max="365" value="30" oninput="render()"/>
+      Parado há mais de (dias): <input class="fi" id="par" type="number" min="1" max="365" value="5" oninput="render()"/>
+    </div>
+    <div class="cr-tabs" id="vcTabs">
+      <button type="button" class="cr-tab active" data-t="ter">📅 Término do contrato</button>
+      <button type="button" class="cr-tab" data-t="ani">🎂 12 meses (recesso)</button>
+      <button type="button" class="cr-tab" data-t="par">⏳ Parados</button>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead id="vcHead"></thead><tbody id="vcBody"></tbody></table>
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5">
+      Alertas informativos, não bloqueiam nada. A regra de recesso (quando nasce o direito e quantos dias) deve ser confirmada com o jurídico; aqui só avisamos que o estágio completa 12 meses.
+    </p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+let _ct = [], _tab = 'ter';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function dia(s) { if (!s) return null; const m = String(s).slice(0, 10).split('-'); return new Date(+m[0], +m[1] - 1, +m[2]); }
+const HOJE = (() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); })();
+const dif = d => Math.round((d - HOJE) / 86400000);
+const fmt = d => d ? d.toLocaleDateString('pt-BR') : '—';
+function quando(n) { return n < 0 ? `<span class="vc-late">venceu há ${-n} d</span>` : n === 0 ? '<span class="vc-late">hoje</span>' : `<span class="${n <= 7 ? 'vc-soon' : ''}">em ${n} d</span>`; }
+function mais12(d) { return new Date(d.getFullYear() + 1, d.getMonth(), d.getDate()); }
+document.querySelectorAll('#vcTabs .cr-tab').forEach(b => b.onclick = () => {
+  _tab = b.dataset.t; document.querySelectorAll('#vcTabs .cr-tab').forEach(x => x.classList.toggle('active', x === b)); render();
+});
+function listas() {
+  const J = +document.getElementById('jan').value || 30, P = +document.getElementById('par').value || 5;
+  const vivos = _ct.filter(c => c.status !== 'cancelado');
+  // M15: some o que foi substituído por movimento assinado (vale a última versão) e a própria rescisão; rescindido não vence
+  const vigentes = vivos.filter(c => c.tipo_mov !== 'rescisao' && !movSuperado(_ct, c));
+  const ter = vigentes.filter(c => dia(c.periodo_fim)).map(c => ({ c, d: dia(c.periodo_fim), n: dif(dia(c.periodo_fim)) }))
+    .filter(x => x.n <= J && x.c.status === 'assinado').sort((a, b) => a.n - b.n);
+  const ani = vigentes.filter(c => c.tipo === 'estagio' && c.status === 'assinado' && dia(movRaiz(_ct, c).periodo_inicio)).map(c => {
+    const d = mais12(dia(movRaiz(_ct, c).periodo_inicio)); return { c, d, n: dif(d) };
+  }).filter(x => x.n <= J && x.n >= -365 && (!dia(x.c.periodo_fim) || dia(x.c.periodo_fim) >= x.d)).sort((a, b) => a.n - b.n);
+  const par = vivos.filter(c => (c.status === 'enviado' || c.status === 'parcial') && c.criado_em).map(c => ({ c, n: -Math.floor((Date.now() - new Date(c.criado_em)) / 86400000) }))
+    .filter(x => -x.n >= P).sort((a, b) => a.n - b.n);
+  return { ter, ani, par };
+}
+function render() {
+  const L = listas();
+  kTer.textContent = L.ter.length; kAni.textContent = L.ani.length; kPar.textContent = L.par.length;
+  const nome = c => `<strong>${esc(c.nome_candidato || c.titulo || '—')}</strong><div style="font-size:.68rem;color:var(--muted)">${esc(c.empresa || '')}</div>`;
+  const num = c => `<span style="font-family:var(--mono);font-size:.68rem;color:var(--accent);font-weight:800">${esc(c.numero_contrato || '—')}</span>`;
+  const tp = c => c.tipo === 'clt' ? '💼 CLT' : '🎓 Estágio';
+  let head, rows;
+  if (_tab === 'ter') { head = ['Nº', 'Candidato', 'Tipo', 'Término', 'Prazo']; rows = L.ter.map(x => [num(x.c), nome(x.c), tp(x.c), fmt(x.d), quando(x.n)]); }
+  else if (_tab === 'ani') { head = ['Nº', 'Candidato', 'Início', '12 meses em', 'Prazo']; rows = L.ani.map(x => [num(x.c), nome(x.c), fmt(dia(movRaiz(_ct, x.c).periodo_inicio)), fmt(x.d), quando(x.n)]); }
+  else { head = ['Nº', 'Candidato', 'Status', 'Criado em', 'Parado há']; rows = L.par.map(x => [num(x.c), nome(x.c), esc(x.c.status), fmt(new Date(x.c.criado_em)), `<span class="vc-soon">${-x.n} dias</span>`]); }
+  vcHead.innerHTML = '<tr>' + head.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  vcBody.innerHTML = rows.length ? rows.map(r => '<tr>' + r.map(x => `<td>${x}</td>`).join('') + '</tr>').join('')
+    : `<tr><td colspan="${head.length}"><div class="empty"><span>✅</span>Nada nesta janela.</div></td></tr>`;
+}
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  const { data, error } = await window._sb.from('cr_contratos').select('*');
+  if (error) { console.error('cr_contratos', error); toast('Erro ao carregar contratos', 'err'); }
+  _ct = data || []; render();
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+})();
+</script>
+</body>
+</html>

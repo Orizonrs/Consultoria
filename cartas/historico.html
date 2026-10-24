@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Histórico de acessos — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.hs-bar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem;align-items:center}
+.hs-bar .fi{width:auto;min-width:160px}
+.hs-note{font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Histórico de acessos</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span><button class="btn btn-ghost btn-sm" type="button" onclick="exportar()">⬇️ CSV</button></div>
+  </div>
+  <div class="content">
+    <div class="hs-bar">
+      <select class="fi" id="fUsr" onchange="render()" aria-label="Filtrar por usuário"><option value="">Todos os usuários</option></select>
+      <select class="fi" id="fAcao" onchange="render()" aria-label="Filtrar por ação"><option value="">Todas as ações</option></select>
+      <div class="search-box">🔍 <input id="busca" placeholder="Buscar referência ou detalhe..." oninput="render()"/></div>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Referência</th><th>Detalhe</th></tr></thead><tbody id="hsBody"></tbody></table>
+    </div>
+    <p class="hs-note">Mostra os 500 registros mais recentes. O histórico é somente-inclusão: o aplicativo não edita nem apaga registros. Hoje todo usuário logado pode ler este histórico (ainda não há perfis). Não guardamos CPF nem conteúdo dos documentos aqui.</p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const ACOES = { criou_empresa: '🏢 Cadastrou empresa', editou_empresa: '✏️ Editou empresa', desativou_empresa: '⏸️ Desativou empresa', reativou_empresa: '▶️ Reativou empresa', excluiu_empresa: '🗑️ Excluiu empresa', importou_empresas: '📥 Importou empresas dos contratos', criou_instituicao: '🎓 Cadastrou instituição', editou_instituicao: '✏️ Editou instituição', desativou_instituicao: '⏸️ Desativou instituição', reativou_instituicao: '▶️ Reativou instituição', excluiu_instituicao: '🗑️ Excluiu instituição', definiu_perfil: '👥 Definiu perfil de acesso', publicou_modelo: '📝 Publicou versão de modelo', ativou_modelo: '↩️ Ativou versão de modelo', retencao_aplicada: '🔒 Aplicou retenção LGPD (anonimizou)', titular_anonimizado: '🔒 Atendeu pedido de titular (LGPD)', importou_instituicoes: '📥 Importou instituições dos contratos', criou_candidato: '🧑‍🎓 Cadastrou candidato', editou_candidato: '✏️ Editou candidato', excluiu_candidato: '🗑️ Excluiu candidato', login: '🔑 Entrou', logout: '🚪 Saiu', criou_contrato: '➕ Criou contrato', cancelou_contrato: '✕ Cancelou contrato',
+  criou_aditivo: '📝 Criou aditivo', criou_renovacao: '🔄 Criou renovação', criou_rescisao: '⛔ Criou rescisão', novo_link: '🔄 Gerou novo link de assinatura', reabriu_assinatura: '↩️ Reabriu assinatura recusada', otp_emitido: '🔐 Gerou código de confirmação', otp_exigido: '🔐 Exigiu código de confirmação', otp_dispensado: '🔓 Dispensou código de confirmação', duplicou_contrato: '📑 Duplicou contrato', prorrogou_link: '⏱️ Prorrogou link de assinatura', lembrete: '🔔 Registrou lembrete de assinatura', emitiu_carta: '✉️ Emitiu carta', excluiu_carta: '🗑️ Excluiu carta', exportou_csv: '⬇️ Exportou CSV', anexou_arquivo: '📎 Anexou arquivo ao contrato', excluiu_anexo: '🗑️ Excluiu anexo de contrato', alterou_config: '⚙️ Alterou configuração' };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _log = [], _vis = [];
+function quando(d) { const x = new Date(d); return isNaN(x) ? '' : x.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }); }
+function opcoes(sel, valores, rot) { const cur = sel.value; sel.options.length = 1; valores.forEach(v => sel.add(new Option(rot ? rot(v) : v, v))); sel.value = cur; }
+function render() {
+  const u = fUsr.value, a = fAcao.value, q = busca.value.toLowerCase();
+  _vis = _log.filter(l => (!u || l.usuario_email === u) && (!a || l.acao === a) && (!q || ((l.referencia || '') + ' ' + (l.detalhe || '')).toLowerCase().includes(q)));
+  hsBody.innerHTML = _vis.length ? _vis.map(l => `<tr><td>${esc(quando(l.criado_em))}</td><td>${esc(l.usuario_email || '—')}</td><td>${esc(ACOES[l.acao] || l.acao)}</td><td style="font-family:var(--mono);font-size:.7rem">${esc(l.referencia || '—')}</td><td>${esc(l.detalhe || '')}</td></tr>`).join('')
+    : '<tr><td colspan="5"><div class="empty"><span>🕘</span>Nenhum registro nesta seleção.</div></td></tr>';
+}
+function exportar() {
+  exportarCSV('historico', [['Quando', l => quando(l.criado_em)], ['Usuário', l => l.usuario_email], ['Ação', l => l.acao], ['Entidade', l => l.entidade], ['Referência', l => l.referencia], ['Detalhe', l => l.detalhe]], _vis);
+}
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  if (!(await ehAdmin())) { _log = []; toast('Somente administradores podem ver o histórico de acessos.', 'err'); render(); return; }
+  const { data, error } = await window._sb.from('cr_log').select('*').order('criado_em', { ascending: false }).limit(500);
+  if (error) { console.error('cr_log', error); toast('Não foi possível ler o histórico. Rode o SQL da R12.', 'err'); }
+  _log = data || [];
+  opcoes(fUsr, [...new Set(_log.map(l => l.usuario_email).filter(Boolean))].sort());
+  opcoes(fAcao, [...new Set(_log.map(l => l.acao))].sort(), v => ACOES[v] || v);
+  render();
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+})();
+</script>
+</body>
+</html>

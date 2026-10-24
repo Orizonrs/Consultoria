@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="icon" href="../imagens/icone.png" type="image/png"/>
-<meta name="description" content="Painel de Cartas Manuais — Orizon Consultoria"/>
-<title>Cartas Manuais — Orizon Consultoria</title>
+<meta name="description" content="Painel de Cartas Manuais — Orizon Consultoria e Gestão"/>
+<title>Cartas Manuais — Orizon Consultoria e Gestão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
 <link rel="stylesheet" href="assets/cr-core.css"/>
-<link rel="stylesheet" href="assets/cr-typo-fix.css"/>
 <style>
 /* ── Welcome bar ── */
 .welcome-bar {
@@ -20,9 +18,9 @@
   margin-bottom: 1.3rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
-.wl-title { font-size: 1.2rem; font-weight: 900; margin-bottom: .16rem; color: #f0f4ff; }
+.wl-title { font-size: 1.2rem; font-weight: 900; margin-bottom: .16rem; color: var(--text); }
 .wl-title em { color: var(--accent); font-style: normal; }
-.wl-sub { font-size: .78rem; color: #94a3b8; }
+.wl-sub { font-size: .78rem; color: var(--slate); }
 .wl-right { display: flex; gap: .45rem; flex-shrink: 0; flex-wrap: wrap; }
 
 /* ── Action cards ── */
@@ -53,10 +51,10 @@
 }
 .ac-ico.azul  { background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.2); }
 .ac-ico.laranja { background: rgba(243,156,18,.12); border: 1px solid rgba(243,156,18,.2); }
-.ac-arr { color: #64748b; font-size: .85rem; transition: transform .17s; }
+.ac-arr { color: var(--dim); font-size: .85rem; transition: transform .17s; }
 .action-card:hover .ac-arr { transform: translate(3px,-3px); color: var(--accent); }
-.ac-title { font-size: .88rem; font-weight: 800; margin-bottom: .08rem; color: #f0f4ff; }
-.ac-desc { font-size: .74rem; color: #94a3b8; line-height: 1.6; }
+.ac-title { font-size: .88rem; font-weight: 800; margin-bottom: .08rem; color: var(--text); }
+.ac-desc { font-size: .74rem; color: var(--slate); line-height: 1.6; }
 .ac-tag {
   display: inline-flex; align-items: center; gap: .28rem;
   font-size: .74rem; font-weight: 700; padding: .13rem .42rem;
@@ -79,47 +77,13 @@
   .grid3 { grid-template-columns: 1fr 1fr !important; }
 }
 </style>
+<script src="assets/cr-brand.js"></script>
 </head>
 <body>
 <div class="app">
 
 <!-- ══ SIDEBAR ══ -->
-<aside class="sidebar">
-  <div class="sb-head">
-    <div class="sb-logo">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="7.5" stroke="white" stroke-width="2.2" fill="none" opacity=".9"/>
-          <circle cx="11" cy="11" r="3.2" fill="white" opacity=".85"/>
-          <path d="M11 3.5 L14 1" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
-        </svg>
-    </div>
-    <div>
-      <div class="sb-name">Orizon <em>Consultoria</em></div>
-      <div class="sb-sub">Cartas Manuais</div>
-    </div>
-  </div>
-  <nav class="sb-nav">
-    <a class="sb-back" href="index.html">← Hub Central</a>
-    <div class="sb-sep">Painel</div>
-    <a class="sb-item active" href="index-cartas.html"><span class="sb-ico">📋</span>Painel de Cartas</a>
-    <div class="sb-sep">Criar Carta</div>
-    <a class="sb-item" href="nova-carta.html"><span class="sb-ico">📄</span>Nova Carta PDF</a>
-    <a class="sb-item" href="assinar-carta.html"><span class="sb-ico">✍️</span>Carta + Assinatura</a>
-    <a class="sb-item" href="nova-carta-cancelamento.html"><span class="sb-ico">📋</span>Cancelamento &amp; Recesso</a>
-  </nav>
-  <div class="sb-foot">
-    <div class="sb-foot-user">
-      <div class="sb-av" id="sb-av-init">OR</div>
-      <div class="sb-user-info">
-        <div class="sb-uname" id="user-nome">—</div>
-        <div class="sb-uemail" id="user-email">—</div>
-      </div>
-    </div>
-    <button class="sb-logout" onclick="doLogout()" title="Sair">
-      <span class="sb-logout-ico">⏻</span> Sair da conta
-    </button>
-  </div>
-</aside>
+<aside class="sidebar" id="crSidebar"></aside>
 
 <!-- ══ MAIN ══ -->
 <div class="main">
@@ -222,7 +186,7 @@
         <span class="panel-title">📋 Cartas Emitidas</span>
         <div class="panel-actions">
           <div class="search-box">🔍 <input id="busca" placeholder="Buscar nome..." oninput="filtrar()"/></div>
-          <select id="filtroTipo" class="btn btn-ghost btn-sm" onchange="filtrar()" style="cursor:pointer">
+          <select id="filtroTipo" style="display:none" class="btn btn-ghost btn-sm" onchange="filtrar()" style="cursor:pointer">
             <option value="">Todos</option>
             <option value="estagiario">🎓 Estagiários</option>
             <option value="efetivo">💼 Efetivos</option>
@@ -247,12 +211,12 @@
 <div id="toast-ct"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
 <script src="assets/cr-auth.js"></script>
 <script src="assets/cr-utils.js"></script>
-<script src="assets/cr-name-fix.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
 <script>
-const SB_URL = 'https://zxivdljbpdpwijtporff.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp4aXZkbGpicGRwd2lqdHBvcmZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4OTEyNjEsImV4cCI6MjA5NzQ2NzI2MX0.hTbkdMCzdT-NjqpK7jVSykZ6ucdhucrLhISoC1_kDs0';
 let _sb, _cartas = [];
 
 (async () => {
@@ -299,14 +263,16 @@ function renderTabela(lista) {
   }
   tb.innerHTML = lista.map(c => `
     <tr>
-      <td><span style="font-size:.66rem;color:var(--accent);font-weight:800;font-family:var(--mono)">${c.numero_carta || '—'}</span></td>
+      <td><span style="font-size:.66rem;color:var(--accent);font-weight:800;font-family:var(--mono)">${c.numero_carta || '—'}${c.status === 'assinada' ? ' ✅' : ''}</span></td>
       <td><strong>${c.nome}</strong></td>
-      <td><span class="tag ${c.tipo === 'estagiario' ? 'tag-blue' : 'tag-orange'}">${c.tipo === 'estagiario' ? '🎓 Est.' : '💼 Efet.'}</span></td>
+      <td><span class="tag ${c.tipo === 'estagiario' ? 'tag-blue' : 'tag-orange'}">${TDOC[c.tipo_doc || 'carta_recomendacao'] || 'Documento'}</span></td>
       <td style="color:var(--muted);font-size:.7rem">${c.cargo || '—'}</td>
       <td style="font-size:.7rem">${c.empresa || '—'}</td>
       <td style="font-size:.66rem;color:var(--muted)">${c.criado_em ? fmtDateShort(c.criado_em) : ''}</td>
       <td><div style="display:flex;gap:.28rem">
         <button class="btn btn-ghost btn-sm" onclick="reimprimir(${c.id})" title="Visualizar">👁️</button>
+        <a class="btn btn-ghost btn-sm" href="nova-carta.html?dup=${c.id}" title="Reabrir / duplicar">📄</a>
+        <a class="btn btn-ghost btn-sm" href="anexos.html?carta=${Number(c.id)}" title="Anexos da carta (RG, comprovantes...)" aria-label="Anexos da carta">📎</a>
         <button class="btn btn-red btn-sm" onclick="excluir(${c.id})" title="Excluir">🗑️</button>
       </div></td>
     </tr>`).join('');
@@ -314,9 +280,9 @@ function renderTabela(lista) {
 
 function filtrar() {
   const q    = document.getElementById('busca').value.toLowerCase();
-  const tipo = document.getElementById('filtroTipo').value;
+  const tipo = window._tabC || '';
   let lista  = _cartas;
-  if (tipo) lista = lista.filter(c => c.tipo === tipo);
+  if (tipo) lista = lista.filter(c => (c.tipo_doc || 'carta_recomendacao') === tipo);
   if (q)    lista = lista.filter(c => (c.nome + c.empresa + c.cargo).toLowerCase().includes(q));
   renderTabela(lista);
 }
@@ -324,7 +290,7 @@ function filtrar() {
 function reimprimir(id) {
   const c = _cartas.find(x => x.id === id);
   if (!c) return;
-  localStorage.setItem('cr_preview', JSON.stringify(c));
+  localStorage.setItem('cr_preview', JSON.stringify(c.dados || c));
   window.open('visualizar.html', '_blank');
 }
 
@@ -332,10 +298,35 @@ async function excluir(id) {
   if (!confirm('Excluir esta carta do histórico?')) return;
   const { error } = await _sb.from('cr_cartas').delete().eq('id', id);
   if (error) { toast('Erro ao excluir', 'err'); return; }
+  const _ce = _cartas.find(c => c.id === id); logAcao('excluiu_carta', 'carta', _ce && _ce.numero_carta);
   _cartas = _cartas.filter(c => c.id !== id);
   renderKPIs(); filtrar();
   toast('Carta excluída ✓');
 }
+
+// ── Abas por tipo de documento (R5) ──
+window._tabC = '';
+const TDOC = { carta_recomendacao: '⭐ Recomendação', carta_cancelamento: '❌ Cancelamento', carta_recesso: '🏖️ Recesso', tce: '📑 TCE' };
+function renderTabs() {
+  let bar = document.getElementById('crTabs');
+  if (!bar) { bar = document.createElement('div'); bar.id = 'crTabs'; bar.className = 'cr-tabs'; const sb = document.querySelector('.search-box').parentElement; sb.parentElement.insertBefore(bar, sb); }
+  const n = k => _cartas.filter(c => (c.tipo_doc || 'carta_recomendacao') === k).length;
+  bar.innerHTML = `<button type="button" class="cr-tab${window._tabC ? '' : ' active'}" onclick="setTabC('')">Todas<span class="n">${_cartas.length}</span></button>` +
+    Object.keys(TDOC).map(k => `<button type="button" class="cr-tab${window._tabC === k ? ' active' : ''}" onclick="setTabC('${k}')">${TDOC[k]}<span class="n">${n(k)}</span></button>`).join('');
+}
+function setTabC(k) { window._tabC = k; renderTabs(); filtrar(); }
+const _renderKPIs = renderKPIs; renderKPIs = function () { _renderKPIs(); renderTabs(); };
+
+// ── Exportar CSV (M16): exporta o que está filtrado na tela ──
+window._visivel = [];
+const _rt = renderTabela; renderTabela = function (l) { window._visivel = l; _rt(l); };
+function exportar() {
+  exportarCSV('cartas', [
+    ['Número', c => c.numero_carta], ['Documento', c => (TDOC[c.tipo_doc || 'carta_recomendacao'] || '').replace(/^\S+\s/, '')],
+    ['Nome', c => c.nome], ['Cargo', c => c.cargo], ['Empresa', c => c.empresa], ['Status', c => c.status || 'emitida'], ['Criado em', c => csvData(c.criado_em)]
+  ], window._visivel);
+}
+(function () { const r = document.querySelector('.tb-right'); if (r) r.insertAdjacentHTML('afterbegin', '<button class="btn btn-ghost btn-sm" type="button" onclick="exportar()" title="Exportar a lista filtrada">⬇️ CSV</button>'); })();
 </script>
 </body>
 </html>

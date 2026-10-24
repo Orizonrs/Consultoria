@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Anexos — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.ax-info{padding:1rem;margin-bottom:1rem;display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.ax-info b{font-family:var(--mono)}
+.ax-form{padding:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-bottom:1rem}
+.ax-form .full{grid-column:1/-1}
+.ax-form label{display:block;font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.ax-form .fi{width:100%;box-sizing:border-box}
+.ax-act{display:flex;gap:.3rem;flex-wrap:wrap}
+.ax-note{font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+.ax-aviso{padding:1rem;margin-bottom:1rem;font-size:.78rem;line-height:1.5}
+@media(max-width:640px){.ax-form{grid-template-columns:1fr}}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><a href="index-contratos.html" id="axBcLista">Contratos</a><span style="opacity:.3">›</span><strong>Anexos</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span><a class="btn btn-ghost btn-sm" href="index-contratos.html" id="axVoltar">← Voltar</a></div>
+  </div>
+  <div class="content">
+    <div class="card ax-aviso" id="axAviso" style="display:none" role="status"></div>
+    <div class="card ax-info" id="axInfo" style="display:none">
+      <div><div style="font-size:.68rem;color:var(--muted)" id="axRotulo">Contrato</div><b id="axNumero">—</b> <span id="axTitulo" style="font-size:.78rem"></span></div>
+      <div id="axContagem" style="font-size:.74rem;color:var(--muted)"></div>
+    </div>
+    <div class="card" id="axFormCard" style="display:none;padding:0;margin-bottom:1rem">
+      <div class="panel-hd"><span class="panel-title">📎 Novo anexo</span></div>
+      <div class="ax-form">
+        <div><label for="axCat">Tipo do documento *</label>
+          <select class="fi" id="axCat"><option value="">Escolha...</option></select></div>
+        <div><label for="axArq">Arquivo (PDF, PNG ou JPEG, até 2 MB) *</label>
+          <input class="fi" id="axArq" type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"/></div>
+        <div class="full ax-act"><button type="button" class="btn btn-primary btn-sm" id="axEnviar" onclick="enviar()">📎 Anexar</button></div>
+      </div>
+    </div>
+    <div class="card" id="axListaCard" style="display:none;padding:0;overflow:auto">
+      <table><thead><tr><th>Arquivo</th><th>Tipo do documento</th><th>Formato</th><th>Tamanho</th><th>Hash (SHA-256)</th><th>Enviado em</th><th>Ações</th></tr></thead><tbody id="axLista"></tbody></table>
+    </div>
+    <p class="ax-note" id="axNota" style="display:none"><b>Dado pessoal (LGPD):</b> anexos costumam ser documentos pessoais (RG, comprovante de matrícula). Ficam guardados no banco, só aparecem para usuários logados e <b>são apagados quando o contrato é anonimizado</b> (retenção ou pedido do titular). O tipo do arquivo é conferido pelo conteúdo, não pelo nome. O anexo <b>não faz parte</b> do hash de assinatura do contrato: pode ser incluído depois de assinado. Só administradores excluem anexos. O histórico de acessos registra o número do contrato e o tipo do documento, nunca o nome do arquivo.</p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+// R39: a mesma tela serve contrato (?id=) e carta (?carta=). ALVO guarda o que muda: tabela, funções, mensagens.
+const ALVOS = {
+  contrato: { tabela: 'cr_anexos', col: 'contrato_id', pai: 'cr_contratos', numero: 'numero_contrato', titulo: 'titulo', add: 'cr_anexo_adicionar', arg: 'p_contrato', baixar: 'cr_anexo_baixar', excluir: 'cr_anexo_excluir', sql: 'R36', nomeAlvo: 'contrato', vazio: 'Nenhum anexo neste contrato.', abra: 'Abra esta página pelo botão 📎 de um contrato.', naoAch: 'Contrato não encontrado.', anon: 'Contrato anonimizado: não recebe anexos e os anexos que existiam foram apagados.' },
+  carta: { tabela: 'cr_anexos_carta', col: 'carta_id', pai: 'cr_cartas', numero: 'numero_carta', titulo: 'nome', add: 'cr_anexo_carta_adicionar', arg: 'p_carta', baixar: 'cr_anexo_carta_baixar', excluir: 'cr_anexo_carta_excluir', sql: 'R39', nomeAlvo: 'carta', vazio: 'Nenhum anexo nesta carta.', abra: 'Abra esta página pelo botão 📎 de uma carta.', naoAch: 'Carta não encontrada.', anon: 'Carta anonimizada: não recebe anexos e os anexos que existiam foram apagados.' }
+};
+const _qs = new URLSearchParams(location.search);
+const ALVO = (_qs.get('carta') != null && _qs.get('id') == null) ? ALVOS.carta : ALVOS.contrato;
+let _id = null, _contrato = null, _anexos = [], _tabelaOk = true, _enviando = false;
+
+function aviso(msg) { const a = $('axAviso'); a.textContent = msg; a.style.display = ''; }
+function esconderTudo() { ['axInfo', 'axFormCard', 'axListaCard', 'axNota'].forEach(i => $(i).style.display = 'none'); }
+
+function render() {
+  $('axContagem').textContent = _anexos.length + ' de ' + window.ANEXO_MAX_QTD + ' anexos';
+  $('axLista').innerHTML = _anexos.length ? _anexos.map(a => `<tr>
+      <td><b>${esc(a.nome)}</b></td>
+      <td><span class="tag tag-blue">${esc(window.ANEXO_CATEGORIAS[a.categoria] || a.categoria)}</span></td>
+      <td style="font-size:.74rem">${esc(String(a.tipo || '').toUpperCase())}</td>
+      <td style="font-size:.74rem">${esc(formatarTamanho(a.tamanho))}</td>
+      <td style="font-family:var(--mono);font-size:.68rem" title="${esc(a.hash_sha256)}">${esc(String(a.hash_sha256 || '').slice(0, 12))}…</td>
+      <td style="font-size:.7rem;color:var(--muted)">${a.criado_em ? esc(fmtDateShort(a.criado_em)) : '—'}</td>
+      <td><div class="ax-act">
+        <button type="button" class="btn btn-blue btn-sm" onclick="baixar(${Number(a.id)})" aria-label="Baixar ${esc(a.nome)}">⬇️ Baixar</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="excluir(${Number(a.id)})" aria-label="Excluir ${esc(a.nome)}">🗑️</button></div></td></tr>`).join('')
+    : `<tr><td colspan="7"><div class="empty"><span>📎</span>${!_tabelaOk ? 'A tabela de anexos ainda não existe: rode sql/cr-schema.sql (' + ALVO.sql + ').' : ALVO.vazio}</div></td></tr>`;
+}
+
+async function carregarLista() {
+  const { data, error } = await window._sb.from(ALVO.tabela).select('id,' + ALVO.col + ',categoria,nome,tipo,tamanho,hash_sha256,criado_em').eq(ALVO.col, _id).order('criado_em', { ascending: false });
+  if (error) {
+    console.error('cr_anexos', error.code); _tabelaOk = false; _anexos = [];
+    $('axEnviar').disabled = true; $('axArq').disabled = true; $('axCat').disabled = true;
+    aviso(erroAnexo(error, null, ALVO.nomeAlvo));
+  } else { _tabelaOk = true; _anexos = data || []; $('axAviso').style.display = 'none'; }
+  render();
+}
+
+async function enviar() {
+  if (_enviando || !_contrato) return;
+  const cat = $('axCat').value, f = $('axArq').files && $('axArq').files[0];
+  if (!cat) { toast('Escolha o tipo do documento.', 'err'); $('axCat').focus(); return; }
+  if (!f) { toast('Escolha o arquivo.', 'err'); $('axArq').focus(); return; }
+  const v = anexoValidar(f);
+  if (v) { toast(erroAnexo(null, { erro: v }), 'err'); return; }
+  _enviando = true; $('axEnviar').disabled = true;
+  try {
+    const base64 = await lerBase64(f);
+    const { data, error } = await window._sb.rpc(ALVO.add, { [ALVO.arg]: _id, p_categoria: cat, p_nome: f.name, p_base64: base64 });
+    if (error || (data && data.erro)) { console.error('anexar', (error && error.code) || (data && data.erro)); toast(erroAnexo(error, data, ALVO.nomeAlvo), 'err'); }
+    else { toast('Anexo incluído ✓'); $('axArq').value = ''; await carregarLista(); }
+  } catch (e) { console.error('anexar', e && e.name); toast('Não foi possível ler o arquivo.', 'err'); }
+  _enviando = false; $('axEnviar').disabled = !_tabelaOk;
+}
+function lerBase64(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).replace(/^data:[^,]*,/, ''));
+    r.onerror = () => rej(new Error('leitura'));
+    r.readAsDataURL(f);
+  });
+}
+
+async function baixar(id) {
+  const { data, error } = await window._sb.rpc(ALVO.baixar, { p_id: id });
+  if (error || !data || data.erro) { console.error('baixar', (error && error.code) || (data && data.erro)); toast(erroAnexo(error, data, ALVO.nomeAlvo), 'err'); return; }
+  try {
+    const bin = atob(data.base64), arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const mime = { pdf: 'application/pdf', png: 'image/png', jpg: 'image/jpeg' }[data.tipo] || 'application/octet-stream';
+    const url = URL.createObjectURL(new Blob([arr], { type: mime }));
+    const a = document.createElement('a'); a.href = url; a.download = data.nome || 'anexo'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (e) { console.error('baixar', e && e.name); toast('Não foi possível abrir o arquivo.', 'err'); }
+}
+
+async function excluir(id) {
+  const a = _anexos.find(x => x.id === id); if (!a) return;
+  if (!(await exigirAdmin('excluir anexos'))) return;
+  if (!confirm('Excluir DEFINITIVAMENTE o anexo "' + a.nome + '"?\n\nO arquivo é apagado do banco e não pode ser recuperado.')) return;
+  const { data, error } = await window._sb.rpc(ALVO.excluir, { p_id: id });
+  if (error || (data && data.erro)) { console.error('excluir anexo', (error && error.code) || (data && data.erro)); toast(erroAnexo(error, data, ALVO.nomeAlvo), 'err'); return; }
+  toast('Anexo excluído ✓'); await carregarLista();
+}
+
+(async function iniciar() {
+  const sel = $('axCat');
+  Object.keys(window.ANEXO_CATEGORIAS).forEach(k => { const o = document.createElement('option'); o.value = k; o.textContent = window.ANEXO_CATEGORIAS[k]; sel.appendChild(o); });
+  if (ALVO === ALVOS.carta) { $('axRotulo').textContent = 'Carta'; $('axBcLista').href = 'index-cartas.html'; $('axBcLista').textContent = 'Cartas'; $('axVoltar').href = 'index-cartas.html'; document.title = 'Anexos da carta — Orizon Documentos'; $('axNota').innerHTML = $('axNota').innerHTML.replace('quando o contrato é anonimizado', 'quando a carta é anonimizada'); }
+  const raw = _qs.get(ALVO === ALVOS.carta ? 'carta' : 'id');
+  _id = /^\d{1,15}$/.test(raw || '') ? Number(raw) : null;
+  if (!_id) { aviso(ALVO.abra); return; }
+  const t = setInterval(async () => {
+    if (!window._sb) return; clearInterval(t);
+    const { data, error } = await window._sb.from(ALVO.pai).select('id,' + ALVO.numero + ',' + ALVO.titulo + ',anonimizado_em' + (ALVO === ALVOS.contrato ? ',status' : '')).eq('id', _id).single();
+    if (error || !data) { aviso(ALVO.naoAch); return; }
+    _contrato = data;
+    $('axNumero').textContent = data[ALVO.numero] || '—'; $('axTitulo').textContent = data[ALVO.titulo] ? '— ' + data[ALVO.titulo] : '';
+    $('axInfo').style.display = '';
+    if (data.anonimizado_em) { aviso(ALVO.anon); return; }
+    $('axFormCard').style.display = ''; $('axListaCard').style.display = ''; $('axNota').style.display = '';
+    await carregarLista();
+  }, 80);
+})();
+</script>
+</body>
+</html>

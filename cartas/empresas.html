@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Empresas — Orizon Documentos</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<style>
+.em-bar{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.8rem;align-items:center}
+.em-bar .fi{width:auto;min-width:150px}
+.em-form{padding:1rem;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin-bottom:1rem}
+.em-form .full{grid-column:1/-1}
+.em-form label{display:block;font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:.25rem}
+.em-form .fi{width:100%;box-sizing:border-box}
+.em-row2{display:flex;gap:.4rem}
+.em-act{display:flex;gap:.3rem;flex-wrap:wrap}
+.em-note{font-size:.72rem;color:var(--muted);margin-top:.8rem;line-height:1.5}
+.em-inativa td{color:var(--muted)} /* sem opacity: a auditoria de contraste mede a cor, não a transparência */
+@media(max-width:640px){.em-form{grid-template-columns:1fr}}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="tb-bc"><a href="index.html">Hub</a><span style="opacity:.3">›</span><strong>Empresas</strong></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span><button class="btn btn-primary btn-sm" type="button" id="btnNova" onclick="abrirForm()">➕ Nova empresa</button></div>
+  </div>
+  <div class="content">
+    <div class="card em-form-card" id="emFormCard" style="display:none;padding:0;margin-bottom:1rem">
+      <div class="panel-hd"><span class="panel-title" id="emFormTitulo">🏢 Nova empresa</span></div>
+      <div class="em-form">
+        <div class="full"><label for="f_razao">Razão social *</label><input class="fi" id="f_razao" maxlength="200" autocomplete="off"/></div>
+        <div><label for="f_cnpj">CNPJ</label>
+          <div class="em-row2"><input class="fi" id="f_cnpj" placeholder="00.000.000/0001-00" oninput="maskCNPJ(this)" style="flex:1"/><button type="button" class="btn btn-ghost btn-sm" id="btnCnpjEmp" onclick="buscarPorCNPJ()" title="Busca razão social e endereço na base pública da Receita (BrasilAPI). Só preenche campos vazios.">🔎 Buscar</button></div></div>
+        <div><label for="f_end">Endereço</label><input class="fi" id="f_end" placeholder="Rua, nº, bairro, cidade/UF" maxlength="300"/></div>
+        <div><label for="f_sup">Supervisor (nome)</label><input class="fi" id="f_sup" placeholder="Ex.: João Santos" maxlength="120"/></div>
+        <div><label for="f_cargo">Supervisor (cargo)</label><input class="fi" id="f_cargo" placeholder="Ex.: Gerente de RH" maxlength="120"/></div>
+        <div class="full em-act"><button type="button" class="btn btn-primary btn-sm" id="btnSalvar" onclick="salvar()">💾 Salvar</button><button type="button" class="btn btn-ghost btn-sm" onclick="fecharForm()">Cancelar</button></div>
+      </div>
+    </div>
+
+    <div class="em-bar">
+      <select class="fi" id="fStatus" onchange="render()" aria-label="Filtrar por situação"><option value="ativas">Ativas</option><option value="inativas">Inativas</option><option value="todas">Todas</option></select>
+      <div class="search-box">🔍 <input id="busca" placeholder="Buscar razão social, CNPJ ou supervisor..." oninput="render()"/></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnImportar" onclick="importar()" title="Cadastra as empresas dos contratos já feitos que ainda não estão aqui">📥 Importar dos contratos</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="exportar()">⬇️ CSV</button>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table><thead><tr><th>Razão social</th><th>CNPJ</th><th>Endereço</th><th>Supervisor</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="emBody"></tbody></table>
+    </div>
+    <p class="em-note">Ao escolher uma empresa no Novo Contrato, o CNPJ, o endereço e o supervisor daqui são preenchidos (só nos campos vazios). Empresa <b>inativa</b> deixa de ser sugerida. Excluir uma empresa <b>não altera contratos já criados</b>: cada contrato guarda o próprio texto. O CNPJ é conferido no navegador e também no servidor. Hoje todo usuário logado pode ver e editar este cadastro (ainda não há perfis).</p>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let _emp = [], _vis = [], _editId = null, _tabelaOk = true;
+const $ = id => document.getElementById(id);
+
+function render() {
+  const st = $('fStatus').value, q = $('busca').value.toLowerCase().trim(), qd = q.replace(/\D/g, '');
+  _vis = _emp.filter(e => (st === 'todas' || (st === 'ativas') === !!e.ativo)
+    && (!q || (e.razao_social + ' ' + (e.supervisor_nome || '')).toLowerCase().includes(q) || (qd && String(e.cnpj || '').includes(qd))));
+  $('emBody').innerHTML = _vis.length ? _vis.map(e => `<tr class="${e.ativo ? '' : 'em-inativa'}">
+      <td><b>${esc(e.razao_social)}</b></td><td style="font-family:var(--mono);font-size:.7rem">${esc(formatarCNPJ(e.cnpj || '') || '—')}</td>
+      <td style="font-size:.74rem">${esc(e.endereco || '—')}</td>
+      <td style="font-size:.74rem">${esc(e.supervisor_nome || '—')}${e.supervisor_cargo ? '<br><span style="color:var(--muted)">' + esc(e.supervisor_cargo) + '</span>' : ''}</td>
+      <td><span class="tag ${e.ativo ? 'tag-green' : 'tag-gray'}">${e.ativo ? 'Ativa' : 'Inativa'}</span></td>
+      <td><div class="em-act">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="abrirForm(${Number(e.id)})" aria-label="Editar ${esc(e.razao_social)}">✏️</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="alternarAtivo(${Number(e.id)})" aria-label="${e.ativo ? 'Desativar' : 'Reativar'} ${esc(e.razao_social)}">${e.ativo ? '⏸️' : '▶️'}</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="excluir(${Number(e.id)})" aria-label="Excluir ${esc(e.razao_social)}">🗑️</button></div></td></tr>`).join('')
+    : `<tr><td colspan="6"><div class="empty"><span>🏢</span>${!_tabelaOk ? 'A tabela de empresas ainda não existe: rode sql/cr-schema.sql (R30).' : _emp.length ? 'Nenhuma empresa nesta seleção.' : 'Nenhuma empresa cadastrada. Use “Nova empresa” ou “Importar dos contratos”.'}</div></td></tr>`;
+}
+async function carregar() {
+  const { data, error } = await window._sb.from('cr_empresas').select('*').order('razao_social', { ascending: true }).limit(2000);
+  if (error) { console.error('cr_empresas', error); _tabelaOk = false; toast(erroEmpresa(error).replace('salvar', 'ler'), 'err'); _emp = []; }
+  else { _tabelaOk = true; _emp = data || []; }
+  render();
+}
+function abrirForm(id) {
+  _editId = id || null; const e = id ? _emp.find(x => x.id === id) : null;
+  $('emFormTitulo').textContent = e ? '✏️ Editar empresa' : '🏢 Nova empresa';
+  $('f_razao').value = e ? e.razao_social : ''; $('f_cnpj').value = e ? formatarCNPJ(e.cnpj || '') : '';
+  $('f_end').value = e && e.endereco || ''; $('f_sup').value = e && e.supervisor_nome || ''; $('f_cargo').value = e && e.supervisor_cargo || '';
+  $('emFormCard').style.display = ''; $('f_razao').focus(); $('emFormCard').scrollIntoView && $('emFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function fecharForm() { _editId = null; $('emFormCard').style.display = 'none'; }
+async function salvar() {
+  const v = id => $(id).value.trim(), razao = v('f_razao'), cnpj = v('f_cnpj');
+  if (!razao) { toast('A razão social é obrigatória.', 'err'); $('f_razao').focus(); return; }
+  if (cnpj && !validarCNPJ(cnpj)) { toast('CNPJ inválido: confira os dígitos.', 'err'); $('f_cnpj').focus(); return; }
+  const row = { razao_social: razao, cnpj: cnpj ? cnpj.replace(/\D/g, '') : null, endereco: v('f_end') || null, supervisor_nome: v('f_sup') || null, supervisor_cargo: v('f_cargo') || null };
+  const b = $('btnSalvar'); b.disabled = true;
+  const q = _editId ? window._sb.from('cr_empresas').update(row).eq('id', _editId) : window._sb.from('cr_empresas').insert(row);
+  const { error } = await q; b.disabled = false;
+  if (error) { console.error('salvar empresa', error); toast(erroEmpresa(error), 'err'); return; }
+  logAcao(_editId ? 'editou_empresa' : 'criou_empresa', 'empresa', razao);
+  toast(_editId ? 'Empresa atualizada ✓' : 'Empresa cadastrada ✓'); fecharForm(); await carregar();
+}
+async function alternarAtivo(id) {
+  const e = _emp.find(x => x.id === id); if (!e) return;
+  const { error } = await window._sb.from('cr_empresas').update({ ativo: !e.ativo }).eq('id', id);
+  if (error) { console.error('ativo', error); toast(erroEmpresa(error), 'err'); return; }
+  logAcao(e.ativo ? 'desativou_empresa' : 'reativou_empresa', 'empresa', e.razao_social);
+  toast(e.ativo ? 'Empresa desativada: não será mais sugerida.' : 'Empresa reativada ✓'); await carregar();
+}
+async function excluir(id) {
+  const e = _emp.find(x => x.id === id); if (!e) return;
+  if (!(await exigirAdmin('excluir cadastros'))) return;
+  if (!confirm('Excluir a empresa "' + e.razao_social + '" do cadastro?\n\nOs contratos já criados NÃO são alterados. Para só parar de sugerir, use Desativar.')) return;
+  const { error } = await window._sb.from('cr_empresas').delete().eq('id', id);
+  if (error) { console.error('excluir', error); toast('Não foi possível excluir a empresa.', 'err'); return; }
+  logAcao('excluiu_empresa', 'empresa', e.razao_social); toast('Empresa excluída do cadastro.'); await carregar();
+}
+// Preenche razão social e endereço pelo CNPJ, SÓ nos campos vazios (mesma regra do Novo Contrato)
+async function buscarPorCNPJ() {
+  const b = $('btnCnpjEmp'), old = b.textContent; b.disabled = true; b.textContent = '⏳';
+  const r = await buscarCNPJ($('f_cnpj').value); b.disabled = false; b.textContent = old;
+  if (r.erro) { toast(r.erro, 'err'); return; }
+  const pre = [];
+  if (r.razao && !$('f_razao').value.trim()) { $('f_razao').value = r.razao; pre.push('razão social'); }
+  if (r.endereco && !$('f_end').value.trim()) { $('f_end').value = r.endereco; pre.push('endereço'); }
+  const ativa = /ativa/i.test(r.situacao) || !r.situacao;
+  toast(pre.length ? '🔎 Preenchido: ' + pre.join(' e ') + (ativa ? '' : ' — atenção: situação ' + r.situacao) : 'Nada a preencher: os campos já tinham conteúdo.', ativa ? 'ok' : 'err');
+}
+// Cadastra as empresas dos contratos já feitos que ainda não estão no cadastro (uma a uma: um erro não derruba as outras)
+async function importar() {
+  const b = $('btnImportar'); b.disabled = true;
+  try {
+    const { data, error } = await window._sb.from('cr_contratos').select('empresa,cnpj_empresa,endereco_emp,supervisor_nome,supervisor_cargo,criado_em').order('criado_em', { ascending: false }).limit(1000);
+    if (error) throw error;
+    const novas = empresasParaImportar(empresasRecentes(data, 1000), _emp);
+    if (!novas.length) { toast('Nada a importar: todas as empresas dos contratos já estão no cadastro.'); return; }
+    if (!confirm('Cadastrar ' + novas.length + ' empresa' + (novas.length > 1 ? 's' : '') + ' encontrada' + (novas.length > 1 ? 's' : '') + ' nos contratos?\n\nO endereço e o supervisor vêm do contrato mais recente de cada uma; confira depois.')) return;
+    let ok = 0, falhas = 0, semCnpj = 0;
+    for (const n of novas) {
+      const { _cnpjDescartado, ...row } = n;
+      const { error: e2 } = await window._sb.from('cr_empresas').insert(row);
+      if (e2) { falhas++; console.error('importar', row.razao_social, e2); } else { ok++; if (_cnpjDescartado) semCnpj++; }
+    }
+    logAcao('importou_empresas', 'empresa', String(ok), falhas ? falhas + ' falharam' : null);
+    toast('📥 ' + ok + ' empresa' + (ok === 1 ? '' : 's') + ' importada' + (ok === 1 ? '' : 's') + (semCnpj ? ' (' + semCnpj + ' sem CNPJ válido: corrija depois)' : '') + (falhas ? ' · ' + falhas + ' não foram importadas' : ''), falhas ? 'err' : 'ok', 6000);
+    await carregar();
+  } catch (e) { console.error('importar', e); toast('Não foi possível importar. ' + erroEmpresa(e), 'err'); }
+  finally { b.disabled = false; }
+}
+function exportar() {
+  exportarCSV('empresas', [['Razão social', e => e.razao_social], ['CNPJ', e => formatarCNPJ(e.cnpj || '')], ['Endereço', e => e.endereco], ['Supervisor', e => e.supervisor_nome], ['Cargo do supervisor', e => e.supervisor_cargo], ['Situação', e => e.ativo ? 'Ativa' : 'Inativa']], _vis);
+}
+(async () => {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  await carregar();
+  try { const { data: { user } } = await window._sb.auth.getUser(); if (user && window.populateUser) populateUser(user); } catch (e) {}
+})();
+</script>
+</body>
+</html>

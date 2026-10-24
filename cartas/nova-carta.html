@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<link rel="icon" type="image/png" sizes="32x32" href="../imagens/favicon-32x32.png"/>
-<link rel="shortcut icon" href="../imagens/icone.png" type="image/png"/>
-<meta name="description" content="Crie cartas de recomendação, cancelamento, recesso e TCE — Orizon Consultoria."/>
-<title>Novo Documento — Orizon Consultoria</title>
+<meta name="description" content="Crie cartas de recomendação, cancelamento, recesso e TCE — Orizon Consultoria e Gestão."/>
+<title>Novo Documento — Orizon Consultoria e Gestão</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
 <link rel="stylesheet" href="assets/cr-core.css"/>
-<link rel="stylesheet" href="assets/cr-typo-fix.css"/>
 <style>
 /* ── Tipo selector ── */
 .tipo-grid {
@@ -30,7 +27,19 @@
   font-size: 1.1rem; flex-shrink: 0;
 }
 .tipo-nome { font-size: .73rem; font-weight: 800; line-height: 1.2; }
-.tipo-desc { font-size: .57rem; color: #94a3b8; line-height: 1.4; }
+.tipo-desc { font-size: .57rem; color: var(--slate); line-height: 1.4; }
+/* ── Etapas (R17) ── */
+.nc-steps { display:flex; gap:.3rem; flex-wrap:wrap; margin:0 0 1.1rem; }
+.nc-step { display:flex; align-items:center; gap:.45rem; padding:.5rem .85rem; border:1.5px solid var(--border); border-radius:999px; background:var(--card2); color:var(--muted); font:700 .74rem var(--font); cursor:pointer; }
+.nc-step .nn { width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:var(--card3,rgba(128,128,128,.2)); font-size:.65rem; }
+.nc-step.on { border-color:var(--accent); color:var(--accent); }
+.nc-step.on .nn { background:var(--accent); color:var(--on-accent); }
+.nc-step.ok .nn { background:var(--green); color:var(--on-green); }
+.nc-oculto { display:none !important; }
+.nc-nav { display:flex; gap:.6rem; flex-wrap:wrap; padding:.2rem 0 3rem; }
+.nc-resumo { font-size:.78rem; line-height:1.9; }
+.nc-resumo b { color:var(--muted); font-weight:600; display:inline-block; min-width:110px; }
+.nc-default-tag { font-size:.6rem; color:var(--accent); margin-left:.4rem; }
 
 /* ── Layout split ── */
 .split-wrap {
@@ -57,7 +66,7 @@
 }
 .preview-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  height: 100%; gap: .5rem; color: #94a3b8; font-size: .72rem;
+  height: 100%; gap: .5rem; color: #475569; font-size: .72rem;
 }
 .preview-empty span { font-size: 2rem; opacity: .25; }
 .preview-actions {
@@ -68,10 +77,10 @@
 /* ── Sec title ── */
 .sec-title { font-size: 1.15rem; font-weight: 900; margin-bottom: .18rem; }
 .sec-title span { color: var(--accent); }
-.sec-sub { font-size: .82rem; color: #94a3b8; margin-bottom: 1.2rem; }
+.sec-sub { font-size: .82rem; color: var(--slate); margin-bottom: 1.2rem; }
 
 /* ── Form header labels ── */
-.fi-note { font-size: .58rem; color: #64748b; margin-top: .2rem; }
+.fi-note { font-size: .58rem; color: var(--dim); margin-top: .2rem; }
 
 @media (max-width: 1100px) {
   .split-wrap { grid-template-columns: 1fr; }
@@ -83,47 +92,13 @@
   .split-wrap { grid-template-columns: 1fr; }
 }
 </style>
+<script src="assets/cr-brand.js"></script>
 </head>
 <body>
 <div class="app">
 
 <!-- ══ SIDEBAR ══ -->
-<aside class="sidebar">
-  <div class="sb-head">
-    <div class="sb-logo">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="7.5" stroke="white" stroke-width="2.2" fill="none" opacity=".9"/>
-          <circle cx="11" cy="11" r="3.2" fill="white" opacity=".85"/>
-          <path d="M11 3.5 L14 1" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
-        </svg>
-    </div>
-    <div>
-      <div class="sb-name">Orizon <em>Consultoria</em></div>
-      <div class="sb-sub">Cartas Manuais</div>
-    </div>
-  </div>
-  <nav class="sb-nav">
-    <a class="sb-back" href="index.html">← Hub Central</a>
-    <div class="sb-sep">Painel</div>
-    <a class="sb-item" href="index-cartas.html"><span class="sb-ico">📋</span>Painel de Cartas</a>
-    <div class="sb-sep">Criar Carta</div>
-    <a class="sb-item active" href="nova-carta.html"><span class="sb-ico">📄</span>Novo Documento</a>
-    <div class="sb-sep">Contratos</div>
-    <a class="sb-item" href="index-contratos.html"><span class="sb-ico">🖊️</span>Contratos Digitais</a>
-  </nav>
-  <div class="sb-foot">
-    <div class="sb-foot-user">
-      <div class="sb-av" id="sb-av-init">OR</div>
-      <div class="sb-user-info">
-        <div class="sb-uname" id="user-nome">—</div>
-        <div class="sb-uemail" id="user-email">—</div>
-      </div>
-    </div>
-    <button class="sb-logout" onclick="doLogout()" title="Sair">
-      <span class="sb-logout-ico">⏻</span> Sair da conta
-    </button>
-  </div>
-</aside>
+<aside class="sidebar" id="crSidebar"></aside>
 
 <!-- ══ MAIN ══ -->
 <div class="main">
@@ -154,8 +129,10 @@
     <div class="sec-title">✍️ Novo <span>Documento</span></div>
     <div class="sec-sub">Selecione o tipo, preencha os dados e visualize o resultado antes de imprimir.</div>
 
+    <div class="nc-steps" id="ncSteps" role="tablist" aria-label="Etapas do documento"></div>
+
     <!-- TIPO -->
-    <div class="tipo-grid">
+    <div class="tipo-grid" data-step="1">
       <div class="tipo-item ativo" id="btn-carta_recomendacao" onclick="setTipo('carta_recomendacao')">
         <div class="tipo-ico" style="background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.22)">⭐</div>
         <div class="tipo-nome">Recomendação</div>
@@ -169,7 +146,7 @@
       <div class="tipo-item" id="btn-carta_recesso" onclick="setTipo('carta_recesso')">
         <div class="tipo-ico" style="background:rgba(52,152,219,.12);border:1px solid rgba(52,152,219,.22)">🏖️</div>
         <div class="tipo-nome">Recesso</div>
-        <div class="tipo-desc">15 dias — Lei 11.788</div>
+        <div class="tipo-desc">30 dias (1 ano ou mais) — Lei 11.788</div>
       </div>
       <div class="tipo-item" id="btn-tce" onclick="setTipo('tce')">
         <div class="tipo-ico" style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.22)">📄</div>
@@ -185,7 +162,7 @@
       <div class="form-col">
 
         <!-- DADOS DO ESTAGIÁRIO -->
-        <div class="card">
+        <div class="card" data-step="2">
           <div class="card-label">Dados do Estagiário / Profissional</div>
           <div class="grid-2">
             <div class="form-group">
@@ -237,7 +214,7 @@
         </div>
 
         <!-- EMPRESA -->
-        <div class="card">
+        <div class="card" data-step="2">
           <div class="card-label">Empresa / Unidade Concedente</div>
           <div class="grid-2">
             <div class="form-group">
@@ -256,7 +233,7 @@
         </div>
 
         <!-- PERÍODO -->
-        <div class="card">
+        <div class="card" data-step="2">
           <div class="card-label">Período de Vigência</div>
           <div class="grid-2">
             <div class="form-group">
@@ -271,7 +248,7 @@
         </div>
 
         <!-- RECESSO (condicional) -->
-        <div class="card" id="bloco-recesso" style="display:none">
+        <div class="card" data-step="2" id="bloco-recesso" style="display:none">
           <div class="card-label">Dados do Recesso</div>
           <div class="grid-3">
             <div class="form-group">
@@ -284,13 +261,15 @@
             </div>
             <div class="form-group">
               <label class="fl">Nº de dias</label>
-              <input type="number" class="fi" id="dias_recesso" value="15" min="1" max="30" oninput="schedulePreview()"/>
+              <input type="number" class="fi" id="dias_recesso" value="30" min="1" max="30" oninput="schedulePreview()"/>
+              <div style="font-size:11px;color:#64748b;margin-top:4px">Art. 13 da Lei 11.788: 30 dias para estágio de 1 ano ou mais; proporcional se for menor. Ajuste o número ao caso.</div>
             </div>
           </div>
+          <div id="recessoAviso" role="status" style="display:none;margin-top:.5rem;padding:.55rem .8rem;border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.1);border-radius:10px;font-size:12px;line-height:1.5"></div>
         </div>
 
         <!-- FINANCEIRO -->
-        <div class="card">
+        <div class="card" data-step="2">
           <div class="card-label">Dados Financeiros</div>
           <div class="grid-3">
             <div class="form-group">
@@ -314,7 +293,7 @@
         </div>
 
         <!-- SUPERVISOR -->
-        <div class="card">
+        <div class="card" data-step="2">
           <div class="card-label">Supervisor / Responsável</div>
           <div class="grid-2">
             <div class="form-group">
@@ -329,7 +308,7 @@
         </div>
 
         <!-- TCE EXTRA (condicional) -->
-        <div class="card" id="bloco-tce" style="display:none">
+        <div class="card" data-step="2" id="bloco-tce" style="display:none">
           <div class="card-label">Informações adicionais do TCE</div>
           <div class="grid-2">
             <div class="form-group">
@@ -344,7 +323,7 @@
         </div>
 
         <!-- ATIVIDADES (condicional) -->
-        <div class="card" id="bloco-atividades" style="display:none">
+        <div class="card" data-step="3" id="bloco-atividades" style="display:none">
           <div class="card-label">Atividades do Estagiário</div>
           <div class="form-group">
             <label class="fl">Descrição das atividades exercidas</label>
@@ -354,17 +333,25 @@
           </div>
         </div>
 
-        <!-- RECOMENDAÇÃO EXTRA (condicional) -->
-        <div class="card" id="bloco-rec-extra" style="display:none">
-          <div class="card-label">Parágrafo adicional (opcional)</div>
+        <!-- TEXTO (etapa 3): automático e editável -->
+        <div class="card" data-step="3" id="bloco-rec-extra">
+          <div class="card-label">Texto de destaque <span class="nc-default-tag" id="ncTag"></span></div>
           <div class="form-group">
-            <textarea class="fi" id="texto_livre" rows="3"
-              placeholder="Destaque habilidades, conquistas ou observações..." oninput="schedulePreview()"></textarea>
+            <textarea class="fi" id="texto_livre" rows="5"
+              placeholder="Observação final (opcional)..." oninput="textoEditado()"></textarea>
+            <div class="fi-note" id="ncNota"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="ncRestaurar" onclick="restaurarTexto()" style="margin-top:.4rem">↺ Restaurar texto automático</button>
           </div>
         </div>
 
+        <!-- RESUMO (etapa 4) -->
+        <div class="card" data-step="4">
+          <div class="card-label">Conferência antes de emitir</div>
+          <div class="nc-resumo" id="ncResumo"></div>
+        </div>
+
         <!-- EMISSÃO -->
-        <div class="card">
+        <div class="card" data-step="4">
           <div class="card-label">Emissão do Documento</div>
           <div class="grid-2">
             <div class="form-group">
@@ -378,13 +365,12 @@
           </div>
         </div>
 
-        <!-- AÇÕES -->
-        <div style="display:flex;gap:.6rem;flex-wrap:wrap;padding-bottom:3rem">
-          <button class="btn btn-primary" id="btnGerarBottom" onclick="gerar()">
-            <span>📄 Gerar Documento</span>
-          </button>
-          <button class="btn btn-ghost" onclick="previsualizar()">👁 Pré-visualizar</button>
-          <a href="index-cartas.html" class="btn btn-ghost">← Cancelar</a>
+        <!-- NAVEGAÇÃO ENTRE ETAPAS -->
+        <div class="nc-nav">
+          <button class="btn btn-ghost" id="ncVoltar" onclick="irEtapa(_etapa-1)">← Voltar</button>
+          <button class="btn btn-primary" id="ncAvancar" onclick="avancar()">Continuar →</button>
+          <button class="btn btn-primary" id="btnGerarBottom" onclick="gerar()" style="display:none"><span>📄 Emitir e gerar PDF</span></button>
+          <a href="index-cartas.html" class="btn btn-ghost">Cancelar</a>
         </div>
 
       </div><!-- /form-col -->
@@ -415,11 +401,15 @@
 <div id="toast-ct"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
 <script src="assets/cr-auth.js"></script>
 <script src="assets/cr-utils.js"></script>
-<script src="assets/cr-name-fix.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
 <script>
 let _tipo = 'carta_recomendacao';
+let _etapa = 1, _maxEtapa = 1, _txtEditado = false;
+let _modeloRec = null;   // R38: versão ativa do texto da recomendação (cr_modelos). null = sem modelo: vale o texto fixo de sempre.
 let _previewTimer = null;
 
 document.getElementById('data_emissao').value = new Date().toISOString().slice(0,10);
@@ -437,7 +427,7 @@ function setTipo(t) {
   show('bloco-recesso',     t === 'carta_cancelamento' || t === 'carta_recesso');
   show('bloco-tce',         t === 'tce');
   show('bloco-atividades',  t === 'tce' || t === 'carta_cancelamento' || t === 'carta_recesso');
-  show('bloco-rec-extra',   t === 'carta_recomendacao');
+  show('bloco-rec-extra',   true);
   show('bloco-valor-total', t === 'carta_cancelamento');
   show('bloco-cargo',       t === 'carta_recomendacao');
   show('bloco-curso',       t !== 'carta_recomendacao');
@@ -459,7 +449,77 @@ function setTipo(t) {
     tce:                'TCE'
   };
   document.getElementById('preview-tipo-label').textContent = labels[t];
+  const ts = document.getElementById('texto_livre');
+  if (ts && !_txtEditado) { ts.value = textoPadrao(); }
+  atualizarNotaTexto(); render_etapa();
   schedulePreview();
+}
+
+// ── Texto automático (etapa 3) ──
+// Recomendação: o texto-padrão aparece aqui e pode ser editado. R38: o padrão vem do MODELO ATIVO (Configurações > Modelos), com {{nome}} trocado
+// pelo nome atual. Com modelo, o texto final (padrão ou editado) é GRAVADO na carta (dados.texto_livre) — publicar outra versão depois não muda carta emitida.
+// Sem modelo (SQL da R38 não rodou ou falha de rede): o texto NÃO editado não é enviado e o documento usa o padrão fixo dele, como antes.
+// Outros tipos: campo vazio = nada é acrescentado; o que for escrito entra como observação final.
+const TEXTO_FIXO_REC = 'Durante o período de estágio, {{nome}} demonstrou comprometimento, responsabilidade e postura profissional exemplar. Apresentou proatividade, facilidade de adaptação às rotinas da empresa e bom relacionamento interpessoal com toda a equipe.';
+function textoPadrao() {
+  if (_tipo !== 'carta_recomendacao') return '';
+  return window.modeloTextoPlano(_modeloRec ? _modeloRec.texto : TEXTO_FIXO_REC, { nome: v('nome') }, 'texto_recomendacao', { nome: '[nome]' });
+}
+async function carregarModeloRec() {
+  try {
+    await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+    const { data, error } = await window._sb.from('cr_modelos').select('versao,texto').eq('chave', 'texto_recomendacao').eq('ativo', true).limit(1);
+    if (error || !data || !data.length || window.modeloValidar(data[0].texto, 'texto_recomendacao')) { if (error) console.warn('cr_modelos', error.code); return; }
+    _modeloRec = { versao: data[0].versao, texto: data[0].texto };
+  } catch (e) { console.warn('modelo da recomendação indisponível', e); return; }
+  const ta = document.getElementById('texto_livre');
+  if (ta && !_txtEditado && _tipo === 'carta_recomendacao') ta.value = textoPadrao();
+  atualizarNotaTexto(); if (typeof atualizarPreview === 'function') atualizarPreview();
+}
+function atualizarNotaTexto() {
+  const rec = _tipo === 'carta_recomendacao';
+  document.getElementById('ncTag').textContent = rec ? (_txtEditado ? '✏️ editado por você' : '⚙️ automático') : '';
+  document.getElementById('ncNota').textContent = rec ? 'Texto gerado automaticamente com o nome informado' + (_modeloRec ? ' (modelo v' + _modeloRec.versao + ')' : '') + '. Edite à vontade; use "Restaurar" para voltar ao padrão.' : 'Opcional. O que você escrever entra como observação final antes da data e das assinaturas.';
+  document.getElementById('ncRestaurar').style.display = rec ? '' : 'none';
+}
+function textoEditado() {
+  const ta = document.getElementById('texto_livre');
+  _txtEditado = _tipo === 'carta_recomendacao' ? (ta.value.trim() !== textoPadrao()) : !!ta.value.trim();
+  atualizarNotaTexto(); schedulePreview();
+}
+function restaurarTexto() { _txtEditado = false; document.getElementById('texto_livre').value = textoPadrao(); atualizarNotaTexto(); schedulePreview(); }
+
+// ── Etapas: 1 Tipo · 2 Dados · 3 Texto · 4 Pré-visualizar e emitir ──
+const ETAPAS = ['Tipo', 'Dados', 'Texto', 'Pré-visualizar e emitir'];
+function validarDados() {
+  if (!v('nome')) return 'Informe o nome.';
+  if (_tipo === 'tce') { if (!v('curso')) return 'TCE exige o curso do estudante.'; if (!v('instituicao')) return 'TCE exige a instituição de ensino.'; }
+  const i = v('periodo_inicio'), f = v('periodo_fim');
+  if (i && f && f < i) return 'O término não pode ser antes do início.';
+  return null;
+}
+function render_etapa() {
+  document.querySelectorAll('[data-step]').forEach(e => { e.classList.toggle('nc-oculto', e.getAttribute('data-step') !== String(_etapa)); });
+  // blocos condicionais por tipo continuam valendo dentro da etapa
+  document.getElementById('ncSteps').innerHTML = ETAPAS.map((n, k) => '<button type="button" role="tab" class="nc-step' + (k + 1 === _etapa ? ' on' : '') + (k + 1 < _etapa ? ' ok' : '') + '" onclick="irEtapa(' + (k + 1) + ')"><span class="nn">' + (k + 1 < _etapa ? '✓' : k + 1) + '</span>' + n + '</button>').join('');
+  document.getElementById('ncVoltar').style.visibility = _etapa > 1 ? 'visible' : 'hidden';
+  document.getElementById('ncAvancar').style.display = _etapa < 4 ? '' : 'none';
+  document.getElementById('btnGerarBottom').style.display = _etapa === 4 ? '' : 'none';
+  if (_etapa === 3 && !_txtEditado) { document.getElementById('texto_livre').value = textoPadrao(); }
+  if (_etapa === 4) resumoFinal();
+}
+function irEtapa(n) {
+  n = Math.max(1, Math.min(4, n));
+  if (n > _etapa) { for (let k = _etapa; k < n; k++) { if (k === 2) { const e = validarDados(); if (e) { toast(e, 'err'); _etapa = 2; render_etapa(); return; } } } }
+  _etapa = n; _maxEtapa = Math.max(_maxEtapa, n); render_etapa();
+  if (n >= 2) schedulePreview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function avancar() { irEtapa(_etapa + 1); }
+function resumoFinal() {
+  const d = dadosForm(), L = { carta_recomendacao: 'Carta de Recomendação', carta_cancelamento: 'Carta de Cancelamento', carta_recesso: 'Carta de Recesso', tce: 'Termo de Compromisso de Estágio' };
+  const e = x => String(x == null || x === '' ? '—' : x).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  document.getElementById('ncResumo').innerHTML = '<div><b>Documento</b>' + e(L[_tipo]) + '</div><div><b>Nome</b>' + e(d.nome) + '</div><div><b>Empresa</b>' + e(d.empresa) + '</div><div><b>Período</b>' + e(d.periodo_inicio) + ' → ' + e(d.periodo_fim) + '</div><div><b>Texto</b>' + (_tipo === 'carta_recomendacao' ? (_txtEditado ? 'editado por você' : 'automático') : (d.texto_livre ? 'com observação final' : 'automático')) + '</div><div style="color:var(--muted);font-size:.7rem;margin-top:.4rem">Ao emitir, o documento é numerado, gravado no histórico e aberto para imprimir/salvar em PDF.</div>';
 }
 
 // ── Dados do form ──
@@ -475,13 +535,16 @@ function dadosForm() {
     matricula: v('matricula'), instituicao: v('instituicao'),
     periodo_inicio: v('periodo_inicio') || null, periodo_fim: v('periodo_fim') || null,
     recesso_inicio: v('recesso_inicio') || null, recesso_fim: v('recesso_fim') || null,
-    dias_recesso: parseInt(v('dias_recesso')) || 15,
+    dias_recesso: parseInt(v('dias_recesso')) || 30,
     valor_bolsa: parseFloat(v('valor_bolsa')) || null,
     valor_vt: parseFloat(v('valor_vt')) || null,
     taxa_admin: parseFloat(v('taxa_admin')) || 15,
     valor_total: parseFloat(v('valor_total')) || null,
     supervisor_nome: v('supervisor_nome'), supervisor_cargo: v('supervisor_cargo'),
-    texto_livre: v('texto_livre'),
+    texto_livre: (_tipo === 'carta_recomendacao' && !_txtEditado) ? (_modeloRec ? textoPadrao() : '') : v('texto_livre'),
+    // R38: de onde veio o texto da recomendação (só informativo). modelo_versao só quando o texto é o do modelo, sem edição.
+    texto_editado: (_tipo === 'carta_recomendacao' && _txtEditado) ? true : null,
+    modelo_versao: (_tipo === 'carta_recomendacao' && !_txtEditado && _modeloRec) ? _modeloRec.versao : null,
     jornada_horas: v('jornada_horas') || '6 horas diárias / 30h semanais',
     apolice_seguro: v('apolice_seguro') || '1018200561901 Capemisa Seguradora',
     atividades_plano: v('atividades_plano'),
@@ -491,7 +554,17 @@ function dadosForm() {
 }
 
 // ── Preview embutido (sem nova aba) ──
+// R45: aviso amarelo de coerência do recesso (não bloqueia; só no tipo Recesso e no Cancelamento, que também têm o bloco)
+function atualizarAvisoRecesso() {
+  const box = document.getElementById('recessoAviso'); if (!box) return;
+  box.textContent = ''; box.style.display = 'none';
+  if (_tipo !== 'carta_recesso' && _tipo !== 'carta_cancelamento') return;
+  const l = window.recessoAvisos ? window.recessoAvisos({ recesso_inicio: v('recesso_inicio'), recesso_fim: v('recesso_fim'), dias_recesso: v('dias_recesso'), periodo_inicio: v('periodo_inicio'), periodo_fim: v('periodo_fim') }) : [];
+  if (!l.length) return;
+  box.textContent = '⚠️ ' + l.join(' ⚠️ '); box.style.display = '';
+}
 function schedulePreview() {
+  atualizarAvisoRecesso();
   clearTimeout(_previewTimer);
   _previewTimer = setTimeout(atualizarPreview, 600);
 }
@@ -523,19 +596,36 @@ function previsualizar() {
 }
 
 // ── Gerar (abre visualizar.html para imprimir) ──
-function gerar() {
+async function gerar() {
+  const eV = validarDados(); if (eV) { toast(eV, 'err'); return; }
   const d = dadosForm();
-  if (!d.nome) { toast('Informe o nome.', 'err'); return; }
   const prefixos = { carta_recomendacao:'REC', carta_cancelamento:'CAN', carta_recesso:'RCS', tce:'TCE' };
-  const agora = new Date();
-  d.numero_carta = `${prefixos[_tipo]||'DOC'}-${agora.getFullYear()}-${String(agora.getTime()).slice(-4)}`;
+  await emitirCarta(d, _tipo);
   localStorage.setItem('cr_preview', JSON.stringify(d));
   window.open('visualizar.html', '_blank');
   setTimeout(() => localStorage.removeItem('cr_preview'), 120000);
   toast('✅ Documento gerado! Imprima ou salve como PDF na próxima aba.');
 }
 
-setTipo('carta_recomendacao');
+const _qp = new URLSearchParams(location.search);
+setTipo(document.getElementById('btn-' + _qp.get('tipo')) ? _qp.get('tipo') : 'carta_recomendacao');
+carregarModeloRec();
+async function duplicarCarta(id) {
+  await new Promise(r => { const t = setInterval(() => { if (window._sb) { clearInterval(t); r(); } }, 80); });
+  const { data, error } = await _sb.from('cr_cartas').select('dados,tipo_doc').eq('id', id).single();
+  if (error || !data || !data.dados) { toast('Não foi possível carregar a carta', 'err'); return; }
+  if (data.tipo_doc) setTipo(data.tipo_doc);
+  Object.entries(data.dados).forEach(([k, v]) => { const el = document.getElementById(k); if (el && v != null && k !== 'numero_carta') el.value = v; });
+  // R38: carta duplicada com o texto do MODELO (não editado) volta a usar o modelo ativo e o nome novo; texto editado à mão continua sendo mantido
+  _txtEditado = !!data.dados.texto_livre && !(data.tipo_doc === 'carta_recomendacao' && data.dados.modelo_versao);
+  if (!_txtEditado) { const ta = document.getElementById('texto_livre'); if (ta) ta.value = textoPadrao(); }
+  atualizarNotaTexto(); render_etapa();
+  toast('Dados carregados. Ajuste e gere um novo documento.'); atualizarPreview();
+}
+if (_qp.get('dup')) duplicarCarta(_qp.get('dup'));
+(async () => { const c = await carregarConfig(), d = c.dados_padrao || {};
+  ['cidade_emissao','taxa_admin','jornada_horas','apolice_seguro'].forEach(k => { const e = document.getElementById(k); if (e && !e.value && d[k]) e.value = d[k]; });
+  if (typeof atualizarPreview === 'function') atualizarPreview(); })();
 </script>
 </body>
 </html>

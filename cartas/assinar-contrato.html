@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assinar contrato — Orizon Consultoria e Gestão</title>
+<style>
+:root{--bg:#060606;--card:#0e0e0e;--c2:#131313;--acc:#60a5fa;--pri:#1e40af;--tx:#f0f4ff;--mu:#8a9ab8;--ok:#2ecc71;--er:#e74c3c;--wa:#f39c12;--bd:rgba(96,165,250,.2)}
+@media(prefers-color-scheme:light){:root{--bg:#f3f6fb;--card:#fff;--c2:#f1f5fa;--tx:#0f172a;--mu:#475569;--acc:#1d4ed8;--ok:#15803d;--er:#b91c1c;--wa:#92400e;--bd:rgba(30,64,175,.2)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 Sora,system-ui,sans-serif;padding:1rem}
+.w{max-width:720px;margin:0 auto}h1{font-size:1.15rem;margin:.2rem 0}.sub{color:var(--mu);font-size:.8rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:1rem;margin:.9rem 0}
+.row{display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0;border-bottom:1px solid var(--bd);font-size:.85rem}.row b{color:var(--mu);font-weight:600}.row span{text-align:right}
+.sig{display:flex;justify-content:space-between;font-size:.82rem;padding:.25rem 0}.ok{color:var(--ok)}.pe{color:var(--wa)}.er{color:var(--er)}
+canvas{width:100%;height:170px;background:#fff;border-radius:10px;touch-action:none;display:block}
+.tabs button{background:none;border:0;color:var(--mu);font:700 .8rem Sora,system-ui;padding:.4rem .8rem;cursor:pointer;border-bottom:2px solid transparent}.tabs button.on{color:var(--acc);border-color:var(--acc)}
+input[type=text]{width:100%;padding:.6rem;border-radius:8px;border:1px solid var(--bd);background:var(--c2);color:var(--tx);font:inherit;margin-bottom:.5rem}
+.btn{border:0;border-radius:10px;padding:.7rem 1.1rem;font:700 .85rem Sora,system-ui;cursor:pointer}.p{background:var(--pri);color:#fff}.g{background:transparent;color:var(--mu);border:1px solid var(--bd)}.btn:disabled{opacity:.5}
+#otpIn{font:700 1.5rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.3em;text-align:center}
+.hash{font-family:monospace;font-size:.7rem;word-break:break-all;color:var(--acc)}
+</style><script src="assets/cr-brand.js"></script>
+</head><body><div class="w" id="app"><p class="sub">Carregando…</p></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-otp.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+// Página pública: acessa o banco SOMENTE pelas funções por token (RN-04, RN-06, RN-10)
+const _sbPub = supabase.createClient(window.CR_CONFIG.SB_URL, window.CR_CONFIG.SB_KEY);
+const _tk = new URLSearchParams(location.search).get('t');
+const _app = document.getElementById('app');
+const esc = x => String(x ?? '—').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ERROS = { token_invalido:'Link inválido.', cancelado:'Este contrato foi cancelado.', expirado:'Este link expirou. Peça um novo à Orizon.', ja_assinado:'Você já assinou este documento.', aguardando_vez:'Ainda não é a sua vez de assinar. Aguarde a assinatura anterior e abra este link de novo.', recusado:'Você recusou este documento.', assinatura_invalida:'Assinatura inválida. Desenhe ou digite novamente.' };
+const PAPEL = { candidato:'Candidato/Colaborador', empresa_nexus:'Orizon Consultoria e Gestão', empresa_cliente:'Empresa', supervisor:'Supervisor', instituicao:'Instituição de Ensino' };
+const brl = v => v == null || v === '' ? '—' : 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+const dt = d => d ? new Date(d).toLocaleString('pt-BR') : '—';
+const dd = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+function fim(msg, ok) { _app.innerHTML = `<div class="card"><h1 class="${ok ? 'ok' : 'er'}">${ok ? '✅' : '⚠️'} ${esc(msg)}</h1></div>`; }
+let _mode = 'draw', _ink = false, _cv, _cx, _down = false, _codigo = '';
+// R37 (M3): quando a Orizon exige código, a assinatura só aparece depois de o código ser conferido pelo servidor (e é conferido DE NOVO ao assinar)
+function otpBoxHtml(me) {
+  const o = me.otp || {}; if (!o.exigido) return '';
+  const aviso = o.bloqueado ? erroOtp('codigo_bloqueado') : !o.emitido ? erroOtp('codigo_nao_emitido') : o.expirado ? erroOtp('codigo_expirado') : '';
+  return `<div class="card" id="otpBox"><h1>🔐 Confirme sua identidade</h1>
+    <p>Para assinar, digite o <b>código de 6 dígitos</b> que a Orizon enviou para você. Ele chega por um canal diferente do link (por exemplo, WhatsApp ou ligação).</p>
+    <input type="text" id="otpIn" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="000000" aria-label="Código de 6 dígitos" oninput="this.value=otpLimpar(this.value)" onkeydown="if(event.key==='Enter')validarOtp()">
+    <button class="btn p" id="bOtp" onclick="validarOtp()">Confirmar código</button>
+    <p id="otpMsg" class="er" role="alert" style="font-size:.82rem">${esc(aviso)}</p></div>`;
+}
+function otpVoltar(msg) {
+  _codigo = ''; const bx = document.getElementById('otpBox'), sg = document.getElementById('sigBox'); if (!bx) return;
+  bx.style.display = ''; if (sg) sg.style.display = 'none';
+  const m = document.getElementById('otpMsg'); m.className = 'er'; m.textContent = msg || '';
+  const i = document.getElementById('otpIn'); if (i) { i.value = ''; i.focus(); }
+}
+async function validarOtp() {
+  const cod = otpCodigoValido(document.getElementById('otpIn').value), msg = document.getElementById('otpMsg'), b = document.getElementById('bOtp');
+  msg.className = 'er';
+  if (!cod) { msg.textContent = erroOtp('codigo_ausente'); return; }
+  b.disabled = true; b.textContent = 'Conferindo…';
+  const { data, error } = await _sbPub.rpc('cr_otp_validar', { p_token: _tk, p_codigo: cod });
+  b.disabled = false; b.textContent = 'Confirmar código';
+  if (error) { console.error('cr_otp_validar'); msg.textContent = 'Não foi possível conferir o código. Tente novamente.'; return; }
+  if (data.erro) { msg.textContent = erroOtp(data.erro, data.restantes); return; }
+  _codigo = cod; msg.textContent = '';
+  document.getElementById('otpBox').style.display = 'none'; document.getElementById('sigBox').style.display = '';
+}
+(async () => {
+  if (!_tk) return fim(ERROS.token_invalido);
+  const { data, error } = await _sbPub.rpc('cr_ler_por_token', { p_token: _tk });
+  if (error) { console.error(error); return fim('Não foi possível carregar o documento. Tente novamente.'); }
+  if (data.erro) return fim(ERROS[data.erro] || data.erro);
+  const c = data.contrato, me = data.signatario, est = c.tipo === 'estagio';
+  const rows = [['Nº', c.numero_contrato], ['Tipo', (c.tipo_mov ? { aditivo: 'Aditivo ao ', renovacao: 'Renovação do ', rescisao: 'Rescisão do ' }[c.tipo_mov] : '') + (est ? 'Termo de Compromisso de Estágio' : 'Contrato CLT')], ['Candidato', c.nome_candidato], ['CPF', c.cpf], ['Cargo', c.cargo], ['Empresa', c.empresa], ['CNPJ', c.cnpj_empresa], ['Endereço', c.endereco_emp],
+    ['Período', dd(c.periodo_inicio) + ' → ' + dd(c.periodo_fim)], ['Jornada', c.jornada_horas], [est ? 'Bolsa' : 'Salário', brl(c.valor_bolsa)], ['Vale-transporte/dia', brl(c.valor_vt)], ['Supervisor', c.supervisor_nome],
+    ...(est ? [['Curso', c.curso], ['Instituição', c.instituicao], ['Atividades', c.atividades_plano]] : [])];
+  const MOVL = { aditivo: '📝 ADITIVO', renovacao: '🔄 RENOVAÇÃO', rescisao: '⛔ RESCISÃO' };
+  const CAMPOL = { periodo_fim: 'Término', valor_bolsa: 'Bolsa/Salário', valor_vt: 'Vale-transporte', jornada_horas: 'Jornada', cargo: 'Cargo', supervisor_nome: 'Supervisor', supervisor_cargo: 'Cargo do supervisor', atividades_plano: 'Plano de atividades' };
+  const fv = (k, v) => v == null || v === '' ? '—' : k === 'periodo_fim' ? dd(v) : (k === 'valor_bolsa' || k === 'valor_vt') ? brl(v) : v;
+  const mov = c.tipo_mov ? `<div class="card" style="border-color:#f59e0b"><b>${MOVL[c.tipo_mov] || esc(c.tipo_mov)}</b> ao contrato nº <b>${esc(data.origem)}</b>
+    ${c.tipo_mov === 'rescisao' ? `<p>Encerramento em <b>${dd(c.data_efeito)}</b>.<br/>Motivo: ${esc(c.motivo_mov)}</p>` : ''}
+    ${c.tipo_mov === 'renovacao' ? `<p>Nova vigência: <b>${dd(c.periodo_inicio)}</b> a <b>${dd(c.periodo_fim)}</b>.</p>` : ''}
+    ${c.tipo_mov === 'aditivo' && c.alteracoes ? `<p>Alterações (de → para):</p>${Object.entries(c.alteracoes).map(([k, a]) => `<div class="row"><b>${esc(CAMPOL[k] || k)}</b><span>${esc(fv(k, a.de))} → <b>${esc(fv(k, a.para))}</b></span></div>`).join('')}${c.motivo_mov ? `<p>Observação: ${esc(c.motivo_mov)}</p>` : ''}` : ''}
+    <p style="font-size:.78rem;opacity:.8">As demais condições do contrato original permanecem as mesmas.</p></div>` : '';
+  const seq = c.ordem_assinatura === 'sequencial';
+  const lista = data.signatarios.map(s => `<div class="sig"><span>${seq && s.ordem ? esc(s.ordem) + 'º · ' : ''}${esc(s.nome)} · ${esc(PAPEL[s.papel] || s.papel)}</span><span class="${s.status === 'assinado' ? 'ok' : s.status === 'recusado' ? 'er' : 'pe'}">${s.status === 'assinado' ? '✅ Assinado' : s.status === 'recusado' ? '❌ Recusado' : '⏳ Pendente'}</span></div>`).join('');
+  let acao;
+  if (me.status === 'assinado') acao = `<div class="card"><b class="ok">✅ Você assinou em ${dt(me.assinado_em)}.</b><p class="hash">Hash: ${esc(me.hash)}</p></div>`;
+  else if (me.status === 'recusado') acao = `<div class="card er">Você recusou este documento.</div>`;
+  else if (me.aguardando) acao = `<div class="card"><b class="pe">⏸️ Ainda não é a sua vez.</b><p>Este documento é assinado <b>um de cada vez</b>. Falta a assinatura de <b>${esc(me.aguardando)}</b> antes da sua.</p><p class="sub">Você já pode ler o documento. Quando a assinatura anterior acontecer, abra este mesmo link de novo para assinar.</p></div>`;
+  else acao = otpBoxHtml(me) + `<div class="card" id="sigBox"${me.otp && me.otp.exigido ? ' style="display:none"' : ''}><h1>Sua assinatura, ${esc(me.nome)}</h1>
+    <div class="tabs"><button class="on" id="tD" onclick="setMode('draw')">✍️ Desenhar</button><button id="tT" onclick="setMode('type')">⌨️ Digitar</button></div>
+    <input type="text" id="nm" placeholder="Digite seu nome completo" style="display:none" oninput="typed()"><canvas id="cv" width="700" height="200"></canvas>
+    ${window.crAvisoLGPD()}
+    <p><label><input type="checkbox" id="ck"> Li o documento e o aviso de privacidade, concordo com os termos e estou ciente do registro de data, hora, IP e dispositivo desta assinatura.</label></p>
+    <button class="btn g" onclick="limpar()">Limpar</button> <button class="btn p" id="bA" onclick="assinar()">Assinar documento</button> <button class="btn g" onclick="recusar()">Recusar</button></div>`;
+  _app.innerHTML = `<h1>🖊️ ${esc(c.titulo)}</h1><div class="sub">Orizon Consultoria e Gestão · assinatura digital</div>
+    ${mov}<div class="card">${rows.map(r => `<div class="row"><b>${r[0]}</b><span>${esc(r[1])}</span></div>`).join('')}</div>
+    <div class="card"><b>Signatários</b>${lista}</div>${acao}`;
+  if (me.status === 'pendente' && !me.aguardando) initCanvas();
+})();
+function initCanvas() {
+  _cv = document.getElementById('cv'); _cx = _cv.getContext('2d'); _cx.lineWidth = 2.4; _cx.lineCap = 'round'; _cx.strokeStyle = '#0a1a5c';
+  const p = e => { const r = _cv.getBoundingClientRect(); return [(e.clientX - r.left) * _cv.width / r.width, (e.clientY - r.top) * _cv.height / r.height]; };
+  _cv.onpointerdown = e => { if (_mode !== 'draw') return; _down = true; _cv.setPointerCapture(e.pointerId); _cx.beginPath(); _cx.moveTo(...p(e)); };
+  _cv.onpointermove = e => { if (!_down) return; _cx.lineTo(...p(e)); _cx.stroke(); _ink = true; };
+  _cv.onpointerup = () => { _down = false; };
+}
+function setMode(m) { _mode = m; document.getElementById('tD').className = m === 'draw' ? 'on' : ''; document.getElementById('tT').className = m === 'type' ? 'on' : ''; document.getElementById('nm').style.display = m === 'type' ? '' : 'none'; limpar(); }
+function limpar() { _cx.clearRect(0, 0, _cv.width, _cv.height); _ink = false; if (_mode === 'type') typed(); }
+function typed() { _cx.clearRect(0, 0, _cv.width, _cv.height); const v = document.getElementById('nm').value.trim(); _ink = !!v; if (v) { _cx.font = 'italic 64px "Brush Script MT","Segoe Script",cursive'; _cx.fillStyle = '#0a1a5c'; _cx.fillText(v, 20, 120, 660); } }
+async function assinar() {
+  if (!_ink) return alert('Desenhe ou digite sua assinatura.');
+  if (!document.getElementById('ck').checked) return alert('Marque a confirmação para assinar.');
+  if (document.getElementById('otpBox') && !_codigo) return otpVoltar(erroOtp('codigo_ausente'));
+  const b = document.getElementById('bA'); b.disabled = true; b.textContent = 'Assinando…';
+  // p_codigo só vai quando existe: contrato sem código continua chamando cr_assinar como antes (funciona mesmo sem o SQL da R37)
+  const { data, error } = await _sbPub.rpc('cr_assinar', Object.assign({ p_token: _tk, p_img: _cv.toDataURL('image/png') }, _codigo ? { p_codigo: _codigo } : {}));
+  if (data && data.erro && String(data.erro).indexOf('codigo_') === 0) { b.disabled = false; b.textContent = 'Assinar documento'; return otpVoltar(erroOtp(data.erro, data.restantes)); }
+  if (error || data.erro) { console.error(error || data.erro); alert(error ? 'Falha ao assinar. Tente novamente.' : (ERROS[data.erro] || data.erro)); b.disabled = false; b.textContent = 'Assinar documento'; return; }
+  _app.innerHTML = `<div class="card"><h1 class="ok">✅ Documento assinado!</h1><p>Nº ${esc(data.numero)} · ${dt(data.assinado_em)}</p><p class="hash">Hash SHA-256: ${esc(data.hash)}</p><p class="sub">Guarde este código. Você pode fechar esta página.</p></div>`;
+}
+async function recusar() {
+  const m = prompt('Motivo da recusa (opcional):'); if (m === null) return;
+  const { data, error } = await _sbPub.rpc('cr_recusar', { p_token: _tk, p_motivo: m });
+  if (error || data.erro) return alert('Não foi possível registrar a recusa.');
+  fim('Recusa registrada.', true);
+}
+</script></body></html>
