@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Modelos de texto — Cartas de Conta · Orizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<link rel="stylesheet" href="assets/cab.css"/>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cr_theme')||'dark')}catch(e){}</script>
+
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+      <div class="tb-bc"><strong>Hub</strong><span style="opacity:.3">›</span><span>Cartas em PDF › Modelos</span></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content">
+
+    <div class="welcome"><div><div class="wl-title">📝 Modelos de <em>texto</em></div><div class="wl-sub">Textos-base das cartas. Use {{variáveis}} — elas são preenchidas com os dados do formulário.</div></div>
+      <button class="btn btn-primary btn-sm" onclick="novo()">➕ Novo modelo</button></div>
+    <div class="aviso hub-aviso">⚠️ Estes textos são MODELOS. Cada banco tem exigências próprias: revise com um advogado e com o banco antes de usar em produção.</div>
+    <div class="split">
+      <div class="panel"><div class="panel-hd"><span class="panel-title">📚 Modelos</span></div><div id="lista" style="padding:.4rem .8rem 1rem"></div></div>
+      <div class="panel" style="padding:1rem 1.1rem" id="ed"><div class="empty"><span>📝</span>Escolha um modelo para editar.</div></div>
+    </div>
+    <div class="section-label" style="margin-top:1.2rem">👁 Prévia com dados de exemplo</div>
+    <div class="sheet-wrap"><div id="pv"></div></div>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="void 0"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cab-carta.js"></script>
+<script src="assets/cr-demo.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+
+<script>
+
+let M = [], SEL = null;
+const EX = { tipo_conta: 'pj', banco_nome: 'Banco Exemplo S.A.', agencia: '0001', cidade: 'Guaíba/RS', data: CAB.hojeISO(), razao_social: 'Empresa Exemplo Ltda', cnpj: '11222333000181', endereco: 'Rua das Flores, 100, Centro',
+  responsavel: 'Maria Souza', cargo_responsavel: 'Sócia-administradora', titular_nome: 'João da Silva', cpf: '52998224725', cargo_vinculo: 'sócio-administrador', finalidade: 'movimentação financeira da empresa', poderes: 'assinar e movimentar a conta' };
+async function carregar() {
+  let r = await _sb.from('cab_modelos').select('*').order('id'); M = r.data || [];
+  if (!M.length) { for (const x of CAB.MODELOS_PADRAO) await _sb.from('cab_modelos').insert(x); r = await _sb.from('cab_modelos').select('*').order('id'); M = r.data || []; }
+  if (SEL == null && M.length) SEL = M[0].id; desenhar();
+}
+function desenhar() {
+  document.getElementById('lista').innerHTML = M.map(m => '<div class="action-card' + (m.id === SEL ? ' featured' : '') + '" style="margin-top:.55rem;cursor:pointer" onclick="SEL=' + m.id + ';desenhar()" tabindex="0" onkeydown="if(event.key===\'Enter\'){SEL=' + m.id + ';desenhar()}">' +
+    '<div class="ac-title">' + CAB.esc(m.nome) + '</div><div class="ac-desc">' + CAB.esc(CAB.TIPO_MODELO[m.tipo] || m.tipo) + ' · ' + (m.ativo === false ? '<span class="c-red">inativo</span>' : '<span class="c-green">ativo</span>') + '</div></div>').join('');
+  const m = M.find(x => x.id === SEL), ed = document.getElementById('ed');
+  if (!m) { ed.innerHTML = '<div class="empty"><span>📝</span>Escolha um modelo para editar.</div>'; document.getElementById('pv').innerHTML = ''; return; }
+  ed.innerHTML = '<div class="form-group"><label class="fl" for="mn">Nome</label><input class="fi" id="mn" value="' + CAB.esc(m.nome) + '"/></div>' +
+    '<div class="grid-2"><div class="form-group"><label class="fl" for="mt">Tipo</label><select class="fi" id="mt">' + Object.keys(CAB.TIPO_MODELO).map(k => '<option value="' + k + '"' + (m.tipo === k ? ' selected' : '') + '>' + CAB.TIPO_MODELO[k] + '</option>').join('') + '</select></div>' +
+    '<div class="form-group"><label class="fl" for="ma">Situação</label><select class="fi" id="ma"><option value="1"' + (m.ativo !== false ? ' selected' : '') + '>Ativo</option><option value="0"' + (m.ativo === false ? ' selected' : '') + '>Inativo</option></select></div></div>' +
+    '<div class="form-group"><label class="fl" for="mx">Texto</label><textarea class="fi mono" id="mx" rows="16" oninput="previa()">' + CAB.esc(m.texto) + '</textarea></div>' +
+    '<div class="fl" style="margin-bottom:.3rem">Inserir variável</div><div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.8rem">' + CAB.VARIAVEIS.map(v => '<button type="button" class="chip-var" onclick="ins(\'' + v + '\')">{{' + v + '}}</button>').join('') + '</div>' +
+    '<div class="kbd-note" style="margin-bottom:.7rem">Bloco opcional: <span class="mono">{{#poderes}} ... {{/poderes}}</span> só aparece se o campo estiver preenchido.</div>' +
+    '<div style="display:flex;gap:.45rem;flex-wrap:wrap"><button class="btn btn-primary" onclick="salvar()">💾 Salvar</button><button class="btn btn-ghost" onclick="restaurar()">↺ Restaurar padrão</button><button class="btn btn-red" onclick="excluir()">🗑 Excluir</button></div>';
+  previa();
+}
+function ins(v) { const t = document.getElementById('mx'), a = t.selectionStart, b = t.selectionEnd; t.value = t.value.slice(0, a) + '{{' + v + '}}' + t.value.slice(b); t.focus(); t.selectionStart = t.selectionEnd = a + v.length + 4; previa(); }
+function previa() { const t = document.getElementById('mx'); if (!t) return; document.getElementById('pv').innerHTML = CAB.folhaHTML({ numero: 'CAB-0000-0000', texto: CAB.renderModelo(t.value, CAB.montarVars(EX, '')), dados: EX }, { destacar: true }); }
+async function salvar() {
+  const o = { nome: document.getElementById('mn').value.trim(), tipo: document.getElementById('mt').value, ativo: document.getElementById('ma').value === '1', texto: document.getElementById('mx').value };
+  if (!o.nome || !o.texto.trim()) return toast('Informe o nome e o texto.', 'wrn');
+  const r = await _sb.from('cab_modelos').update(o).eq('id', SEL); if (r.error) return toast('Erro: ' + r.error.message, 'err'); logAcao('modelo_salvo', o.nome); toast('Modelo salvo.'); carregar();
+}
+async function novo() { const r = await _sb.from('cab_modelos').insert({ nome: 'Novo modelo', tipo: 'empresa_banco', texto: CAB.MODELO_PADRAO, ativo: true }).select().single(); if (r.error) return toast('Erro: ' + r.error.message, 'err'); SEL = r.data.id; carregar(); }
+async function restaurar() {
+  const m = M.find(x => x.id === SEL), p = CAB.MODELOS_PADRAO.find(x => x.tipo === m.tipo) || CAB.MODELOS_PADRAO[0]; if (!confirm('Voltar o texto deste modelo para o padrão do sistema?')) return;
+  const r = await _sb.from('cab_modelos').update({ texto: p.texto }).eq('id', SEL); if (r.error) return toast('Erro: ' + r.error.message, 'err'); toast('Texto restaurado.'); carregar();
+}
+async function excluir() {
+  const m = M.find(x => x.id === SEL); if (!confirm('Excluir o modelo “' + m.nome + '”? Cartas já emitidas não são afetadas.')) return;
+  const r = await _sb.from('cab_modelos').delete().eq('id', SEL); if (r.error) return toast('Erro: ' + r.error.message, 'err'); SEL = null; toast('Modelo excluído.', 'wrn'); carregar();
+}
+crPronto().then(carregar);
+</script>
+</body>
+</html>

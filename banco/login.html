@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link href="../imagens/site.webmanifest" rel="manifest"/>
+<title>Entrar — Cartas de Conta · Orizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cr_theme')||'dark')}catch(e){}</script>
+<style>
+html[data-theme="light"]{--bg:#f3f6fb;--bg2:#eaf0f8;--card:#ffffff;--card2:#f1f5fa;--text:#0f172a;--muted:#475569;--muted2:#5a6a80;--border:rgba(29,78,216,.16);--border2:rgba(29,78,216,.34);--accent:#1d4ed8}
+:root{
+  --primary:#1d4ed8;--accent:#3b82f6;--accent2:#a8d85f;
+  --bg:#080808;--bg2:#0d0d0d;--card:#111111;--card2:#161616;
+  --border:rgba(59,130,246,0.12);--border2:rgba(59,130,246,0.28);
+  --text:#ffffff;--muted:#ffffff;--muted2:#8a94a8;
+  --red:#e74c3c;--orange:#f39c12;--green:#2ecc71;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;}
+
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(59,130,246,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.025) 1px,transparent 1px);
+  background-size:52px 52px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-30%;left:50%;transform:translateX(-50%);
+  width:800px;height:600px;background:radial-gradient(ellipse,rgba(59,130,246,0.05) 0%,transparent 68%);
+  pointer-events:none;z-index:0;}
+
+#loginScreen{
+  position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);overflow:hidden;
+}
+#loginScreen::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(59,130,246,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59,130,246,0.07) 0%, transparent 50%),
+    radial-gradient(circle at 60% 10%, rgba(59,130,246,0.04) 0%, transparent 40%);
+  animation:lbg 8s ease-in-out infinite alternate;pointer-events:none;
+}
+@keyframes lbg{0%{opacity:0.7;transform:scale(1);}100%{opacity:1;transform:scale(1.05);}}
+
+.login-wrap{
+  position:relative;z-index:1;width:100%;max-width:860px;
+  display:grid;grid-template-columns:1fr 1fr;
+  background:linear-gradient(165deg,rgba(17,30,58,0.98) 0%,rgba(9,14,28,0.98) 55%,rgba(6,9,18,0.99) 100%);
+  border:1px solid var(--border2);border-radius:28px;
+  overflow:hidden;backdrop-filter:blur(24px);
+  box-shadow:0 40px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(96,165,250,0.08);
+  margin:1rem;
+}
+/* R23: tema claro do login (o lado do formulário era #000 fixo e o texto escuro ficava ilegível; o painel de marca continua escuro, com as cores do tema escuro) */
+html[data-theme="light"] .login-wrap{background:#fff;box-shadow:0 30px 70px rgba(15,23,42,.18)}
+html[data-theme="light"] .login-form-side{background:#fff}
+html[data-theme="light"] .login-brand{--text:#fff;--muted:#fff;--accent:#60a5fa;color:#fff}
+html[data-theme="light"] .f-input{background:#f1f5fa;border-color:rgba(15,23,42,.22)}
+html[data-theme="light"] .check-human{background:#f1f5fa;border-color:rgba(15,23,42,.18)}
+html[data-theme="light"] .ch-box{background:#fff;border-color:rgba(15,23,42,.4)}
+html[data-theme="light"] .att-dot{background:rgba(15,23,42,.18)}
+@media(max-width:680px){.login-wrap{grid-template-columns:1fr;}.login-brand{display:none!important;}}
+
+.login-brand{
+  background:linear-gradient(160deg,#1e3f7a 0%,#12234a 100%);
+  padding:2.8rem 2.2rem;display:flex;flex-direction:column;justify-content:space-between;
+  border-right:1px solid rgba(96,165,250,0.3);position:relative;overflow:hidden;
+}
+.login-brand::before{
+  content:'';position:absolute;top:-40%;right:-30%;width:400px;height:400px;
+  background:radial-gradient(ellipse,rgba(96,165,250,0.22) 0%,transparent 65%);pointer-events:none;
+}
+.login-brand::after{
+  content:'';position:absolute;bottom:-20%;left:-10%;width:250px;height:250px;
+  background:radial-gradient(ellipse,rgba(96,165,250,0.24) 0%,transparent 65%);pointer-events:none;
+}
+.lb-logo{width:72px;height:72px;border-radius:50%;
+  background:none;border:none;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;margin-bottom:1.8rem;box-shadow:0 4px 24px rgba(96,165,250,0.5);}
+.lb-logo img{width:100%;height:100%;object-fit:contain;display:block;}
+.lb-tag{font-size:0.55rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--accent);opacity:0.85;margin-bottom:0.6rem;}
+.lb-title{font-size:2rem;font-weight:900;line-height:1.15;margin-bottom:0.5rem;letter-spacing:-0.5px;}
+.lb-title span{color:var(--accent);text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 -1px 0 #000,0 1px 0 #000,-1px 0 0 #000,1px 0 0 #000;}
+.lb-sub{font-size:0.78rem;color:#ffffff;line-height:1.7;margin-bottom:2rem;}
+.lb-features{display:flex;flex-direction:column;gap:0.6rem;}
+.lb-feat{display:flex;align-items:center;gap:0.65rem;font-size:0.73rem;color:#ffffff;}
+.lb-feat-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:0.7;flex-shrink:0;}
+.lb-footer{font-size:0.6rem;color:rgba(255,255,255,0.9);margin-top:auto;}
+.lb-secure{display:flex;align-items:center;gap:0.45rem;margin-top:1.5rem;}
+.lb-secure-ico{font-size:0.9rem;opacity:1;filter:drop-shadow(0 0 6px rgba(96,165,250,0.7));}
+.lb-secure-txt{font-size:0.62rem;color:#ffffff;}
+
+.login-form-side{padding:2.8rem 2.4rem;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;background:#000000;}
+.login-form-side>*{position:relative;z-index:1;}
+.mobile-brand{display:none;}
+.lf-eyebrow{font-size:0.58rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--accent);opacity:0.9;margin-bottom:0.45rem;}
+.lf-title{font-size:1.4rem;font-weight:900;margin-bottom:0.25rem;}
+.lf-sub{font-size:0.76rem;color:var(--muted);margin-bottom:2rem;line-height:1.55;}
+
+.f-label{font-size:0.65rem;font-weight:700;color:var(--muted);display:block;margin-bottom:0.3rem;letter-spacing:0.4px;text-transform:uppercase;}
+.f-wrap{position:relative;margin-bottom:0.85rem;}
+.f-icon{position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-size:0.85rem;opacity:1;filter:drop-shadow(0 0 5px rgba(96,165,250,0.6));pointer-events:none;}
+.f-eye{position:absolute;right:0.9rem;top:50%;transform:translateY(-50%);font-size:0.88rem;opacity:0.85;filter:drop-shadow(0 0 4px rgba(96,165,250,0.4));cursor:pointer;user-select:none;transition:opacity 0.15s;}
+.f-eye:hover{opacity:1;}
+.f-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);
+  border-radius:12px;padding:0.82rem 2.5rem 0.82rem 2.6rem;color:var(--text);
+  font-family:inherit;font-size:0.86rem;transition:all 0.2s;outline:none;}
+.f-input:focus{border-color:var(--accent);background:rgba(59,130,246,0.04);box-shadow:0 0 0 3px rgba(59,130,246,0.08);}
+.f-input.err{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(231,76,60,0.1)!important;animation:shake 0.35s ease;}
+.f-input::placeholder{color:var(--muted2);font-size:0.82rem;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
+
+.login-attempts{display:flex;align-items:center;gap:0.45rem;margin-bottom:0.7rem;min-height:1.2rem;}
+.att-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.1);transition:all 0.2s;flex-shrink:0;}
+.att-dot.used{background:var(--red);}
+.att-dot.warn{background:var(--orange);}
+.att-txt{font-size:0.62rem;color:var(--muted);}
+
+.check-human{display:flex;align-items:center;gap:0.7rem;
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px;padding:0.75rem 1rem;margin-bottom:0.85rem;cursor:pointer;
+  user-select:none;transition:all 0.2s;}
+.check-human:hover{background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.18);}
+.check-human.on{background:rgba(59,130,246,0.07);border-color:rgba(59,130,246,0.28);}
+.ch-box{width:20px;height:20px;border-radius:5px;border:2px solid rgba(255,255,255,0.16);
+  background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all 0.18s;}
+.check-human.on .ch-box{background:var(--accent);border-color:var(--accent);}
+.ch-tick{opacity:0;transform:scale(0.4);transition:all 0.15s;font-size:0.72rem;color:#fff;}
+.check-human.on .ch-tick{opacity:1;transform:scale(1);}
+.ch-txt{font-size:0.78rem;color:var(--muted);font-weight:600;flex:1;}
+.check-human.on .ch-txt{color:var(--text);}
+.ch-ico{font-size:0.9rem;opacity:0.6;transition:opacity 0.18s;margin-left:auto;}
+.check-human.on .ch-ico{opacity:1;filter:drop-shadow(0 0 6px rgba(96,165,250,0.7));}
+
+.login-btn{
+  width:100%;background:linear-gradient(135deg,#3b82f6 0%,#60a5fa 50%,#8ec5ff 100%);
+  color:#ffffff;border:1px solid rgba(224,240,255,0.6);border-radius:12px;padding:0.92rem;font-family:inherit;
+  font-size:0.9rem;font-weight:800;cursor:pointer;transition:all 0.22s;
+  letter-spacing:0.4px;margin-top:0.1rem;position:relative;overflow:hidden;
+  text-shadow:0 1px 2px rgba(0,0,0,0.35), 0 0 16px rgba(255,255,255,0.5);
+  box-shadow:0 10px 36px rgba(96,165,250,0.55), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.login-btn::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.18),transparent);opacity:0;transition:opacity 0.2s;}
+.login-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 46px rgba(96,165,250,0.7), inset 0 1px 0 rgba(255,255,255,0.5);}
+.login-btn:hover:not(:disabled)::after{opacity:1;}
+.login-btn:active:not(:disabled){transform:translateY(0);}
+.login-btn:disabled{color:#ffffff;opacity:0.6;cursor:not-allowed;filter:grayscale(0.3);box-shadow:none;border-color:rgba(255,255,255,0.15);}
+
+.login-blocked{
+  background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);
+  border-radius:10px;padding:0.75rem 1rem;font-size:0.75rem;color:var(--red);
+  text-align:center;margin-bottom:0.8rem;display:none;line-height:1.55;
+}
+.login-blocked.show{display:block;}
+
+.login-err{font-size:0.73rem;color:var(--red);text-align:center;margin-top:0.65rem;min-height:1rem;font-weight:600;}
+.login-footer{margin-top:1.6rem;font-size:0.6rem;color:var(--muted);text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:0.4rem;}
+.lf-sep{opacity:0.3;}
+
+@media(max-width:680px){
+  #loginScreen{
+    align-items:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .login-wrap{
+    grid-template-columns:1fr;width:100%;max-width:100%;
+    margin:0;border-radius:0;border:none;min-height:100svh;
+  }
+  .login-brand{display:none;}
+  .mobile-brand{
+    display:flex;align-items:center;gap:0.9rem;
+    padding:1.7rem 1.4rem 1.3rem;
+    background:linear-gradient(160deg,#1e3f7a 0%,#12234a 100%);
+    border-bottom:1px solid rgba(96,165,250,0.4);
+    position:relative;overflow:hidden;
+  }
+  .mobile-brand::before{
+    content:'';position:absolute;top:-60%;right:-20%;width:220px;height:220px;
+    background:radial-gradient(ellipse,rgba(96,165,250,0.22) 0%,transparent 65%);pointer-events:none;
+  }
+  .mb-logo{
+    width:52px;height:52px;border-radius:50%;flex-shrink:0;position:relative;z-index:1;
+    background:none;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 22px rgba(96,165,250,0.4), inset 0 0 14px rgba(96,165,250,0.15);
+  }
+  .mb-logo img{width:100%;height:100%;object-fit:contain;display:block;border-radius:50%;}
+  .mb-text{position:relative;z-index:1;}
+  .mb-title{font-size:1.15rem;font-weight:900;color:#ffffff;letter-spacing:-0.3px;}
+  .mb-title span{color:#60a5fa;text-shadow:0 0 10px rgba(96,165,250,0.5);}
+  .mb-tag{font-size:0.7rem;color:#ffffff;margin-top:0.2rem;}
+  .login-form-side{padding:2rem 1.4rem 2.5rem;justify-content:flex-start;}
+  .lf-eyebrow{color:#60a5fa;opacity:1;text-shadow:0 0 8px rgba(96,165,250,0.4);}
+  .lf-title{font-size:1.3rem;}
+  .f-input{font-size:16px;}
+  .login-btn{min-height:48px;font-size:0.95rem;}
+  .check-human{min-height:52px;touch-action:manipulation;}
+  .check-human.on .ch-box{background:#60a5fa;border-color:#60a5fa;}
+  .f-input:focus{border-color:#60a5fa;box-shadow:0 0 0 3px rgba(96,165,250,0.15);}
+}
+</style>
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-wrap">
+
+    <!-- LADO ESQUERDO: Branding -->
+    <div class="login-brand">
+      <div>
+        <div class="lb-logo">
+          <img data-cr-logo alt="Orizon Consultoria e Gestão"/>
+        </div>
+        <div class="lb-title"><span>Orizon</span><br/>Cartas de Conta</div>
+        <div class="lb-sub">Emissão, assinatura e acompanhamento de cartas de abertura de conta bancária.</div>
+        <div class="lb-features">
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Cartas em PDF na hora (zona manual)</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Assinatura eletrônica com trilha de auditoria</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Modelos de texto e cadastros reutilizáveis</div>
+          <div class="lb-feat"><div class="lb-feat-dot"></div>Numeração automática CAB-AAAA-0001</div>
+        </div>
+      </div>
+      <div>
+        <div class="lb-secure">
+          <span class="lb-secure-ico">🔒</span>
+          <span class="lb-secure-txt">Acesso protegido · Sessão expira em 8h · Bloqueio por tentativas</span>
+        </div>
+        <div class="lb-footer" style="margin-top:0.6rem;">Orizon Consultoria e Gestão · Cartas de Conta · v0.1</div>
+      </div>
+    </div>
+
+    <!-- CABEÇALHO COMPACTO — SÓ MOBILE -->
+    <div class="mobile-brand">
+      <div class="mb-logo"><img data-cr-logo alt="Orizon Consultoria e Gestão"/></div>
+      <div class="mb-text">
+        <div class="mb-title">Orizon <span>Cartas</span></div>
+        <div class="mb-tag">Cartas de Conta</div>
+      </div>
+    </div>
+
+    <!-- LADO DIREITO: Formulário -->
+    <div class="login-form-side">
+      <div class="lf-eyebrow">Acesso restrito</div>
+      <div class="lf-title">Bem-vindo de volta</div>
+      <div class="lf-sub">Faça login para acessar o sistema.</div>
+      <div class="hub-aviso" id="demoDica" style="display:none;font-size:.74rem;margin:.2rem 0 .8rem">🧪 <span><b>Modo demonstração:</b> use qualquer e-mail e uma senha com 4 ou mais caracteres. Os dados ficam só neste navegador.</span></div>
+
+      <label class="f-label">E-mail</label>
+      <div class="f-wrap">
+        <span class="f-icon">✉️</span>
+        <input class="f-input" id="lEmail" type="email" placeholder="seu@email.com"
+          autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('lSenha').focus()"/>
+      </div>
+
+      <label class="f-label">Senha</label>
+      <div class="f-wrap">
+        <span class="f-icon">🔒</span>
+        <input class="f-input" id="lSenha" type="password" placeholder="••••••••"
+          autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')loginTentar()"/>
+        <span class="f-eye" id="eyeToggle" onclick="toggleSenhaVis()" title="Mostrar senha">👁</span>
+      </div>
+
+      <div class="login-attempts" id="attemptsRow" style="display:none;">
+        <div class="att-dot" id="att1"></div>
+        <div class="att-dot" id="att2"></div>
+        <div class="att-dot" id="att3"></div>
+        <div class="att-dot" id="att4"></div>
+        <div class="att-dot" id="att5"></div>
+        <span class="att-txt" id="attTxt"></span>
+      </div>
+
+      <div class="login-blocked" id="loginBlocked"></div>
+
+      <div class="check-human" id="chHuman" onclick="toggleHuman()">
+        <div class="ch-box"><span class="ch-tick">✓</span></div>
+        <span class="ch-txt">Não sou um robô</span>
+        <span class="ch-ico">🛡️</span>
+      </div>
+
+      <button class="login-btn" id="loginBtn" disabled onclick="loginTentar()"
+        title="Marque 'Não sou um robô' para continuar">
+        Entrar no painel
+      </button>
+      <div class="login-err" id="loginErr"></div>
+
+      <div class="login-footer">
+        <span>🔐</span><span class="lf-sep">·</span>
+        <span>Sessão segura · 8h de validade</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cr-demo.js"></script>
+<script src="assets/cr-a11y.js"></script>
+<script>
+const SUPABASE_URL = window.CR_CONFIG.SB_URL;
+const SUPABASE_KEY = window.CR_CONFIG.SB_KEY;
+const _sbLogin = window.CR_CONFIG.DEMO ? window.CABDemo.client() : supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if(window.CR_CONFIG.DEMO) document.getElementById("demoDica").style.display="";
+const SESSION_KEY  = 'cab_session_v1';
+
+const ROLES_MAP = {};
+
+let _sessao  = null;
+let _humanOk = false;
+
+const MAX_TENTATIVAS = 5;
+const BLOQUEIO_KEY   = 'cab_lockout_v1';
+const DELAY_BASE_MS  = 1500;
+
+function lerLockout(){try{return JSON.parse(localStorage.getItem(BLOQUEIO_KEY)||'null');}catch(e){return null;}}
+function salvarLockout(obj){try{localStorage.setItem(BLOQUEIO_KEY,JSON.stringify(obj));}catch(e){}}
+function limparLockout(){try{localStorage.removeItem(BLOQUEIO_KEY);}catch(e){}}
+
+function toggleSenhaVis(){
+  const inp = document.getElementById('lSenha');
+  const eye = document.getElementById('eyeToggle');
+  if(inp.type==='password'){inp.type='text';eye.textContent='🙈';}
+  else{inp.type='password';eye.textContent='👁';}
+}
+
+function toggleHuman(){
+  const lk = lerLockout();
+  if(lk && lk.bloqueado && Date.now() < lk.ate) return;
+  _humanOk = !_humanOk;
+  document.getElementById('chHuman').classList.toggle('on', _humanOk);
+  document.getElementById('loginBtn').disabled = !_humanOk;
+}
+
+function atualizarIndicadorTentativas(tentativas){
+  const row = document.getElementById('attemptsRow');
+  const txt = document.getElementById('attTxt');
+  if(tentativas===0){row.style.display='none';return;}
+  row.style.display='flex';
+  const restantes = MAX_TENTATIVAS - tentativas;
+  txt.textContent = restantes>0
+    ? `${restantes} tentativa${restantes!==1?'s':''} restante${restantes!==1?'s':''}`
+    : 'Conta bloqueada';
+  for(let i=1;i<=MAX_TENTATIVAS;i++){
+    const dot = document.getElementById('att'+i);
+    if(!dot) continue;
+    dot.className = i<=tentativas ? 'att-dot '+(tentativas>=MAX_TENTATIVAS-1?'used':'warn') : 'att-dot';
+  }
+}
+
+function mostrarBloqueio(segundos){
+  const el = document.getElementById('loginBlocked');
+  const min = Math.ceil(segundos/60);
+  el.innerHTML = `🔒 Acesso temporariamente bloqueado após ${MAX_TENTATIVAS} tentativas incorretas.<br/>
+    Aguarde <strong id="cntDown">${segundos}s</strong> ou tente novamente em ${min} minuto${min!==1?'s':''}.`;
+  el.classList.add('show');
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('chHuman').style.pointerEvents = 'none';
+  document.getElementById('chHuman').style.opacity = '0.4';
+  const iv = setInterval(()=>{
+    segundos--;
+    const cd = document.getElementById('cntDown');
+    if(cd) cd.textContent = segundos+'s';
+    if(segundos<=0){
+      clearInterval(iv);
+      el.classList.remove('show');
+      limparLockout();
+      atualizarIndicadorTentativas(0);
+      document.getElementById('chHuman').style.pointerEvents='';
+      document.getElementById('chHuman').style.opacity='';
+      document.getElementById('loginBtn').disabled = !_humanOk;
+      document.getElementById('loginErr').textContent='';
+    }
+  },1000);
+}
+
+function verificarBloqueioInicial(){
+  const lk = lerLockout();
+  if(!lk) return;
+  if(lk.bloqueado && Date.now()<lk.ate){
+    const restam = Math.ceil((lk.ate-Date.now())/1000);
+    atualizarIndicadorTentativas(MAX_TENTATIVAS);
+    mostrarBloqueio(restam);
+  } else if(lk.bloqueado){
+    limparLockout();
+  } else {
+    atualizarIndicadorTentativas(lk.tentativas||0);
+  }
+}
+
+async function autenticar(email,senha){
+  if(window.CR_CONFIG.DEMO){
+    const ok=/^[^\s@]+@[^\s@]+$/.test(email)&&senha.length>=4; if(ok) window.CABDemo.entrar(email);
+    return {res:{ok:ok},data:ok?{access_token:'demo',refresh_token:'demo',user:{email:email,user_metadata:{}}}:{}};
+  }
+  const res = await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:senha})});
+  return {res:res,data:await res.json()};
+}
+
+async function loginTentar(){
+  if(!_humanOk) return;
+  const lk = lerLockout();
+  if(lk && lk.bloqueado && Date.now()<lk.ate) return;
+  const btn   = document.getElementById('loginBtn');
+  const email = document.getElementById('lEmail').value.trim().toLowerCase();
+  const senha = document.getElementById('lSenha').value;
+  const err   = document.getElementById('loginErr');
+
+  btn.disabled = true;
+  err.textContent = '⏳ Verificando...';
+
+  try{
+    const {res,data} = await autenticar(email,senha);
+
+    if(!res.ok || !data.access_token){
+      const atual = lk ? lk.tentativas : 0;
+      const novas = atual+1;
+      if(novas>=MAX_TENTATIVAS){
+        const duracaoS = 120;
+        salvarLockout({tentativas:novas,bloqueado:true,ate:Date.now()+duracaoS*1000});
+        atualizarIndicadorTentativas(novas);
+        mostrarBloqueio(duracaoS);
+        err.textContent='';
+      } else {
+        salvarLockout({tentativas:novas,bloqueado:false,ate:null});
+        atualizarIndicadorTentativas(novas);
+        btn.disabled=false;
+        const delay = DELAY_BASE_MS*novas;
+        err.textContent='❌ E-mail ou senha incorretos · aguarde '+(delay/1000).toFixed(1)+'s';
+        ['lEmail','lSenha'].forEach(id=>{
+          const el2=document.getElementById(id);
+          el2.classList.add('err');
+          setTimeout(()=>el2.classList.remove('err'),600);
+        });
+        setTimeout(()=>{btn.disabled=!_humanOk;err.textContent='❌ E-mail ou senha incorretos';},delay);
+      }
+      return;
+    }
+
+    // Sucesso
+    const metaRole = data.user?.user_metadata?.role||null;
+    const roleInfo = ROLES_MAP[email]||{nome:email,role:metaRole||'admin'};
+    if(!ROLES_MAP[email]&&metaRole) roleInfo.role=metaRole;
+    limparLockout();
+    atualizarIndicadorTentativas(0);
+    err.textContent='';
+    try{await _sbLogin.auth.setSession({access_token:data.access_token,refresh_token:data.refresh_token});}catch(e){console.error('setSession',e);}
+    try{await _sbLogin.rpc('cab_log',{p_acao:'login'});}catch(e){console.warn('cr_log',e);}
+    _sessao={nome:roleInfo.nome,email,role:roleInfo.role,ts:Date.now(),access_token:data.access_token};
+    try{localStorage.setItem(SESSION_KEY,JSON.stringify(_sessao));}catch(e){}
+
+    const params = new URLSearchParams(window.location.search);
+    const next   = params.get('next');
+    window.location.href = (next&&!next.includes('login'))?next:'index.html';
+
+  }catch(e){
+    err.textContent='❌ Erro de conexão. Tente novamente.';
+    btn.disabled=false;
+  }
+}
+
+window.addEventListener('load',()=>{
+  verificarBloqueioInicial();
+  _sbLogin.auth.getSession().then(({data:{session}})=>{
+    if(!session) return;
+    const next=new URLSearchParams(window.location.search).get('next');
+    window.location.href=(next&&!next.includes('login'))?next:'index.html';
+  });
+});
+</script>
+</body>
+</html>

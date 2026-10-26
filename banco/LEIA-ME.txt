@@ -1,0 +1,35 @@
+CARTAS DE CONTA — Orizon  (v0.1 · zona MANUAL pronta)
+=====================================================
+Construído em cima do zip do Orizon Documentos (cr-core.css, cr-shell.js, cr-brand.js, cr-utils.js, login, hub).
+
+COMO ABRIR
+  Modo demonstração (padrão): abra login.html — qualquer e-mail + senha com 4+ caracteres. Os dados ficam só neste navegador.
+  Melhor por servidor local:   python3 -m http.server 8000   →  http://localhost:8000/login.html
+
+PRONTO NESTA ENTREGA
+  Hub com as 2 zonas · menu AUTOMÁTICO (roxo) × MANUAL (azul) · login com bloqueio por tentativas
+  MANUAL: Painel de Cartas · Nova Carta (5 etapas, CPF/CNPJ validados, prévia A4) · Visualizar/Imprimir PDF (A4, cabeçalho, rodapé, "Página X de Y")
+          Duplicar · Cancelar (marca CANCELADA) · Modelos de texto editáveis ({{variáveis}})
+  Cadastros (valem para as 2 zonas): Empresas · Bancos/Agências · Clientes/Titulares (CPF/CNPJ mascarados nas listas)
+  Numeração CAB-AAAA-0001, hash SHA-256 e código de verificação em cada carta · trilha de auditoria (só inserção)
+  sql/cab-schema.sql: schema COMPLETO com RLS (inclui as funções do link de assinatura da zona AUTOMÁTICO)
+
+AINDA "EM BREVE" (itens apagados no menu)
+  AUTOMÁTICO: painel digital, nova carta digital, assinar.html (link público), visualizar-assinado, verificar, vencimentos, anexos
+  CONTA: histórico de acessos e configurações (LGPD/retenção)
+
+USAR DE VERDADE (Supabase)
+  1) Crie um projeto Supabase NOVO.  2) Rode sql/cab-schema.sql no SQL Editor.  3) Crie o usuário em Authentication (o 1º vira admin).
+  4) Em assets/cr-config.js preencha SB_URL e SB_KEY (chave publishable/anon — NUNCA a secret/service_role).
+
+DADOS DA EMPRESA NO RODAPÉ DAS CARTAS
+  assets/cr-brand.js → cnpj, endereco, email, telefone (vazio = a linha não aparece). Trocar logo/nome = só esse arquivo.
+
+TESTES
+  node tests/cab-carta-test.js        regras puras (CPF/CNPJ, modelo, SHA-256)       29 ok
+  sh tests/rodar-sql.sh               schema + RLS + numeração + assinatura no PostgreSQL local descartável   33 ok
+  python3 tests/e2e.py                fluxo completo no navegador (Playwright)       42 ok
+
+ATENÇÃO
+  Os textos-modelo são MODELOS: revisar com advogado e com o banco antes de usar em produção.
+  Assinatura eletrônica simples (desenho/digitação + trilha). Se o banco exigir ICP-Brasil, é preciso um provedor certificado.

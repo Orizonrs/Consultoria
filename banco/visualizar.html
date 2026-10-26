@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Visualizar carta — Cartas de Conta · Orizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<link rel="stylesheet" href="assets/cab.css"/>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cr_theme')||'dark')}catch(e){}</script>
+
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+      <div class="tb-bc"><strong>Hub</strong><span style="opacity:.3">›</span><span>Cartas em PDF › Visualizar</span></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content">
+
+    <div class="noprint" style="display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+      <a href="index-cartas.html" class="btn btn-ghost btn-sm">← Painel</a>
+      <button class="btn btn-primary btn-sm" onclick="imprimir()">🖨️ Imprimir / Salvar PDF</button>
+      <a class="btn btn-ghost btn-sm" id="bDup" href="#">⧉ Duplicar</a>
+      <button class="btn btn-red btn-sm" id="bCan" onclick="cancelar()" style="display:none">✖ Cancelar carta</button>
+      <span class="kbd-note">Dica: no diálogo de impressão escolha “Salvar como PDF” e desmarque “Cabeçalhos e rodapés” do navegador.</span>
+    </div>
+    <div class="panel noprint" id="info" style="padding:.8rem 1rem;margin-bottom:1rem;display:none"></div>
+    <div class="sheet-wrap" id="folha"><div class="empty"><span>⏳</span>Carregando...</div></div>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="void 0"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cab-carta.js"></script>
+<script src="assets/cr-demo.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+
+<script>
+
+let C = null; const id = new URLSearchParams(location.search).get('id');
+async function integridade(c) { const h = await CAB.sha256(c.texto_final + '|' + c.numero); return h === c.hash_conteudo; }
+async function mostrar() {
+  const { data, error } = await _sb.from('cab_cartas').select('*').eq('id', id).single();
+  if (error || !data) { document.getElementById('folha').innerHTML = '<div class="empty"><span>⚠️</span>Carta não encontrada. <a href="index-cartas.html" style="color:var(--accent)">Voltar ao painel</a></div>'; return; }
+  C = data; const dados = C.dados_json || {};
+  document.getElementById('folha').innerHTML = CAB.folhaHTML({ numero: C.numero, codigo: C.codigo_verificacao, texto: C.texto_final, dados: dados, cancelada: C.status === 'cancelada' }, {});
+  document.title = C.numero + ' — Cartas de Conta · Orizon';
+  document.getElementById('bDup').href = 'nova-carta.html?dup=' + C.id; document.getElementById('bCan').style.display = C.status === 'cancelada' ? 'none' : '';
+  const ok = await integridade(C), inf = document.getElementById('info'); inf.style.display = '';
+  inf.innerHTML = '<b class="mono">' + CAB.esc(C.numero) + '</b> · ' + (C.status === 'cancelada' ? '<span class="tag tag-red">Cancelada</span>' : '<span class="tag tag-green">Emitida</span>') + ' em ' + fmtDateTime(C.criado_em) +
+    ' · ' + (ok ? '<span class="c-green">✔ texto íntegro (hash confere)</span>' : '<span class="c-red">⚠ texto não confere com o hash gravado</span>') +
+    '<br/><small class="c-muted mono" style="word-break:break-all">SHA-256: ' + CAB.esc(C.hash_conteudo) + '</small>';
+  if (new URLSearchParams(location.search).get('print') === '1') { history.replaceState(null, '', 'visualizar.html?id=' + id); setTimeout(imprimir, 700); }
+}
+function imprimir() { if (C) { auditar(C.id, 'impressao'); logAcao('carta_impressa', C.numero); } window.print(); }
+async function cancelar() {
+  if (!C || !confirm('Cancelar a carta ' + C.numero + '? Ela fica marcada como CANCELADA.')) return;
+  const r = await _sb.from('cab_cartas').update({ status: 'cancelada' }).eq('id', C.id); if (r.error) return toast('Erro: ' + r.error.message, 'err');
+  auditar(C.id, 'cancelada'); toast('Carta cancelada.', 'wrn'); mostrar();
+}
+crPronto().then(mostrar);
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Nova carta — Cartas de Conta · Orizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<link rel="stylesheet" href="assets/cab.css"/>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cr_theme')||'dark')}catch(e){}</script>
+
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+      <div class="tb-bc"><strong>Hub</strong><span style="opacity:.3">›</span><span>Cartas em PDF › Nova carta</span></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content">
+
+    <div class="welcome"><div><div class="wl-title">✉️ Nova <em>Carta</em> de Abertura de Conta</div><div class="wl-sub">Preencha em etapas, confira a prévia A4 e gere o PDF na hora</div></div></div>
+    <div class="steps" id="steps" role="list"></div>
+    <div class="panel" style="padding:1.1rem 1.2rem"><div id="passo"></div>
+      <div class="form-nav"><button class="btn btn-ghost" id="bVolta" onclick="ir(-1)">← Voltar</button><button class="btn btn-primary" id="bAvanca" onclick="ir(1)">Próximo →</button></div></div>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="void 0"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cab-carta.js"></script>
+<script src="assets/cr-demo.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+
+<script>
+
+const PASSOS = [
+  { t: 'Tipo e banco', f: [
+    { k: 'tipo_conta', l: 'Tipo de conta', sel: Object.keys(CAB.TIPOS_CONTA).map(k => [k, CAB.TIPOS_CONTA[k]]), req: 1 },
+    { k: 'banco_nome', l: 'Banco', ph: 'Ex.: Banco do Brasil', req: 1, lista: 'dlBancos' }, { k: 'agencia', l: 'Agência (opcional)', ph: '0000-0' },
+    { k: 'cidade', l: 'Cidade/UF', ph: 'Ex.: Guaíba/RS', req: 1 }, { k: 'data', l: 'Data da carta', tipo: 'date', req: 1 }] },
+  { t: 'Empresa', pj: 1, pick: 'empresas', f: [
+    { k: 'razao_social', l: 'Razão social', req: 1 }, { k: 'cnpj', l: 'CNPJ', mask: 'maskCNPJ', ph: '00.000.000/0000-00', req: 1 },
+    { k: 'endereco', l: 'Endereço da sede', req: 1 }, { k: 'responsavel', l: 'Responsável legal', req: 1 }, { k: 'cargo_responsavel', l: 'Cargo do responsável', ph: 'Ex.: Sócio-administrador', req: 1 }] },
+  { t: 'Titular', pick: 'titulares', f: [
+    { k: 'titular_nome', l: 'Nome completo', req: 1 }, { k: 'cpf', l: 'CPF', mask: 'maskCPF', ph: '000.000.000-00', req: 1 },
+    { k: 'rg', l: 'RG (opcional)' }, { k: 'orgao_rg', l: 'Órgão emissor (opcional)', ph: 'SSP/RS' },
+    { k: 'cargo_vinculo', l: 'Cargo ou vínculo', ph: 'Ex.: sócio-administrador / estagiário', req: 1 },
+    { k: 'email_titular', l: 'E-mail (opcional)', tipo: 'email' }, { k: 'telefone_titular', l: 'Telefone (opcional)', mask: 'maskTel' }] },
+  { t: 'Finalidade e poderes', f: [
+    { k: 'finalidade', l: 'Finalidade da conta', area: 1, ph: 'Ex.: movimentação financeira da empresa', req: 1 },
+    { k: 'poderes', l: 'Poderes de movimentação (opcional)', area: 1, ph: 'Ex.: assinar, movimentar e encerrar a conta' }] },
+  { t: 'Revisão' }
+];
+const S = { tipo_conta: 'pj', data: CAB.hojeISO() }; let P = 0, CAD = { empresas: [], titulares: [], bancos: [] }, MODELOS = [], editado = false, emitindo = false;
+const ativos = () => PASSOS.map((p, i) => i).filter(i => !(PASSOS[i].pj && S.tipo_conta === 'pf'));
+function campo(f) {
+  const v = CAB.esc(S[f.k] || ''), id = 'f_' + f.k, h = '<div class="form-group"><label class="fl" for="' + id + '">' + f.l + (f.req ? ' <span class="req">*</span>' : '') + '</label>';
+  let i;
+  if (f.sel) i = '<select class="fi" id="' + id + '" onchange="set(\'' + f.k + '\',this.value,1)">' + f.sel.map(o => '<option value="' + o[0] + '"' + (S[f.k] === o[0] ? ' selected' : '') + '>' + CAB.esc(o[1]) + '</option>').join('') + '</select>';
+  else if (f.area) i = '<textarea class="fi" id="' + id + '" rows="3" placeholder="' + CAB.esc(f.ph || '') + '" oninput="set(\'' + f.k + '\',this.value)">' + v + '</textarea>';
+  else i = '<input class="fi" id="' + id + '" type="' + (f.tipo || 'text') + '" value="' + v + '" placeholder="' + CAB.esc(f.ph || '') + '"' + (f.lista ? ' list="' + f.lista + '"' : '') + ' oninput="' + (f.mask ? f.mask + '(this);' : '') + 'set(\'' + f.k + '\',this.value)" autocomplete="off"/>';
+  return h + i + '<div class="f-err" id="e_' + f.k + '"></div></div>';
+}
+function set(k, v, redesenhar) { S[k] = v; if (k === 'tipo_conta' && redesenhar) { desenharSteps(); } if (!editado) S._texto = null; const e = document.getElementById('e_' + k); if (e) { e.textContent = ''; document.getElementById('f_' + k).classList.remove('err'); } if (PASSOS[P].t === 'Revisão') atualizarPrevia(); }
+function desenharSteps() {
+  const at = ativos(); document.getElementById('steps').innerHTML = at.map((i, n) => '<div class="step ' + (i === P ? 'on' : i < P ? 'ok' : '') + '" role="listitem"><b>' + (i < P ? '✓' : n + 1) + '</b>' + PASSOS[i].t + '</div>').join('');
+}
+function pickHTML(p) {
+  const l = CAD[p.pick] || []; if (!l.length) return '<div class="kbd-note" style="margin-bottom:.7rem">Dica: cadastre em <a href="' + (p.pick === 'empresas' ? 'empresas.html' : 'clientes.html') + '" style="color:var(--accent)">' + (p.pick === 'empresas' ? 'Empresas' : 'Clientes / Titulares') + '</a> para preencher com um clique.</div>';
+  return '<div class="pick"><label class="fl" for="pk">Usar cadastro:</label><select class="fi" id="pk" onchange="usarCadastro(\'' + p.pick + '\',this.value)"><option value="">— escolher —</option>' + l.map(x => '<option value="' + x.id + '">' + CAB.esc(x.razao_social || x.nome) + '</option>').join('') + '</select></div>';
+}
+function usarCadastro(t, id) {
+  const x = (CAD[t] || []).find(r => String(r.id) === String(id)); if (!x) return;
+  const m = t === 'empresas' ? { razao_social: x.razao_social, cnpj: CAB.fmtCNPJ(x.cnpj), endereco: x.endereco, responsavel: x.responsavel, cargo_responsavel: x.cargo_responsavel }
+    : { titular_nome: x.nome, cpf: CAB.fmtCPF(x.cpf), rg: x.rg, email_titular: x.email, telefone_titular: x.telefone, cargo_vinculo: x.vinculo || S.cargo_vinculo };
+  Object.keys(m).forEach(k => { if (m[k]) S[k] = m[k]; }); S._texto = null; desenhar();
+}
+function modeloAtual() { return MODELOS.find(m => String(m.id) === String(S._modelo)) || MODELOS.find(m => m.tipo === CAB.tipoModeloDaConta(S.tipo_conta)) || MODELOS[0]; }
+function textoBase() { const m = modeloAtual(); return CAB.renderModelo(m ? m.texto : CAB.MODELO_PADRAO, CAB.montarVars(S, '')); }
+function atualizarPrevia() {
+  if (S._texto == null) S._texto = textoBase(); const ta = document.getElementById('ta'); if (ta && document.activeElement !== ta) ta.value = S._texto;
+  document.getElementById('pv').innerHTML = CAB.folhaHTML({ numero: '', texto: S._texto, dados: S }, { destacar: true });
+  const f = (S._texto.match(/\[(\w+)\]/g) || []), a = document.getElementById('aviso');
+  a.innerHTML = f.length ? '⚠️ Faltam dados: <b>' + Array.from(new Set(f)).join(', ') + '</b>. Volte e preencha, ou edite o texto.' : '✔ Texto completo.';
+  a.className = 'hub-aviso'; a.style.background = f.length ? '' : 'rgba(46,204,113,.1)'; a.style.borderColor = f.length ? '' : 'rgba(46,204,113,.35)';
+}
+function revisao() {
+  const ms = MODELOS.filter(m => m.ativo !== false);
+  return '<div class="split"><div><div class="form-group"><label class="fl" for="md">Modelo de texto</label><select class="fi" id="md" onchange="S._modelo=this.value;editado=false;S._texto=null;atualizarPrevia()">' +
+    ms.map(m => '<option value="' + m.id + '"' + (modeloAtual() && modeloAtual().id === m.id ? ' selected' : '') + '>' + CAB.esc(m.nome) + '</option>').join('') + '</select></div>' +
+    '<div class="form-group"><label class="fl" for="ta">Texto da carta (pode ajustar)</label><textarea class="fi" id="ta" rows="16" oninput="S._texto=this.value;editado=true;atualizarPrevia()"></textarea></div>' +
+    '<div id="aviso" class="hub-aviso"></div><div class="kbd-note">Ao gerar, a carta recebe um número (CAB-AAAA-0001), um código de verificação e fica arquivada no painel. O texto final não pode ser alterado depois.</div></div>' +
+    '<div class="sheet-wrap" style="padding:.5rem"><div id="pv" style="zoom:.62"></div></div></div>';
+}
+function desenhar() {
+  const p = PASSOS[P]; desenharSteps(); const b = document.getElementById('bAvanca'), pos = ativos().indexOf(P);
+  document.getElementById('bVolta').style.visibility = pos === 0 ? 'hidden' : 'visible';
+  b.textContent = p.t === 'Revisão' ? '📄 Gerar PDF e arquivar' : 'Próximo →'; b.className = 'btn ' + (p.t === 'Revisão' ? 'btn-green' : 'btn-primary');
+  document.getElementById('passo').innerHTML = '<div class="section-label">' + p.t + '</div>' + (p.t === 'Revisão' ? revisao() : (p.pick ? pickHTML(p) : '') + '<div class="grid-2">' + p.f.map(campo).join('') + '</div>');
+  if (p.t === 'Revisão') atualizarPrevia();
+}
+function validarPasso() {
+  const p = PASSOS[P]; if (!p.f) return true; const e = CAB.validar(S); let ok = true;
+  p.f.forEach(f => { const m = e[f.k]; const el = document.getElementById('e_' + f.k); if (el) { el.textContent = m || ''; document.getElementById('f_' + f.k).classList.toggle('err', !!m); } if (m) ok = false; });
+  if (!ok) { toast('Corrija os campos destacados.', 'wrn'); const x = document.querySelector('.fi.err'); if (x) x.focus(); } return ok;
+}
+async function ir(d) {
+  const at = ativos(), pos = at.indexOf(P);
+  if (d > 0) { if (!validarPasso()) return; if (PASSOS[P].t === 'Revisão') return emitir(); }
+  P = at[Math.max(0, Math.min(at.length - 1, pos + d))]; desenhar(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+async function emitir() {
+  if (emitindo) return; const e = CAB.validar(S); if (Object.keys(e).length) { toast('Há dados inválidos: ' + Object.keys(e).join(', '), 'err'); return; }
+  const faltam = (S._texto.match(/\[\w+\]/g) || []); if (faltam.length && !confirm('O texto ainda tem campos vazios (' + faltam.join(', ') + '). Gerar mesmo assim?')) return;
+  emitindo = true; const b = document.getElementById('bAvanca'); b.disabled = true; b.textContent = '⏳ Gerando...';
+  try {
+    const n = await _sb.rpc('cab_proximo_numero', { p_ano: new Date().getFullYear() }); if (n.error || !n.data) throw new Error((n.error && n.error.message) || 'Sem número.');
+    const numero = n.data, texto = S._texto, hash = await CAB.sha256(texto + '|' + numero), dados = Object.assign({}, S); delete dados._texto; delete dados._modelo;
+    const r = await _sb.from('cab_cartas').insert({ numero: numero, modo: 'manual', tipo_conta: S.tipo_conta, status: 'emitida', banco_nome: S.banco_nome, empresa_nome: S.tipo_conta === 'pf' ? null : S.razao_social,
+      titular_nome: S.titular_nome, finalidade: S.finalidade, texto_final: texto, hash_conteudo: hash, codigo_verificacao: CAB.gerarCodigo(), dados_json: dados }).select().single();
+    if (r.error) throw new Error(r.error.message);
+    auditar(r.data.id, 'emitida', numero); logAcao('carta_emitida', numero); location.href = 'visualizar.html?id=' + r.data.id + '&print=1';
+  } catch (err) { toast('Não foi possível gerar: ' + err.message, 'err', 6000); emitindo = false; b.disabled = false; b.textContent = '📄 Gerar PDF e arquivar'; }
+}
+(async () => {
+  await crPronto();
+  const t = ['empresas', 'titulares', 'bancos']; for (const k of t) { const r = await _sb.from('cab_' + k).select('*').order('id', { ascending: false }); CAD[k] = r.data || []; }
+  let m = await _sb.from('cab_modelos').select('*'); MODELOS = m.data || [];
+  if (!MODELOS.length) { for (const x of CAB.MODELOS_PADRAO) await _sb.from('cab_modelos').insert(x); m = await _sb.from('cab_modelos').select('*'); MODELOS = m.data || []; }
+  const dl = document.createElement('datalist'); dl.id = 'dlBancos'; dl.innerHTML = CAD.bancos.map(b => '<option value="' + CAB.esc(b.nome) + '">').join(''); document.body.appendChild(dl);
+  const dup = new URLSearchParams(location.search).get('dup');
+  if (dup) { const r = await _sb.from('cab_cartas').select('*').eq('id', dup).single(); if (r.data) { Object.assign(S, r.data.dados_json || {}, { data: CAB.hojeISO() }); toast('Dados copiados da carta ' + r.data.numero + '. Revise e gere a nova.', 'ok', 4500); } }
+  desenhar();
+})();
+</script>
+</body>
+</html>

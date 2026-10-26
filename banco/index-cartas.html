@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Cartas em PDF — Cartas de Conta · Orizon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"/>
+<link rel="stylesheet" href="assets/cr-core.css"/>
+<link rel="stylesheet" href="assets/cab.css"/>
+<script>try{document.documentElement.setAttribute('data-theme',localStorage.getItem('cr_theme')||'dark')}catch(e){}</script>
+
+<script src="assets/cr-brand.js"></script>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="crSidebar"></aside>
+<div class="main">
+  <div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+  <div class="topbar">
+    <div class="tb-left">
+      <button class="mob-menu-btn" onclick="toggleSidebar()" aria-label="Abrir menu">☰</button>
+      <div class="tb-bc"><strong>Hub</strong><span style="opacity:.3">›</span><span>Cartas em PDF</span></div>
+    </div>
+    <div class="tb-right"><span class="tb-clock" id="tb-clock"></span></div>
+  </div>
+  <div class="content">
+
+    <div class="welcome">
+      <div><div class="wl-title">📋 Cartas em <em>PDF</em></div><div class="wl-sub">Cartas de abertura de conta emitidas na zona manual</div></div>
+      <div class="wl-right" style="display:flex;gap:.45rem"><a href="modelos.html" class="btn btn-ghost btn-sm">📝 Modelos</a><a href="nova-carta.html" class="btn btn-primary btn-sm">✉️ Nova Carta</a></div>
+    </div>
+    <div class="kpi-row kpi-4">
+      <div class="kpi"><div class="kpi-top"><span class="kpi-ico">📋</span><span class="kpi-delta up">emitidas</span></div><div class="kpi-v c-accent" id="kTotal">—</div><div class="kpi-l">Cartas Emitidas</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-ico">🏢</span><span class="kpi-delta neu">PJ / salário / pagto.</span></div><div class="kpi-v c-blue" id="kPJ">—</div><div class="kpi-l">Com Empresa</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-ico">🧑</span><span class="kpi-delta neu">PF</span></div><div class="kpi-v c-orange" id="kPF">—</div><div class="kpi-l">Pessoa Física</div></div>
+      <div class="kpi"><div class="kpi-top"><span class="kpi-ico">📅</span><span class="kpi-delta up">este mês</span></div><div class="kpi-v c-green" id="kMes">—</div><div class="kpi-l">Emitidas Este Mês</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-title">📋 Cartas Emitidas</span>
+        <div class="panel-actions"><div class="search-box">🔍 <input id="busca" placeholder="Buscar nº, titular, banco..." oninput="desenhar()" aria-label="Buscar"/></div></div></div>
+      <div class="tabs-f" style="padding:0 1rem" id="abas"></div>
+      <div style="overflow-x:auto"><table>
+        <thead><tr><th>Nº</th><th>Titular</th><th>Banco</th><th>Tipo</th><th>Emissão</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="tb"><tr><td colspan="7"><div class="empty"><span>⏳</span>Carregando...</div></td></tr></tbody></table></div>
+    </div>
+  </div>
+</div>
+</div>
+<div id="toast-ct"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="void 0"></script>
+<script src="assets/cr-config.js"></script>
+<script src="assets/cab-carta.js"></script>
+<script src="assets/cr-demo.js"></script>
+<script src="assets/cr-auth.js"></script>
+<script src="assets/cr-utils.js"></script>
+<script src="assets/cr-shell.js"></script>
+<script src="assets/cr-a11y.js"></script>
+
+<script>
+
+let CART = [], ABA = 'todas';
+const ABAS = [['todas', 'Todas'], ['emitida', 'Emitidas'], ['cancelada', 'Canceladas']];
+function desenharAbas() {
+  document.getElementById('abas').innerHTML = ABAS.map(a => { const n = CART.filter(c => a[0] === 'todas' || c.status === a[0]).length;
+    return '<button class="btn btn-sm ' + (ABA === a[0] ? 'btn-primary' : 'btn-ghost') + '" onclick="ABA=\'' + a[0] + '\';desenhar()">' + a[1] + ' (' + n + ')</button>'; }).join('');
+}
+function desenhar() {
+  desenharAbas(); const q = document.getElementById('busca').value.trim().toLowerCase();
+  const l = CART.filter(c => (ABA === 'todas' || c.status === ABA) && (!q || [c.numero, c.titular_nome, c.banco_nome, c.empresa_nome].join(' ').toLowerCase().includes(q)));
+  document.getElementById('tb').innerHTML = l.length ? l.map(c =>
+    '<tr><td class="mono"><strong>' + CAB.esc(c.numero) + '</strong></td><td>' + CAB.esc(c.titular_nome) + (c.empresa_nome ? '<br/><small class="c-muted">' + CAB.esc(c.empresa_nome) + '</small>' : '') + '</td><td>' + CAB.esc(c.banco_nome) + '</td>' +
+    '<td><span class="tag tag-blue">' + CAB.esc(CAB.TIPOS_ROTULO[c.tipo_conta] || c.tipo_conta) + '</span></td><td>' + fmtDateShort(c.criado_em) + '</td>' +
+    '<td><span class="tag ' + (c.status === 'cancelada' ? 'tag-red' : 'tag-green') + '">' + (c.status === 'cancelada' ? 'Cancelada' : 'Emitida') + '</span></td>' +
+    '<td style="white-space:nowrap"><a class="btn btn-ghost btn-sm" href="visualizar.html?id=' + c.id + '" title="Ver / PDF">👁 Ver</a> <a class="btn btn-ghost btn-sm" href="nova-carta.html?dup=' + c.id + '" title="Duplicar">⧉</a>' +
+    (c.status === 'cancelada' ? '' : ' <button class="btn btn-red btn-sm" onclick="cancelar(' + c.id + ')" title="Cancelar">✖</button>') + '</td></tr>').join('')
+    : '<tr><td colspan="7"><div class="empty"><span>📭</span>Nenhuma carta aqui. <a href="nova-carta.html" style="color:var(--accent)">Criar a primeira carta →</a></div></td></tr>';
+}
+async function cancelar(id) {
+  const c = CART.find(x => x.id === id); if (!c || !confirm('Cancelar a carta ' + c.numero + '? Ela continua no arquivo, marcada como CANCELADA.')) return;
+  const r = await _sb.from('cab_cartas').update({ status: 'cancelada' }).eq('id', id); if (r.error) return toast('Não foi possível cancelar: ' + r.error.message, 'err');
+  auditar(id, 'cancelada'); logAcao('carta_cancelada', c.numero); toast('Carta cancelada.', 'wrn'); carregar();
+}
+async function carregar() {
+  const { data, error } = await _sb.from('cab_cartas').select('*').order('id', { ascending: false });
+  if (error) { document.getElementById('tb').innerHTML = '<tr><td colspan="7"><div class="empty"><span>⚠️</span>' + CAB.esc(error.message) + '</div></td></tr>'; return; }
+  CART = (data || []).filter(c => c.modo === 'manual'); const ok = CART.filter(c => c.status !== 'cancelada'), ini = new Date(); ini.setDate(1); ini.setHours(0, 0, 0, 0);
+  document.getElementById('kTotal').textContent = ok.length; document.getElementById('kPJ').textContent = ok.filter(c => c.tipo_conta !== 'pf').length;
+  document.getElementById('kPF').textContent = ok.filter(c => c.tipo_conta === 'pf').length; document.getElementById('kMes').textContent = ok.filter(c => new Date(c.criado_em) >= ini).length;
+  desenhar();
+}
+crPronto().then(carregar);
+</script>
+</body>
+</html>
