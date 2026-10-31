@@ -577,18 +577,26 @@
     /* Cabeçalho do menu: apenas bordas laterais de 2px, continuando a borda do container do topo */
     header{border-left:2px solid #fff;border-right:2px solid #fff;}
     [data-theme="light"] header{border-left-color:#000;border-right-color:#000;}
+    /* Filtros: ocupam a largura toda da tela (sem limite de 1200px), como o aviso e o topo */
+    .toolbar{max-width:none;margin:0;}
+    /* Cards de vagas (coluna principal): largura total no desktop, alinhados com a esquerda dos filtros */
+    .main{max-width:none;margin:0;}
     /* AVISO IMPORTANTE (abaixo do topo): painel com título e 4 blocos numerados; texto branco no escuro e preto no claro */
-    .aviso-strip{padding:24px;border-bottom:0;font-size:13px;color:#fff;hyphens:manual;-webkit-hyphens:manual;word-spacing:normal;}
+    .aviso-strip{padding:24px 0;border-bottom:0;font-size:13px;color:#fff;hyphens:manual;-webkit-hyphens:manual;word-spacing:normal;}
     [data-theme="light"] .aviso-strip{color:#000;}
-    .aviso-painel{max-width:1200px;margin:0 auto;border:2px solid #fff;border-radius:18px;padding:20px 22px 22px;text-align:left;}
-    [data-theme="light"] .aviso-painel{border-color:#000;}
-    .aviso-topo{display:flex;align-items:center;gap:12px;padding-bottom:16px;margin-bottom:18px;border-bottom:1px dashed rgba(255,255,255,.35);}
-    [data-theme="light"] .aviso-topo{border-bottom-color:rgba(0,0,0,.35);}
+    .aviso-painel{max-width:none;width:100%;margin:0;border:0;border-radius:18px;padding:20px 24px 22px;text-align:left;}
+    .aviso-topo{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-bottom:1px dashed transparent;color:inherit;font:inherit;text-align:left;padding:0;margin:0;cursor:pointer;}
+    .aviso-tx{display:block;min-width:0;}
+    .aviso-chev{display:block;width:22px;height:22px;margin-left:auto;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s;}
+    .aviso-painel.aberto .aviso-topo{border-bottom-color:rgba(255,255,255,.35);padding-bottom:16px;margin-bottom:18px;}
+    [data-theme="light"] .aviso-painel.aberto .aviso-topo{border-bottom-color:rgba(0,0,0,.35);}
+    .aviso-painel.aberto .aviso-chev{transform:rotate(180deg);}
     .aviso-ic{width:38px;height:38px;border-radius:12px;background:var(--brand-light);color:var(--brand);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
     .aviso-ic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-    .aviso-titulo{font-size:16px;font-weight:700;line-height:1.2;}
-    .aviso-sub{font-size:12px;opacity:.7;margin-top:2px;}
-    .aviso-grade{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+    .aviso-titulo{display:block;font-size:16px;font-weight:700;line-height:1.2;}
+    .aviso-sub{display:block;font-size:12px;opacity:.7;margin-top:2px;}
+    .aviso-grade{display:none;grid-template-columns:repeat(4,1fr);gap:0;}
+    .aviso-painel.aberto .aviso-grade{display:grid;}
     .aviso-item{position:relative;padding:0 20px;border-left:1px dashed rgba(255,255,255,.35);}
     [data-theme="light"] .aviso-item{border-left-color:rgba(0,0,0,.35);}
     .aviso-item:first-child{padding-left:0;border-left:0;}
@@ -602,8 +610,9 @@
       .aviso-item:nth-child(3){padding-left:0;border-left:0;}
     }
     @media(max-width:600px){
-      .aviso-strip{padding:16px;}
+      .aviso-strip{padding:16px 0;}
       .aviso-painel{padding:16px;border-radius:14px;}
+      .aviso-painel.aberto .aviso-topo{margin-bottom:16px;}
       .aviso-grade{grid-template-columns:1fr;row-gap:0;}
       .aviso-item,.aviso-item:nth-child(3){padding:14px 0;border-left:0;border-top:1px dashed rgba(255,255,255,.35);}
       [data-theme="light"] .aviso-item,[data-theme="light"] .aviso-item:nth-child(3){border-top-color:rgba(0,0,0,.35);}
@@ -628,9 +637,9 @@
     .hero-d .hero-find input:focus{outline:none;}
     .hero-d .hero-find-btn{flex-shrink:0;font:inherit;font-size:14px;font-weight:700;background:var(--brand);color:#03211e;border:0;border-radius:999px;padding:10px 22px;cursor:pointer;transition:background .2s;}
     .hero-d .hero-find-btn:hover{background:var(--brand-dark);color:#fff;}
-    .hero-d .hero-inl{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:16px;font-size:14px;opacity:.95;}
+    .hero-d .hero-inl{display:flex;flex-wrap:wrap;justify-content:center;max-width:640px;gap:6px 22px;margin-top:16px;font-size:14px;opacity:.95;}
     .hero-d .hero-inl b{font-size:18px;font-weight:700;}
-    .hero-d .hero-tipos-wrap{margin-top:16px;padding-top:0;border-top:0;}
+    .hero-d .hero-tipos-wrap{margin-top:16px;padding-top:0;border-top:0;display:none;}
     .hero-d .hero-tipos{justify-content:flex-start;}
     .hero-d .hero-tipo-chip{font-family:inherit;color:inherit;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
     .hero-d .hero-tipo-chip:hover,.hero-d .hero-tipo-chip[aria-pressed="true"]{background:var(--brand);color:#03211e;border-color:var(--brand);}
@@ -644,6 +653,8 @@
       .hero-d .hero-tipos{justify-content:flex-start;}
       /* Mobile: oculta os filtros de tipo de contrato (Estágio, Jovem Aprendiz, CLT...) */
       .hero-d .hero-tipos-wrap{display:none;}
+      /* Mobile: indicadores (vagas, postagens, empresas) centralizados */
+      .hero-d .hero-inl{justify-content:center;}
     }
     @media(prefers-reduced-motion:reduce){.hero-d .hero-tipo-chip,.hero-d .hero-find-btn{transition:none;}}
 
@@ -878,14 +889,15 @@
 
 <div class="aviso-strip">
   <div class="aviso-painel" role="note" aria-label="Aviso importante">
-    <div class="aviso-topo">
+    <button type="button" class="aviso-topo" id="aviso-toggle" aria-expanded="false" aria-controls="aviso-grade">
       <span class="aviso-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></svg></span>
-      <div>
-        <div class="aviso-titulo">Aviso importante</div>
-        <div class="aviso-sub">Leia antes de se candidatar</div>
-      </div>
-    </div>
-    <div class="aviso-grade">
+      <span class="aviso-tx">
+        <span class="aviso-titulo">Aviso importante</span>
+        <span class="aviso-sub">Leia antes de se candidatar</span>
+      </span>
+      <svg class="aviso-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6l6 -6"/></svg>
+    </button>
+    <div class="aviso-grade" id="aviso-grade">
       <div class="aviso-item"><span class="aviso-n">1</span><b>Quem somos</b><p>Este é um <strong>mural comunitário, informativo e sem fins lucrativos</strong>, que reúne vagas de Guaíba, Eldorado do Sul e Barra do Ribeiro a partir de <strong>fontes públicas</strong>.</p></div>
       <div class="aviso-item"><span class="aviso-n">2</span><b>Não participamos da seleção</b><p>Triagem, entrevistas e contratação são de responsabilidade exclusiva das empresas, e a candidatura ocorre pelos canais oficiais informados na vaga.</p></div>
       <div class="aviso-item"><span class="aviso-n">3</span><b>Prazo “Expira em”</b><p>É apenas uma <strong>estimativa para organização do mural</strong> (30 dias para vagas com link e 15 dias para WhatsApp/e-mail) e <strong>não representa a validade real da vaga</strong>.</p></div>
@@ -5367,5 +5379,17 @@ renderVagas();
 
 <div align="center"><a href='https://contador.s12.com.br'><img src='https://contador.s12.com.br/img-wAD14Czxz7Y3wxYa-4.gif' border='0' alt='contador gratuito'></a><script type='text/javascript' src='https://contador.s12.com.br/ad.js?id=wAD14Czxz7Y3wxYa'></script></div>
 
+<script>
+/* AVISO IMPORTANTE: painel começa recolhido (desktop e mobile) e abre ao clicar no cabeçalho */
+(function(){
+  var btn=document.getElementById('aviso-toggle');
+  var painel=btn&&btn.closest('.aviso-painel');
+  if(!btn||!painel) return;
+  btn.addEventListener('click',function(){
+    var aberto=painel.classList.toggle('aberto');
+    btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  });
+})();
+</script>
 </body>
 </html>
