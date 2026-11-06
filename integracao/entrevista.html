@@ -3658,9 +3658,9 @@ function irPara(n) {
 
     // Envia currículo por email ao recrutador (sem bloquear)
     if (_curriculoTexto) {
-      enviarEmailCurriculo(_curriculoTexto).catch(e => console.warn('[curriculo-email]', e));
+      enviarEmailCurriculo(_curriculoTexto, _pdfFile).catch(e => console.warn('[curriculo-email]', e));
     } else if (_pdfFile) {
-      enviarEmailCurriculo('[Candidato anexou o arquivo "' + _pdfFile.name + '" mas não usou a extração por IA.]').catch(e => console.warn('[curriculo-email]', e));
+      enviarEmailCurriculo('[Candidato anexou o arquivo "' + _pdfFile.name + '" mas não usou a extração por IA.]', _pdfFile).catch(e => console.warn('[curriculo-email]', e));
     } else {
       // Candidato preencheu manualmente — compila os dados do formulário e envia
       const linhasManual = [];
@@ -4576,45 +4576,99 @@ ${textoCV.slice(0, 60000)}`;
   }
 }
 
+// ── Guarda o currículo original no Supabase Storage (bucket privado "curriculos", só envio) ──
+// O arquivo fica lá só até você baixar (ex.: para o Drive) e apagar pelo painel.
+async function enviarCurriculoSupabase(arquivo, nomeStr, vagaStr) {
+  if (!arquivo || !arquivo.size) return null;
+  try {
+    const limpa = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').substring(0, 40) || 'x';
+    const ext = (arquivo.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 5) || 'pdf';
+    const d = new Date();
+    const p2 = n => String(n).padStart(2, '0');
+    const pasta = d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+    const hora  = p2(d.getHours()) + p2(d.getMinutes()) + p2(d.getSeconds());
+    const caminho = pasta + '/' + hora + '_' + limpa(nomeStr) + '_' + limpa(vagaStr) + '.' + ext;
+    const resp = await fetch(SB + '/storage/v1/object/curriculos/' + caminho, {
+      method: 'POST',
+      headers: {
+        'apikey': KEY,
+        'Authorization': 'Bearer ' + KEY,
+        'Content-Type': arquivo.type || 'application/octet-stream',
+        'x-upsert': 'false',
+      },
+      body: arquivo,
+    });
+    if (!resp.ok) {
+      console.warn('[curriculo-supabase] falhou:', resp.status, await resp.text().catch(() => ''));
+      return null;
+    }
+    console.log('[curriculo-supabase] ✅ salvo em curriculos/' + caminho);
+    return 'curriculos/' + caminho;
+  } catch (e) {
+    console.warn('[curriculo-supabase] erro:', e);
+    return null;
+  }
+}
+
 // ── EMAIL: currículo PDF recebido → recrutador ──
-async function enviarEmailCurriculo(textoCV) {
+async function enviarEmailCurriculo(textoCV, arquivo) {
   try {
     const up2     = new URLSearchParams(window.location.search);
     const nomeStr = NOME || up2.get('nome') || 'Candidato';
     const vagaStr = VAGA || up2.get('vaga') || 'Não informada';
     const telStr  = TEL  || up2.get('tel')  || '--';
+    const mailStr = EMAIL || up2.get('email') || '--';
     const now     = new Date();
     const dtFmt   = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    const corpo = [
-      '══════════════════════════════════════',
-      '  CURRÍCULO RECEBIDO — PDF/WORD',
-      '══════════════════════════════════════',
-      'Candidato : ' + nomeStr,
-      'Vaga      : ' + vagaStr,
-      'Telefone  : ' + telStr,
-      'Data/Hora : ' + dtFmt,
-      '',
-      '──────── TEXTO EXTRAÍDO DO CURRÍCULO ────────',
-      textoCV,
-      '══════════════════════════════════════',
-    ].join('\n');
+    // Envia o arquivo original para o Supabase e informa onde ele ficou guardado
+    let localArquivo = null;
+    if (arquivo && arquivo.size > 0 && arquivo.size <= 5 * 1024 * 1024) {
+      localArquivo = await enviarCurriculoSupabase(arquivo, nomeStr, vagaStr);
+    }
 
-    const payload = {
-      access_key: 'dafbb472-9f38-4d31-b464-42a6c14adec5',
+    const campos = {
+      access_key: 'f91b6ed9-adf8-44fc-a3d8-77e534176271',
       subject: `CURRICULO RECEBIDO — ${nomeStr} — ${vagaStr}`,
       from_name: 'Consultoria Orizon — Pré-Entrevista',
       Candidato: nomeStr,
       Vaga: vagaStr,
       Telefone: telStr,
+      Email_candidato: mailStr,
       Data: dtFmt,
-      Curriculo_texto: textoCV.substring(0, 8000),
+      Arquivo_no_Supabase: localArquivo
+        ? localArquivo + '  (Supabase > Storage > curriculos — baixe e depois apague)'
+        : (arquivo ? 'não foi possível guardar o arquivo no Supabase' : '--'),
+      Curriculo_texto: (textoCV || '').substring(0, 8000),
     };
 
+    // 1ª tentativa: com o arquivo original (PDF/Word) anexado ao e-mail.
+    // Anexo exige o plano Pro do Web3Forms e arquivo de até 5 MB.
+    if (arquivo && arquivo.size > 0 && arquivo.size <= 5 * 1024 * 1024) {
+      try {
+        const fd = new FormData();
+        Object.keys(campos).forEach(k => fd.append(k, campos[k]));
+        fd.append('attachment', arquivo, arquivo.name);
+        const resA = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }, // sem Content-Type: o navegador define o multipart
+          body: fd,
+        });
+        const outA = await resA.json();
+        console.log('[curriculo-email] com anexo:', resA.status, outA.success ? '✅' : '❌', outA.message || '');
+        if (outA.success) return; // enviado com anexo
+      } catch (eA) {
+        console.warn('[curriculo-email] falha no envio com anexo, tentando só texto:', eA);
+      }
+      campos.Curriculo_texto = '[Não foi possível anexar o arquivo "' + arquivo.name + '"]\n\n' + campos.Curriculo_texto;
+    }
+
+    // 2ª tentativa (ou caso sem arquivo): só texto, como antes — garante que nada se perde
     const res = await fetch('https://api.web3forms.com/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(campos),
     });
     const result = await res.json();
     console.log('[curriculo-email] Web3Forms status:', res.status, result.success ? '✅' : '❌', result.message || '');
@@ -6494,7 +6548,7 @@ function mostrarResultado(dados, ia) {
   } catch(e) { console.warn('fitBtnWrap erro:', e); }
 }
 
-const WEB3FORMS_KEY='dafbb472-9f38-4d31-b464-42a6c14adec5';
+const WEB3FORMS_KEY='f91b6ed9-adf8-44fc-a3d8-77e534176271';
 
 // ── E-MAIL UNIFICADO (DISC + Mini-Entrevista + Links) ──
 async function enviarEmailUnificado(dados, ia) {
