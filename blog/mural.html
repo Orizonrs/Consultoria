@@ -13779,7 +13779,7 @@ function renderVagas() {
       : "";
 
     return `
-      <div class="vaga-card ${v.status === 'encerrada' ? 'encerrada' : ''}" style="--area-color:${corArea}" data-vaga-key="${escapeHtml(v.empresa + '|' + v.cargo + '|' + v.dataPublicacao)}">
+      <div class="vaga-card ${v.status === 'encerrada' ? 'encerrada' : ''}" style="--area-color:${corArea}" data-vaga-key="${escapeHtml(v.empresa + '|' + v.cargo + '|' + v.dataPublicacao)}" data-vaga-link="${escapeHtml(v.linkSistema || '')}">
         <div class="vaga-top">
           <div>
             <div class="vaga-titulo">${escapeHtml(v.cargo)}</div>
@@ -14472,6 +14472,22 @@ renderVagas();
   function hostDe(url) {
     try { return new URL(url).hostname.replace(/^www\./, ""); } catch (e) { return url; }
   }
+  /* nome da plataforma de vagas (em vez do endereço do link) */
+  function nomePlataforma(url) {
+    var h = hostDe(url).toLowerCase();
+    var mapa = [
+      ["pandape.infojobs.com.br", "Pandapé"], ["pandape", "Pandapé"],
+      ["infojobs", "InfoJobs"], ["gupy.io", "Gupy"], ["jobfy", "Jobfy"],
+      ["csod.com", "Cornerstone"], ["vagas.com.br", "Vagas.com"],
+      ["forms.gle", "Google Forms"], ["docs.google.com", "Google Forms"],
+      ["rhgestor", "RH Gestor"], ["linkedin.com", "LinkedIn"],
+      ["catho.com.br", "Catho"], ["indeed", "Indeed"], ["solides", "Solides"],
+      ["kenoby", "Kenoby"], ["greenhouse.io", "Greenhouse"], ["lever.co", "Lever"],
+      ["workable", "Workable"], ["abler", "Abler"], ["recrutei", "Recrutei"]
+    ];
+    for (var i = 0; i < mapa.length; i++) if (h.indexOf(mapa[i][0]) !== -1) return mapa[i][1];
+    return "Portal da empresa";
+  }
   function curto(url) {
     try { var u = new URL(url); return u.hostname.replace(/^www\./, "") + u.pathname.replace(/\/$/, ""); } catch (e) { return url; }
   }
@@ -14515,7 +14531,7 @@ renderVagas();
   /* contatos que a vaga TEM (o usuário escolhe quais aparecem) */
   function listaContatos(v) {
     var L = [];
-    if (v.linkSistema) L.push({ id: "plataforma", rot: "PLATAFORMA", val: hostDe(v.linkSistema), url: v.linkSistema });
+    if (v.linkSistema) L.push({ id: "plataforma", rot: "PLATAFORMA", val: nomePlataforma(v.linkSistema), url: v.linkSistema });
     if (v.whatsapp) L.push({ id: "whatsapp", rot: "WHATSAPP", val: fmtTel(v.whatsapp) });
     if (v.email) L.push({ id: "email", rot: "E-MAIL", val: v.email });
     if (v.enderecoPresencial) L.push({ id: "endereco", rot: "ENDEREÇO", val: v.enderecoPresencial });
@@ -14987,7 +15003,16 @@ renderVagas();
       var b = document.createElement("button");
       b.type = "button"; b.className = "vaga-btn btn-card-li"; b.textContent = "Card LinkedIn";
       b.title = "Gerar imagem 4x5 para postar no LinkedIn";
-      b.addEventListener("click", function () { window.gerarCardLinkedIn(card.getAttribute("data-vaga-key")); });
+      b.addEventListener("click", function () {
+        /* várias vagas podem ter a mesma empresa+cargo+data (ex.: Panvel); o link da vaga clicada
+           identifica a vaga certa, para o QR code apontar para ELA e não para a primeira igual */
+        var chave = card.getAttribute("data-vaga-key"), link = card.getAttribute("data-vaga-link") || "";
+        var exata = null;
+        for (var i = 0; i < vagas.length; i++) {
+          if (chaveVaga(vagas[i]) === chave && (vagas[i].linkSistema || "") === link) { exata = vagas[i]; break; }
+        }
+        window.gerarCardLinkedIn(exata || chave);
+      });
       acoes.appendChild(b);
     });
   }
