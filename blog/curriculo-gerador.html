@@ -276,6 +276,19 @@ textarea{resize:vertical;min-height:70px;}
 .ft-std .ft-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;}
 .ft-std .ft-nav a{font-size:12.5px;font-weight:600;color:var(--ft);text-decoration:none;}
 .ft-std .ft-nav a:hover{color:var(--brand);}
+
+/* ==== BOTÕES DE ROLAGEM PADRÃO (topo / final) ==== */
+.scroll-btns{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:12px;z-index:200;}
+.scroll-btn{width:48px;height:48px;border-radius:50%;border:1px solid color-mix(in srgb,var(--brand) 35%,transparent);background:linear-gradient(160deg,var(--white),var(--brand-light));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:var(--brand);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.28),0 0 0 1px rgba(255,255,255,.03) inset;transition:transform .22s ease,box-shadow .22s ease,background .22s ease,color .22s ease,border-color .22s ease;font-size:18px;opacity:0;pointer-events:none;transform:translateY(8px) scale(.9);padding:0;}
+.scroll-btn svg{width:19px;height:19px;stroke:currentColor;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s ease;}
+.scroll-btn.show{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);}
+.scroll-btn:hover{background:linear-gradient(160deg,var(--brand),var(--brand-dark));border-color:var(--brand);color:#fff;transform:translateY(-3px) scale(1.05);box-shadow:0 12px 28px color-mix(in srgb,var(--brand) 40%,transparent);}
+.scroll-btn:hover svg{transform:translateY(-1px);}
+#btn-bottom:hover svg{transform:translateY(1px);}
+.scroll-btn:active{transform:translateY(-1px) scale(.97);}
+[data-theme="light"] .scroll-btn{box-shadow:0 8px 20px rgba(20,30,60,.14),0 0 0 1px rgba(255,255,255,.5) inset;}
+[data-theme="light"] .scroll-btn:hover{box-shadow:0 12px 26px color-mix(in srgb,var(--brand) 30%,transparent);}
+@media(max-width:560px){.scroll-btns{right:14px;bottom:14px;gap:9px;}.scroll-btn{width:42px;height:42px;}.scroll-btn svg{width:17px;height:17px;}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -1283,5 +1296,26 @@ textarea{resize:vertical;min-height:70px;}
 })();
 </script>
 
+<div class="scroll-btns" id="scroll-btns">
+  <button class="scroll-btn" id="btn-top" type="button" aria-label="Ir para o topo" title="Ir para o topo"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+  <button class="scroll-btn" id="btn-bottom" type="button" aria-label="Ir para o final" title="Ir para o final"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+</div>
+<script>
+(function(){
+  var btnTop=document.getElementById('btn-top'),btnBottom=document.getElementById('btn-bottom');
+  if(!btnTop||!btnBottom) return;
+  function updateButtons(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    var max=document.documentElement.scrollHeight-window.innerHeight;
+    btnTop.classList.toggle('show',y>300);
+    btnBottom.classList.toggle('show',y<max-300);
+  }
+  btnTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  btnBottom.addEventListener('click',function(){window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});});
+  window.addEventListener('scroll',updateButtons,{passive:true});
+  window.addEventListener('resize',updateButtons);
+  updateButtons();
+})();
+</script>
 </body>
 </html>
