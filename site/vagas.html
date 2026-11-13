@@ -7886,21 +7886,83 @@ const STATUS = {
   }
 }
 
-// Anchor highlight via URL param
-window.addEventListener('load', function() {
+// Vaga única via URL (?vaga=vaga-xxx ou #vaga-xxx): mostra só a vaga escolhida na mini vaga
+(function() {
   var params = new URLSearchParams(window.location.search);
+  // Retorno da entrevista também usa ?vaga=, mas aí não deve filtrar a lista
+  if (params.get('abrir_modal') === '1') return;
   var vagaId = params.get('vaga') || window.location.hash.replace('#', '');
-  if (vagaId) {
+  if (!vagaId) return;
+
+  function mostrarSoEstaVaga() {
     var cardEl = document.getElementById(vagaId);
-    if (cardEl) {
+    if (!cardEl || !cardEl.classList.contains('vaga-card')) return; // vaga inexistente: mantém lista completa
+
+    var cards = document.querySelectorAll('#vagasContainer .vaga-card');
+    cards.forEach(function(c) { c.style.display = (c === cardEl) ? '' : 'none'; });
+
+    var cnt = document.getElementById('vagasCount');
+    if (cnt) cnt.textContent = '1';
+
+    var sel = document.getElementById('searchArea');
+    if (sel) sel.value = vagaId;
+
+    var grid = document.getElementById('vagasContainer');
+    if (grid && !document.getElementById('vagaUnicaAviso')) {
+      var tituloEl = cardEl.querySelector('.vaga-title, h3');
+      var titulo = tituloEl ? tituloEl.textContent.trim() : 'esta vaga';
+      var aviso = document.createElement('div');
+      aviso.id = 'vagaUnicaAviso';
+      aviso.setAttribute('role', 'status');
+      aviso.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:0.8rem;flex-wrap:wrap;margin:0 0 1rem;padding:0.7rem 1rem;border:1px solid rgba(37,99,235,0.35);background:rgba(37,99,235,0.08);border-radius:12px;font-size:0.85rem;';
+      var txt = document.createElement('span');
+      txt.textContent = 'Você está vendo apenas a vaga: ';
+      var b = document.createElement('strong');
+      b.textContent = titulo;
+      txt.appendChild(b);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = 'Ver todas as vagas →';
+      btn.style.cssText = 'cursor:pointer;font:inherit;font-weight:700;padding:0.4rem 0.9rem;border-radius:99px;border:1.5px solid #2563eb;background:transparent;color:#2563eb;';
+      btn.onclick = mostrarTodasAsVagas;
+      aviso.appendChild(txt);
+      aviso.appendChild(btn);
+      grid.parentNode.insertBefore(aviso, grid);
+    }
+
+    window.addEventListener('load', function() {
       setTimeout(function() {
         cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         cardEl.style.boxShadow = '0 0 0 3px var(--primary)';
         setTimeout(function() { cardEl.style.boxShadow = ''; }, 2500);
       }, 400);
-    }
+    });
   }
-});
+
+  window.mostrarTodasAsVagas = function() {
+    document.querySelectorAll('#vagasContainer .vaga-card').forEach(function(c) { c.style.display = ''; });
+    var total = document.querySelectorAll('#vagasContainer .vaga-card').length;
+    var cnt = document.getElementById('vagasCount');
+    if (cnt) cnt.textContent = total;
+    var sel = document.getElementById('searchArea');
+    if (sel) sel.value = '';
+    var aviso = document.getElementById('vagaUnicaAviso');
+    if (aviso) aviso.remove();
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.delete('vaga');
+      url.hash = '';
+      window.history.replaceState({}, '', url.toString());
+    } catch (e) {}
+  };
+
+  // Roda assim que o DOM estiver pronto (evita piscar a lista inteira antes de filtrar)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mostrarSoEstaVaga);
+  } else {
+    mostrarSoEstaVaga();
+  }
+})();
 
 /* ===================================================== */
 /* CALCULADORA DE BENEFICIOS + ANIMACAO BOTAO CANDIDATAR */
