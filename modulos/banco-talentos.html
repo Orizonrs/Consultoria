@@ -456,7 +456,7 @@ html[data-theme="light"] .act-grp .act-gi[style*="#f87171"]{color:#b91c1c!import
 html[data-theme="light"] .act-pop .act-ic[style*="#25d366"]{color:#15803d!important;background:rgba(22,163,74,0.18)!important;box-shadow:inset 0 0 0 1px rgba(22,163,74,0.40);}
 html[data-theme="light"] .act-grp .act-gi[style*="#25d366"]{color:#15803d!important;}
 /* Bordas dos botões de ação do card — branca no modo escuro, preta no modo claro (igual aos cards/filtros) */
-.act-grp{border:1px solid #fff;}
+.act-grp{border:1px solid #fff;box-sizing:border-box;}
 .act-bar .act-main{border:1px solid #fff!important;}
 html[data-theme="light"] .act-grp{border-color:#000;}
 html[data-theme="light"] .act-bar .act-main{border:1px solid #000!important;}
@@ -1448,17 +1448,34 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') fecharMenuAcoes();
 window.addEventListener('resize',fecharMenuAcoes);
 window.addEventListener('scroll',e=>{ const p=document.getElementById('actPop'); if(p && e.target && p.contains(e.target)) return; fecharMenuAcoes(); },true);
 
+// Acordeões do card: após abrir, libera a altura (max-height:none + overflow visível) para não cortar
+// nada (bordas, quebra de linha em tela estreita, fontes que carregam depois).
+function _accAbrir(el){
+  clearTimeout(el._accT);
+  el.classList.remove('collapsed');
+  el.style.overflow='hidden';
+  el.style.maxHeight = el.scrollHeight + 'px';
+  el._accT = setTimeout(()=>{
+    if(!el.classList.contains('collapsed')){ el.style.maxHeight='none'; el.style.overflow='visible'; }
+  }, 340);
+}
+function _accFechar(el){
+  clearTimeout(el._accT);
+  el.style.overflow='hidden';
+  el.style.maxHeight = el.scrollHeight + 'px';
+  void el.offsetHeight; // força o reflow para a animação de fechar partir da altura real
+  requestAnimationFrame(()=>{ el.classList.add('collapsed'); });
+}
+
 function toggleFootBtns(btn){
   const body = btn.nextElementSibling;
   const isOpen = btn.classList.contains('open');
   if(isOpen){
-    body.style.maxHeight = body.scrollHeight + 'px';
-    requestAnimationFrame(()=>{ body.classList.add('collapsed'); });
+    _accFechar(body);
     btn.classList.remove('open');
     btn.querySelector('.ft-chev').textContent = '▼';
   } else {
-    body.classList.remove('collapsed');
-    body.style.maxHeight = body.scrollHeight + 'px';
+    _accAbrir(body);
     btn.classList.add('open');
     btn.querySelector('.ft-chev').textContent = '▲';
   }
@@ -1468,14 +1485,12 @@ function toggleFitBars(btn){
   const wrap = btn.nextElementSibling;
   const isOpen = btn.classList.contains('open');
   if(isOpen){
-    wrap.style.maxHeight = wrap.scrollHeight + 'px';
-    requestAnimationFrame(()=>{ wrap.classList.add('collapsed'); });
+    _accFechar(wrap);
     btn.classList.remove('open');
     const chev = btn.querySelector('.ft-chev,.chev');
     if(chev) chev.textContent = '▼';
   } else {
-    wrap.classList.remove('collapsed');
-    wrap.style.maxHeight = wrap.scrollHeight + 'px';
+    _accAbrir(wrap);
     btn.classList.add('open');
     const chev = btn.querySelector('.ft-chev,.chev');
     if(chev) chev.textContent = '▲';
