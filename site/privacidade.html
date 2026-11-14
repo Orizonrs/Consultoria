@@ -4134,6 +4134,91 @@ body.dark-mode .menu-content::-webkit-scrollbar-thumb { background: #00c8ff; }
 ::view-transition-old(root){z-index:1;}::view-transition-new(root){z-index:2;}
 html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!important;}
 </style>
+<style id="priv-counter-v2">
+@keyframes pcb-ping{0%{transform:scale(.7);opacity:.7}100%{transform:scale(1.55);opacity:0}}
+@keyframes pcb-ping-m{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.22);opacity:0}}
+@keyframes pcb-spin{to{transform:rotate(360deg)}}
+@keyframes pcb-blink{50%{opacity:.25}}
+@keyframes pcb-pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,#22c55e 60%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+body .priv-counter-block{
+  --pc:#2563eb;
+  position:relative;overflow:hidden;display:grid;
+  grid-template-columns:auto 1fr;grid-template-areas:"shield main" "stats stats";
+  gap:1.1rem 1.8rem;align-items:center;text-align:left;
+  padding:1.7rem;border-radius:20px;border:1.5px solid var(--pc);
+  background:color-mix(in srgb,var(--pc) 7%,transparent);
+}
+body.dark-mode .priv-counter-block{--pc:#00c8ff;background:color-mix(in srgb,#00c8ff 6%,#0b1220)}
+.pcb-shield{grid-area:shield;position:relative;width:104px;height:104px;display:grid;place-items:center}
+.pcb-shield::before,.pcb-shield::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--pc);animation:pcb-ping 2.6s ease-out infinite}
+.pcb-shield::after{animation-delay:1.3s}
+.pcb-sweep{position:absolute;inset:6px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 290deg,color-mix(in srgb,var(--pc) 55%,transparent) 360deg);animation:pcb-spin 3.2s linear infinite;border:1px solid color-mix(in srgb,var(--pc) 45%,transparent)}
+.pcb-core{position:relative;z-index:1;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;font-size:2.1rem;line-height:1;background:color-mix(in srgb,var(--pc) 16%,#0b1220);border:1.5px solid var(--pc)}
+body:not(.dark-mode) .pcb-core{background:#fff}
+.pcb-main{grid-area:main;min-width:0}
+body .priv-counter-block .priv-counter-label{margin:0 0 .35rem;font-size:.78rem;letter-spacing:2.5px}
+body .priv-counter-block .priv-counter-days{display:inline-block;font-size:clamp(3rem,9vw,4.4rem);font-weight:900;line-height:1;color:var(--pc)}
+body.dark-mode .priv-counter-block .priv-counter-days{color:#fff !important;text-shadow:0 0 26px color-mix(in srgb,#00c8ff 70%,transparent)}
+body .priv-counter-block .priv-counter-sub{margin:.35rem 0 .9rem;font-size:.9rem;opacity:.8}
+body .priv-counter-block .priv-counter-sub{color:var(--text-light)}
+body.dark-mode .priv-counter-block .priv-counter-sub{color:#cfe9f2 !important;opacity:.9}
+body .priv-counter-block .pcb-cell span,body .priv-counter-block .pcb-sep{color:var(--text-light)}
+body.dark-mode .priv-counter-block .pcb-cell span,body.dark-mode .priv-counter-block .pcb-sep{color:#cfe9f2}
+.pcb-clock{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap}
+.pcb-live{width:9px;height:9px;border-radius:50%;background:#22c55e;animation:pcb-pulse 1.8s ease-in-out infinite;margin-right:.15rem}
+.pcb-cell{display:flex;flex-direction:column;align-items:center;min-width:3.4rem;padding:.4rem .5rem;border-radius:10px;border:1px solid color-mix(in srgb,var(--pc) 40%,transparent);background:color-mix(in srgb,var(--pc) 9%,transparent)}
+.pcb-cell b{font-size:1.25rem;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--pc)}
+body.dark-mode .pcb-cell b{color:#fff}
+.pcb-cell span{font-size:.62rem;letter-spacing:1.2px;text-transform:uppercase;opacity:.75}
+.pcb-sep{font-weight:800;opacity:.6;animation:pcb-blink 1s steps(1) infinite}
+body .priv-counter-block .priv-counter-stats{grid-area:stats;margin:.3rem 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;justify-content:stretch}
+body .priv-counter-block .priv-counter-stat{display:flex;flex-direction:column;align-items:center;gap:.1rem;text-align:center;padding:.95rem .7rem .85rem;border-radius:14px;font-size:.8rem;line-height:1.3;color:var(--text-light);border:1px solid color-mix(in srgb,var(--pc) 38%,transparent);background:color-mix(in srgb,var(--pc) 8%,transparent);transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+body .priv-counter-block .priv-counter-stat:hover{transform:translateY(-3px);border-color:var(--pc);box-shadow:0 10px 26px color-mix(in srgb,var(--pc) 28%,transparent)}
+body.dark-mode .priv-counter-block .priv-counter-stat{color:#e8f4f8 !important}
+.pcs-ic{font-style:normal;font-size:1.6rem;line-height:1;margin-bottom:.15rem}
+body .priv-counter-block .priv-counter-stat strong{font-size:1.9rem;font-weight:900;line-height:1.1;color:var(--pc);font-variant-numeric:tabular-nums}
+body.dark-mode .priv-counter-block .priv-counter-stat strong{color:#fff}
+@media (max-width:640px){
+  /* MOBILE = mesmo layout do desktop (escudo à esquerda, números à direita, 3 cards embaixo), tudo fluido por largura de tela */
+  .priv-accordion-box{padding:1rem .75rem}
+  body .priv-counter-block{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"shield main" "stats stats";text-align:left;justify-items:stretch;align-items:center;gap:.8rem clamp(.5rem,2.6vw,.9rem);padding:clamp(.8rem,3.4vw,1.1rem) clamp(.6rem,3vw,.9rem);margin-bottom:1.5rem}
+  .pcb-shield{width:clamp(52px,17vw,70px);height:clamp(52px,17vw,70px)}
+  .pcb-shield::before,.pcb-shield::after{border-width:1.5px;animation-name:pcb-ping-m}
+  .pcb-core{width:64%;height:64%;font-size:clamp(1.05rem,5.6vw,1.45rem)}
+  body .priv-counter-block .priv-counter-label{font-size:clamp(.46rem,2.15vw,.6rem);letter-spacing:clamp(.5px,.38vw,1.4px);margin-bottom:.2rem;line-height:1.3;white-space:nowrap}
+  body .priv-counter-block .priv-counter-days{font-size:clamp(2.2rem,12.5vw,3.2rem)}
+  body .priv-counter-block .priv-counter-sub{font-size:clamp(.5rem,2.6vw,.68rem);margin:.25rem 0 .55rem;line-height:1.3;white-space:nowrap}
+  .pcb-clock{justify-content:flex-start;flex-wrap:nowrap;gap:clamp(.12rem,.9vw,.25rem)}
+  .pcb-live{width:7px;height:7px;margin-right:.05rem;flex:none}
+  .pcb-cell{min-width:0;flex:0 1 clamp(2rem,10.5vw,2.6rem);padding:.25rem .2rem;border-radius:8px}
+  .pcb-cell b{font-size:clamp(.8rem,3.9vw,1rem)}
+  .pcb-cell span{font-size:clamp(.42rem,1.9vw,.52rem);letter-spacing:.4px}
+  .pcb-sep{font-size:.8rem}
+  body .priv-counter-block .priv-counter-stats{width:100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.3rem,1.8vw,.5rem)}
+  body .priv-counter-block .priv-counter-stat{padding:.65rem .2rem .55rem;font-size:clamp(.5rem,2.4vw,.66rem);border-radius:12px;min-width:0;overflow-wrap:anywhere}
+  body .priv-counter-block .priv-counter-stat strong{font-size:clamp(1.1rem,5.6vw,1.4rem)}
+  .pcs-ic{font-size:clamp(1.1rem,5.2vw,1.35rem)}
+}
+@media (max-width:680px){
+  /* "Sua Privacidade, Sempre Trancada": MOBILE = mesmo layout e proporções do desktop (cadeado ~19% à esquerda, texto à direita; título em 1 linha), tudo fluido */
+  body .priv-lock-container.content-container{padding:clamp(.8rem,3.4vw,1.2rem) clamp(.6rem,2.8vw,1rem)}
+  body .priv-lock-grid{grid-template-columns:clamp(62px,19vw,96px) minmax(0,1fr);text-align:left;gap:clamp(.5rem,2.6vw,.9rem);align-items:start}
+  body .priv-lock-visual{margin:0;max-width:none;width:100%;align-self:start}
+  body .priv-lock-text{min-width:0}
+  body .priv-lock-text .priv-section-eyebrow{font-size:clamp(.5rem,2.3vw,.62rem);letter-spacing:clamp(1px,.7vw,2.2px);margin-bottom:.3rem;text-align:left;white-space:nowrap}
+  body .priv-lock-container .priv-lock-title.orizon-section-title{font-size:clamp(.56rem,2.95vw,.95rem) !important;line-height:1.25;margin:0 0 .55rem;white-space:nowrap;letter-spacing:0}
+  body .priv-lock-title .orizon-title-icon{width:1.15em !important;height:1.15em !important;margin-right:.25em !important}
+  body .priv-lock-desc{font-size:clamp(.62rem,3.05vw,.78rem);line-height:1.6;margin-bottom:.75rem;text-align:left !important}
+  body .priv-lock-container .priv-lock-desc,body .priv-lock-container .priv-lock-desc *{hyphens:none !important;-webkit-hyphens:none !important;-ms-hyphens:none !important;word-break:normal !important;overflow-wrap:normal !important}
+  body .priv-lock-highlights{gap:.45rem}
+  body .priv-lock-highlights li{font-size:clamp(.58rem,2.9vw,.74rem);gap:.4rem;line-height:1.35;align-items:center}
+  body .priv-lock-hl-icon{font-size:clamp(1rem,4.6vw,1.25rem);width:1.4rem;margin-top:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .pcb-shield::before,.pcb-shield::after,.pcb-sweep,.pcb-live,.pcb-sep{animation:none}
+  .pcb-shield::before,.pcb-shield::after{opacity:.35}
+}
+</style>
 </head>
 <body>
 <style>
@@ -4863,7 +4948,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <div class="priv-lock-text">
 <div class="lgpd-direitos-eyebrow priv-section-eyebrow">Proteção Contínua</div>
 <h2 class="priv-lock-title orizon-section-title"><svg class="orizon-title-icon" viewBox="0 0 24 24" style="width:1.3em;height:1.3em;object-fit:contain;vertical-align:middle;margin-right:0.35em;" aria-hidden="true" focusable="false"><defs><linearGradient id="g_lock" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/></linearGradient></defs><path d="M7.3 10.8V7.6a4.7 4.7 0 0 1 9.4 0v3.2" fill="none" stroke="#94a3b8" stroke-width="2"/><rect x="5.4" y="10.8" width="13.2" height="10" rx="2" fill="url(#g_lock)"/><circle cx="12" cy="15.2" r="1.6" fill="#fff"/><rect x="11.3" y="16.2" width="1.4" height="2.6" rx="0.5" fill="#fff"/></svg><span class="ost-w1">Sua</span> <span class="ost-w2">Privacidade, Sempre Trancada</span></h2>
-<p class="priv-lock-desc">Assim como esse cadeado, seus dados pessoais na <strong>Orizon</strong> nunca ficam expostos. Cada informação que você compartilha — do currículo ao contato — é criptografada, monitorada e protegida em conformidade com a <strong>LGPD</strong>, do primeiro clique até o fim do processo seletivo.</p>
+<p class="priv-lock-desc">Assim como esse cadeado, seus dados pessoais na <strong>Orizon</strong> nunca ficam expostos. Cada informação que você compartilha, do currículo ao contato é criptografada, monitorada e protegida em conformidade com a <strong>LGPD</strong>, do primeiro clique até o fim do processo seletivo.</p>
 <ul class="priv-lock-highlights">
 <li><span class="priv-lock-hl-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.2" fill="currentColor"/><path d="M8 11V7.2a4 4 0 0 1 8 0V11" stroke="currentColor" stroke-width="2.1" fill="none" stroke-linecap="round"/><circle cx="12" cy="15.5" r="1.3" fill="#0a0e1a"/></svg></span> Criptografia de ponta a ponta nos dados sensíveis</li>
 <li><span class="priv-lock-hl-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.2l6.5 2.6v5.4c0 4.4-2.8 7.6-6.5 8.9-3.7-1.3-6.5-4.5-6.5-8.9V5.8L12 3.2z" fill="currentColor"/><path d="M9 12.1l2 2 4-4.2" stroke="#0a0e1a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Acesso restrito apenas a pessoas autorizadas</li>
@@ -4885,20 +4970,24 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <!-- CONTADOR ANIMADO -->
 <div class="priv-counter-block" id="counterBlock">
+<div class="pcb-shield" aria-hidden="true"><div class="pcb-sweep"></div><div class="pcb-core">🛡️</div></div>
+<div class="pcb-main">
 <div class="priv-counter-label">🔐 Seus dados protegidos há</div>
 <div class="priv-counter-days" id="daysCounter">0</div>
 <div class="priv-counter-sub">dias desde nossa fundação em 2025</div>
+<div class="pcb-clock" aria-hidden="true"><span class="pcb-live"></span><div class="pcb-cell"><b id="pcbH">00</b><span>horas</span></div><span class="pcb-sep">:</span><div class="pcb-cell"><b id="pcbM">00</b><span>min</span></div><span class="pcb-sep">:</span><div class="pcb-cell"><b id="pcbS">00</b><span>seg</span></div></div>
+</div>
 <div class="priv-counter-stats">
-<span class="priv-counter-stat"><strong id="usersCount">0</strong> dados protegidos</span>
-<span class="priv-counter-stat"><strong>100%</strong> conformidade LGPD</span>
-<span class="priv-counter-stat"><strong>0</strong> vazamentos</span>
+<span class="priv-counter-stat"><i class="pcs-ic" aria-hidden="true">🗄️</i><strong id="usersCount">0</strong> dados protegidos</span>
+<span class="priv-counter-stat"><i class="pcs-ic" aria-hidden="true">✅</i><strong>100%</strong> conformidade LGPD</span>
+<span class="priv-counter-stat"><i class="pcs-ic" aria-hidden="true">🔒</i><strong>0</strong> vazamentos</span>
 </div>
 </div>
 <!-- CARDS COM FOTO — CLIQUE PARA VIRAR -->
 <p class="priv-photo-hint">👆 Toque em cada card para ver os detalhes</p>
 <div class="priv-photo-grid" id="privPhotoGrid">
 <!-- 1. INTRODUÇÃO -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1633265486064-086b219458ec?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">1</span>
@@ -4913,7 +5002,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 <!-- 2. O QUE COLETAMOS -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1542744173-05336fcc7ad4?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">2</span>
@@ -4928,7 +5017,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 <!-- 3. COMO USAMOS -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">3</span>
@@ -4947,7 +5036,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 <!-- 4. SEGURANÇA -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1614064548237-096f735f344f?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">4</span>
@@ -4966,7 +5055,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 <!-- 5. COOKIES -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1590065707046-4fde65275b2e?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">5</span>
@@ -4986,7 +5075,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 <!-- 6. CONTATO DPO -->
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1584433144859-1fc3ab64a957?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">6</span>
@@ -4998,7 +5087,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <p>Fale com nosso Encarregado de Proteção de Dados:</p>
 <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.4rem;" onclick="event.stopPropagation()">
 <a class="btn btn-primary" href="mailto:adm@orizonrs.com" style="font-size:0.68rem;padding:0.4rem 0.7rem;margin:0;">📧 E-mail</a>
-<a class="btn btn-secondary" href="https://wa.me/5551996976579" style="font-size:0.68rem;padding:0.4rem 0.7rem;margin:0;" target="_blank">💬 WhatsApp</a>
+<a class="btn btn-secondary" href="https://wa.me/5551996976579" style="font-size:0.68rem;padding:0.4rem 0.7rem;margin:0;" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>
 </div>
 <p style="margin-top:0.4rem;font-size:0.65rem;opacity:0.7;"><strong>Atualizado:</strong> Janeiro de 2026</p>
 </div>
@@ -5060,7 +5149,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <!-- OBRIGAÇÕES DA ORIZON -->
 <div class="priv-photo-grid priv-photo-grid-single" style="margin-top:2rem;">
-<div class="priv-photo-card" onclick="flipCard(this)">
+<div class="priv-photo-card" onclick="flipCard(this)" role="button" tabindex="0" aria-pressed="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this);}">
 <div class="priv-photo-inner">
 <div class="priv-photo-front" style="background-image:linear-gradient(180deg, rgba(10,15,35,0.15) 0%, rgba(10,15,35,0.85) 100%), url('https://images.unsplash.com/photo-1504711331083-9c895941bf81?auto=format&amp;fit=crop&amp;w=800&amp;q=75');">
 <span class="priv-photo-num">📜</span>
@@ -5624,7 +5713,7 @@ function markdownParaHTML(texto) {
   function processarInline(str) {
     return str
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#2563eb;text-decoration:underline;">$1</a>');
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">$1</a>');
   }
 
   // Dividimos por quebra de linha simples
@@ -5827,7 +5916,7 @@ Tente novamente em instantes.`));
       function processarInline(str) {
         return str
           .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:#8dc63f;text-decoration:underline;">$1</a>');
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:#8dc63f;text-decoration:underline;">$1</a>');
       }
       const linhas = texto.split('\n');
       const blocos = []; let listaAtual = []; let tipoListaAtual = null;
@@ -6715,6 +6804,18 @@ let vtRecognition = null;
     "en": " leaks",
     "es": " filtraciones"
   },
+  "horas": {
+    "en": "hours",
+    "es": "horas"
+  },
+  "min": {
+    "en": "min",
+    "es": "min"
+  },
+  "seg": {
+    "en": "sec",
+    "es": "seg"
+  },
   "👆 Toque em cada card para ver os detalhes": {
     "en": "👆 Tap each card to see the details",
     "es": "👆 Toque cada tarjeta para ver los detalles"
@@ -7455,28 +7556,55 @@ let vtRecognition = null;
 
     // === CARDS LGPD FLIP ===
     function flipCard(el) {
-      el.classList.toggle('flipped');
+      var on = el.classList.toggle('flipped');
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
     }
 
     // === CONTADOR ANIMADO ===
     (function() {
-      function animateNum(id, end, dur) {
+      var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var founded = new Date('2025-01-01T00:00:00-03:00');
+      function pad(n) { return (n < 10 ? '0' : '') + n; }
+      function countUp(id, end, dur) {
         var el = document.getElementById(id);
         if (!el) return;
-        var start = 0, step = end / (dur / 16);
-        var t = setInterval(function() {
-          start += step;
-          if (start >= end) { el.textContent = end; clearInterval(t); return; }
-          el.textContent = Math.floor(start);
-        }, 16);
+        if (reduce) { el.textContent = end; return; }
+        var t0 = null;
+        function frame(ts) {
+          if (t0 === null) t0 = ts;
+          var p = Math.min((ts - t0) / dur, 1);
+          el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3)));
+          if (p < 1) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
       }
-      var founded = new Date('2025-01-01');
-      var now = new Date();
-      var days = Math.floor((now - founded) / 86400000);
-      setTimeout(function() {
-        animateNum('daysCounter', days, 1200);
-        animateNum('usersCount', 847, 1500);
-      }, 500);
+      function tick() {
+        var diff = Date.now() - founded.getTime();
+        var h = document.getElementById('pcbH'), m = document.getElementById('pcbM'), s = document.getElementById('pcbS');
+        if (!h || !m || !s) return;
+        h.textContent = pad(Math.floor(diff % 86400000 / 3600000));
+        m.textContent = pad(Math.floor(diff % 3600000 / 60000));
+        s.textContent = pad(Math.floor(diff % 60000 / 1000));
+      }
+      var started = false;
+      function start() {
+        if (started) return;
+        started = true;
+        var days = Math.floor((Date.now() - founded.getTime()) / 86400000);
+        countUp('daysCounter', days, 1400);
+        countUp('usersCount', 847, 1600);
+        tick();
+        setInterval(tick, 1000);
+      }
+      var block = document.getElementById('counterBlock');
+      if (block && 'IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function(entries) {
+          if (entries[0].isIntersecting) { io.disconnect(); start(); }
+        }, { threshold: 0.35 });
+        io.observe(block);
+      } else {
+        start();
+      }
     })();
     </script>
 <script>
