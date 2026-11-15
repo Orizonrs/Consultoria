@@ -1458,6 +1458,50 @@ document.getElementById('mobile-toggle')?.addEventListener('click', () => docume
    ══════════════════════════════════════════════════════════════════ */
 const vagas = [
   {
+    empresa: "CIEE de Guaíba",
+    cargo: "Estagiário(a) de Operações Florestais",
+    numeroVagas: 1,
+    area: "meio-ambiente-agro",
+    local: "Guaíba/RS (Ermo)",
+    tipo: "Estágio",
+    dataPublicacao: "2026-11-14",
+    linkSistema: "https://cieers.org.br/conjuntos/vagas/detalhes/detalhes?vaga=26639859&numero=1",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Estágio em Operações Florestais na CMPC Celulose Riograndense Ltda, no bairro Ermo, em Guaíba/RS, presencial, divulgada pela plataforma Conjuntos do CIEE-RS. Bolsa-auxílio de R$ 1.500 por mês, com possibilidade de efetivação. Horário das 8h às 15h, com 1h de intervalo, de segunda a sexta. Código da vaga 26/63985-9 01.",
+    atividades: [],
+    requisitos: [],
+    beneficios: ["Bolsa-auxílio de R$ 1.500 por mês", "Vale-transporte integral", "Possibilidade de efetivação"],
+    siteOficial: "https://cieers.org.br",
+    instagram: "https://www.instagram.com/ciee_rs/",
+    facebook: "https://www.facebook.com/CIEERS.ORG/",
+    linkedin: "https://br.linkedin.com/company/ciee-rs",
+    enderecoPresencial: "R. São José, 780 - Centro, Guaíba - RS, 92500-000"
+  },
+  {
+    empresa: "CIEE de Guaíba",
+    cargo: "Estagiário(a) de Marketing",
+    numeroVagas: 1,
+    area: "marketing",
+    local: "Guaíba/RS (Centro)",
+    tipo: "Estágio",
+    dataPublicacao: "2026-11-14",
+    linkSistema: "https://cieers.org.br/conjuntos/vagas/detalhes/detalhes?vaga=26660840&numero=1",
+    email: "",
+    whatsapp: "",
+    mensagemWhats: "",
+    descricao: "Vaga de Estágio em Marketing na E M R Comércio de Artigos e Suprimentos de Escritório Ltda, no Centro de Guaíba/RS, presencial, divulgada pela plataforma Conjuntos do CIEE-RS. Bolsa-auxílio de R$ 700 por mês, com possibilidade de efetivação. Horário das 13h30 às 18h30, de segunda a sábado. Código da vaga 26/66084-0 01.",
+    atividades: [],
+    requisitos: [],
+    beneficios: ["Bolsa-auxílio de R$ 700 por mês", "Vale-transporte integral", "Possibilidade de efetivação"],
+    siteOficial: "https://cieers.org.br",
+    instagram: "https://www.instagram.com/ciee_rs/",
+    facebook: "https://www.facebook.com/CIEERS.ORG/",
+    linkedin: "https://br.linkedin.com/company/ciee-rs",
+    enderecoPresencial: "R. São José, 780 - Centro, Guaíba - RS, 92500-000"
+  },
+  {
     empresa: "Consultoria Camilla Terra Ltda",
     cargo: "Analista Fiscal - Eldorado RS",
     numeroVagas: 1,
@@ -16554,12 +16598,9 @@ renderVagas();
 
     /* faixa final */
     ctx.fillStyle = T.mudo; ctx.font = "500 21px " + SANS; ctx.textAlign = "center";
-    /* data da divulgação = dia em que o card está sendo gerado (hoje) */
-    var hoje = new Date();
-    var dd = String(hoje.getDate()).padStart(2, "0"), mm = String(hoje.getMonth() + 1).padStart(2, "0");
-    var pub = "Divulgada em " + dd + "/" + mm + "/" + hoje.getFullYear();
-    var enc = v.dataEncerramento ? " · Inscrições até " + formatarData(v.dataEncerramento) : "";
-    ctx.fillText(pub + enc, W / 2, 1325);
+    /* a data em que o card é gerado NÃO aparece mais no card (vai no "texto extra");
+       só fica a data-limite de inscrição, quando a empresa informou uma */
+    if (v.dataEncerramento) ctx.fillText("Inscrições até " + formatarData(v.dataEncerramento), W / 2, 1325);
     ctx.textAlign = "left";
   }
 
@@ -16580,6 +16621,29 @@ renderVagas();
     L.push("");
     L.push("#vagas #emprego #oportunidade" + (cidade ? " #" + cidade : "") + " #RioGrandeDoSul");
     return L.join("\n");
+  }
+
+  /* ── texto extra padronizado (Facebook/Instagram: grupo e página) ──
+     Os dois [INSERIR LINK] viram o link por onde a pessoa entra na vaga
+     (linkSistema). Sem linkSistema, usa o link do mural salvo; se também
+     não houver, mantém [INSERIR LINK] para preencher à mão. */
+  function textoExtra(v) {
+    var hoje = new Date();
+    var dd = String(hoje.getDate()).padStart(2, "0"), mm = String(hoje.getMonth() + 1).padStart(2, "0");
+    var link = v.linkSistema || muralSalvo() || "[INSERIR LINK]";
+    return [
+      "📅 DIVULGAÇÃO — " + dd + "/" + mm + "/" + hoje.getFullYear(),
+      "",
+      "🔵 Facebook: " + link,
+      "",
+      "📸 Instagram: " + link,
+      "",
+      "⚠️ Atenção: o Instagram não permite links clicáveis nas legendas do feed. Para acessar vagas com links, escaneie o QR Code ou consulte nosso Facebook e Mural de Vagas no WhatsApp. Se a publicação não apresentar links, desconsidere esta orientação.",
+      "",
+      "⚠️ Aviso sobre a validade: após 15 dias da data de divulgação, considere esta vaga encerrada ou possivelmente inativa. Recomendamos confirmar a disponibilidade diretamente com a empresa responsável.",
+      "",
+      "#Guaíba #EldoradoDoSulRS #Emprego #GuaibaRS #Guaiba #EldoradoDoSul #PortoAlegre #PortoAlegreRS"
+    ].join("\n");
   }
 
   /* ── legenda para WhatsApp (negrito com *asteriscos*, links completos clicáveis) ── */
@@ -16757,73 +16821,132 @@ renderVagas();
     m.appendChild(p); document.body.appendChild(m);
   }
 
-  /* ── pré-visualização ── */
-  function abrirPrevia(url, nome, texto, reabrirOpcoes, alternarTema, temaAtual, canal) {
+  /* ── pré-visualização: card à esquerda, opções organizadas em seções à direita ── */
+  function injetarEstiloPrevia() {
+    if (document.getElementById("card-li-style")) return;
+    var st = document.createElement("style"); st.id = "card-li-style";
+    st.textContent =
+      "#card-li-modal.cl-previa{align-items:center;justify-content:center;overflow:auto;}" +
+      ".cl-wrap{display:flex;gap:22px;align-items:stretch;justify-content:center;width:100%;max-width:1080px;margin:auto;}" +
+      ".cl-imgbox{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}" +
+      ".cl-img{display:block;height:min(calc(100vh - 40px),780px);width:auto;max-width:100%;aspect-ratio:4/5;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.6);}" +
+      ".cl-side{flex:1 1 380px;min-width:320px;max-width:540px;background:#161b24;color:#e8ecf4;border:1px solid #252c3a;border-radius:16px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:14px;max-height:calc(100vh - 40px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.5);font-family:'DM Sans',sans-serif;}" +
+      ".cl-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}" +
+      ".cl-tit{font:700 18px 'DM Sans',sans-serif;line-height:1.2;}" +
+      ".cl-sub{font-size:13px;color:#9aa3b8;margin-top:3px;word-break:break-word;}" +
+      ".cl-x{flex:0 0 auto;border:0;background:#252c3a;color:#e8ecf4;width:32px;height:32px;border-radius:8px;font:700 16px 'DM Sans',sans-serif;cursor:pointer;}" +
+      ".cl-sec{border-top:1px solid #252c3a;padding-top:12px;display:flex;flex-direction:column;gap:8px;}" +
+      ".cl-rot{font:700 12px 'DM Sans',sans-serif;letter-spacing:2px;color:#14b8a6;text-transform:uppercase;}" +
+      ".cl-btns{display:flex;flex-wrap:wrap;gap:8px;}" +
+      ".cl-btns button{flex:1 1 auto;white-space:nowrap;}" +
+      ".cl-ta{width:100%;box-sizing:border-box;background:#0f141c;color:#e8ecf4;border:1px solid #252c3a;border-radius:10px;padding:10px;font:14px/1.45 'DM Sans',sans-serif;resize:vertical;min-height:96px;}" +
+      "@media (max-width:860px){.cl-wrap{flex-direction:column;align-items:center;}.cl-img{height:auto;width:min(100%,420px);}.cl-side{max-width:100%;width:100%;max-height:none;flex:0 0 auto;min-width:0;}}";
+    document.head.appendChild(st);
+  }
+
+  function abrirPrevia(url, nome, texto, reabrirOpcoes, alternarTema, temaAtual, canal, extra, info) {
     var zap = canal === "whatsapp";
+    injetarEstiloPrevia();
     var velho = document.getElementById("card-li-modal"); if (velho) velho.remove();
     var m = document.createElement("div");
-    m.id = "card-li-modal";
-    m.style.cssText = BASE_MODAL + "flex-direction:column;gap:14px;" + (zap ? "justify-content:flex-start;overflow:auto;" : "");
-    var img = document.createElement("img");
+    m.id = "card-li-modal"; m.className = "cl-previa";
+    m.style.cssText = BASE_MODAL;
+
+    var wrap = document.createElement("div"); wrap.className = "cl-wrap";
+    var imgBox = document.createElement("div"); imgBox.className = "cl-imgbox";
+    var img = document.createElement("img"); img.className = "cl-img";
     img.src = url; img.alt = zap ? "Card WhatsApp" : "Card LinkedIn";
-    img.style.cssText = "max-height:" + (zap ? "min(58vh,640px)" : "calc(100vh - 110px)") + ";max-width:100%;aspect-ratio:4/5;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.6);flex-shrink:0;";
-    var ta = null, rotTa = null;
-    if (zap) {
-      rotTa = document.createElement("div");
-      rotTa.style.cssText = "font:700 12px 'DM Sans',sans-serif;letter-spacing:2px;color:#14b8a6;text-transform:uppercase;";
-      rotTa.textContent = "Legenda (pode editar antes de enviar)";
-      ta = document.createElement("textarea"); ta.value = texto; ta.rows = 10;
-      ta.style.cssText = "width:100%;max-width:520px;box-sizing:border-box;background:#161b24;color:#e8ecf4;border:1px solid #252c3a;border-radius:10px;padding:10px;font:14px/1.45 'DM Sans',sans-serif;resize:vertical;flex-shrink:0;";
+    imgBox.appendChild(img);
+
+    var side = document.createElement("div"); side.className = "cl-side";
+
+    /* cabeçalho */
+    var head = document.createElement("div"); head.className = "cl-head";
+    var hb = document.createElement("div");
+    var tit = document.createElement("div"); tit.className = "cl-tit"; tit.textContent = zap ? "Card WhatsApp pronto" : "Card LinkedIn pronto";
+    var sub = document.createElement("div"); sub.className = "cl-sub"; sub.textContent = info || "";
+    hb.appendChild(tit); if (info) hb.appendChild(sub);
+    var x = document.createElement("button"); x.type = "button"; x.className = "cl-x"; x.textContent = "✕"; x.title = "Fechar";
+    x.onclick = function () { m.remove(); };
+    head.appendChild(hb); head.appendChild(x); side.appendChild(head);
+
+    function secao(rotulo) {
+      var s = document.createElement("div"); s.className = "cl-sec";
+      var r = document.createElement("div"); r.className = "cl-rot"; r.textContent = rotulo; s.appendChild(r);
+      side.appendChild(s); return s;
     }
-    function txt() { return ta ? ta.value : texto; }
-    var barra = document.createElement("div");
-    barra.style.cssText = "display:flex;gap:10px;flex-wrap:wrap;justify-content:center;flex-shrink:0;";
-    function btn(rot, fn, primario) {
+    function grupoBtns(s) { var g = document.createElement("div"); g.className = "cl-btns"; s.appendChild(g); return g; }
+    function btn(g, rot, fn, primario) {
       var b = document.createElement("button"); b.type = "button"; b.textContent = rot;
-      b.style.cssText = estiloBtn(primario); b.onclick = fn; barra.appendChild(b); return b;
+      b.style.cssText = estiloBtn(primario); b.onclick = fn; g.appendChild(b); return b;
+    }
+    function caixaTexto(s, valor, linhas) {
+      var t = document.createElement("textarea"); t.className = "cl-ta"; t.value = valor; t.rows = linhas; s.appendChild(t); return t;
     }
     function feito(b, rot, msg) { b.textContent = msg; setTimeout(function () { b.textContent = rot; }, 2000); }
+    function copiar(t, b, rot, msgOk, titPrompt) {
+      var v = t.value;
+      var ok = function () { feito(b, rot, msgOk); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(ok, function () { prompt(titPrompt, v); });
+      else prompt(titPrompt, v);
+    }
     function blobDaImagem() { return fetch(url).then(function (r) { return r.blob(); }); }
     function baixar() { var a = document.createElement("a"); a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); }
-    function copiarTexto(b, rot) {
-      var ok = function () { feito(b, rot, "Legenda copiada ✓"); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt()).then(ok, function () { prompt("Copie a legenda:", txt()); });
-      else prompt("Copie a legenda:", txt());
-    }
+
+    /* 1) imagem */
+    var sImg = secao("Imagem do card"), gImg = grupoBtns(sImg);
+    var taLeg = null;   /* criada na seção de legenda, mas os botões abaixo a usam */
+    function legendaAtual() { return taLeg ? taLeg.value : texto; }
     if (zap) {
-      btn("Enviar pelo WhatsApp", function () {
+      btn(gImg, "Enviar pelo WhatsApp", function () {
         blobDaImagem().then(function (bl) {
           var f = new File([bl], nome, { type: "image/png" });
-          if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], text: txt() });
-          window.open("https://wa.me/?text=" + encodeURIComponent(txt()), "_blank");
+          if (navigator.canShare && navigator.canShare({ files: [f] })) return navigator.share({ files: [f], text: legendaAtual() });
+          window.open("https://wa.me/?text=" + encodeURIComponent(legendaAtual()), "_blank");
           alert("Este navegador não envia a imagem direto. Abri o WhatsApp só com a legenda: use \"Copiar imagem\" (ou \"Baixar PNG\") e cole/anexe o card na conversa do grupo.");
         }).catch(function (e) { if (e && e.name === "AbortError") return; alert("Não consegui abrir o compartilhamento. Use \"Baixar PNG\" e \"Copiar legenda\"."); });
       }, true);
-      btn("Copiar imagem e abrir o grupo", function () {
+      btn(gImg, "Baixar PNG", baixar);
+      var bImg = btn(gImg, "Copiar imagem", function () {
+        if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) { alert("Seu navegador não permite copiar imagem aqui. Use \"Baixar PNG\"."); return; }
+        blobDaImagem().then(function (bl) { return navigator.clipboard.write([new ClipboardItem({ "image/png": bl })]); })
+          .then(function () { feito(bImg, "Copiar imagem", "Imagem copiada ✓"); }, function () { alert("Não consegui copiar a imagem. Use \"Baixar PNG\"."); });
+      });
+      btn(gImg, "Copiar imagem e abrir o grupo", function () {
         /* o navegador exige que a cópia e a abertura aconteçam no mesmo clique */
         var temClip = window.ClipboardItem && navigator.clipboard && navigator.clipboard.write;
         if (temClip) { try { navigator.clipboard.write([new ClipboardItem({ "image/png": blobDaImagem() })]).catch(function () {}); } catch (e) {} }
         window.open(GRUPO_ZAP, "_blank", "noopener");
         if (!temClip) alert("Abri o grupo. Neste navegador a imagem não copia sozinha: use \"Baixar PNG\" e anexe o card no grupo.");
       });
-      var bImg = btn("Copiar imagem", function () {
-        if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) { alert("Seu navegador não permite copiar imagem aqui. Use \"Baixar PNG\"."); return; }
-        blobDaImagem().then(function (bl) { return navigator.clipboard.write([new ClipboardItem({ "image/png": bl })]); })
-          .then(function () { feito(bImg, "Copiar imagem", "Imagem copiada ✓"); }, function () { alert("Não consegui copiar a imagem. Use \"Baixar PNG\"."); });
-      });
-      var bCopiaZ = btn("Copiar legenda", function () { copiarTexto(bCopiaZ, "Copiar legenda"); });
-      btn("Baixar PNG", baixar);
     } else {
-      btn("Baixar PNG", baixar, true);
+      btn(gImg, "Baixar PNG", baixar, true);
     }
-    btn(temaAtual === "claro" ? "Ver em modo escuro" : "Ver em modo claro", alternarTema);
-    btn("Editar opções", reabrirOpcoes);
-    if (!zap) { var bCopia = btn("Copiar legenda", function () { copiarTexto(bCopia, "Copiar legenda"); }); }
-    btn("Fechar", function () { m.remove(); });
+
+    /* 2) aparência */
+    var sAp = secao("Aparência"), gAp = grupoBtns(sAp);
+    btn(gAp, temaAtual === "claro" ? "Ver em modo escuro" : "Ver em modo claro", alternarTema);
+    btn(gAp, "Editar opções", reabrirOpcoes);
+
+    /* 3) legenda */
+    var sLeg = secao(zap ? "Legenda do WhatsApp" : "Legenda do LinkedIn");
+    taLeg = caixaTexto(sLeg, texto, zap ? 7 : 5);
+    var gLeg = grupoBtns(sLeg);
+    var bLeg = btn(gLeg, "Copiar legenda", function () { copiar(taLeg, bLeg, "Copiar legenda", "Legenda copiada ✓", "Copie a legenda:"); }, false);
+
+    /* 4) texto extra (Facebook / Instagram) */
+    var sEx = secao("Texto extra · Facebook e Instagram");
+    var taX = caixaTexto(sEx, extra || "", 8);
+    var gEx = grupoBtns(sEx);
+    var bExtra = btn(gEx, "Copiar texto extra", function () { copiar(taX, bExtra, "Copiar texto extra", "Texto extra copiado ✓", "Copie o texto extra:"); }, false);
+
+    /* rodapé */
+    var gFim = document.createElement("div"); gFim.className = "cl-btns"; gFim.style.cssText = "margin-top:2px;";
+    btn(gFim, "Fechar", function () { m.remove(); });
+    side.appendChild(gFim);
+
     m.onclick = function (e) { if (e.target === m) m.remove(); };
-    m.appendChild(img);
-    if (zap) { m.appendChild(rotTa); m.appendChild(ta); }
-    m.appendChild(barra); document.body.appendChild(m);
+    wrap.appendChild(imgBox); wrap.appendChild(side); m.appendChild(wrap); document.body.appendChild(m);
   }
 
   async function gerar(v, d, opts) {
@@ -16849,7 +16972,7 @@ renderVagas();
       abrirOpcoes(v, d, opts, function (o) { gerar(v, d, o); });
     }, function () {
       gerar(v, d, Object.assign({}, opts, { tema: tema === "claro" ? "escuro" : "claro" }));
-    }, tema, canal);
+    }, tema, canal, textoExtra(v), v.cargo + " · " + v.empresa);
   }
 
   window.gerarCardLinkedIn = function (id, opcoes) {
