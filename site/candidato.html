@@ -4723,6 +4723,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 </div>
+<div class="dicas-extra-wrap" id="dicas-extra-wrap"><div class="dicas-extra-inner">
 <div class="contact-card flip-card dica-card-extra" style="--accent:#f59e0b; --accent-rgb:245,158,11;" tabindex="0">
 <div class="flip-inner">
 <div class="flip-face flip-front">
@@ -4763,6 +4764,8 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 </div>
 </div>
+</div>
+</div>
 <div class="dicas-ver-mais-wrap" id="dicas-ver-mais-wrap">
 <button aria-controls="dicas-ver-mais-wrap" aria-expanded="false" class="btn btn-primary" id="dicas-ver-mais-btn" onclick="toggleDicasExtra()" type="button">Ver mais dicas ▼</button>
 </div>
@@ -4774,12 +4777,78 @@ document.addEventListener('DOMContentLoaded', function(){
        "VER MAIS" (desktop/tablet) e CARROSSEL (mobile)
        — seção Dicas Profissionais
     ═══════════════════════════════════════════ */
-    .dicas-profissionais-section .dica-card-extra {
-      display: none;
+    /* ── Abertura/fechamento animados dos cards extras (desktop/tablet) ── */
+    @media (min-width: 561px) {
+      .dicas-profissionais-section .dicas-extra-wrap {
+        grid-column: 1 / -1;
+        align-self: start;                 /* sem esticar: evita sobrar 24px quando fechado */
+        display: grid;
+        grid-template-rows: 0fr;
+        margin-top: -1.5rem;               /* anula o gap do grid enquanto fechado */
+        opacity: 0;
+        transition:
+          grid-template-rows .75s cubic-bezier(.22,1,.36,1),
+          margin-top .75s cubic-bezier(.22,1,.36,1),
+          opacity .45s ease .05s;
+      }
+      .dicas-profissionais-section .dicas-extra-wrap.is-open {
+        grid-template-rows: 1fr;
+        margin-top: 0;
+        opacity: 1;
+        transition:
+          grid-template-rows .75s cubic-bezier(.22,1,.36,1),
+          margin-top .75s cubic-bezier(.22,1,.36,1),
+          opacity .5s ease;
+      }
+      .dicas-profissionais-section .dicas-extra-inner {
+        min-height: 0;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        visibility: hidden;                /* fechado: fora do foco/teclado */
+        transition: visibility 0s linear .75s;
+      }
+      .dicas-profissionais-section .dicas-extra-wrap.is-open .dicas-extra-inner {
+        visibility: visible;
+        transition: visibility 0s;
+      }
+      .dicas-profissionais-section .dicas-extra-wrap.is-settled .dicas-extra-inner {
+        overflow: visible;                 /* depois de abrir, não corta nada */
+      }
+
+      /* Cards entram em cascata (fade + sobe + leve zoom) e saem ao contrário */
+      .dicas-profissionais-section .dica-card-extra {
+        display: block;
+        transition:
+          opacity .55s ease,
+          transform .7s cubic-bezier(.22,1,.36,1) !important;
+      }
+      .dicas-profissionais-section .dicas-extra-wrap:not(.is-open) .dica-card-extra {
+        opacity: 0 !important;
+        transform: translateY(34px) scale(.94) !important;
+      }
+      .dicas-profissionais-section .dicas-extra-wrap.is-open .dica-card-extra:nth-child(1) { transition-delay: .10s !important; }
+      .dicas-profissionais-section .dicas-extra-wrap.is-open .dica-card-extra:nth-child(2) { transition-delay: .20s !important; }
+      .dicas-profissionais-section .dicas-extra-wrap.is-open .dica-card-extra:nth-child(3) { transition-delay: .30s !important; }
+      .dicas-profissionais-section .dicas-extra-wrap:not(.is-open) .dica-card-extra:nth-child(1) { transition-delay: .10s !important; }
+      .dicas-profissionais-section .dicas-extra-wrap:not(.is-open) .dica-card-extra:nth-child(3) { transition-delay: 0s !important; }
     }
-    .dicas-profissionais-section.dicas-expanded .dica-card-extra {
-      display: block;
+    @media (min-width: 561px) and (max-width: 900px) {
+      .dicas-profissionais-section .dicas-extra-inner { grid-template-columns: repeat(2, 1fr); }
     }
+    /* Mobile: o wrapper some do layout e os cards seguem no carrossel */
+    @media (max-width: 560px) {
+      .dicas-profissionais-section .dicas-extra-wrap,
+      .dicas-profissionais-section .dicas-extra-inner { display: contents; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .dicas-profissionais-section .dicas-extra-wrap,
+      .dicas-profissionais-section .dicas-extra-inner,
+      .dicas-profissionais-section .dica-card-extra { transition-duration: .01s !important; transition-delay: 0s !important; }
+    }
+    .dicas-ver-mais-btn-anim, #dicas-ver-mais-btn { transition: transform .25s ease, box-shadow .25s ease, background .25s ease; }
+    #dicas-ver-mais-btn:active { transform: scale(.96); }
     .dicas-ver-mais-wrap {
       width: 100%;
       text-align: center;
@@ -4854,7 +4923,24 @@ document.addEventListener('DOMContentLoaded', function(){
       var section = document.querySelector('.dicas-profissionais-section');
       var btn = document.getElementById('dicas-ver-mais-btn');
       if (!section || !btn) return;
-      var expanded = section.classList.toggle('dicas-expanded');
+      var wrap = document.getElementById('dicas-extra-wrap');
+      var expanded = !(wrap && wrap.classList.contains('is-open'));
+      section.classList.toggle('dicas-expanded', expanded);
+      if (wrap) {
+        wrap.classList.remove('is-settled');
+        wrap.classList.toggle('is-open', expanded);
+        if (expanded) {
+          // libera o overflow só depois da animação (evita cortar sombras/virada dos cards)
+          clearTimeout(wrap._settleT);
+          wrap._settleT = setTimeout(function () {
+            if (wrap.classList.contains('is-open')) wrap.classList.add('is-settled');
+          }, 900);
+        } else {
+          // ao fechar, mantém o botão visível na tela
+          var r = btn.getBoundingClientRect();
+          if (r.top < 0) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
       btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
       btn.textContent = expanded ? 'Ver menos ▲' : 'Ver mais dicas ▼';
     }
