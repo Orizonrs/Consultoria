@@ -245,7 +245,15 @@
   
   <script>
   /* aplica o tema salvo antes da 1ª pintura (evita "flash") */
-  (function(){try{var t=localStorage.getItem('orizon-tema');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+  (function(){try{
+    /* chave 'theme' compartilhada com a página Sobre; 'orizon-tema' = legado */
+    var t=localStorage.getItem('theme');
+    if(t!=='light'&&t!=='dark') t=localStorage.getItem('orizon-tema');
+    if(t==='light'||t==='dark'){
+      document.documentElement.setAttribute('data-theme',t);
+      if(t==='dark') document.documentElement.classList.add('dark-mode');
+    }
+  }catch(e){}})();
 </script>
   <style>
     :root{
@@ -638,7 +646,114 @@
     :root[data-theme="light"] .filter-type-btn.active{background:rgba(var(--accent-rgb),0.1);border-color:var(--accent);color:var(--accent);}
     :root[data-theme="light"] .form-section[style*="243,156,18"]{background:#fff8ec !important;border-color:rgba(163,95,0,0.3) !important;}
     :root[data-theme="light"] .faq-item{border-bottom-color:rgba(15,35,55,0.12);}
-</style>
+
+    /* ══════════ LAYOUT COM PRÉVIA AO VIVO ══════════ */
+    .wrapper{max-width:1360px;}
+    .builder-grid{display:block;}
+    .builder-preview{display:none;}
+    .btn-preview-fab{display:none;}
+    @media(min-width:1024px){
+      .builder-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.6rem;align-items:start;}
+      .builder-form{min-width:0;}
+      .builder-form .grid-3{grid-template-columns:1fr 1fr;}
+      .builder-preview{display:block;position:sticky;top:76px;align-self:start;max-height:calc(100vh - 96px);display:flex;flex-direction:column;}
+      .bp-close{display:none;}
+    }
+    .bp-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.7rem;flex-shrink:0;}
+    .bp-title{font-size:.66rem;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);}
+    .bp-sub{font-size:.66rem;color:var(--muted2);white-space:nowrap;}
+    .bp-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:.4rem;box-shadow:0 0 6px rgba(46,204,113,.7);}
+    .bp-scroll{overflow:auto;flex:1;min-height:0;border-radius:14px;scrollbar-width:thin;}
+    .bp-close{background:rgba(var(--accent-rgb),.12);color:var(--accent);border:1px solid var(--border2);border-radius:9px;padding:.45rem .85rem;font-family:inherit;font-size:.78rem;font-weight:700;cursor:pointer;}
+    @media(max-width:1023px){
+      .builder-preview{position:fixed;inset:0;z-index:180;background:var(--bg);flex-direction:column;padding:.9rem 1rem 1rem;display:none;}
+      .builder-preview.open{display:flex;}
+      .bp-close{display:inline-flex;white-space:nowrap;flex-shrink:0;}
+      .bp-sub{display:none;}
+      .btn-preview-fab{display:flex;align-items:center;gap:.45rem;position:fixed;right:1rem;bottom:1rem;z-index:99;background:var(--accent);color:var(--on-accent);border:none;border-radius:99px;padding:.75rem 1.1rem;font-family:inherit;font-size:.82rem;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.35);}
+    }
+    @media(max-width:640px){ .btn-preview-fab{bottom:4.9rem;} }
+    body.previa-aberta .site-header{z-index:0;}
+    body.previa-aberta .mobile-nav-bar,body.previa-aberta .btn-preview-fab{display:none !important;}
+
+    /* folha do currículo (sempre branca, como o PDF) */
+    .cvp{background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;border-radius:12px;padding:26px 28px 30px;box-shadow:0 8px 30px rgba(0,0,0,.28);min-height:320px;}
+    .cvp header{border-bottom:3px solid #2c5f8a;padding-bottom:8px;margin-bottom:14px;}
+    .cvp h1{font-size:22px;font-weight:900;color:#111;margin-bottom:5px;line-height:1.2;word-break:break-word;}
+    .cvp .cvp-contatos{font-size:11.5px;color:#555;display:flex;flex-wrap:wrap;gap:3px 14px;}
+    .cvp section{margin-bottom:13px;padding-left:8px;margin-left:-8px;border-left:3px solid transparent;transition:border-color .25s,background .25s;border-radius:2px;}
+    .cvp section.cvp-focus{border-left-color:#00a6d6;background:rgba(0,166,214,.06);}
+    .cvp h2{font-size:10.5px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid #2c5f8a;padding-bottom:2px;margin-bottom:6px;}
+    .cvp p{font-size:12.5px;color:#555;line-height:1.5;margin-bottom:3px;text-align:left;word-break:break-word;}
+    .cvp .cvp-exp{margin-bottom:9px;}
+    .cvp .cvp-exp-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;}
+    .cvp .cvp-emp{font-size:13px;font-weight:800;color:#111;}
+    .cvp .cvp-per{font-size:11px;color:#555;font-weight:600;}
+    .cvp .cvp-cargo{font-size:12.5px;font-weight:700;color:#1a3a5c;margin:1px 0 3px;}
+    .cvp .cvp-local{font-size:11px;color:#555;font-weight:400;}
+    .cvp ul{padding-left:16px;margin-top:2px;}
+    .cvp li{font-size:12px;color:#111;margin-bottom:2px;line-height:1.45;word-break:break-word;}
+    .cvp .cvp-ghost{color:#9aa5b1 !important;font-style:italic;}
+    .cvp h1.cvp-ghost{font-style:normal;font-weight:700;}
+    .cvp .cvp-empty{font-size:12px;color:#9aa5b1;text-align:center;padding:1.2rem .5rem;border:1.5px dashed #cfd6de;border-radius:10px;margin-top:6px;}
+    @media(max-width:480px){ .cvp{padding:20px 18px 24px;} .cvp h1{font-size:19px;} }
+  
+    .step-num svg{width:12px;height:12px;display:block;}
+    .step-btn{font-size:0.78rem;}
+    @media(max-width:600px){ .step-num svg{width:15px;height:15px;} }
+  
+    /* ícones das etapas, cada um com sua cor */
+    #stepBtn0{--sc:#38bdf8;--sc-l:#0284c7;}
+    #stepBtn1{--sc:#fbbf24;--sc-l:#b45309;}
+    #stepBtn2{--sc:#a78bfa;--sc-l:#6d28d9;}
+    #stepBtn3{--sc:#34d399;--sc-l:#047857;}
+    #stepBtn4{--sc:#f472b6;--sc-l:#be185d;}
+    #stepBtn5{--sc:#fb923c;--sc-l:#c2410c;}
+    :root[data-theme="light"] #stepBtn0{--sc:var(--sc-l);}
+    :root[data-theme="light"] #stepBtn1{--sc:var(--sc-l);}
+    :root[data-theme="light"] #stepBtn2{--sc:var(--sc-l);}
+    :root[data-theme="light"] #stepBtn3{--sc:var(--sc-l);}
+    :root[data-theme="light"] #stepBtn4{--sc:var(--sc-l);}
+    :root[data-theme="light"] #stepBtn5{--sc:var(--sc-l);}
+    :root[data-theme="light"] .step-btn.done{color:var(--muted);}
+    .step-btn .step-num,.step-btn.done .step-num{background:rgba(255,255,255,0.08);background:color-mix(in srgb,var(--sc) 18%,transparent);color:var(--sc);}
+    .step-btn.active .step-num{background:var(--sc);color:var(--on-accent);box-shadow:0 0 12px color-mix(in srgb,var(--sc) 55%,transparent);}
+    .step-btn.active{color:var(--sc);}
+    .step-btn.done{color:var(--muted);}
+  
+    /* cor da etapa atual: o conteúdo inteiro acompanha */
+    .builder-grid{--primary:color-mix(in srgb,var(--accent) 55%,#000);--border:rgba(var(--accent-rgb),0.18);--border2:rgba(var(--accent-rgb),0.34);}
+    .builder-grid[data-step="0"]{--accent:#38bdf8;--accent-rgb:56,189,248;}
+    .builder-grid[data-step="1"]{--accent:#fbbf24;--accent-rgb:251,191,36;}
+    .builder-grid[data-step="2"]{--accent:#a78bfa;--accent-rgb:167,139,250;}
+    .builder-grid[data-step="3"]{--accent:#34d399;--accent-rgb:52,211,153;}
+    .builder-grid[data-step="4"]{--accent:#f472b6;--accent-rgb:244,114,182;}
+    .builder-grid[data-step="5"]{--accent:#fb923c;--accent-rgb:251,146,60;}
+    :root[data-theme="light"] .builder-grid[data-step="0"]{--accent:#0284c7;--accent-rgb:2,132,199;}
+    :root[data-theme="light"] .builder-grid[data-step="1"]{--accent:#b45309;--accent-rgb:180,83,9;}
+    :root[data-theme="light"] .builder-grid[data-step="2"]{--accent:#6d28d9;--accent-rgb:109,40,217;}
+    :root[data-theme="light"] .builder-grid[data-step="3"]{--accent:#047857;--accent-rgb:4,120,87;}
+    :root[data-theme="light"] .builder-grid[data-step="4"]{--accent:#be185d;--accent-rgb:190,24,93;}
+    :root[data-theme="light"] .builder-grid[data-step="5"]{--accent:#c2410c;--accent-rgb:194,65,12;}
+    .cvp section.cvp-focus{border-left-color:var(--accent);background:rgba(var(--accent-rgb),0.08);}
+    .cvp header.cvp-focus{border-bottom-color:var(--accent);}
+    .builder-grid .progress-bar-fill,.builder-grid .form-section,.builder-grid .steps-nav{transition:background .3s,border-color .3s;}
+      :root[data-theme="light"] .builder-grid .btn-next,.mobile-nav-bar .btn-next{background:linear-gradient(135deg,var(--primary),var(--accent));}
+    :root[data-theme="light"] .builder-grid .btn-next{box-shadow:0 4px 16px rgba(var(--accent-rgb),0.3);}
+      .mobile-nav-bar{--primary:color-mix(in srgb,var(--accent) 55%,#000);}
+    .mobile-nav-bar[data-step="0"],.btn-preview-fab[data-step="0"]{--accent:#38bdf8;--accent-rgb:56,189,248;}
+    .mobile-nav-bar[data-step="1"],.btn-preview-fab[data-step="1"]{--accent:#fbbf24;--accent-rgb:251,191,36;}
+    .mobile-nav-bar[data-step="2"],.btn-preview-fab[data-step="2"]{--accent:#a78bfa;--accent-rgb:167,139,250;}
+    .mobile-nav-bar[data-step="3"],.btn-preview-fab[data-step="3"]{--accent:#34d399;--accent-rgb:52,211,153;}
+    .mobile-nav-bar[data-step="4"],.btn-preview-fab[data-step="4"]{--accent:#f472b6;--accent-rgb:244,114,182;}
+    .mobile-nav-bar[data-step="5"],.btn-preview-fab[data-step="5"]{--accent:#fb923c;--accent-rgb:251,146,60;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="0"],:root[data-theme="light"] .btn-preview-fab[data-step="0"]{--accent:#0284c7;--accent-rgb:2,132,199;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="1"],:root[data-theme="light"] .btn-preview-fab[data-step="1"]{--accent:#b45309;--accent-rgb:180,83,9;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="2"],:root[data-theme="light"] .btn-preview-fab[data-step="2"]{--accent:#6d28d9;--accent-rgb:109,40,217;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="3"],:root[data-theme="light"] .btn-preview-fab[data-step="3"]{--accent:#047857;--accent-rgb:4,120,87;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="4"],:root[data-theme="light"] .btn-preview-fab[data-step="4"]{--accent:#be185d;--accent-rgb:190,24,93;}
+    :root[data-theme="light"] .mobile-nav-bar[data-step="5"],:root[data-theme="light"] .btn-preview-fab[data-step="5"]{--accent:#c2410c;--accent-rgb:194,65,12;}
+  </style>
   <!-- ════════════════════════════════════════════════════════════
        TEMA & MOBILE
   ═════════════════════════════════════════════════════════════ -->
@@ -685,14 +800,16 @@
   <!-- PAGE ALERT -->
   <div class="page-alert" id="pageAlert"></div>
 
+  <div class="builder-grid" id="builderGrid" data-step="0">
+  <div class="builder-form" id="builderForm">
   <!-- STEPS NAV -->
   <div class="steps-nav" id="stepsNav">
-    <button class="step-btn active" onclick="irPara(0)" id="stepBtn0"><span class="step-num">1</span><span class="step-label">Cabeçalho</span></button>
-    <button class="step-btn" onclick="irPara(1)" id="stepBtn1"><span class="step-num">2</span><span class="step-label">Experiências</span></button>
-    <button class="step-btn" onclick="irPara(2)" id="stepBtn2"><span class="step-num">3</span><span class="step-label">Formação</span></button>
-    <button class="step-btn" onclick="irPara(3)" id="stepBtn3"><span class="step-num">4</span><span class="step-label">Habilidades</span></button>
-    <button class="step-btn" onclick="irPara(4)" id="stepBtn4"><span class="step-num">5</span><span class="step-label">Resumo</span></button>
-    <button class="step-btn" onclick="irPara(5)" id="stepBtn5"><span class="step-num">6</span><span class="step-label">Gerar PDF</span></button>
+    <button class="step-btn active" onclick="irPara(0)" id="stepBtn0"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></span><span class="step-label">Cabeçalho</span></button>
+    <button class="step-btn" onclick="irPara(1)" id="stepBtn1"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg></span><span class="step-label">Experiências</span></button>
+    <button class="step-btn" onclick="irPara(2)" id="stepBtn2"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 9 12 4 2 9l10 5 10-5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/></svg></span><span class="step-label">Formação</span></button>
+    <button class="step-btn" onclick="irPara(3)" id="stepBtn3"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 9-12h-7l1-8z"/></svg></span><span class="step-label">Habilidades</span></button>
+    <button class="step-btn" onclick="irPara(4)" id="stepBtn4"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg></span><span class="step-label">Resumo</span></button>
+    <button class="step-btn" onclick="irPara(5)" id="stepBtn5"><span class="step-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 20h16"/></svg></span><span class="step-label">Gerar PDF</span></button>
   </div>
 
   <!-- PROGRESS BAR -->
@@ -1024,6 +1141,18 @@
     </div>
   </div>
 
+  </div><!-- /builder-form -->
+
+  <aside class="builder-preview" id="builderPreview" aria-label="Prévia do currículo em tempo real">
+    <div class="bp-head">
+      <span class="bp-title"><span class="bp-live"></span>Prévia em tempo real</span>
+      <span class="bp-sub">Atualiza enquanto você digita</span>
+      <button class="bp-close" type="button" onclick="fecharPreviaLive()">✕ Fechar</button>
+    </div>
+    <div class="bp-scroll"><div class="cvp" id="cvpBody"></div></div>
+  </aside>
+  </div><!-- /builder-grid -->
+
   <!-- ══════════════════════════════════════════════════ -->
   <!-- FOOTER SEO -->
   <!-- ══════════════════════════════════════════════════ -->
@@ -1081,6 +1210,8 @@
   <button class="btn-prev" id="mobileBtnPrev" onclick="mobileNavPrev()">← Voltar</button>
   <button class="btn-next" id="mobileBtnNext" onclick="mobileNavNext()">Experiências →</button>
 </div>
+
+<button class="btn-preview-fab" id="btnPreviewFab" type="button" onclick="abrirPreviaLive()" aria-label="Ver prévia do currículo">👁 Prévia</button>
 
 <div class="toast" id="toast"></div>
 
@@ -2183,12 +2314,146 @@ function alternarTema(){
   root.classList.add('theme-anim');
   root.setAttribute('data-theme',novo);
   setTimeout(function(){root.classList.remove('theme-anim');},350);
-  try{localStorage.setItem('orizon-tema',novo);}catch(e){}
+  root.classList.toggle('dark-mode',novo==='dark');
+  try{localStorage.setItem('theme',novo);localStorage.setItem('orizon-tema',novo);}catch(e){}
   syncTemaUI();
 }
+/* reaplica o tema salvo: voltar pelo histórico (bfcache) ou mudança em outra aba */
+function aplicarTemaSalvo(){
+  var t=null; try{t=localStorage.getItem('theme');}catch(e){}
+  if(t!=='light'&&t!=='dark') return;
+  var root=document.documentElement;
+  if(root.getAttribute('data-theme')!==t){
+    root.setAttribute('data-theme',t);
+    root.classList.toggle('dark-mode',t==='dark');
+    syncTemaUI();
+  }
+}
+window.addEventListener('pageshow',aplicarTemaSalvo);
+window.addEventListener('storage',function(e){ if(e.key==='theme') aplicarTemaSalvo(); });
 document.addEventListener('DOMContentLoaded',syncTemaUI);
 
 window.addEventListener('DOMContentLoaded', init);
+</script>
+
+<script>
+// ══════════════════════════════════════════════════
+// PRÉVIA AO VIVO
+// ══════════════════════════════════════════════════
+(function(){
+  var SEC_POR_PASSO = {0:['cab'],1:['exp'],2:['form','cursos'],3:['hab','idi'],4:['res']};
+  var _t = null;
+
+  function foco(sec){ return (SEC_POR_PASSO[stepAtual]||[]).indexOf(sec) > -1; }
+  function secAbre(sec){ return '<section data-sec="'+sec+'"'+(foco(sec)?' class="cvp-focus"':'')+'>'; }
+  function ghost(sec, txt){ return foco(sec) ? secAbre(sec)+'<div class="cvp-empty">'+txt+'</div></section>' : ''; }
+  function ano(x){ return (x.mes&&x.ano)?x.mes+'/'+x.ano:(x.ano||''); }
+
+  window.atualizarPreview = function(){
+    var box = document.getElementById('cvpBody');
+    if(!box) return;
+    var d; try{ d = coletarTudo(); }catch(e){ return; }
+    var c = d.cabecalho, h = '';
+
+    var contatos = [];
+    if(c.cidade)   contatos.push('📍 '+esc(c.cidade)+(c.bairro?' · '+esc(c.bairro):''));
+    if(c.telefone) contatos.push('📱 '+esc(c.telefone));
+    if(c.telefone2)contatos.push('📱 '+esc(c.telefone2));
+    if(c.email)    contatos.push('✉ '+esc(c.email));
+    if(c.linkedin) contatos.push('🔗 '+esc(c.linkedin));
+    if(c.portfolio)contatos.push('🌐 '+esc(c.portfolio));
+
+    h += '<header'+(foco('cab')?' class="cvp-focus"':'')+'>';
+    h += c.nome ? '<h1>'+esc(c.nome)+'</h1>' : '<h1 class="cvp-ghost">Seu nome completo</h1>';
+    h += '<div class="cvp-contatos">'+(contatos.length
+        ? contatos.map(function(x){return '<span>'+x+'</span>';}).join('')
+        : '<span class="cvp-ghost">cidade · telefone · e-mail</span>')+'</div></header>';
+
+    var txt = d.tipoResumo==='objetivo' ? d.objetivo : d.resumo;
+    var titRes = d.tipoResumo==='objetivo' ? 'Objetivo Profissional' : 'Resumo Profissional';
+    if(txt) h += secAbre('res')+'<h2>'+titRes+'</h2><p>'+esc(txt)+'</p></section>';
+    else h += ghost('res','Seu '+(d.tipoResumo==='objetivo'?'objetivo':'resumo')+' profissional aparecerá aqui.');
+
+    if(d.formacoes && d.formacoes.length){
+      h += secAbre('form')+'<h2>Formação Acadêmica</h2>';
+      d.formacoes.forEach(function(f){
+        var a = ano(f);
+        h += '<p><b>'+esc(f.tipo||'')+'</b>'+(f.curso?' em '+esc(f.curso):'')+(f.instituicao?' — '+esc(f.instituicao):'')+(a?' ('+a+')':'')+'</p>';
+      });
+      h += '</section>';
+    } else h += ghost('form','Sua formação acadêmica aparecerá aqui.');
+
+    if(d.exps && d.exps.length){
+      h += secAbre('exp')+'<h2>Experiência Profissional</h2>';
+      d.exps.forEach(function(e){
+        var bl = (e.bullets||[]).filter(function(b){return b && b.trim();});
+        h += '<div class="cvp-exp"><div class="cvp-exp-top"><b class="cvp-emp">'+(esc(e.empresa)||'<span class="cvp-ghost">Empresa</span>')+'</b><span class="cvp-per">'+esc(e.periodo)+'</span></div>'
+           + '<div class="cvp-cargo">'+(esc(e.cargo)||'<span class="cvp-ghost">Cargo</span>')+(e.local?' <span class="cvp-local">· '+esc(e.local)+'</span>':'')+'</div>'
+           + (bl.length?'<ul>'+bl.map(function(b){return '<li>'+esc(b.trim())+'</li>';}).join('')+'</ul>':'')
+           + '</div>';
+      });
+      h += '</section>';
+    } else h += ghost('exp','Suas experiências profissionais aparecerão aqui.');
+
+    if((d.habTec&&d.habTec.length)||(d.habComp&&d.habComp.length)){
+      h += secAbre('hab')+'<h2>Habilidades</h2>';
+      if(d.habTec&&d.habTec.length)   h += '<p><b>Técnicas:</b> '+d.habTec.map(esc).join(' · ')+'</p>';
+      if(d.habComp&&d.habComp.length) h += '<p><b>Comportamentais:</b> '+d.habComp.map(esc).join(' · ')+'</p>';
+      h += '</section>';
+    } else h += ghost('hab','Suas habilidades aparecerão aqui.');
+
+    if(d.cursos && d.cursos.length){
+      h += secAbre('cursos')+'<h2>Cursos e Certificações</h2>';
+      d.cursos.forEach(function(cr){
+        var a = ano(cr);
+        h += '<p>'+esc(cr.nome||'')+(cr.instituicao?' — '+esc(cr.instituicao):'')+(cr.carga?' ('+esc(cr.carga)+')':'')+(a?' · '+a:'')+'</p>';
+      });
+      h += '</section>';
+    } else h += ghost('cursos','Cursos e certificações aparecerão aqui.');
+
+    if(d.idiomas && d.idiomas.length){
+      h += secAbre('idi')+'<h2>Idiomas</h2><p>'+d.idiomas.map(function(x){return '<b>'+esc(x.idioma)+'</b>'+(x.nivel?' ('+esc(x.nivel)+')':'');}).join(' &nbsp;·&nbsp; ')+'</p></section>';
+    } else h += ghost('idi','Seus idiomas aparecerão aqui.');
+
+    box.innerHTML = h;
+  };
+
+  function agendar(delay){ clearTimeout(_t); _t = setTimeout(atualizarPreview, delay||60); }
+
+  // Qualquer edição no formulário atualiza a prévia
+  var form = document.getElementById('builderForm');
+  if(form){
+    ['input','change'].forEach(function(ev){ form.addEventListener(ev, function(){ agendar(40); }, true); });
+    ['click','keydown'].forEach(function(ev){ form.addEventListener(ev, function(){ agendar(120); }, true); });
+  }
+
+  // Troca de etapa / carregar rascunho
+  var _ip = window.irPara;
+  function corEtapa(){ var g=document.getElementById('builderGrid'); if(g) g.setAttribute('data-step', String(stepAtual)); var m=document.getElementById('mobileNavBar'); if(m) m.setAttribute('data-step', String(stepAtual)); var f=document.getElementById('btnPreviewFab'); if(f) f.setAttribute('data-step', String(stepAtual)); }
+  window.irPara = function(n){ _ip(n); corEtapa(); agendar(10); };
+  corEtapa();
+  var _cd = window.carregarDados;
+  if(_cd) window.carregarDados = function(){ _cd.apply(this, arguments); agendar(10); };
+
+  // Mobile / tablet: prévia em tela cheia
+  window.abrirPreviaLive = function(){
+    atualizarPreview();
+    var p = document.getElementById('builderPreview');
+    if(p){ p.classList.add('open'); document.body.classList.add('previa-aberta'); document.body.style.overflow='hidden'; }
+  };
+  window.fecharPreviaLive = function(){
+    var p = document.getElementById('builderPreview');
+    if(p){ p.classList.remove('open'); document.body.classList.remove('previa-aberta'); document.body.style.overflow=''; }
+  };
+  window.addEventListener('resize', function(){
+    if(window.innerWidth >= 1024) fecharPreviaLive();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') fecharPreviaLive(); });
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ agendar(30); });
+  else agendar(30);
+  window.addEventListener('load', function(){ agendar(30); });
+})();
 </script>
 </body>
 </html>
