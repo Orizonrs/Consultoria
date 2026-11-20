@@ -8115,12 +8115,39 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
   #top-cards-grid .tip-short { display: inline; }
   #top-cards-grid .card p { font-size: .8rem; line-height: 1.4; overflow-wrap: anywhere; }
 }
+/* DESKTOP: 3 cards em uma linha (frente/verso mantidos); "Currículo Otimizado" e "Ver mais" ocultos. Mobile não muda. */
+@media (min-width: 769px) {
+  #top-cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #top-cards-grid .tip-more, #top-cards-grid .tip-more-clip, #top-cards-grid .tip-more-grid { display: contents !important; }
+  #top-cards-grid .tip-more .tip-flip { visibility: visible !important; }
+  #top-cards-grid .tip-more .tip-flip:nth-child(2) { display: none !important; }
+  .tip-more-wrap { display: none !important; }
+}
+/* DESKTOP: sem frente/verso — o texto fica direto na frente do card */
+.tip-desk-text{display:none}
+@media (min-width: 769px) {
+  #top-cards-grid .tip-flip { cursor: default; }
+  #top-cards-grid .tip-flip-inner, #top-cards-grid .tip-flip.is-flipped .tip-flip-inner { transform: none !important; }
+  #top-cards-grid .tip-face.tip-back { display: none !important; }
+  #top-cards-grid .tip-front .tip-hint { display: none !important; }
+  #top-cards-grid .tip-front { justify-content: flex-start; }
+  #top-cards-grid .tip-front .tip-desk-text { display: block; margin: .7rem 0 0; font-size: .88rem; line-height: 1.55; text-align: center; }
+  #top-cards-grid .tip-front .tip-desk-text .tip-short { display: none; }
+  #top-cards-grid .tip-front .tip-desk-text .tip-long { display: inline; }
+}
 @media (prefers-reduced-motion: reduce) { #top-cards-grid *, .tip-more-btn * { transition-duration: .01s !important; animation-duration: .01s !important; } }
 </style>
 <script>
 (function(){
   var g=document.getElementById('top-cards-grid'); if(!g) return;
-  function flip(el){var on=!el.classList.contains('is-flipped');el.classList.toggle('is-flipped',on);el.setAttribute('aria-pressed',on);}
+  /* desktop: copia o texto do verso para a frente do card */
+  g.querySelectorAll('.tip-flip').forEach(function(f){
+    var bp=f.querySelector('.tip-back p'),fr=f.querySelector('.tip-front');
+    if(!bp||!fr||fr.querySelector('.tip-desk-text'))return;
+    var c=bp.cloneNode(true);c.className='tip-desk-text';fr.appendChild(c);
+  });
+  var mqFlip=window.matchMedia('(min-width: 769px)');
+  function flip(el){if(mqFlip.matches)return;var on=!el.classList.contains('is-flipped');el.classList.toggle('is-flipped',on);el.setAttribute('aria-pressed',on);}
   g.addEventListener('click',function(e){var f=e.target.closest('.tip-flip'); if(f) flip(f);});
   g.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('tip-flip')){e.preventDefault();flip(e.target);}});
   var btn=document.getElementById('tip-more-btn'),more=document.getElementById('tip-more');
@@ -8134,7 +8161,9 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
     lbl.setAttribute('data-vt-skip','1');
   });
   var mq=window.matchMedia('(max-width: 768px)');
-  function sync(){more.querySelectorAll('.tip-flip').forEach(function(x){x.tabIndex=(mq.matches||more.classList.contains('is-open'))?0:-1;});more.setAttribute('aria-hidden',mq.matches?'false':String(!more.classList.contains('is-open')));}
+  var mqd=window.matchMedia('(min-width: 769px)');
+  function sync(){more.querySelectorAll('.tip-flip').forEach(function(x,i){x.tabIndex=(mq.matches||more.classList.contains('is-open')||(mqd.matches&&i===0))?0:-1;});more.setAttribute('aria-hidden',(mq.matches||mqd.matches)?'false':String(!more.classList.contains('is-open')));}
+  (mqd.addEventListener?mqd.addEventListener('change',sync):mqd.addListener(sync));
   sync(); (mq.addEventListener?mq.addEventListener('change',sync):mq.addListener(sync));
 })();
 </script>
