@@ -4694,7 +4694,8 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div class="flip-face flip-back">
 <h3>Currículo Impecável</h3>
-<p>Seu currículo é seu primeiro contato. Mantenha-o sempre atualizado, com informações claras e bem organizadas. Use formato PDF, evite cores excessivas e fontes estranhas. Destaque suas principais competências, certificações e experiências relevantes. Seja objetivo: recrutadores gastam segundos na leitura inicial.</p>
+<p class="flip-long">Seu currículo é seu primeiro contato. Mantenha-o sempre atualizado, com informações claras e bem organizadas. Use formato PDF, evite cores excessivas e fontes estranhas. Destaque suas principais competências, certificações e experiências relevantes. Seja objetivo: recrutadores gastam segundos na leitura inicial.</p>
+<p class="flip-short" style="display:none">Mantenha o currículo atualizado, em PDF, claro e objetivo. Destaque competências e experiências relevantes: recrutadores leem em segundos.</p>
 </div>
 </div>
 </div>
@@ -5133,6 +5134,16 @@ document.addEventListener('DOMContentLoaded', function(){
       .comportamento-live-text { flex: 1 1 52%; }
       .comportamento-live-image { flex: 1 1 48%; }
       .comportamento-live-image img { max-height: 120px; }
+    }
+
+    /* Textos do Comportamento: alinhados à esquerda (sem justificar) */
+    .comportamento-live-text p {
+      text-align: left !important;
+      text-justify: auto !important;
+      hyphens: none !important;
+      -webkit-hyphens: none !important;
+      -ms-hyphens: none !important;
+      word-spacing: normal !important;
     }
 
     /* Seção antiga de flip-cards do Comportamento (mobile):
@@ -7058,6 +7069,7 @@ loadSavedTheme();
       "Dicas": { en: "Tips", es: "Consejos" },
       "Profissionais": { en: "for Professionals", es: "para Profesionales" },
       "Currículo Impecável": { en: "Impeccable Resume", es: "Currículum Impecable" },
+      "Mantenha o currículo atualizado, em PDF, claro e objetivo. Destaque competências e experiências relevantes: recrutadores leem em segundos.": { en: "Keep your resume up to date, in PDF, clear and objective. Highlight relevant skills and experience: recruiters read in seconds.", es: "Mantenga el currículum actualizado, en PDF, claro y objetivo. Destaque competencias y experiencias relevantes: los reclutadores leen en segundos." },
       "passe o mouse ↺": { en: "hover to flip ↺", es: "pase el mouse ↺" },
       "Seu currículo é seu primeiro contato. Mantenha-o sempre atualizado, com informações claras e bem organizadas. Use formato PDF, evite cores excessivas e fontes estranhas. Destaque suas principais competências, certificações e experiências relevantes. Seja objetivo: recrutadores gastam segundos na leitura inicial.": { en: "Your resume is your first contact. Keep it always updated, with clear and well-organized information. Use PDF format, avoid excessive colors and strange fonts. Highlight your main skills, certifications and relevant experience. Be objective: recruiters spend only seconds on the first read.", es: "Su currículum es su primer contacto. Manténgalo siempre actualizado, con información clara y bien organizada. Use formato PDF, evite colores excesivos y fuentes extrañas. Destaque sus principales competencias, certificaciones y experiencias relevantes. Sea objetivo: los reclutadores dedican segundos a la lectura inicial." },
       "Imagem Profissional": { en: "Professional Image", es: "Imagen Profesional" },
@@ -8510,14 +8522,32 @@ body.dark-mode .scroll-top-btn:hover {
   .contact-card--brand .tutorial-button{padding:.3rem .3rem !important;display:block;margin-top:.3rem;}
   .contact-card--brand br{display:none;}
   .contact-card--brand .tutorial-button{display:none !important;}
+  /* Efeito "drop": só os 2 primeiros ficam à mostra; os demais descem ao clicar em "Ver mais dicas" */
+  .dicas-profissionais-section .contact-grid{row-gap:0 !important;}
+  .dicas-profissionais-section .contact-card{margin-bottom:.7rem;}
+  .dicas-profissionais-section .contact-grid > .contact-card:nth-child(3),
+  .dicas-profissionais-section .dicas-extra-wrap .dica-card-extra:nth-child(n+1){
+    max-height:0 !important;margin-bottom:0 !important;border-width:0 !important;overflow:hidden !important;
+    opacity:0 !important;transform:translateY(-22px) scale(.94) !important;
+    transition:max-height .7s cubic-bezier(.22,1,.36,1),margin-bottom .7s cubic-bezier(.22,1,.36,1),opacity .4s ease,transform .7s cubic-bezier(.22,1,.36,1) !important;
+  }
+  .dicas-profissionais-section.dicas-expanded .contact-grid > .contact-card:nth-child(3),
+  .dicas-profissionais-section.dicas-expanded .dicas-extra-wrap .dica-card-extra:nth-child(n+1){
+    max-height:300px !important;margin-bottom:.7rem !important;border-width:2.5px !important;
+    opacity:1 !important;transform:none !important;
+  }
+  .dicas-profissionais-section.dicas-expanded .dicas-extra-wrap .dica-card-extra:nth-child(1){transition-delay:.08s,.08s,.12s,.08s !important;}
+  .dicas-profissionais-section.dicas-expanded .dicas-extra-wrap .dica-card-extra:nth-child(2){transition-delay:.16s,.16s,.2s,.16s !important;}
+  .dicas-profissionais-section.dicas-expanded .dicas-extra-wrap .dica-card-extra:nth-child(3){transition-delay:.24s,.24s,.28s,.24s !important;}
+  .dicas-profissionais-section .dicas-ver-mais-wrap{margin-top:.3rem !important;}
+  /* Currículo Impecável: verso conciso no mobile */
+  .flip-back .flip-long{display:none !important;}
+  .flip-back .flip-short{display:block !important;}
+  .contact-card--brand{min-height:204px !important;display:flex !important;flex-direction:column;justify-content:center;align-items:center;}
   /* flip-cards */
   /* Dicas Profissionais: 2x2 + botão "Ver mais dicas" (mostra as outras 2) */
   .dicas-profissionais-section .contact-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:.7rem !important;}
   .dicas-profissionais-section .dicas-ver-mais-wrap{display:block !important;text-align:center;margin-top:1rem;}
-  .dicas-profissionais-section:not(.dicas-expanded) .dica-card-extra:nth-child(n+2){display:none !important;}
-  .dicas-profissionais-section .dicas-extra-wrap .dica-card-extra{opacity:1 !important;transform:none !important;}
-  .dicas-profissionais-section.dicas-expanded .dica-card-extra:nth-child(n+2){animation:dicaIn .5s ease both !important;}
-  @keyframes dicaIn{from{opacity:0;transform:translateY(18px) scale(.95);}to{opacity:1;transform:none;}}
   .dicas-profissionais-section .flip-card .flip-inner{height:230px !important;}
   .dicas-profissionais-section .flip-icon-badge{width:62px !important;height:62px !important;}
   .dicas-profissionais-section .flip-icon-badge .flip-icon-svg svg{width:34px !important;height:34px !important;}
