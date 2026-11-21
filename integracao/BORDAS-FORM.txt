@@ -1,0 +1,400 @@
+BORDAS DO FORMULÁRIO — MODO CLARO PRETO / MODO ESCURO BRANCO (Orizon Consultoria)
+==============================================================================
+Arquivos: candidatura.html, entrevista.html, status-candidatura.html, perfil-5eixos-adjetivos.html, perfil-5eixos-resultado.html,
+          candidatura-canais.html, disc.html (ipsativo) e disc-classico.html
+Onde está: bloco <style id="bordas-form">, logo depois da tag <body>.
+
+REGRA
+- Modo claro  (html sem .dark-mode): bordas PRETAS  #000000
+- Modo escuro (html.dark-mode):      bordas BRANCAS #ffffff
+- Espessura: igual nos dois arquivos (1.5px declarado; o Chrome desenha como 1 pixel de tela).
+- Campo em foco (:focus) continua com a borda azul/ciano. Campo com erro (candidatura) continua vermelho.
+
+O QUE RECEBE A BORDA
+candidatura.html:
+  .section-card (card de cada etapa), .field input, .field select, .field textarea
+entrevista.html:
+  Cards/blocos: .sec, .e1-bloco (+ variantes traj/vaga/vol/projesc/difer/conq), .e0-sec (acordeões
+  Experiências, Formação, Certificados, Habilidades, Idiomas), .e0-sec-ico, .etapas, .etapas-mob,
+  .completude-box, .tip, .analise-card, .passos-card, .parse-card, .review-card, .review-original,
+  .review-result, .rev-box, .score-wrap, .res-hero, .vaga-pill, .fh
+  Botões neutros: .btn-back, .btn-candidatura, #btnFitCultural, .pdf-upload-btn, .pdf-parse-btn,
+  .add-btn, .bprev, .tbtn, .expand-btn, .mic-btn, .comp-btn-falar, .comp-btn-limpar,
+  .expand-modal-close, .pbtn-close, .rbtn-close, .disp-opt, .etapas-mob-arrow
+  Campos: .fi, .tinp, .comp-textarea
+  Caixa de upload tracejada: .pdf-upload-box (continua tracejada)
+NÃO ALTERADOS (têm cor própria com significado): botões/avisos vermelho, laranja e azul de ação
+  (.comp-btn-revisar, .review-btn, avisos), etiquetas "Obrigatório/Opcional" e números dos blocos.
+
+status-candidatura.html:
+  Cards/caixas: .panorama, .pan-step (exceto os vermelhos de cor própria), .search-card, .cand-header,
+  .cand-avatar, .pipe-wrap, .disc-card, .aviso, .aviso-card.cinza, etiqueta neutra .badge (vaga)
+  Botão neutro: .btn-back ("← Vagas")
+  Campo: .inp (busca por nome/telefone) — foco ciano e erro vermelho (via JS) continuam funcionando
+  NÃO ALTERADOS: .etapa-atual-card, .aviso-card.amarelo/.azul, .step-dot/.step-chip, badge DISC, botão Consultar (verde)
+
+perfil-5eixos-adjetivos.html:
+  Cards/caixas: .card, .legend-bar, .word-card, .stat-box, .step, .example-word, .fc-instructions, .fc-block (menos .done),
+  .save-status.saving, .counter-box neutro
+  Botões/campos: .btn-ghost, .fc-opt (menos .active), input text/email/tel (foco ciano e .invalid vermelho continuam)
+  Só cor (sem anel): checkbox input.chk não marcado, .ex-chk.out e .example-box (continua tracejada)
+perfil-5eixos-resultado.html:
+  .cand-bar, .result-card, .inner-box, .btn-ghost — vale só na tela (@media screen): o PDF/impressão mantém as bordas cinza claras
+  NÃO ALTERADOS nos dois: avisos, badges (.ia-badge, .fit-badge, .profile-badge), .empate-alerta, barras de progresso, estados marcado/ativo/ok
+
+candidatura-canais.html:
+  .canal-card (menos .selected e hover), .canal-detalhe, .privacidade; .steps-row só troca a cor da borda (divisores internos mantidos)
+  NÃO ALTERADOS: .bonus-box (faixa lateral colorida), etiquetas dos canais, .toast
+disc.html (ipsativo) e disc-classico.html (mesmo CSS nos dois):
+  Cards: .intro-card, .question-card, .cand-result-card, .result-card, .trait-card, .fit-item, .pressure-item, .lgpd-box
+  Botões/opções: .btn-back, .btn-prev, .q-option (menos .selected/hover), .ips-item (menos .atribuido/hover)
+  Campo: .name-section input (foco ciano continua); bolinhas .q-option-dot e .ips-bolinha neutras só trocam a cor
+  NÃO ALTERADOS: pills D/I/S/C, badges, .cb-ok/.cb-warn, .nivel-badge, .success-badge, .encouragement, bolinhas coloridas n1/n2, estados selecionado/hover
+TÍTULOS DISC: disc.html = cabeçalho "TESTE DISC IPSATIVO" (mobile "DISC IPSATIVO", era "Teste DISC Grátis") + aba/og:title/twitter:title/JSON-LD "Teste DISC Ipsativo Online ...";
+  disc-classico.html = cabeçalho "TESTE DISC CLÁSSICO" (mobile "DISC CLÁSSICO") + títulos "Teste DISC Clássico ..."
+
+CANTOS (entrevista.html, status-candidatura.html, perfil-5eixos-*.html, candidatura-canais.html e disc*.html)
+- Nas curvas dos cantos arredondados a borda comum afinava. No entrevista o contorno é desenhado como
+  traço contínuo (box-shadow inset) com a mesma espessura das retas do candidatura.
+- A variável --ring-form define a espessura desse traço (1px; 1.25px em telas com escala 150%-174%).
+
+COMO DESATIVAR
+- Apague o bloco <style id="bordas-form">...</style> do arquivo.
+
+================================================================================
+CÓDIGO — status-candidatura.html (bloco logo depois da tag <body>)
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, caixas, botão neutro e campo: modo claro = PRETO, modo escuro = BRANCO, mesma espessura do entrevista.html.
+   O contorno é desenhado como traço contínuo (inset) para não afinar nas curvas dos cantos arredondados.
+   Foco (ciano) e erro (vermelho do campo de busca) continuam funcionando; avisos/etapas/etiquetas com cor própria não são alterados. Para desativar, apague este bloco. */
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .btn-back,
+html:not(.dark-mode) .panorama,
+html:not(.dark-mode) .pan-step:not([style*="border-color"]),
+html:not(.dark-mode) .search-card,
+html:not(.dark-mode) .cand-header,
+html:not(.dark-mode) .cand-avatar,
+html:not(.dark-mode) .pipe-wrap,
+html:not(.dark-mode) .disc-card,
+html:not(.dark-mode) .aviso,
+html:not(.dark-mode) .aviso-card.cinza,
+html:not(.dark-mode) .badge[style*="border-color:var(--border);"] { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) .inp:not(:focus):not([style*="border-color"]) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html.dark-mode .btn-back,
+html.dark-mode .panorama,
+html.dark-mode .pan-step:not([style*="border-color"]),
+html.dark-mode .search-card,
+html.dark-mode .cand-header,
+html.dark-mode .cand-avatar,
+html.dark-mode .pipe-wrap,
+html.dark-mode .disc-card,
+html.dark-mode .aviso,
+html.dark-mode .aviso-card.cinza,
+html.dark-mode .badge[style*="border-color:var(--border);"] { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode .inp:not(:focus):not([style*="border-color"]) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+</style>
+
+
+================================================================================
+REFORÇO DE CANTOS (bloco <style id="bordas-form-cantos">, logo depois do bloco bordas-form)
+================================================================================
+PROBLEMA: no traço inset de 1px as retas ficam nítidas, mas a CURVA dos cantos arredondados fica mais fina/apagada
+(a linha diagonal de 1px divide a cor entre pixels vizinhos). Em telas com escala fracionada (125%) as retas também
+ficavam cinza.
+SOLUÇÃO (sem aumentar a espessura das retas): cada canto recebe um arco de reforço feito com 4 radial-gradient (um por
+canto) com o MESMO raio do elemento (variável --r). O arco ocupa só o quadrado do canto (--r x --r); as retas
+continuam com 1px (var(--ring-form)). Modo claro = arco preto, modo escuro = arco branco.
+MODELO (um seletor):
+  html:not(.dark-mode) SELETOR { --r:10px; background-image:
+    radial-gradient(circle at 100% 100%,transparent calc(var(--r) - 1.6px),rgba(0,0,0,1) calc(var(--r) - 1.1px),rgba(0,0,0,1) calc(var(--r) - .8px),transparent calc(var(--r) - .3px)),
+    ...(mesmo para 0 100%, 100% 0 e 0 0)...
+    !important; background-size:var(--r) var(--r) !important; background-repeat:no-repeat !important;
+    background-position:0 0,100% 0,0 100%,100% 100% !important; }
+  (modo escuro: html.dark-mode e rgba(255,255,255,1))
+REGRA: --r tem que ser IGUAL ao border-radius do elemento; se o raio mudar (ex.: @media mobile), ajustar o --r junto.
+NÃO recebem reforço: pílulas (raio 99px), elementos com fundo em gradiente/imagem e campos de texto sem raio próprio.
+RAIOS USADOS POR ARQUIVO:
+  disc.html: .btn-back:not(:hover) (10px), .btn-prev:not(:hover) (16px), .intro-card (22px), .question-card (22px), .cand-result-card (22px), .result-card (22px), .trait-card (16px), .fit-item (16px), .pressure-item (16px), .lgpd-box (16px), .q-option:not(.selected):not(:hover) (16px), .ips-item:not(.atribuido):not(:hover) (16px)
+  disc-classico.html: .btn-back:not(:hover) (10px), .btn-prev:not(:hover) (16px), .intro-card (22px), .question-card (22px), .cand-result-card (22px), .result-card (22px), .trait-card (16px), .fit-item (16px), .pressure-item (16px), .lgpd-box (16px), .q-option:not(.selected):not(:hover) (16px), .ips-item:not(.atribuido):not(:hover) (16px)
+  candidatura-canais.html: .canal-card:not(.selected):not(:hover) (16px), .canal-detalhe (14px), .privacidade (13px)
+  status-candidatura.html: .btn-back (10px), .panorama (16px), .pan-step:not([style*="border-color"]) (12px), .search-card (16px), .cand-header (16px), .cand-avatar (12px), .pipe-wrap (16px), .disc-card (14px), .aviso (14px), .aviso-card.cinza (12px), .inp:not(:focus):not([style*="border-color"]) (10px)
+  perfil-5eixos-adjetivos.html: .btn-ghost (16px), .legend-bar (16px), .word-card (12px), .stat-box (16px), .step (16px), .example-word (10px), .fc-instructions (16px), .fc-block:not(.done) (16px), .save-status.saving (16px)
+  perfil-5eixos-resultado.html: .cand-bar (16px), .result-card (20px), .inner-box (12px), .btn-ghost (12px)
+OBSERVAÇÃO: entrevista.html e candidatura.html não foram reenviados nesta rodada — o bloco original deles (acima) segue igual;
+para dar o mesmo reforço neles, enviar os arquivos (mesmo modelo, com o --r de cada classe).
+
+================================================================================
+CÓDIGO — perfil-5eixos-adjetivos.html (bloco logo depois da tag <body>)
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, caixas, botões neutros e campos: modo claro = PRETO, modo escuro = BRANCO, mesma espessura do entrevista.html.
+   O contorno é um traço contínuo (inset) para não afinar nas curvas dos cantos arredondados. Campos de texto mantêm a espessura original (sem pulo no foco); checkbox e caixa de exemplo só trocam a cor (a tracejada continua tracejada).
+   Foco (ciano) e erro (vermelho) continuam funcionando; avisos, badges e estados com cor própria não são alterados. Não afeta a impressão/PDF. Para desativar, apague este bloco. */
+@media screen{
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .card,
+html:not(.dark-mode) .btn-ghost,
+html:not(.dark-mode) .legend-bar,
+html:not(.dark-mode) .word-card,
+html:not(.dark-mode) .stat-box,
+html:not(.dark-mode) .step,
+html:not(.dark-mode) .example-word,
+html:not(.dark-mode) .fc-instructions,
+html:not(.dark-mode) .fc-block:not(.done),
+html:not(.dark-mode) .fc-opt:not(.active),
+html:not(.dark-mode) .save-status.saving,
+html:not(.dark-mode) .counter-box:not(.ok):not(.low) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) input[type=text]:not(:focus):not(.invalid),
+html:not(.dark-mode) input[type=email]:not(:focus):not(.invalid),
+html:not(.dark-mode) input[type=tel]:not(:focus):not(.invalid) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html.dark-mode .card,
+html.dark-mode .btn-ghost,
+html.dark-mode .legend-bar,
+html.dark-mode .word-card,
+html.dark-mode .stat-box,
+html.dark-mode .step,
+html.dark-mode .example-word,
+html.dark-mode .fc-instructions,
+html.dark-mode .fc-block:not(.done),
+html.dark-mode .fc-opt:not(.active),
+html.dark-mode .save-status.saving,
+html.dark-mode .counter-box:not(.ok):not(.low) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode input[type=text]:not(:focus):not(.invalid),
+html.dark-mode input[type=email]:not(:focus):not(.invalid),
+html.dark-mode input[type=tel]:not(:focus):not(.invalid) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html:not(.dark-mode) input.chk:not(:checked),
+html:not(.dark-mode) .ex-chk.out,
+html:not(.dark-mode) .example-box { border-color: #000000 !important; }
+html.dark-mode input.chk:not(:checked),
+html.dark-mode .ex-chk.out,
+html.dark-mode .example-box { border-color: #ffffff !important; }
+}
+</style>
+
+================================================================================
+CÓDIGO — perfil-5eixos-resultado.html (bloco logo depois da tag <body>)
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, caixas, botões neutros e campos: modo claro = PRETO, modo escuro = BRANCO, mesma espessura do entrevista.html.
+   O contorno é um traço contínuo (inset) para não afinar nas curvas dos cantos arredondados. Só vale na tela; o PDF/impressão continua com as bordas cinza claras.
+   Foco (ciano) e erro (vermelho) continuam funcionando; avisos, badges e estados com cor própria não são alterados. Não afeta a impressão/PDF. Para desativar, apague este bloco. */
+@media screen{
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .cand-bar,
+html:not(.dark-mode) .result-card,
+html:not(.dark-mode) .inner-box,
+html:not(.dark-mode) .btn-ghost { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html.dark-mode .cand-bar,
+html.dark-mode .result-card,
+html.dark-mode .inner-box,
+html.dark-mode .btn-ghost { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+}
+</style>
+
+================================================================================
+CÓDIGO — candidatura-canais.html (bloco logo depois da tag <body>)
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, caixas, botões neutros e campos: modo claro = PRETO, modo escuro = BRANCO, mesma espessura do entrevista.html.
+   O contorno é um traço contínuo (inset) para não afinar nas curvas dos cantos arredondados. A barra de etapas (.steps-row) só troca a cor da borda (os divisores internos ficam como estavam).
+   Foco/hover/seleção (ciano) continuam funcionando; etiquetas, avisos e estados com cor própria não são alterados. Para desativar, apague este bloco. */
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .canal-card:not(.selected):not(:hover),
+html:not(.dark-mode) .canal-detalhe,
+html:not(.dark-mode) .privacidade { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) .steps-row { border-color: #000000 !important; }
+html.dark-mode .canal-card:not(.selected):not(:hover),
+html.dark-mode .canal-detalhe,
+html.dark-mode .privacidade { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode .steps-row { border-color: #ffffff !important; }
+</style>
+
+================================================================================
+CÓDIGO — disc.html e disc-classico.html (mesmo bloco nos dois, logo depois da tag <body>)
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, caixas, botões neutros e campos: modo claro = PRETO, modo escuro = BRANCO, mesma espessura do entrevista.html.
+   O contorno é um traço contínuo (inset) para não afinar nas curvas dos cantos arredondados. Campo de nome mantém a espessura original (sem pulo no foco); bolinhas de opção só trocam a cor.
+   Foco/hover/seleção (ciano) continuam funcionando; etiquetas, avisos e estados com cor própria não são alterados. Para desativar, apague este bloco. */
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .btn-back:not(:hover),
+html:not(.dark-mode) .btn-prev:not(:hover),
+html:not(.dark-mode) .intro-card,
+html:not(.dark-mode) .question-card,
+html:not(.dark-mode) .cand-result-card,
+html:not(.dark-mode) .result-card,
+html:not(.dark-mode) .trait-card,
+html:not(.dark-mode) .fit-item,
+html:not(.dark-mode) .pressure-item,
+html:not(.dark-mode) .lgpd-box,
+html:not(.dark-mode) .q-option:not(.selected):not(:hover),
+html:not(.dark-mode) .ips-item:not(.atribuido):not(:hover) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) .name-section input:not(:focus) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) .q-option:not(.selected) .q-option-dot,
+html:not(.dark-mode) .ips-bolinha:not(.n1):not(.n2) { border-color: #000000 !important; }
+html.dark-mode .btn-back:not(:hover),
+html.dark-mode .btn-prev:not(:hover),
+html.dark-mode .intro-card,
+html.dark-mode .question-card,
+html.dark-mode .cand-result-card,
+html.dark-mode .result-card,
+html.dark-mode .trait-card,
+html.dark-mode .fit-item,
+html.dark-mode .pressure-item,
+html.dark-mode .lgpd-box,
+html.dark-mode .q-option:not(.selected):not(:hover),
+html.dark-mode .ips-item:not(.atribuido):not(:hover) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode .name-section input:not(:focus) { border-color: transparent !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode .q-option:not(.selected) .q-option-dot,
+html.dark-mode .ips-bolinha:not(.n1):not(.n2) { border-color: #ffffff !important; }
+</style>
+
+================================================================================
+CÓDIGO — candidatura.html
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas do formulário (cards e campos): modo claro = PRETO, modo escuro = BRANCO.
+   Foco (azul/ciano) e erro (vermelho) continuam funcionando. Para desativar, apague este bloco. */
+html:not(.dark-mode) .section-card,
+html:not(.dark-mode) .field input:not(:focus),
+html:not(.dark-mode) .field select:not(:focus),
+html:not(.dark-mode) .field textarea:not(:focus) { border-color: #000000 !important; }
+html.dark-mode .section-card,
+html.dark-mode .field input:not(:focus),
+html.dark-mode .field select:not(:focus),
+html.dark-mode .field textarea:not(:focus) { border-color: #ffffff !important; }
+html:not(.dark-mode) .field.has-error input, html:not(.dark-mode) .field.has-error select,
+html.dark-mode .field.has-error input, html.dark-mode .field.has-error select { border-color: var(--red) !important; }
+</style>
+
+================================================================================
+CÓDIGO — entrevista.html
+================================================================================
+<style id="bordas-form">
+/* [BORDAS-FORM] Bordas de cards, blocos, caixas, botões neutros e campos: modo claro = PRETO, modo escuro = BRANCO, espessura igual à do candidatura.html (1.5px declarado = 1 pixel de tela).
+   O contorno é desenhado como um traço contínuo (inset) para não afinar nas curvas dos cantos arredondados.
+   Foco (azul) continua funcionando; botões/avisos com cor própria e etiquetas não são alterados. Para desativar, apague este bloco. */
+/* Espessura do contorno = a mesma borda do candidatura.html (1 pixel de tela, que varia com o zoom/escala do Windows) */
+:root{--ring-form:1px}
+@media (min-resolution:1.5dppx) and (max-resolution:1.74dppx){:root{--ring-form:1.25px}}
+html:not(.dark-mode) .sec,
+html:not(.dark-mode) .e1-bloco,
+html:not(.dark-mode) .e1-bloco-traj,
+html:not(.dark-mode) .e1-bloco-vaga,
+html:not(.dark-mode) .e1-bloco-vol,
+html:not(.dark-mode) .e1-bloco-projesc,
+html:not(.dark-mode) .e1-bloco-difer,
+html:not(.dark-mode) .e1-bloco-conq,
+html:not(.dark-mode) .e0-sec,
+html:not(.dark-mode) .e0-sec:hover,
+html:not(.dark-mode) .e0-sec.open,
+html:not(.dark-mode) .e0-sec-ico,
+html:not(.dark-mode) .etapas,
+html:not(.dark-mode) .etapas-mob,
+html:not(.dark-mode) .etapas-mob-arrow,
+html:not(.dark-mode) .pdf-upload-btn,
+html:not(.dark-mode) .pdf-parse-btn,
+html:not(.dark-mode) .pdf-status,
+html:not(.dark-mode) .btn-back,
+html:not(.dark-mode) .btn-candidatura,
+html:not(.dark-mode) #btnFitCultural,
+html:not(.dark-mode) .completude-box,
+html:not(.dark-mode) .tip,
+html:not(.dark-mode) .analise-card,
+html:not(.dark-mode) .passos-card,
+html:not(.dark-mode) .parse-card,
+html:not(.dark-mode) .review-card,
+html:not(.dark-mode) .review-original,
+html:not(.dark-mode) .review-result,
+html:not(.dark-mode) .rev-box,
+html:not(.dark-mode) .score-wrap,
+html:not(.dark-mode) .res-hero,
+html:not(.dark-mode) .vaga-pill,
+html:not(.dark-mode) .add-btn,
+html:not(.dark-mode) .bprev,
+html:not(.dark-mode) .tbtn,
+html:not(.dark-mode) .expand-btn,
+html:not(.dark-mode) .mic-btn,
+html:not(.dark-mode) .comp-btn-falar,
+html:not(.dark-mode) .comp-btn-limpar,
+html:not(.dark-mode) .expand-modal-close,
+html:not(.dark-mode) .pbtn-close,
+html:not(.dark-mode) .rbtn-close,
+html:not(.dark-mode) .disp-opt,
+html:not(.dark-mode) .fh,
+html:not(.dark-mode) div[style*="border:1.5px solid rgba(var(--wf)"],
+html:not(.dark-mode) div[style*="border:1.5px solid var(--border2)"],
+html:not(.dark-mode) div[style*="border:1px solid var(--border)"],
+html:not(.dark-mode) button[style*="border:1.5px solid rgba(var(--wf)"],
+html:not(.dark-mode) .fi:not(:focus),
+html:not(.dark-mode) .tinp:not(:focus),
+html:not(.dark-mode) .comp-textarea:not(:focus),
+html:not(.dark-mode) #sec0 .fi:not(:focus),
+html:not(.dark-mode) #sec1 .fi:not(:focus),
+html:not(.dark-mode) #sec3 .comp-textarea:not(:focus) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #000000 !important; }
+html:not(.dark-mode) .pdf-upload-box { border-color: #000000 !important; border-width: 1.5px !important; }
+html:not(.dark-mode) .e1-bloco.open .e1-bloco-header { border-color: #000000 !important; }
+html.dark-mode .sec,
+html.dark-mode .e1-bloco,
+html.dark-mode .e1-bloco-traj,
+html.dark-mode .e1-bloco-vaga,
+html.dark-mode .e1-bloco-vol,
+html.dark-mode .e1-bloco-projesc,
+html.dark-mode .e1-bloco-difer,
+html.dark-mode .e1-bloco-conq,
+html.dark-mode .e0-sec,
+html.dark-mode .e0-sec:hover,
+html.dark-mode .e0-sec.open,
+html.dark-mode .e0-sec-ico,
+html.dark-mode .etapas,
+html.dark-mode .etapas-mob,
+html.dark-mode .etapas-mob-arrow,
+html.dark-mode .pdf-upload-btn,
+html.dark-mode .pdf-parse-btn,
+html.dark-mode .pdf-status,
+html.dark-mode .btn-back,
+html.dark-mode .btn-candidatura,
+html.dark-mode #btnFitCultural,
+html.dark-mode .completude-box,
+html.dark-mode .tip,
+html.dark-mode .analise-card,
+html.dark-mode .passos-card,
+html.dark-mode .parse-card,
+html.dark-mode .review-card,
+html.dark-mode .review-original,
+html.dark-mode .review-result,
+html.dark-mode .rev-box,
+html.dark-mode .score-wrap,
+html.dark-mode .res-hero,
+html.dark-mode .vaga-pill,
+html.dark-mode .add-btn,
+html.dark-mode .bprev,
+html.dark-mode .tbtn,
+html.dark-mode .expand-btn,
+html.dark-mode .mic-btn,
+html.dark-mode .comp-btn-falar,
+html.dark-mode .comp-btn-limpar,
+html.dark-mode .expand-modal-close,
+html.dark-mode .pbtn-close,
+html.dark-mode .rbtn-close,
+html.dark-mode .disp-opt,
+html.dark-mode .fh,
+html.dark-mode div[style*="border:1.5px solid rgba(var(--wf)"],
+html.dark-mode div[style*="border:1.5px solid var(--border2)"],
+html.dark-mode div[style*="border:1px solid var(--border)"],
+html.dark-mode button[style*="border:1.5px solid rgba(var(--wf)"],
+html.dark-mode .fi:not(:focus),
+html.dark-mode .tinp:not(:focus),
+html.dark-mode .comp-textarea:not(:focus),
+html.dark-mode #sec0 .fi:not(:focus),
+html.dark-mode #sec1 .fi:not(:focus),
+html.dark-mode #sec3 .comp-textarea:not(:focus) { border-color: transparent !important; border-width: 0 !important; box-shadow: inset 0 0 0 var(--ring-form,1px) #ffffff !important; }
+html.dark-mode .pdf-upload-box { border-color: #ffffff !important; border-width: 1.5px !important; }
+html.dark-mode .e1-bloco.open .e1-bloco-header { border-color: #ffffff !important; }
+</style>
