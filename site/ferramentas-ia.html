@@ -7944,6 +7944,8 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
     var idle=document.createElement('div'); idle.className='tip-idle'; idle.setAttribute('aria-hidden','true'); g.appendChild(idle);
     function act(f){g.classList.remove('is-idle');flips.forEach(function(x){x.classList.toggle('is-active',x===f);});}
     function clear(){g.classList.add('is-idle');flips.forEach(function(x){x.classList.remove('is-active');});}
+    /* seleção por clique (fica fixa). Padrão: ChatGPT (1º card) no desktop; no celular começa fechado */
+    function reset(){ if(window.matchMedia('(min-width: 769px)').matches) act(flips[0]); else clear(); }
     function sync(){var more=g.querySelector('.tip-more'); if(more) more.setAttribute('aria-hidden','false'); flips.forEach(function(x){x.tabIndex=0;});}
     flips.forEach(function(f,i){
       var ic=f.querySelector('.tip-front .card-icon'), back=f.querySelector('.tip-back'), fr=f.querySelector('.tip-front');
@@ -7954,12 +7956,9 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
         back.insertBefore(c,back.firstChild);
         var t=document.createElement('div'); t.className='tip-idle-tile'; t.setAttribute('style',fr.getAttribute('style')||'');
         var c2=c.cloneNode(true); c2.classList.remove('tip-panel-icon'); t.appendChild(c2);
-        t.addEventListener('mouseenter',function(){ if(hov.matches) act(f); });
         t.addEventListener('click',function(){ act(f); });
         idle.appendChild(t);
       }
-      f.addEventListener('mouseenter',function(){ if(hov.matches) act(f); });
-      f.addEventListener('focus',function(e){ if(hov.matches && e.target===f && f.matches(':focus-visible')) act(f); });
       f.addEventListener('pointerdown',function(){ f._was=f.classList.contains('is-active'); });
       f.addEventListener('click',function(e){
         if(!hov.matches && f._was && e.target.closest('.tip-front')){ f._was=false; clear(); return; }
@@ -7972,10 +7971,8 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
         if(n>=0&&n<flips.length){e.preventDefault();flips[n].focus();}
       });
     });
-    g.addEventListener('mouseleave',function(){ if(hov.matches && !g.querySelector(':focus-visible')) clear(); });
-    g.addEventListener('focusout',function(e){ if(hov.matches && !g.contains(e.relatedTarget)) clear(); });
     window.addEventListener('resize',sync);
-    clear(); sync();
+    reset(); sync();
   });
 })();
 </script>
@@ -8082,6 +8079,27 @@ body:not(.dark-mode) .scroll-top-btn.on-footer:hover { background: rgba(255,255,
 .topics-toggle-mobile,
 .voice-translator-toggle { border-radius: 25px 25px 25px 6px !important; }
 .theme-toggle { border-radius: 25px 25px 6px 25px !important; }
+</style>
+<style id="tip-seta-centralizada">
+/* Seta (>) dos cards de ferramentas de IA: centralizada na vertical */
+@media (min-width: 769px) {
+  #tip-grid-ia .tip-flip .card.tip-front::after {
+    position: absolute !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: 1.4rem !important;
+    width: 8px !important;
+    height: 8px !important;
+    margin: 0 !important;
+    animation: none !important;
+    background: none !important;
+    transform: translateY(-50%) rotate(45deg) !important;
+  }
+  #tip-grid-ia .tip-flip.is-active .card.tip-front::after {
+    transform: translateY(-50%) translateX(3px) rotate(45deg) !important;
+  }
+}
 </style>
 </body>
 </html>
