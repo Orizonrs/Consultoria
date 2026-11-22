@@ -6977,6 +6977,8 @@ async function enviarEmailUnificado(dados, ia) {
 // ── ETAPA FINAL: anexar o currículo na própria página (FormSubmit, grátis → e-mail) ──
 // O arquivo vai por e-mail (FormSubmit) e uma cópia de segurança fica no Supabase (bucket privado "curriculos").
 const CV_MAX_BYTES = 5 * 1024 * 1024;
+// Cole entre as aspas o URL do app da Web do Google Apps Script (termina com /exec). Veja LEIA-ME-APPS-SCRIPT.txt
+const CV_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5qC67lyhSLLKBd8t1qhxMZkEZsPAgHtmUosd9Bi2zahzVW06QUdmG13ZAh7rF_lcwXQ/exec';
 let _cvEnviando = false;
 
 function irParaCandidatura() { enviarCurriculoFinal(); }
@@ -7079,6 +7081,38 @@ async function cvDestinatarios() {
   return [CV_EMAIL_PADRAO];
 }
 
+// Envio por Google Apps Script (e-mail com anexo, sem FormSubmit)
+function cvLerBase64(file) {
+  return new Promise((ok, erro) => {
+    const r = new FileReader();
+    r.onload = () => ok(String(r.result).split(',')[1] || '');
+    r.onerror = () => erro(r.error);
+    r.readAsDataURL(file);
+  });
+}
+async function cvEnviarAppsScript(f, dest, caminho) {
+  const g = id => (document.getElementById(id) || {}).value || '';
+  try {
+    const corpo = JSON.stringify({
+      destinos: dest,
+      assunto: g('cvSubject'),
+      nome: g('cvNome'), vaga: g('cvVaga'), telefone: g('cvTel'),
+      email_candidato: g('cvEmail'), fit_score: g('cvFit'), data_envio: g('cvData'),
+      backup_supabase: g('cvBackup'),
+      nome_arquivo: f.name, mime: f.type || 'application/octet-stream',
+      arquivo_base64: await cvLerBase64(f)
+    });
+    // text/plain evita o "preflight" do navegador (Apps Script não responde a ele)
+    const res = await fetch(CV_APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: corpo });
+    const j = await res.json();
+    console.log('[curriculo-final] Apps Script:', j);
+    return !!j.ok;
+  } catch (e) {
+    console.warn('[curriculo-final] Apps Script:', e);
+    return false; // se o Supabase guardou a cópia, a tela de sucesso aparece mesmo assim
+  }
+}
+
 async function enviarCurriculoFinal() {
   if (_cvEnviando) return;
   if (!cvTemArquivo()) { irParaCandidaturaCanais(); return; } // sem arquivo: fluxo antigo
@@ -7093,8 +7127,9 @@ async function enviarCurriculoFinal() {
     : 'não foi possível guardar cópia no Supabase';
 
   // 1b) define para quais e-mails vai (canais marcados na vaga): o 1º recebe direto, os demais em cópia (_cc)
+  let dest = [CV_EMAIL_PADRAO];
   try {
-    const dest = await cvDestinatarios();
+    dest = await cvDestinatarios();
     const fm = document.getElementById('cvFormEl');
     fm.action = 'https://formsubmit.co/' + dest[0];
     let cc = document.getElementById('cvCc');
@@ -7107,7 +7142,8 @@ async function enviarCurriculoFinal() {
 
   // 2) e-mail com o arquivo anexado (FormSubmit) — formulário multipart postado em iframe invisível
   let formOk = false;
-  try {
+  if (CV_APPS_SCRIPT_URL) { formOk = await cvEnviarAppsScript(f, dest, caminho); }
+  else try {
     formOk = await new Promise(resolve => {
       const ifr = document.getElementById('cvIframe');
       let fim = false;
