@@ -1372,14 +1372,14 @@ body:not(.dark-mode) #sec-servicos-cards-foto {
 @media (min-width: 1200px) {
   body:not(.dark-mode) #sec-servicos-cards-foto { padding: 0 3rem !important; }
 }
-/* Sem container ao redor no modo claro: cards sem borda própria */
+/* Modo claro: cards com borda azul (antes eram sem borda) */
 body:not(.dark-mode) #sec-servicos-cards-foto .ia-photo-card-face {
-  border: none !important;
+  border: 2px solid #2563eb !important;
 }
 
 /* ---- Modo escuro: mantém o container padrão da seção; cada card recebe sua própria borda ---- */
 body.dark-mode #sec-servicos-cards-foto .ia-photo-card-face {
-  border: 1.5px solid rgba(0, 200, 255, 0.55) !important;
+  border: 2px solid rgba(0, 200, 255, 0.75) !important;
 }
 </style>
 <style>
@@ -6073,9 +6073,9 @@ document.addEventListener('DOMContentLoaded', function(){
           }
           /* DESKTOP: radar e container mais compactos (menos altura). Para desfazer, apague este bloco. */
           @media (min-width:901px){
-            .sr-stage{grid-template-columns:minmax(280px,360px) 1fr;gap:28px;}
-            .sr-radar-pad{max-width:360px;}
-            .sr-radar-pad .sr-radar-outer{--sr-node-size:48px;--sr-label-h:22px;--sr-label-pad:14px;--sr-safe:8px;}
+            .sr-stage{grid-template-columns:minmax(320px,420px) 1fr;gap:28px;}
+            .sr-radar-pad{max-width:420px;}
+            .sr-radar-pad .sr-radar-outer{--sr-node-size:72px;--sr-label-h:24px;--sr-label-pad:16px;--sr-safe:8px;}
             #radar-servicos-container.content-container{padding-top:28px !important;padding-bottom:28px !important;}
             #section-servicos{margin:0 !important;}
             #section-servicos > p{margin-bottom:1rem !important;}
@@ -6103,8 +6103,8 @@ document.addEventListener('DOMContentLoaded', function(){
             background:conic-gradient(from 0deg, rgba(0,200,255,0.18), transparent 26%);
             animation:sr-spin 9s linear infinite;opacity:.9;pointer-events:none;
             -webkit-mask-image:radial-gradient(circle,#000 100%,#000 100%);mask-image:radial-gradient(circle,#000 100%,#000 100%);}
-          body:not(.dark-mode) .sr-sweep{background:conic-gradient(from 0deg, rgba(124,58,237,0.16), transparent 26%);}
-          .sr-locked .sr-sweep{animation-play-state:paused;}
+          body:not(.dark-mode) .sr-sweep{background:conic-gradient(from 0deg, rgba(124,58,237,0.38), transparent 26%);}
+          .sr-locked .sr-sweep{animation-play-state:running !important;} /* varredura contínua: nunca pausa ao clicar */
           @keyframes sr-spin{to{transform:rotate(360deg);}}
 
           .sr-hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -6373,6 +6373,29 @@ document.addEventListener('DOMContentLoaded', function(){
             srMnavCurrent.style.setProperty('--sr-c', s.color);
             srMnavCurrent.innerHTML = '<span class="sr-n-icon" aria-hidden="true">' + s.icon + '</span><span>' + s.title + '</span>';
           }
+
+          /* iguala a altura do painel nas 5 frentes (usa a maior) */
+          var srEqBusy = false, srEqW = 0;
+          function srEqualize(){
+            if (srEqBusy || !srPanel.offsetWidth) return;   /* seção fechada: mede quando abrir */
+            srEqBusy = true;
+            var keep = srActive, max = 0;
+            srPanel.style.minHeight = '';
+            for (var k = 0; k < SR_SERVICES.length; k++){
+              srRenderPanel(k);
+              max = Math.max(max, srPanel.offsetHeight);
+            }
+            srRenderPanel(keep);
+            srPanel.style.minHeight = max + 'px';
+            srEqW = srPanel.offsetWidth;
+            srEqBusy = false;
+          }
+          if (window.ResizeObserver){
+            new ResizeObserver(function(){
+              if (srPanel.offsetWidth && srPanel.offsetWidth !== srEqW) srEqualize();
+            }).observe(srPanel);
+          }
+          window.addEventListener('load', function(){ setTimeout(srEqualize, 50); });
 
           function srRenderProgress(){
             srProgressRow.innerHTML = '';
@@ -11351,6 +11374,43 @@ html body .orizon-divider-section + .contact-section.contact-section.contact-sec
 html body main > section.contact-section.contact-section.contact-section,
 html body .contact-section.contact-section.contact-section:has(+ .orizon-divider-section){margin-bottom:0 !important}
 
+</style>
+<style id="servicos-sem-container">
+/* Serviços (Modelos 01 a 04): sem caixa externa. Conteúdo solto na página, só com o título da seção por cima.
+   Para voltar ao visual antigo, apague este bloco. */
+html body #radar-servicos-container.content-container,
+html body.dark-mode #radar-servicos-container.content-container,
+html body:not(.dark-mode) #radar-servicos-container.content-container,
+html body #apoio-servicos-container.content-container,
+html body.dark-mode #apoio-servicos-container.content-container,
+html body:not(.dark-mode) #apoio-servicos-container.content-container,
+html body #consultorias-container.content-container,
+html body.dark-mode #consultorias-container.content-container,
+html body:not(.dark-mode) #consultorias-container.content-container,
+html body #solidaria-container.content-container,
+html body.dark-mode #solidaria-container.content-container,
+html body:not(.dark-mode) #solidaria-container.content-container{
+  background:none !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  -webkit-backdrop-filter:none !important;backdrop-filter:none !important;
+}
+html body #radar-servicos-container.content-container::before,html body #radar-servicos-container.content-container::after,
+html body #apoio-servicos-container.content-container::before,html body #apoio-servicos-container.content-container::after,
+html body #consultorias-container.content-container::before,html body #consultorias-container.content-container::after,
+html body #solidaria-container.content-container::before,html body #solidaria-container.content-container::after{display:none !important;}
+</style>
+<style id="servicos-texto-intro">
+/* Textos de introdução dos Serviços (Modelos 01 a 04): preto no modo claro, branco no modo escuro, sem transparência.
+   Para voltar ao visual antigo, apague este bloco. */
+html body:not(.dark-mode) #section-servicos > p,
+html body:not(.dark-mode) .ap-lead,
+html body:not(.dark-mode) .co-lead{color:#000 !important;opacity:1 !important;}
+html body.dark-mode #section-servicos > p,
+html body.dark-mode .ap-lead,
+html body.dark-mode .co-lead{color:#fff !important;opacity:1 !important;}
 </style>
 </body>
 </html>
