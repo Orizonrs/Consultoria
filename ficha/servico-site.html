@@ -323,6 +323,18 @@ html.dark-mode body .hero-eyebrow,html.dark-mode body .hero.hero .hero-eyebrow{b
 html:not(.dark-mode) body .hero-eyebrow,html:not(.dark-mode) body .hero.hero .hero-eyebrow{border:1px solid #000 !important;}
 @media (prefers-reduced-motion:reduce){html body .hero-eyebrow::before{animation:none;}}
 </style>
+<style id="primeira-tela">
+/* [PRIMEIRA-TELA] Primeira tela = header + hero preenchendo a janela (sem letreiro) + título tipo tutorial. Para desativar, apague este bloco, a div #tutTitulo e o script primeira-tela-js. */
+html body div.hero.hero{display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+.tut-titulo{margin:2.4rem 0 1.6rem}
+.tut-eyebrow{display:inline-block;font-size:.66rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink3);margin-bottom:.5rem}
+.tut-title{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(1.7rem,4.2vw,2.7rem);line-height:1.1;color:var(--ink);margin:0 0 .5rem}
+.tut-title em{font-style:italic;padding-right:.1em;background:linear-gradient(90deg,#2563eb,#7c3aed 55%,#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.tut-sub{font-size:.95rem;color:var(--ink3);max-width:560px}
+@media(max-width:700px){.tut-titulo{text-align:center;margin:1.6rem 0 1.2rem}.tut-title{font-size:1.7rem}.tut-sub{font-size:.88rem;margin:0 auto}}
+@media print{.tut-titulo{display:none !important}}
+@media(max-width:700px){html body .hero.hero .hero-actions{align-self:stretch;width:100%;align-items:center;justify-content:center}}
+</style>
 </head>
 <body>
 <style id="cta-claro-azul">
@@ -392,7 +404,9 @@ html:not(.dark-mode) body { background-color:#eef0f4 !important; }
     </div>
   </div>
 
-  <!-- COMO FAZEMOS -->
+  <div class="tut-titulo" id="tutTitulo"><span class="tut-eyebrow">Tutorial</span><h2 class="tut-title">Como <em>funciona</em></h2><p class="tut-sub">Veja, passo a passo, como criamos o seu site e como começar.</p></div>
+
+    <!-- COMO FAZEMOS -->
   <div class="section">
     <div class="sec-hdr">
       <div class="sec-icon gold">🖥️</div>
@@ -1074,6 +1088,38 @@ html.dark-mode body .sbx-tab.done,html.dark-mode body .tbx-tab.done{color:#fffff
 (function(){
 document.querySelectorAll('.sbx-br,.tbx-br').forEach(function(br){var w=document.createElement('div');w.className='nx-bd';w.innerHTML='<i class="o1"></i><i class="o2"></i>';br.parentNode.insertBefore(w,br);w.appendChild(br);});
 document.querySelectorAll('.sbx-tabs,.tbx-tabs').forEach(function(T){new MutationObserver(function(){var b=T.querySelector('.on');if(b&&T.scrollWidth>T.clientWidth)T.scrollTo({left:b.offsetLeft-T.clientWidth/2+b.offsetWidth/2,behavior:'smooth'});}).observe(T,{attributes:true,subtree:true,attributeFilter:['class']});});
+})();
+</script>
+<script id="primeira-tela-js">
+(function(){
+  var lastW=0,lastH=0;
+  function ajustar(force){
+    var hero=document.querySelector('.hero'),hd=document.querySelector('.site-header'),shell=document.querySelector('.shell');
+    if(!hero||!shell)return;
+    var w=window.innerWidth,h=window.innerHeight;
+    if(!force&&w<=980&&w===lastW&&Math.abs(h-lastH)<150)return;
+    lastW=w;lastH=h;
+    var free=h-(hd?hd.offsetHeight:0)-parseFloat(getComputedStyle(shell).paddingTop)-parseFloat(getComputedStyle(hero).marginBottom);
+    var kids=Array.prototype.slice.call(hero.children);
+    function setZ(z){kids.forEach(function(k){k.style.zoom=(z===1?'':z);});}
+    hero.style.minHeight='';setZ(1);
+    if(free<200)return;
+    /* [PRIMEIRA-TELA-ZOOM] acha o MAIOR zoom do conteudo do hero que ainda cabe na altura livre (mobile 0,55-1,40 / desktop 0,62-1,45, 10 passos), como no index. O hero fica colado no header, sem faixa vazia em cima. */
+    var lo=w<=980?0.55:0.62,hi=w<=980?1.4:1.45,best=lo;
+    for(var i=0;i<10;i++){
+      var mid=(lo+hi)/2;setZ(mid);
+      if(hero.offsetHeight<=free){best=mid;lo=mid;}else{hi=mid;}
+    }
+    setZ(best);
+    hero.style.minHeight=free+'px';
+  }
+  function run(){ajustar(true);}
+  window.addEventListener('resize',function(){ajustar(false);});
+  window.addEventListener('orientationchange',run);
+  window.addEventListener('load',run);
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);
+  run();
 })();
 </script>
 </body>
