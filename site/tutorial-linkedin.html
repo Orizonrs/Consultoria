@@ -1010,16 +1010,32 @@ button.ts-et:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(10,102,1
 }
 @media (min-width:861px){#btnMenu{display:none}}
 
-/* ===== Celular: aula à esquerda e montagem do perfil ao lado (2 colunas), com fontes e elementos menores ===== */
+/* ===== Celular: aula em largura total; perfil abre num painel pelo botão "Preview" ===== */
+#btnPreview{display:none;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:12px;font-weight:700;white-space:nowrap}
+#btnPreview svg{flex:none}
+#btnPreview[aria-expanded="true"]{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+#btnPreview .pv-dot{display:none;width:9px;height:9px;border-radius:50%;background:#e8590c;box-shadow:0 0 0 2px #fff}
+#btnPreview.novo .pv-dot{display:inline-block}
+.lateral-topo{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lateral-topo h2{margin-bottom:6px}
+#btnPreviewFechar{display:none}
 @media (max-width:860px){
-  .casca{grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:6px;padding:6px;align-items:start}
-  .casca>.menu{grid-column:1/-1}
-  .casca>.principal{grid-column:1;grid-row:1;min-width:0}
-  .casca>.lateral{grid-column:2;grid-row:1;order:0;position:sticky;top:var(--topo-h,96px);max-height:calc(100dvh - var(--topo-h,96px) - 8px);overflow:auto;min-width:0;padding:0;zoom:.52}
-  .casca>.lateral .li,.casca>.lateral *{max-width:100%}
-  .casca>.principal{zoom:.64}
-  .bil-stub{width:54px;padding:8px 2px;font-size:.54rem;overflow:hidden}.bil-stub b{font-size:1.05rem}.bil-rows{padding:2px 8px}.bil-it{gap:8px}
+  .casca{grid-template-columns:1fr;gap:10px;padding:12px}
+  .casca>.principal{grid-column:1;min-width:0}
+  #btnPreview{display:inline-flex}
+  .topo #btnPreview{margin-left:auto}
+  .topo #btnContinuar{margin-left:0}
+  .casca>.lateral{display:none}
+  .casca>.lateral.aberto{display:block;position:fixed;left:0;right:0;bottom:0;top:auto;margin:0 auto;max-width:560px;z-index:30;
+    max-height:min(82dvh,calc(100dvh - var(--topo-h,96px)));overflow:auto;overscroll-behavior:contain;
+    background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;
+    padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(16,24,40,.28)}
+  .casca>.lateral .lateral-topo{position:sticky;top:-10px;z-index:2;background:var(--bg);margin:-10px -12px 6px;padding:10px 12px 4px}
+  #btnPreviewFechar{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border-radius:50%}
+  body.preview-aberto::after{content:"";position:fixed;inset:0;z-index:29;background:rgba(11,18,25,.38);pointer-events:auto}
+  body.preview-aberto{overflow:hidden}
 }
+@media (min-width:861px){#btnPreview{display:none!important}}
 
 /* ===== Certificado e perfil em Word (aula 17.1) ===== */
 .cert{--cc:var(--mod,#0a66c2);margin-top:16px;border:2px dashed color-mix(in srgb,var(--cc) 45%,#fff);border-radius:16px;padding:14px 16px;background:color-mix(in srgb,var(--cc) 6%,#fff)}
@@ -1046,6 +1062,7 @@ button.ts-et:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(10,102,1
     <div class="barra" role="progressbar" aria-label="Progresso do tutorial" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="barraProg"><i id="barraProgI"></i></div>
     <small id="progTexto"></small>
   </div>
+  <button class="btn peq" id="btnPreview" type="button" aria-label="Ver preview do perfil" aria-haspopup="dialog" aria-expanded="false" aria-controls="lateralPerfil"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Preview</span><i class="pv-dot" aria-hidden="true"></i></button>
   <button class="btn pri peq" id="btnContinuar" hidden>Continuar ▶</button>
   <button class="btn ghost peq" id="btnReset" title="Apagar o progresso e recomeçar">Reiniciar</button>
 </header>
@@ -1053,8 +1070,8 @@ button.ts-et:hover{border-color:var(--brand);box-shadow:0 6px 16px rgba(10,102,1
 <div class="casca">
   <nav class="menu" id="menu" aria-label="Capítulos"></nav>
   <main class="principal" id="principal" tabindex="-1"></main>
-  <aside class="lateral" aria-label="Perfil de exemplo">
-    <h2>Perfil de exemplo</h2>
+  <aside class="lateral" id="lateralPerfil" aria-label="Perfil de exemplo">
+    <div class="lateral-topo"><h2>Perfil de exemplo</h2><button class="btn peq" id="btnPreviewFechar" type="button" aria-label="Fechar preview">✕</button></div>
     <div id="perfilMock"></div>
   </aside>
 </div>
@@ -4094,6 +4111,30 @@ function rotear() {
     window.addEventListener('resize', sync);
     const medeTopo = () => { if (topo) document.documentElement.style.setProperty('--topo-h', Math.round(topo.getBoundingClientRect().height + 6) + 'px'); };
     medeTopo(); window.addEventListener('resize', medeTopo); window.addEventListener('load', medeTopo);
+  })();
+  (function () {
+    const btn = document.getElementById('btnPreview'), fechar = document.getElementById('btnPreviewFechar'),
+          painel = document.getElementById('lateralPerfil'), menu = document.getElementById('menu'),
+          btnMenu = document.getElementById('btnMenu'), mock = document.getElementById('perfilMock');
+    const mobile = () => window.innerWidth <= 860;
+    function sync() {
+      const aberto = painel.classList.contains('aberto');
+      document.body.classList.toggle('preview-aberto', aberto && mobile());
+      btn.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+      if (aberto) btn.classList.remove('novo');
+    }
+    function abrir() { menu.classList.remove('aberto'); painel.classList.add('aberto'); painel.scrollTop = 0; sync(); }
+    function fecharPainel(foco) { painel.classList.remove('aberto'); sync(); if (foco) btn.focus(); }
+    btn.addEventListener('click', e => { e.stopPropagation(); painel.classList.contains('aberto') ? fecharPainel() : abrir(); });
+    fechar.addEventListener('click', () => fecharPainel(true));
+    btnMenu.addEventListener('click', () => { if (painel.classList.contains('aberto')) fecharPainel(); });
+    document.addEventListener('click', e => { if (painel.classList.contains('aberto') && !painel.contains(e.target) && !btn.contains(e.target)) fecharPainel(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && painel.classList.contains('aberto')) fecharPainel(true); });
+    window.addEventListener('resize', () => { if (!mobile()) painel.classList.remove('aberto'); sync(); });
+    /* bolinha laranja no botão quando o perfil muda enquanto o painel está fechado */
+    let pronto = false; setTimeout(() => { pronto = true; }, 800);
+    new MutationObserver(() => { if (pronto && mobile() && !painel.classList.contains('aberto')) btn.classList.add('novo'); })
+      .observe(mock, { childList: true, subtree: true, characterData: true });
   })();
   document.getElementById('btnReset').addEventListener('click', () => {
     if (!window.confirm('Apagar todo o progresso e recomeçar a trilha?')) return;
