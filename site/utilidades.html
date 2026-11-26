@@ -9663,5 +9663,49 @@ html body.dark-mode .ods-prev-flush a.btn.btn.btn.btn:hover{background-position:
 </style>
 <style id="hf-dark-estilo">html body.dark-mode header.header,html.dark-mode body header.header,html body.dark-mode footer{background:#14151b!important;background-image:none!important;--ft-bg:#14151b;--ft-bottom-bg:#14151b}body.dark-mode footer .footer-bottom{background:#14151b!important}html body.dark-mode header.header,html.dark-mode body header.header{animation:sobHdrPisca 3.4s ease-in-out infinite!important}@keyframes sobHdrPisca{0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}}@media (prefers-reduced-motion:reduce){html body.dark-mode header.header{animation:none!important;box-shadow:0 6px 24px -8px rgba(0,200,255,.45)!important}}body.dark-mode footer::after{content:none!important;display:none!important}</style>
 <style id="sob-dark-hf">html body.dark-mode header.header,html.dark-mode body header.header,html body.dark-mode footer{background:#14151b!important;background-image:none!important;--ft-bg:#14151b;--ft-bottom-bg:#14151b}body.dark-mode footer .footer-bottom{background:#14151b!important}html body.dark-mode header.header,html.dark-mode body header.header{animation:sobHdrPisca 2.6s ease-in-out infinite!important}@keyframes sobHdrPisca{0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}}@media (prefers-reduced-motion:reduce){html body.dark-mode header.header{animation:none!important;box-shadow:0 6px 24px -8px rgba(0,200,255,.45)!important}}</style>
+<style id="dicas-altura-igual">
+/* Mobile: os 4 cards de dicas ficam todos com a altura do maior (valor calculado pelo script abaixo) */
+@media (max-width: 768px) {
+  html body #top-cards-grid .tip-flip-inner { min-height: var(--tip-h, 0px); }
+}
+</style>
+<script id="dicas-altura-igual-js">
+(function(){
+  var grid=document.getElementById('top-cards-grid'); if(!grid) return;
+  var mq=window.matchMedia('(max-width: 768px)'), raf=0;
+  function apply(){
+    grid.style.removeProperty('--tip-h');
+    if(!mq.matches) return;
+    var max=0;
+    grid.querySelectorAll('.tip-flip-inner').forEach(function(el){ var h=el.getBoundingClientRect().height; if(h>max) max=h; });
+    if(max>0) grid.style.setProperty('--tip-h', Math.ceil(max)+'px');
+  }
+  function sched(){ cancelAnimationFrame(raf); raf=requestAnimationFrame(apply); }
+  window.addEventListener('resize',sched); window.addEventListener('orientationchange',sched);
+  window.addEventListener('load',function(){ sched(); setTimeout(sched,600); setTimeout(sched,1800); });
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(sched);
+  var lang=document.getElementById('languageSelector'); if(lang) lang.addEventListener('change',function(){ setTimeout(sched,150); setTimeout(sched,800); });
+  new MutationObserver(sched).observe(grid,{childList:true,characterData:true,subtree:true});
+  sched();
+})();
+</script>
+<style id="transporte-espaco-dica">
+/* Horários e Linhas: mais espaço entre o quadro "Dica" e os 3 cards de transporte (desktop e mobile) */
+html body #cs-transporte .tip-box { margin-bottom: 48px !important; }
+@media (max-width: 768px) { html body #cs-transporte .tip-box { margin-bottom: 26px !important; } }
+</style>
+<style id="linha-item-borda-mobile">
+/* Mobile: borda mais fina nos containers de linhas dentro dos acordeões de transporte (desktop continua em 1.6px) */
+@media (max-width: 768px) {
+  html body .transport-panel .linha-item.linha-item, html body #cs-transporte .linha-item.linha-item { border-width: 0.8px !important; }
+}
+</style>
+<style id="jobradar-eyebrow-cores">
+/* "Perto de você": bolinha verde; texto preto (modo claro) / branco (modo escuro) */
+html body .jobradar-eyebrow { color: #0f172a !important; opacity: 1 !important; }
+html body.dark-mode .jobradar-eyebrow { color: #ffffff !important; }
+html body .jobradar-eyebrow .jobradar-eyebrow-dot { background: #22c55e !important; box-shadow: 0 0 6px #22c55e !important; }
+html body.dark-mode .jobradar-eyebrow .jobradar-eyebrow-dot { background: #4ade80 !important; box-shadow: 0 0 6px #4ade80 !important; }
+</style>
 </body>
 </html>
