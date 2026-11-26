@@ -8179,8 +8179,8 @@ body.dark-mode .tip-more-btn:hover { background: #38bdf8; color: #0b1220; box-sh
     var idle=document.createElement('div'); idle.className='tip-idle'; idle.setAttribute('aria-hidden','true'); g.appendChild(idle);
     function act(f){g.classList.remove('is-idle');flips.forEach(function(x){x.classList.toggle('is-active',x===f);});}
     function clear(){g.classList.add('is-idle');flips.forEach(function(x){x.classList.remove('is-active');});}
-    /* seleção por clique (fica fixa). Padrão: ChatGPT (1º card) no desktop; no celular começa fechado */
-    function reset(){ if(window.matchMedia('(min-width: 769px)').matches) act(flips[0]); else clear(); }
+    /* seleção por clique (fica fixa). Padrão: ChatGPT (1º card) selecionado no desktop e no celular */
+    function reset(){ act(flips[0]); }
     function sync(){var more=g.querySelector('.tip-more'); if(more) more.setAttribute('aria-hidden','false'); flips.forEach(function(x){x.tabIndex=0;});}
     flips.forEach(function(f,i){
       var ic=f.querySelector('.tip-front .card-icon'), back=f.querySelector('.tip-back'), fr=f.querySelector('.tip-front');
@@ -8906,5 +8906,66 @@ body.dark-mode footer::after{content:none !important;display:none !important}
 
 <style id="hf-dark-estilo">html body.dark-mode header.header,html.dark-mode body header.header,html body.dark-mode footer{background:#14151b!important;background-image:none!important;--ft-bg:#14151b;--ft-bottom-bg:#14151b}body.dark-mode footer .footer-bottom{background:#14151b!important}html body.dark-mode header.header,html.dark-mode body header.header{animation:sobHdrPisca 3.4s ease-in-out infinite!important}@keyframes sobHdrPisca{0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}}@media (prefers-reduced-motion:reduce){html body.dark-mode header.header{animation:none!important;box-shadow:0 6px 24px -8px rgba(0,200,255,.45)!important}}body.dark-mode footer::after{content:none!important;display:none!important}</style>
 <style id="sob-dark-hf">html body.dark-mode header.header,html.dark-mode body header.header,html body.dark-mode footer{background:#14151b!important;background-image:none!important;--ft-bg:#14151b;--ft-bottom-bg:#14151b}body.dark-mode footer .footer-bottom{background:#14151b!important}html body.dark-mode header.header,html.dark-mode body header.header{animation:sobHdrPisca 2.6s ease-in-out infinite!important}@keyframes sobHdrPisca{0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}}@media (prefers-reduced-motion:reduce){html body.dark-mode header.header{animation:none!important;box-shadow:0 6px 24px -8px rgba(0,200,255,.45)!important}}</style>
+<style id="ia-pontos-fortes-negrito">
+/* "Pontos fortes:" em negrito nos containers de IA — claro e escuro (no escuro: branco) */
+.tip-long strong.pf-title{font-weight:800 !important;}
+body.dark-mode .tip-long strong.pf-title{color:#ffffff !important;font-weight:800 !important;}
+</style>
+<script id="ia-pontos-fortes-negrito-js">
+(function(){
+  var RE=/(Pontos fortes:|Key strengths:|Puntos fuertes:)/;
+  function wrap(root){
+    var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n,list=[];
+    while(n=w.nextNode()){ if(RE.test(n.data) && !(n.parentNode&&n.parentNode.classList&&n.parentNode.classList.contains('pf-title'))) list.push(n); }
+    list.forEach(function(t){
+      var m=t.data.match(RE), i=m.index;
+      var after=t.splitText(i), rest=after.splitText(m[0].length);
+      var st=document.createElement('strong'); st.className='pf-title'; st.textContent=m[0];
+      after.parentNode.replaceChild(st,after);
+    });
+  }
+  function run(){
+    document.querySelectorAll('.tip-long').forEach(function(el){
+      if(obs) obs.disconnect();
+      wrap(el);
+      if(obs) obs.observe(el,{childList:true,characterData:true,subtree:true});
+    });
+  }
+  var obs=null,busy=false,timer=null;
+  obs=new MutationObserver(function(){ clearTimeout(timer); timer=setTimeout(run,30); });
+  function start(){ run(); setTimeout(run,600); setTimeout(run,1800); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start); else start();
+  var sel=document.getElementById('languageSelector');
+  if(sel) sel.addEventListener('change',function(){ setTimeout(run,100); setTimeout(run,700); });
+})();
+</script>
+<style id="ia-tag-dots-pisca">
+/* Bolinhas dos selos GRATUITO (verde) e FREEMIUM (laranja) piscando — claro e escuro */
+@keyframes tagDotBlink{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 6px 1px currentColor;}50%{opacity:.25;transform:scale(.7);box-shadow:0 0 0 0 transparent;}}
+html body .card-tag.tag-free::before, html body .card-tag.tag-freemium::before{animation:tagDotBlink 1.2s ease-in-out infinite;}
+</style>
+<style id="dica-cards-sem-luz">
+/* Cards "Dica Orizon" (frente e verso, claro e escuro): sem efeito de luz nas bordas e borda de 1.6px */
+html body .dica-card .dica-face, html body .dica-card:hover .dica-face,
+html body.dark-mode .dica-card .dica-face, html body.dark-mode .dica-card:hover .dica-face,
+html body:not(.dark-mode) .dica-card:hover .dica-back { box-shadow: none !important; border-width: 1.6px !important; }
+</style>
+<style id="ia-photo-cards-cores">
+/* Cards de foto "Currículo & Carreira" e demais: borda de cor diferente em cada card (azul, roxo, verde), sem luz, 1.6px;
+   verso com fundo colorido (claro e escuro) */
+html body .ia-photo-card, html body.dark-mode .ia-photo-card {
+  border: 1.6px solid rgb(var(--accent-rgb)) !important; box-shadow: none !important;
+}
+html body .ia-photo-card-back, html body.dark-mode .ia-photo-card-back {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.62), rgba(var(--accent-rgb),0.28) 70%), #0b1220 !important;
+  color: #ffffff !important;
+}
+html body .ia-photo-card-back h4, html body.dark-mode .ia-photo-card-back h4 { color: #ffffff !important; }
+html body:not(.dark-mode) .ia-photo-card-back {
+  background: linear-gradient(135deg, rgba(var(--accent-rgb),0.30), rgba(var(--accent-rgb),0.12) 70%), #ffffff !important;
+  color: #0f172a !important;
+}
+html body:not(.dark-mode) .ia-photo-card-back h4 { color: color-mix(in srgb, rgb(var(--accent-rgb)) 70%, #000) !important; }
+</style>
 </body>
 </html>
