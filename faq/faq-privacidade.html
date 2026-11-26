@@ -4,8 +4,17 @@
   <script>
     if (localStorage.getItem('theme') !== 'light') { document.documentElement.classList.add('dark-mode'); document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('dark-mode'); }); }
     document.documentElement.style.transition = 'none';
+    document.documentElement.classList.add('pre-load');
     window.addEventListener('load', () => { document.documentElement.style.transition = ''; });
   </script>
+  <style id="pre-load-gate">
+    /* Evita o "flash" de carregamento: a página só aparece quando todo o CSS foi lido */
+    html.pre-load{background:#eef0f4}
+    html.pre-load.dark-mode{background:#0a0a0a}
+    html.pre-load body{opacity:0!important}
+    body{transition:opacity .3s ease}
+  </style>
+  <noscript><style>html.pre-load body{opacity:1!important}</style></noscript>
   <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FAQ Privacidade e LGPD | Orizon Consultoria | Guaíba RS</title>
   <meta name="description" content="FAQ sobre privacidade e LGPD na Orizon Consultoria em Guaíba RS. Entenda como gerenciamos dados pessoais em nossos serviços de consultoria administrativa, RH e projetos digitais." />
@@ -444,7 +453,7 @@
       .faq-answer.open{padding:0 1rem 1.2rem;}
       .faq-icon{width:24px;height:24px;font-size:0.95rem;}
     }
-    .scroll-top-btn{position:fixed;bottom:calc(2rem + 60px + 1.4rem);right:1.15rem;width:28px;height:28px;border-radius:50%;background:var(--primary);border:none;color:#fff;font-size:0.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(var(--primary-rgb),0.5);z-index:99;opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity 0.3s ease,transform 0.3s ease;}.scroll-top-btn.visible{opacity:1;pointer-events:auto;transform:translateY(0);}
+    .scroll-top-btn{position:fixed;bottom:1.5rem;right:1.15rem;width:28px;height:28px;border-radius:50%;background:var(--primary);border:none;color:#fff;font-size:0.55rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(var(--primary-rgb),0.5);z-index:99;opacity:0;pointer-events:none;transform:translateY(6px);transition:opacity 0.3s ease,transform 0.3s ease;}.scroll-top-btn.visible{opacity:1;pointer-events:auto;transform:translateY(0);}
 
     /* ===== FOOTER ===== */
     /* ══ FOOTER PROFISSIONAL ══ */
@@ -1305,6 +1314,11 @@ body .info-cards .info-card,body .lgpd-banner .lgpd-banner-inner,body .direitos-
 </style>
 </head>
 <body>
+<script>
+  /* aplica o modo escuro no body já na abertura (antes era só depois do DOMContentLoaded) */
+  if (document.documentElement.classList.contains('dark-mode')) { document.body.classList.add('dark-mode'); }
+</script>
+
   <button class="theme-toggle" onclick="toggleTheme()"><span id="themeIcon">🌙</span></button>
   <div class="top-left-buttons" id="topLeftButtons">
     <div class="top-row">
@@ -2026,16 +2040,6 @@ body:not(.dark-mode) .scroll-top-btn.on-footer:hover { background: rgba(255,255,
   setInterval(req, 400);
 })();
 </script>
-<style id="header-cor">
-/* MODO CLARO: Stripe */
-body:not(.dark-mode) .header{background:linear-gradient(90deg,#0a2540,#635bff) !important;}
-body:not(.dark-mode) footer{background:linear-gradient(90deg,#0a2540,#635bff) !important;}
-body:not(.dark-mode) footer::after{content:none !important;display:none !important}
-body:not(.dark-mode) footer{--ft-bottom-bg:transparent}
-/* MODO ESCURO: rodapé de uma cor só, sem pontilhado */
-body.dark-mode footer{--ft-bottom-bg:transparent}
-body.dark-mode footer::after{content:none !important;display:none !important}
-</style>
 
 
 <!-- ═══ ESTILO FAQ (mesmo padrão de FAQ Vagas e FAQ Candidatos) ═══ -->
@@ -2831,5 +2835,59 @@ html body.dark-mode .cta-box .cta-btn,html body.dark-mode .cta-box .btn{
 html body.dark-mode .cta-box .cta-btn:hover,html body.dark-mode .cta-box .btn:hover{box-shadow:0 0 30px rgba(0,200,255,.75),inset 0 1px 0 rgba(255,255,255,.4)!important}
 @media (prefers-reduced-motion:reduce){html body .cta-box .cta-btn::before,html body .cta-box .btn::before{animation:none}}
 </style>
+<style id="header-cor">
+/* MODO CLARO: Stripe */
+body:not(.dark-mode) .header{background:linear-gradient(90deg,#0a2540,#635bff) !important;}
+body:not(.dark-mode) footer{background:linear-gradient(90deg,#0a2540,#635bff) !important;}
+body:not(.dark-mode) footer::after{content:none !important;display:none !important}
+body:not(.dark-mode) footer{--ft-bottom-bg:transparent}
+/* MODO ESCURO: rodapé de uma cor só, sem pontilhado */
+body.dark-mode footer{--ft-bottom-bg:transparent}
+body.dark-mode footer::after{content:none !important;display:none !important}
+</style>
+
+<style id="sob-dark-hf">
+/* MODO ESCURO: fundo #14151b + brilho ciano piscando no header */
+html body.dark-mode header.header,
+html.dark-mode body header.header,
+html body.dark-mode footer{
+  background:#14151b !important;
+  background-image:none !important;
+  --ft-bg:#14151b;
+  --ft-bottom-bg:#14151b;
+}
+body.dark-mode footer .footer-bottom{background:#14151b !important}
+html body.dark-mode header.header,
+html.dark-mode body header.header{animation:sobHdrPisca 2.6s ease-in-out infinite !important}
+@keyframes sobHdrPisca{
+  0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}
+  50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}
+}
+@media (prefers-reduced-motion:reduce){
+  html body.dark-mode header.header{animation:none !important;box-shadow:0 6px 24px -8px rgba(0,200,255,.45) !important}
+}
+</style>
+
+<style id="logo-contorno-mobile">
+/* CORREÇÃO DA LOGO (modo claro): no Android o R e o Z do "ORIZON" mostravam riscos internos.
+   Troca o contorno interno (text-stroke) por contorno externo (drop-shadow). */
+body:not(.dark-mode) .olh-title{
+  -webkit-text-stroke:0 !important;
+  paint-order:normal !important;
+  text-shadow:none !important;
+  filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000) !important;
+}
+</style>
+<script id="pre-load-reveal">
+(function(){
+  var d=document.documentElement, done=false;
+  function go(){
+    if(done) return; done=true;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ d.classList.remove('pre-load'); }); });
+  }
+  if(document.readyState!=='loading') go(); else document.addEventListener('DOMContentLoaded', go);
+  setTimeout(go, 5000); /* segurança: nunca deixa a página escondida */
+})();
+</script>
 </body>
 </html>
