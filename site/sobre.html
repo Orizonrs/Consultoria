@@ -3132,8 +3132,8 @@ document.addEventListener('DOMContentLoaded', function(){
       <nav class="hv-links" aria-label="Principal"><a href="servicos.html">Serviços</a><a href="vagas.html">Vagas</a><a href="candidato.html">Candidatos</a><a href="contato.html">Contato</a></nav>
       <div class="hv-slot"><div class="hv-tools">
         <a href="../index.html" class="hv-bt hv-voltar">Voltar</a>
-        <button type="button" class="hv-bt hv-menu" data-menu-btn onclick="toggleMenu()" title="Menu" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="hv-lbl">Menu</span></button>
-        <button type="button" class="hv-bt hv-tema" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro"><span id="themeIcon">🌙</span></button>
+        <button type="button" class="hv-bt hv-menu" data-nor="1" data-menu-btn onclick="toggleMenu()" title="Menu" aria-label="Menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="hv-lbl">Menu</span></button>
+        <button type="button" class="hv-bt hv-tema" data-nol="1" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro"><span id="themeIcon">🌙</span></button>
       </div></div>
     </div>
   </div>
@@ -11358,8 +11358,8 @@ html body main .content-section{overflow-x:clip}
 html,body{max-width:100%}
 </style>
 <style id="voltar-oculto-mobile">
-/* [VOLTAR-OCULTO-MOBILE] No CELULAR (ate 768px) o botao Voltar do header fica OCULTO; sobram Menu e Tema. No desktop (769px ou mais) o Voltar continua. O item Voltar dentro do Menu continua existindo. Para desativar, apague este bloco. */
-@media(max-width:768px){html body .hv-voltar,html body .hv-tools .hv-voltar{display:none!important}}
+/* [VOLTAR-OCULTO-MOBILE] [DESATIVADO: o Voltar agora aparece no celular.] No desktop (769px ou mais) o Voltar continua. O item Voltar dentro do Menu continua existindo. Para desativar, apague este bloco. */
+/* (regra removida: agora o Voltar aparece tambem no celular, junto com Menu e Tema) */
 </style>
 <script id="letreiro-velocidade-js">
 /* [LETREIRO-VELOCIDADE] Velocidade do letreiro em PIXELS POR SEGUNDO (padrao 69 px/s = a do contato.html), nao em segundos fixos. Mede a largura de uma volta (.mqg) e calcula a duracao, entao qualquer lista de assuntos, em desktop ou celular, anda na mesma velocidade visual. Para mudar a velocidade: troque PXS. */
@@ -11420,5 +11420,77 @@ html body.dark-mode .pg-visao .reviews-section{box-shadow:none !important;filter
 /* [HEADER-ROLA-IGUAL-SERVICOS] Mesmo comportamento do servicos.html: o header NAO fica grudado no topo, ele rola para cima junto com a pagina; os botoes Voltar/Menu/Tema somem ao descer e voltam ao subir. Vale para desktop e celular. Para desfazer, apague este bloco. */
 html body .hv.hv{position:relative !important;top:auto !important}
 </style>
+<style id="botoes-entrelacados">
+/* [BOTOES-ENTRELACADOS] Voltar/Menu/Tema do header no formato "gancho" (um por cima, outro por baixo, mesma linha). Voltar e Menu entrelacados; Menu (lado direito) e Tema (lado esquerdo) retos, sem gancho, em todos os tamanhos. Celular (ate 480px): botoes menores (36px, fonte .72rem). Os 3 botoes (Voltar, Menu, Tema) aparecem tambem no celular. O desenho vem de um SVG por botao (JS no fim do arquivo). Para desativar, apague este bloco, o script id="botoes-entrelacados-js" e os atributos data-nor / data-nol dos botoes Menu e Tema. */
+:root{--hk-o:26px;--hk-g:4px;--hk-pad:22px;--hk-ext:10px}
+@media(max-width:768px){:root{--hk-pad:16px}}
+@media(max-width:480px){:root{--hk-o:18px;--hk-g:3px;--hk-pad:12px;--hk-ext:6px}}
+html body .hv.hv .hv-tools{gap:0!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt{position:relative;isolation:isolate;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;pointer-events:none;padding:0 var(--hk-pad)!important;-webkit-tap-highlight-color:transparent}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt:hover{background:transparent!important;box-shadow:none!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt.hv-tema{width:auto!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt.hasL{padding-left:calc(var(--hk-o) + var(--hk-ext))!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt.hasR{padding-right:calc(var(--hk-o) + var(--hk-ext))!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt:active{transform:translateY(1px)}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt > svg.hk{display:block!important;position:absolute!important;left:0;top:0;width:100%!important;height:100%!important;z-index:-1;overflow:visible;pointer-events:none}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt > svg.hk path{pointer-events:auto;stroke-width:2;transition:fill .2s}
+html:not(.dark-mode) body .hv .hv-bt > svg.hk path{fill:rgba(0,0,0,.45);stroke:rgba(255,255,255,.85)}
+html:not(.dark-mode) body .hv .hv-bt:hover > svg.hk path{fill:rgba(30,64,175,.75)}
+html.dark-mode body .hv .hv-bt > svg.hk{filter:drop-shadow(0 0 6px rgba(0,200,255,.35))}
+html.dark-mode body .hv .hv-bt > svg.hk path{fill:#0a0a0a;stroke:#00c8ff}
+html.dark-mode body .hv .hv-bt:hover > svg.hk path{fill:#10242d}
+html body .hv .hv-bt:focus-visible > svg.hk path{stroke-width:3}
+/* celular pequeno (ate 480px): botoes menores */
+@media(max-width:480px){
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt{height:36px!important;font-size:.72rem!important;gap:.25rem!important}
+html body .hv.hv.hv .hv-bt.hv-bt.hv-bt.hv-tema{font-size:.9rem!important}
+.hv-slot{min-height:36px}
+}
+</style>
+<script id="botoes-entrelacados-js">
+(function(){
+  var tools=document.querySelector('.hv-tools');if(!tools)return;
+  var btns=[].slice.call(tools.querySelectorAll('.hv-bt')),NS='http://www.w3.org/2000/svg';
+  var mq=window.matchMedia('(max-width:480px)');
+  function px(v){return parseFloat(v)||0}
+  function vis(b){return getComputedStyle(b).display!=='none'}
+  function build(btn,i,n){
+    var cs=getComputedStyle(document.documentElement),o=px(cs.getPropertyValue('--hk-o')),g=px(cs.getPropertyValue('--hk-g'));
+    var w=btn.offsetWidth,h=btn.offsetHeight,s=1;if(!w||!h)return;
+    var hasL=btn.classList.contains('hasL'),hasR=btn.classList.contains('hasR');
+    var ymt=h/2-g/2,ymb=h/2+g/2,rl=(ymt-s)/2,ri=6;
+    var xlt=hasL?s+o:s,xrt=w-s,xrb=hasR?w-s-o:w-s;
+    var rTL=hasL?10:(i===0?24:14), rBL=hasL?rl:(i===0?6:14), rTR=hasR?rl:(i===n-1?24:14), rBR=hasR?10:(i===n-1?6:14);
+    var d='M'+(xlt+rTL)+' '+s+' H'+(xrt-rTR)+' A'+rTR+' '+rTR+' 0 0 1 '+xrt+' '+(s+rTR);
+    if(hasR){d+=' V'+(ymt-rl)+' A'+rl+' '+rl+' 0 0 1 '+(xrt-rl)+' '+ymt+' H'+(xrb+ri)+' A'+ri+' '+ri+' 0 0 0 '+xrb+' '+(ymt+ri)+' V'+(h-s-rBR)+' A'+rBR+' '+rBR+' 0 0 1 '+(xrb-rBR)+' '+(h-s)}
+    else{d+=' V'+(h-s-rBR)+' A'+rBR+' '+rBR+' 0 0 1 '+(xrt-rBR)+' '+(h-s)}
+    d+=' H'+(s+rBL)+' A'+rBL+' '+rBL+' 0 0 1 '+s+' '+(h-s-rBL);
+    if(hasL){d+=' V'+(ymb+rl)+' A'+rl+' '+rl+' 0 0 1 '+(s+rl)+' '+ymb+' H'+(xlt-ri)+' A'+ri+' '+ri+' 0 0 0 '+xlt+' '+(ymb-ri)+' V'+(s+rTL)+' A'+rTL+' '+rTL+' 0 0 1 '+(xlt+rTL)+' '+s+' Z'}
+    else{d+=' V'+(s+rTL)+' A'+rTL+' '+rTL+' 0 0 1 '+(xlt+rTL)+' '+s+' Z'}
+    var svg=null,k=btn.children;for(var j=0;j<k.length;j++){if(k[j].classList&&k[j].classList.contains('hk')){svg=k[j];break}}
+    if(!svg){svg=document.createElementNS(NS,'svg');svg.setAttribute('class','hk');svg.setAttribute('aria-hidden','true');svg.appendChild(document.createElementNS(NS,'path'));btn.insertBefore(svg,btn.firstChild)}
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('preserveAspectRatio','none');
+    svg.firstChild.setAttribute('d',d);
+  }
+  var busy=false;
+  function all(){
+    if(busy)return;busy=true;
+    var o=px(getComputedStyle(document.documentElement).getPropertyValue('--hk-o')),g=px(getComputedStyle(document.documentElement).getPropertyValue('--hk-g'));
+    var v=btns.filter(vis),n=v.length;
+    v.forEach(function(b,i){
+      var hasL=i>0&&!b.dataset.nol,hasR=i<n-1&&!b.dataset.nor;
+      b.classList.toggle('hasL',hasL);b.classList.toggle('hasR',hasR);
+      b.style.marginLeft=i===0?'0':(hasL?(-(o-g))+'px':'6px');
+    });
+    v.forEach(function(b,i){build(b,i,n)});
+    busy=false;
+  }
+  all();
+  window.addEventListener('load',all);window.addEventListener('resize',all);window.addEventListener('orientationchange',all);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
+  setTimeout(all,400);setTimeout(all,1500);
+  if(window.ResizeObserver)btns.forEach(function(b){new ResizeObserver(all).observe(b)});
+})();
+</script>
 </body>
 </html>
