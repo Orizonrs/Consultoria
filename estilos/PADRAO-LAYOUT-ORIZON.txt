@@ -1,0 +1,386 @@
+PADRAO DE LAYOUT ORIZON - PAGINA INTEIRA (NAO SO O HEADER) - VALE PARA TODOS OS HTMLs DO SITE
+=============================================================================================
+Cobre: modo claro/escuro, FUNDO da pagina, header, botoes, CARDS, TITULOS DE SECAO, RODAPE, primeira tela/hero e slider.
+Origem: contato.html (valores medidos e aprovados em 26/11/2026). Mesmo padrao do candidato.html no celular.
+Para reaplicar em outro HTML: siga o "PASSO A PASSO" no fim e cole o "BLOCO CSS PADRAO".
+Os detalhes do historico do contato.html ficam em REGRAS-HEADER-CONTATO.txt (so daquela pagina).
+
+QUADRO RESUMO: DESKTOP x CELULAR (TODAS AS REGRAS DE LAYOUT NUM TXT SO)
+=======================================================================
+Pontos de quebra: DESKTOP = 769px ou mais | TABLET ate 980px (links do header somem) | CELULAR = ate 768px | hero centralizado ate 640px | TELA MINUSCULA ate 340px.
+
+ITEM                          | DESKTOP (>=769px)                              | CELULAR (<=768px)
+------------------------------|------------------------------------------------|---------------------------------------------
+Header (.hv)                  | flutuante, cantos 24px, padding .55rem 1.3rem  | cantos 20px, padding .75rem .8rem (~92px alto)
+Logo                          | 96px                                           | 66px (52px ate 340px)
+Links Servicos/Vagas/...      | visiveis (dourado no hover/pagina atual)       | escondidos (ate 980px); ficam no menu lateral
+Botoes Voltar/Menu/Tema       | altura 50px, fonte 16px, padding 0 24px        | altura 50px, fonte 14,4px, padding 0 16px
+  Voltar / Menu / Tema        | 99x50 / 126x50 / 72x50                         | 78x50 / 75x50 / 72x50 (igual candidato.html)
+  Menu                        | icone 3 linhas (22px) + texto                  | so o texto "Menu"
+  Tema                        | icone 1.25rem                                  | icone 1rem (Tema 56px ate 340px)
+Botoes fixos / somem ao rolar | sim (nav-hidden ao descer, voltam ao subir)    | igual
+Fundo da pagina               | #f3f5fb / #05060d + brilhos azul e roxo fixos  | igual
+Cards                         | interior igual ao original                     | igual
+Titulos de secao (divider)    | espaco 48px em cima e embaixo; titulo ate 2.8rem| espaco 35px; titulo menor (clamp)
+Hero - padding-top            | 1.2rem, alinhado a esquerda                    | 2.4rem, centralizado (ate 640px)
+Hero - titulo                 | clamp 2.2rem-3.7rem (DM Serif Display)         | igual (clamp reduz)
+Primeira tela cheia           | JS mede janela: hero = altura - topo - letreiro| igual, ignora barra do navegador (<150px)
+Letreiro/slider (.mqw)        | altura 49px, fonte 1rem                        | altura 63px, fonte 1.05rem
+Letreiro - velocidade/separador| 69 px/s (JS), losango amarelo 8px            | igual
+Rodape                        | azul no claro / #14151b no escuro, linha degrade| igual (colunas empilham)
+Print de entrega              | (nao se manda)                                 | UMA UNICA IMAGEM, 390px, pagina inteira, escuro
+
+REGRA: este e o TXT GERAL de layout (desktop e celular). Os TXT de cada pagina (REGRAS-HEADER-CONTATO.txt, REGRAS-LAYOUT-SERVICOS.txt...) so guardam o historico daquela pagina. Qualquer mudanca de layout e registrada AQUI e na pagina.
+
+REGRA DE ENTREGA (TODA ALTERACAO, EM QUALQUER HTML)
+---------------------------------------------------
+- Entregar JUNTOS: o HTML + o TXT do HTML (soltos) E o ZIP com os dois (mesmo conteudo).
+- Mandar SEMPRE a imagem do print do HTML no MOBILE: UMA UNICA IMAGEM PNG continua (pagina inteira, 390px de largura, modo escuro). Nunca varias imagens, nunca colunas.
+- Toda alteracao e registrada no TXT, com data, no fim do arquivo.
+
+1. MODO CLARO / ESCURO (mecanismo)
+----------------------------------
+- Classe "dark-mode" no <html> E no <body> (as duas). Sem a classe = modo claro.
+- toggleTheme() alterna a classe nos dois, grava localStorage 'theme' = 'dark' | 'light' e troca o icone #themeIcon (🌙 no claro, ☀️ no escuro).
+- Ao carregar, le localStorage 'theme' e aplica a classe antes de mostrar.
+- Fundo da pagina: claro #f3f5fb / escuro #05060d.
+- Seletores do CSS: claro = html:not(.dark-mode) body ...   escuro = html.dark-mode body ...
+- Cores principais: AZUL DO CLARO #0a2540 -> #635bff (degrade 90deg, igual ao rodape). ESCURO: fundo #14151b, ciano #00c8ff, texto #d9f4ff. DOURADO (hover e pagina atual): #f6c445.
+
+2. HEADER (id siteHeaderOrizon, class "hv")
+-------------------------------------------
+- Barra FLUTUANTE: sticky, top 12px, margem 12px, largura calc(100% - 24px), max 1360px, cantos 24px (20px no celular). O backdrop-filter do .hv fica DESLIGADO (senao prende os botoes fixed).
+- ESQUERDA: logo redonda, link para index.html. Desktop 96px; celular 66px (52px em tela <=340px).
+- DIREITA (desktop): links Servicos, Vagas, Candidatos, Contato (pagina atual = classe "on") + Voltar + Menu + Tema. Celular (<=980px): os links somem; ficam logo + Voltar + Menu + Tema.
+- Links: fonte DM Sans 600 .97rem. Sublinhado desliza no hover. Hover e pagina atual em DOURADO #f6c445 (texto e sublinhado), claro e escuro.
+- CLARO: fundo degrade #0a2540 > #635bff, borda rgba(255,255,255,.25), links brancos.
+- ESCURO: fundo #14151b, borda #00c8ff, links #d9f4ff, pisca-pisca sobHdrPisca 2.6s (desligado com prefers-reduced-motion).
+- Padding interno (.hv-in): desktop .55rem 1.3rem .55rem .9rem. Celular: .75rem .8rem .75rem .75rem (header ~92px de altura).
+
+3. BOTOES VOLTAR / MENU / TEMA (formato "balao de fala")
+--------------------------------------------------------
+- Voltar e Menu: border-radius 25px 25px 25px 6px. Tema: 25px 25px 6px 25px.
+- Fonte DM Sans 700. Borda 2px.
+- DESKTOP (>=769px): altura 50px, fonte 16px (1rem), padding 0 24px, gap .5rem. Tema 72px de largura, icone 1.25rem. Icone do Menu (3 linhas) 22px. Medidas: Voltar 99x50, Menu 126x50, Tema 72x50.
+- CELULAR (<=768px): altura 50px, fonte 14,4px (.9rem), padding 0 16px. Tema 72x50, icone 1rem. Menu mostra SO o texto (icone de 3 linhas escondido). Medidas: Voltar OCULTO no celular (ver REGRA FIXA do Voltar), Menu ~75x50, Tema 72x50.
+- TELAS MUITO ESTREITAS (<=340px): padding 0 10px, Tema 56px, logo 52px.
+- CLARO: fundo rgba(0,0,0,.45) + blur 10px, texto branco, borda 2px rgba(255,255,255,.85), hover fundo rgba(30,64,175,.75).
+- ESCURO: fundo #0a0a0a (preto do chatbot), texto branco, borda 2px #00c8ff + brilho (0 0 10px rgba(0,200,255,.2)), hover brilho maior.
+- Os 3 botoes ficam FIXOS (position:fixed) acompanhando a tela. O .hv-slot reserva o lugar deles dentro do header (min-height 50px) e um JS pequeno posiciona os botoes em cima do slot.
+- Ao ROLAR PRA BAIXO os 3 botoes SOMEM (body.nav-hidden); ao rolar pra cima voltam. Com o menu aberto (body.menu-open) ficam sempre visiveis. (Estilo LinkedIn.)
+- IMPORTANTE: botao que abre o menu precisa do atributo data-menu-btn, senao o clique-fora fecha o menu na hora.
+
+REGRA FIXA - BOTAO VOLTAR OCULTO NO CELULAR (VALE PARA TODO HTML)
+------------------------------------------------------------------
+- No CELULAR (ate 768px) o botao VOLTAR do header de vidro fica OCULTO. Sobram so Menu (75x50) e Tema (72x50); ate 340px: Menu 63x50 e Tema 56x50. No DESKTOP (769px ou mais) o Voltar continua normal (99x50). O item "Voltar" dentro do Menu abre continua existindo.
+- Esta regra TEM PRIORIDADE sobre as medidas antigas de Voltar no celular (78x50) citadas neste TXT e no REGRAS-HEADER-CONTATO.txt.
+- CSS (bloco <style id="voltar-oculto-mobile">, fim do arquivo): @media(max-width:768px){html body .hv-voltar,html body .hv-tools .hv-voltar{display:none!important}}
+- O script que posiciona os botoes no slot do header mede a largura real dos botoes visiveis, entao nao precisa mudar nada.
+- Medido no servicos.html: 768, 390, 360 e 330px = Voltar oculto, header de 92px (78px a 330px), sem rolagem lateral; 769 e 1340px = Voltar visivel.
+
+4. PRIMEIRA TELA CHEIA - IDENTIFICA A LARGURA/ALTURA DA TELA (desktop e celular) E SE ADAPTA
+------------------------------------------------------------------------------------------
+(Igual a ficha-divulgacao.html. Vale para toda pagina que tem hero + letreiro colorido. Codigo pronto no fim: "BLOCO PRIMEIRA TELA".)
+- Duas partes que trabalham juntas:
+  A) CSS por largura de tela (@media): celular ate 768px (e 640px/480px/360px para ajustes finos), desktop a partir de 769px. No desktop vale o padrao; abaixo dos pontos o layout muda (header de 92px, botoes de 50px com Tema 72px, hero centralizado/ajustado, letreiro mais alto).
+  B) Script id="primeira-tela-js": le window.innerWidth e window.innerHeight ao carregar (load e DOMContentLoaded), ao redimensionar (resize), ao girar o celular (orientationchange) e quando as fontes terminam de carregar (document.fonts.ready). Calcula a altura livre = altura da janela - onde o hero comeca - altura do letreiro, e aplica como min-height no hero. Resultado: header + hero + letreiro ocupam EXATAMENTE a altura da janela e o letreiro encosta no rodape da tela, em qualquer tamanho.
+- No celular o script ignora a barra do navegador subindo/descendo (so recalcula se a largura mudou ou a altura mudou 150px ou mais), para a tela nao ficar pulando.
+- So aplica se sobrar 200px ou mais; senao volta ao CSS normal (min-height 62vh no desktop / 280px no celular ficam como reserva).
+- O conteudo do hero comeca logo abaixo do header: padding-top 1.2rem (desktop) / 2.4rem (celular). Alinhado a esquerda no desktop; centralizado no celular (ate 640px).
+- Testado no Chromium (letreiro encostado no rodape da janela, sem rolagem horizontal): 1340x800 (claro e escuro), 1920x1080, 1000x700, 768x1024, 380x740 (claro e escuro), 360x640, 390x844; reduzir a janela de 800 para 600 de altura reajusta.
+- Para desativar: apague o bloco [PRIMEIRA-TELA-CHEIA] do CSS e o script primeira-tela-js.
+
+4B. HERO (ADAPTAR O ASSUNTO A CADA HTML)
+----------------------------------------
+- Estrutura (dentro de <header class="header">; o header antigo continua como envoltorio porque o JS de traducao usa '.header h1'):
+  <div class="ct-shell"><div class="ct-hero">
+    <div class="ct-eyebrow">ROTULO DA PAGINA</div>            (pilula com bolinha verde piscando; ex.: Atendimento)
+    <h1 class="ct-title">Palavras <em>Destaque</em></h1>      (ultima palavra em italico com degrade #2563eb > #7c3aed > #ec4899)
+    <div class="ct-sub">Frase de 1 a 2 linhas sobre o assunto da pagina.</div>
+    <div class="ct-meta"> 4 chips: <div class="ct-chip"><span class="ct-dot"></span> Texto</div> ... </div>
+  </div></div>
+- ADAPTAR POR PAGINA: trocar o rotulo, o titulo (e a palavra em destaque), o subtitulo, os 4 chips e os assuntos do letreiro para o assunto da pagina. Layout, tamanhos e JS NAO mudam.
+  Exemplo contato: "Atendimento" / "Fale <em>Conosco</em>" / "Escolha o canal e fale com a Orizon: WhatsApp, e-mail, formularios ou venha nos visitar em Guaiba." / chips WhatsApp, E-mail, Formularios, Guaiba RS.
+- Textos/bordas do rotulo, subtitulo e chips: PRETOS no claro, BRANCOS no escuro. Titulo #0b1020 no claro / #f1f4ff no escuro. Fonte do titulo DM Serif Display (clamp 2.2rem-3.7rem); texto DM Sans.
+- Para traducao: o titulo do hero vem do TRANSLATIONS da pagina (chave header-h1), mantendo a ultima palavra em <em>.
+
+4C. SEGUNDO HEADER = PARTE FIXA DO PADRAO GERAL (APLICAR SEMPRE, SEM O USUARIO PEDIR)
+------------------------------------------------------------------------------------
+REGRA: "segundo header" = hero (rotulo, titulo, subtitulo, 4 chips) + letreiro colorido. Ele FAZ PARTE do layout de toda pagina Orizon, junto com header de vidro, botoes, fundo e rodape. Ao aplicar o padrao em qualquer HTML, aplicar TUDO de uma vez, com os calculos abaixo. O usuario NAO deve precisar pedir nem explicar de novo.
+CHECKLIST (nada pode faltar):
+ 1) HTML do hero + letreiro dentro do <header class="header"> (item 4B e 5), assunto adaptado a pagina.
+ 2) CSS [PRIMEIRA-TELA] (bloco no fim deste TXT) com as alturas por tela: letreiro desktop 49px / celular 62-63px; hero padding-top 1.2rem desktop / 2.4rem celular; hero centralizado ate 640px.
+ 3) JS primeira-tela-js: le largura e altura da janela e faz header + hero + letreiro = altura exata da janela (letreiro encostado no rodape da tela), no desktop e no celular.
+ 4) JS letreiro-velocidade-js: VELOCIDADE em PIXELS POR SEGUNDO = 69 px/s (a do contato.html, aprovada pelo usuario). O JS mede a largura de uma volta (.mqg) e calcula a duracao (largura / 69). NAO usar segundos fixos: cada pagina tem lista de tamanho diferente e 52s fixos deixavam o servicos.html a 85 px/s (rapido demais). Medido apos o JS: servicos 1340px = 64,2s (69,0 px/s); 390px = 66,4s (69,0 px/s).
+ 5) Medir no Chromium e conferir: 1340x800 (claro e escuro), 1920x1080, 1000x700, 768x1024, 390x844, 360x640 = letreiro no rodape da janela, sem rolagem horizontal; altura do letreiro 49/62; velocidade 69 px/s.
+ 6) Registrar no TXT da pagina (REGRAS-LAYOUT-<PAGINA>.txt) o que foi aplicado e as medidas.
+Valores de referencia: breakpoints desktop >=769 / celular <=768 / hero centralizado <=640 / minusculo <=340. Separador losango amarelo 8px, gap 1,3rem. Loop sem emenda (2 .mqg, animacao -50%; lista curta = repetir ate o .mqg passar de ~2600px).
+
+BLOCO LETREIRO-VELOCIDADE - JS (id="letreiro-velocidade-js", no fim do <body>, depois do primeira-tela-js)
+(function(){
+  var PXS=69;
+  function velocidade(){
+    var g=document.querySelector('.mqg'),t=document.querySelector('.mqt');
+    if(!g||!t)return;
+    var lap=g.getBoundingClientRect().width;
+    if(!lap)return;
+    var d=(lap/PXS).toFixed(1)+'s';
+    if(t.style.animationDuration!==d)t.style.animationDuration=d;
+  }
+  window.addEventListener('resize',velocidade);
+  window.addEventListener('orientationchange',velocidade);
+  window.addEventListener('load',velocidade);
+  document.addEventListener('DOMContentLoaded',velocidade);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(velocidade);
+  velocidade();
+})();
+
+5. LETREIRO / SLIDER COLORIDO (.mqw) - O ASSUNTO MUDA EM CADA HTML
+------------------------------------------------------------------
+- Fica logo abaixo do hero (dentro do <header class="header">), largura total, degrade azul > roxo > rosa (#2563eb, #7c3aed 50%, #ec4899).
+- Altura: desktop 49px (padding .9rem original); celular 63px (padding 1.3rem, fonte 1.05rem).
+- Velocidade: 69 PIXELS POR SEGUNDO (calculada pelo JS letreiro-velocidade-js, ver 4C; o 52s do CSS e so reserva); loop sem emenda (a lista aparece 2 vezes dentro de cada .mqg, e sao 2 .mqg; a animacao anda -50%). Se a lista for curta, repetir mais vezes ate o .mqg ficar mais largo que a maior tela (~2600px).
+- Separador entre os assuntos: LOSANGO AMARELO #fbbf24 (8x8px girado 45graus), gap 1.3rem antes e 1.3rem depois (opcao escolhida pelo usuario; para voltar a estrela, apague o bloco [LETREIRO-LOSANGO]).
+- ASSUNTOS: ficam no HTML, um <span class="mqi">Assunto</span> por item. ADAPTAR A CADA PAGINA aos canais/servicos daquela pagina.
+  Contato (ordem): WhatsApp, E-mail, Formularios, Localizacao em Guaiba, Instagram, Facebook, LinkedIn, Recrutamento & Selecao, Apoio Administrativo, Websites e SEO.
+- (Icones PNG no lugar do separador foram testados e REMOVIDOS a pedido.)
+
+6. O QUE NAO COPIAR PARA OUTRO HTML
+-----------------------------------
+- Classes especificas do contato (.ct-hero, .ct-*), o conteudo do slider e os links do menu atual. Ajuste a pagina atual (classe "on") e o href do Voltar para cada pagina.
+
+7. FUNDO DA PAGINA (toda a pagina, claro e escuro)
+---------------------------------------------------
+- Claro: cor #f3f5fb + brilho AZUL no canto de cima a esquerda (circulo 620px em 6% 18%, rgba(59,130,246,.50)) + brilho ROXO no canto de baixo a direita (640px em 94% 78%, rgba(168,85,247,.48)).
+- Escuro: cor #05060d + brilho azul rgba(40,90,170,.85) e roxo rgba(105,48,150,.85), mesmas posicoes.
+- background-attachment:fixed (o brilho fica parado na rolagem). html{overflow-x:clip}.
+- NUNCA REMOVER esse fundo. Bloco pronto no fim ("BLOCO CSS DO FUNDO").
+- Faixas de secao (sections/containers de largura toda) ficam TRANSPARENTES para o fundo aparecer entre os cards (ex. contato: .sec-empresas, .contact-section, .map-section, .social-section, .forms-wrapper).
+
+REGRA FIXA - MODO CLARO/ESCURO E FUNDO NAO INTERFEREM NOS CONTAINERS (VALE PARA TODO HTML)
+-------------------------------------------------------------------------------------------
+- O modo claro/escuro e o FUNDO da pagina (brilho azul/roxo) so mudam a pagina em si. Eles NAO PODEM mudar a cor de fundo de nenhum container (cards, caixas, accordions, paineis, chips, banners): cada container MANTEM O ESTADO ORIGINAL dele, igual era antes de aplicar o padrao.
+- Container translucido (degrade com rgba, ou sem fundo) deixa o brilho do fundo aparecer por dentro e muda a cor dele. Correcao obrigatoria: por baixo do degrade entra o solido ORIGINAL da pagina: claro #eef0f4 / escuro #0a0a0a (background-color com !important e seletor repetido 3x). Nao trocar o degrade, a borda nem o texto.
+- Container opaco, de cor propria (ex.: cards com degrade solido) nao se mexe. Container que ja tem cor solida propria (ex.: sr-panel no escuro, sr-chip no claro) tambem nao.
+- Ao aplicar o padrao em um HTML: 1) listar os containers translucidos; 2) colocar o underlay no bloco <style id="cards-originais"> (fim do arquivo); 3) conferir por captura, claro e escuro, comparando com a pagina SEM o fundo: nenhum container pode mudar.
+- Servicos.html (26/11/2026): bloco cards-originais com .tip-box (Quem somos / Nossa forca), .sr-detail (card das estatisticas), .downloads-accordion, .downloads-trigger, .md-card, .ia-photo-card-back, .sr-chip (so escuro) e .sr-panel (so claro).
+
+REGRA FIXA - BOTOES LATERAIS (VLIBRAS + ACESSIBILIDADE) NUNCA PODEM SUMIR (VALE PARA TODO HTML)
+-----------------------------------------------------------------------------------------------
+- Os 2 botoes azuis na borda esquerda (#a11y-libras-anchor: mao Libras + pessoa Acessibilidade) ficam SEMPRE visiveis, no desktop e no celular, claro e escuro, rolando ou nao. Medido no servicos.html: top 188px (desktop) e 158px (celular), logo abaixo do header de vidro.
+- O script "Posiciona os botoes" mede o header e coloca o anchor logo abaixo. Ele DEVE medir o header de vidro (.hv), NUNCA o .header: depois do segundo header (hero + letreiro em tela cheia) o .header ocupa a tela inteira e os botoes iam parar fora da tela (812px). Codigo: var header = document.querySelector('.hv') || document.querySelector('.header').
+- Ao aplicar o padrao em um HTML: conferir que o #a11y-libras-anchor aparece na tela (top menor que a altura da janela) em 1340x800, 390x844 e 360x640, antes e depois de rolar.
+
+REGRA FIXA - O DOCUMENTO NUNCA PODE SER MAIS LARGO QUE A TELA (SEM DESALINHAMENTO NO MOBILE)
+--------------------------------------------------------------------------------------------
+- document.body.scrollWidth e document.documentElement.scrollWidth tem que ser IGUAL a largura da janela (360, 390, 430, 768...). Se for maior, a pagina fica desalinhada no celular: conteudo colado na esquerda e vao na direita.
+- Causa achada no servicos.html (26/11/2026): o varredor do radar (.sr-sweep, conic-gradient girando) tem a caixa girada maior que a tela (449px em 390px) e alargava o documento. overflow-x:hidden/clip no html/body NAO resolve no celular real: o corte tem que ser na SECAO.
+- Correcao padrao (bloco <style id="sem-rolagem-lateral"> no fim do arquivo): html body main .content-section{overflow-x:clip} e html,body{max-width:100%}. Nao cria rolagem e nao corta nada visivel.
+- Conferir sempre em modo celular real (is_mobile): rolar a pagina inteira e medir scrollWidth = largura da janela e margem esquerda = margem direita dos cards (12px = 12px).
+
+8. CARDS E CONTAINERS
+---------------------
+- REGRA FIXA: a cor interna dos cards TEM QUE FICAR IGUAL AO ORIGINAL; o fundo do tema NAO pode afeta-los. Cards translucidos ganham por baixo o solido original: claro #eef0f4 / escuro #0a0a0a (card de rede social no escuro #161616).
+- Cards com degrade proprio (servicos.html: modelos 01/02/03, etc.) ja sao opacos: nao mexer.
+- Card novo translucido: acrescentar na lista de seletores do bloco [CARDS-ORIGINAIS] (com seletor repetido para vencer !important antigo).
+- Ao aplicar o fundo numa pagina, conferir por captura (claro e escuro) que nenhum card ficou "vazado".
+
+9. TITULOS DE SECAO (padrao "divider": .orizon-divider-section)
+---------------------------------------------------------------
+- Estrutura: eyebrow (Courier, caixa alta, letter-spacing 4px, .78rem, preto no claro / branco no escuro) + titulo (clamp 1.8rem-2.8rem, peso 800) + linha com losango.
+- Titulo bicolor: 1a palavra (.ost-w1) AZUL #1d4ed8 no claro / CIANO #00c8ff no escuro (com brilho); 2a palavra (.ost-w2) PRETO no claro / BRANCO no escuro.
+- Linha: dois tracos de 2px (180px) com degrade para as pontas + losango 10px; azul #1d4ed8 no claro, ciano #00c8ff no escuro.
+- Espaco acima e abaixo do titulo: --gap-titulo = 48px (desktop/tablet) e 35px (celular <=768px), igual em cima e embaixo.
+- Os blocos <style id="orizon-divider-titles">, "orizon-espacamento-padrao" e "padrao-titulos" ja trazem isso (mesmo codigo no contato.html e no servicos.html).
+
+10. RODAPE (<footer>)
+---------------------
+- CLARO: fundo azul igual ao header (degrade #0a2540 > #635bff), TODOS os textos e icones brancos, seletor de idioma com borda branca; botao do chatbot e seta ganham borda branca quando encostam no rodape.
+- ESCURO: fundo solido #14151b (igual ao header escuro).
+- Linha de 2px em degrade no topo (azul #93c5fd > lilas #c4b5fd > rosa #f9a8d4, pontas transparentes).
+- Barra de baixo (idioma + copyright): pilula de idioma com globo, linha fina em degrade ciano/lilas acima, copy discreto.
+- Blocos ja existentes e IDENTICOS no contato.html e no servicos.html: rodape-claro-branco, bordas-rodape, footer-bottom-bonito, footer-borda-degrade, hf-dark-estilo, sob-dark-hf. Paginas novas copiam esses blocos.
+
+11. BASE COMPARTILHADA QUE JA VEM NO SITE (nao reescrever, so garantir que existe)
+------------------------------------------------------------------------------
+- Mesmo codigo em contato.html e servicos.html (conferido): theme-reveal-css, mobile-header-compact, orizon-divider-titles, orizon-espacamento-padrao, rodape-claro-branco, bordas-rodape, footer-bottom-bonito, footer-borda-degrade, hf-dark-estilo, sob-dark-hf, header-cor.
+- Diferem entre paginas (de proposito, sao da pagina): padrao-titulos (contato tem seletores a mais), botoes-balao, e todos os blocos de cards/hero/degrades de cada pagina.
+
+12. COMO APLICAR A PAGINA INTEIRA EM UM HTML NOVO (ordem)
+---------------------------------------------------------
+1) Header + botoes + JS (blocos abaixo). 2) FUNDO (bloco abaixo). 3) Conferir base compartilhada (item 11) e rodape. 4) Cards: conferir claro/escuro. 5) Titulos de secao no padrao divider. 6) Hero + letreiro + primeira tela cheia: itens 4, 4B e 5 (adaptando o assunto da pagina). 7) Medir e tirar o print unico do mobile.
+
+BLOCO CSS DO FUNDO (colar em <style id="fundo-ficha"> no fim do arquivo)
+-------------------------------------------------------------------------
+html:not(.dark-mode) body{background-color:#f3f5fb!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(59,130,246,.50),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(168,85,247,.48),transparent 72%)!important;background-attachment:fixed!important}
+html.dark-mode body{background-color:#05060d!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(40,90,170,.85),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(105,48,150,.85),transparent 72%)!important;background-attachment:fixed!important}
+html{overflow-x:clip}
+/* cards translucidos com solido original por baixo (ajustar os seletores da pagina) */
+html:not(.dark-mode) body:not(.dark-mode) .SEU-CARD.SEU-CARD.SEU-CARD{background-color:#eef0f4!important}
+html.dark-mode body.dark-mode .SEU-CARD.SEU-CARD.SEU-CARD{background-color:#0a0a0a!important}
+
+PAGINAS JA NO PADRAO
+--------------------
+- contato.html: tudo (header, fundo, hero, letreiro, primeira tela, rodape). 26/11/2026. TXT: REGRAS-LAYOUT-CONTATO.txt.
+- servicos.html: tudo, assunto Nossos Servicos (26/11/2026). TXT: REGRAS-LAYOUT-SERVICOS.txt.
+- sobre.html: tudo, assunto Sobre Nossa Existencia (26/11/2026). TXT: REGRAS-LAYOUT-SOBRE.txt.
+- candidato.html: tudo, assunto Area do Candidato (26/11/2026). TXT: REGRAS-LAYOUT-CANDIDATO.txt.
+- ferramentas-ia.html: tudo, assunto Ferramentas de IA (26/11/2026). TXT: REGRAS-LAYOUT-FERRAMENTAS-IA.txt.
+- utilidades.html: tudo, assunto Ferramentas e Utilidades (26/11/2026). TXT: REGRAS-LAYOUT-UTILIDADES.txt.
+- tutorial.html: tudo, assunto Tutoriais e Videos (26/11/2026). TXT: REGRAS-LAYOUT-TUTORIAL.txt.
+- vagas.html: tudo, assunto Mural de Vagas (26/11/2026). TXT: REGRAS-LAYOUT-VAGAS.txt.
+- REGRA APRENDIDA (26/11/2026): o bloco cards-originais NAO pode trocar o background-color de um card que ja tem cor rgba (vira preto liso e perde o tom). Transparente = solido original; rgba = cor misturada sobre o solido; opaco = nao mexer. Usar :not(#_a):not(#_b) no seletor, porque regras antigas com ID e background:...!important vencem seletor simples. Gerar por tamanho de tela (desktop x celular), pois o mesmo card muda de fundo.
+
+BLOCO PRIMEIRA TELA (hero + letreiro) - CSS FINAL (colar no fim do <style>; ajustar so o assunto no HTML)
+------------------------------------------------------------------------------------------------------
+.ct-shell{max-width:1280px;margin:0 auto;padding:2.5rem 2rem 0;position:relative}
+.ct-hero{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;min-height:62vh;padding:1.2rem .5rem 2.4rem;box-sizing:border-box}
+.ct-eyebrow{display:inline-flex;align-items:center;gap:.55rem;padding:.45rem 1rem;border-radius:99px;font:700 .66rem 'DM Sans','Segoe UI',sans-serif;letter-spacing:3px;text-transform:uppercase;margin-bottom:1.3rem}
+.ct-eyebrow::before,.ct-dot{content:"";flex:0 0 auto;width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;animation:ctDot 1.4s ease-in-out infinite}
+@keyframes ctDot{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.7)}50%{opacity:.35;box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+.ct-title{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(2.2rem,4.8vw,3.7rem);line-height:1.04;letter-spacing:-.02em;margin:0 0 1rem}
+.ct-title em{display:inline-block;padding:0 .14em .08em 0;margin-right:-.14em;font-style:italic;background:linear-gradient(90deg,#2563eb,#7c3aed 55%,#ec4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ct-sub{font:400 1.02rem/1.65 'DM Sans','Segoe UI',sans-serif;max-width:600px}
+.ct-meta{display:flex;gap:1.2rem;margin-top:1.6rem;flex-wrap:wrap}
+.ct-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.3rem .85rem;border-radius:99px;font:600 .72rem 'DM Sans','Segoe UI',sans-serif}
+html:not(.dark-mode) body .ct-title{color:#0b1020}   html.dark-mode body .ct-title{color:#f1f4ff}
+html:not(.dark-mode) body .ct-sub,html:not(.dark-mode) body .ct-eyebrow,html:not(.dark-mode) body .ct-chip{color:#000}
+html:not(.dark-mode) body .ct-eyebrow,html:not(.dark-mode) body .ct-chip{border:1px solid #000;background:rgba(255,255,255,.72)}
+html.dark-mode body .ct-sub,html.dark-mode body .ct-eyebrow,html.dark-mode body .ct-chip{color:#fff}
+html.dark-mode body .ct-eyebrow,html.dark-mode body .ct-chip{border:1px solid #fff;background:rgba(255,255,255,.06)}
+.mqw{width:100%;overflow:hidden;background:linear-gradient(90deg,#2563eb,#7c3aed 50%,#ec4899);padding:.9rem 0}
+.mqt{display:flex;width:max-content;animation:mqmove 52s linear infinite}
+.mqg{display:flex;flex-shrink:0}
+.mqi{display:flex;align-items:center;gap:1.3rem;padding-left:1.2rem;color:#fff;font-weight:700;font-size:1rem;white-space:nowrap}
+.mqi::after{content:"";display:inline-block;flex:none;width:8px;height:8px;margin-right:1.3rem;background:#fbbf24;transform:rotate(45deg)}
+@keyframes mqmove{to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.mqt,.ct-dot,.ct-eyebrow::before{animation:none}}
+@media(max-width:768px){.ct-hero{padding-top:2.4rem}.mqw{padding:1.3rem 0}.mqi{font-size:1.05rem}}
+@media(max-width:640px){.ct-shell{padding:1.5rem 1rem 0}.ct-hero{min-height:280px;align-items:center;text-align:center}.ct-hero *{text-align:center}.ct-meta{justify-content:center;gap:.6rem}}
+
+BLOCO PRIMEIRA TELA - JS (id="primeira-tela-js", no fim do <body>; trocar .ct-hero/.mqw se a pagina usar outras classes)
+------------------------------------------------------------------------------------------------------------------------
+(function(){
+  var lastW=0,lastH=0;
+  function ajustar(force){
+    var hero=document.querySelector('.ct-hero'),mq=document.querySelector('.mqw');
+    if(!hero||!mq)return;
+    var w=window.innerWidth,h=window.innerHeight;
+    if(!force&&w<=980&&w===lastW&&Math.abs(h-lastH)<150)return;
+    lastW=w;lastH=h;
+    hero.style.minHeight='0px';
+    var topo=hero.getBoundingClientRect().top+(window.pageYOffset||0);
+    var free=h-topo-mq.offsetHeight;
+    hero.style.minHeight=free>=200?free+'px':'';
+  }
+  function run(){ajustar(true);}
+  window.addEventListener('resize',function(){ajustar(false);});
+  window.addEventListener('orientationchange',run);
+  window.addEventListener('load',run);
+  document.addEventListener('DOMContentLoaded',run);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(run);
+  run();
+})();
+
+
+BLOCO CSS PADRAO (valores finais; colar em <style id="header-vidro-a"> no fim do <head>/<body>)
+------------------------------------------------------------------------------------------------
+.hv{position:sticky;top:12px;z-index:200;width:calc(100% - 24px);max-width:1360px;margin:12px auto 0;border-radius:24px;border:1px solid rgba(255,255,255,.25)}
+.hv-in{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.55rem 1.3rem .55rem .9rem}
+.hv-left{display:flex;align-items:center;gap:1rem}
+.hv-logo{display:flex;line-height:0;text-decoration:none}
+.hv-logo img{display:block;border-radius:50%;transition:transform .3s}
+.hv-logo:hover img{transform:scale(1.05)}
+.hv-lg{width:96px;height:96px}
+.hv-sm{width:66px;height:66px;display:none!important}
+.hv-right{display:flex;align-items:center;gap:1.6rem}
+.hv-links{display:flex;align-items:center;gap:1.7rem}
+.hv-links a{position:relative;text-decoration:none;font:600 .97rem 'DM Sans','Inter','Segoe UI',sans-serif;padding:.4rem 0;transition:.25s}
+.hv-links a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;border-radius:2px;background:#f6c445;transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.hv-links a:hover::after,.hv-links a.on::after{transform:scaleX(1)}
+html body .hv.hv .hv-links a.on,html body .hv.hv .hv-links a:hover{color:#f6c445!important;-webkit-text-fill-color:#f6c445!important}
+.hv-tools{display:flex;align-items:center;gap:8px}
+.hv-slot{display:block;flex:none;min-height:50px}
+.hv-slot .hv-tools{position:fixed;z-index:260}
+.hv-bt{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;height:50px;padding:0 24px;border-radius:25px 25px 25px 6px;font:700 1rem 'DM Sans','Segoe UI',sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap;transition:all .2s}
+.hv-bt svg{width:22px;height:22px}
+.hv-tema{width:72px;padding:0;border-radius:25px 25px 6px 25px;font-size:1.25rem}
+html body .hv.hv{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html body .hv .hv-tools{transition:opacity .3s ease,visibility .3s ease}
+html body.nav-hidden .hv .hv-tools{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+html body.menu-open .hv .hv-tools{opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+/* CLARO */
+html:not(.dark-mode) body .hv{background:linear-gradient(90deg,#0a2540,#635bff);box-shadow:0 10px 30px -10px rgba(10,37,64,.6)}
+html:not(.dark-mode) body .hv .hv-links a{color:#fff!important;-webkit-text-fill-color:#fff!important}
+html:not(.dark-mode) body .hv .hv-bt{background:rgba(0,0,0,.45)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid rgba(255,255,255,.85)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html:not(.dark-mode) body .hv .hv-bt:hover{background:rgba(30,64,175,.75)!important}
+/* ESCURO */
+@keyframes sobHdrPisca{0%,100%{box-shadow:0 6px 24px -8px rgba(0,200,255,.15)}50%{box-shadow:0 8px 32px -6px rgba(0,200,255,.85)}}
+html.dark-mode body .hv{background:#14151b;border-color:#00c8ff;animation:sobHdrPisca 2.6s ease-in-out infinite}
+html.dark-mode body .hv .hv-links a{color:#d9f4ff!important;-webkit-text-fill-color:#d9f4ff!important}
+html.dark-mode body .hv .hv-bt,html.dark-mode body .hv .hv-bt:hover{background:#0a0a0a!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:2px solid rgb(0,200,255)!important;box-shadow:0 0 10px rgba(0,200,255,.2),0 0 8px rgba(0,200,255,.05)!important}
+html.dark-mode body .hv .hv-bt:hover{box-shadow:0 0 14px rgba(0,200,255,.45),0 0 8px rgba(0,200,255,.15)!important}
+@media(prefers-reduced-motion:reduce){html.dark-mode body .hv{animation:none;box-shadow:0 6px 24px -8px rgba(0,200,255,.45)}}
+/* TABLET / CELULAR */
+@media(max-width:980px){.hv-links{display:none}}
+@media(max-width:768px){
+.hv{border-radius:20px}
+.hv-logo .hv-lg{display:none!important}.hv-sm{display:block!important}
+.hv-in{padding:.75rem .8rem .75rem .75rem}
+.hv-tools{gap:6px}
+.hv-bt{height:50px;padding:0 16px;font-size:.9rem;gap:.4rem}
+.hv-tema{width:72px;padding:0;font-size:1rem}
+.hv-menu svg{display:none}
+.hv-slot{min-height:50px}
+}
+@media(max-width:340px){.hv-bt{padding:0 10px}.hv-tema{width:56px}.hv-sm{width:52px;height:52px}}
+
+HTML DO HEADER (colar logo apos <body>)
+---------------------------------------
+<header class="hv" id="siteHeaderOrizon"><div class="hv-in">
+ <div class="hv-left"><a class="hv-logo" href="index.html"><img class="hv-lg" src="LOGO" width="96" height="96" alt="Orizon"><img class="hv-sm" src="LOGO" width="66" height="66" alt="Orizon"></a></div>
+ <div class="hv-right">
+  <nav class="hv-links"><a href="servicos.html">Servicos</a><a href="vagas.html">Vagas</a><a href="candidato.html">Candidatos</a><a class="on" href="PAGINA-ATUAL.html">Contato</a></nav>
+  <div class="hv-slot"><div class="hv-tools">
+   <a href="../index.html" class="hv-bt hv-voltar">Voltar</a>
+   <button type="button" class="hv-bt hv-menu" data-menu-btn onclick="toggleMenu()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="hv-lbl">Menu</span></button>
+   <button type="button" class="hv-bt hv-tema" onclick="toggleTheme()" aria-label="Alternar tema"><span id="themeIcon">🌙</span></button>
+  </div></div>
+ </div>
+</div></header>
+
+JS NECESSARIO (3 pedacos)
+-------------------------
+1) toggleTheme() + carregar tema salvo (ver item 1). 2) toggleMenu()/closeMenu() e o menu lateral (#menuContent, #menuOverlay; body.menu-open).
+3) Posicionar os botoes fixos no slot:
+(function(){var t=document.querySelector('.hv-tools'),s=document.querySelector('.hv-slot');if(!t||!s)return;
+function m(){s.style.width=t.offsetWidth+'px';s.style.height=t.offsetHeight+'px';var r=s.getBoundingClientRect();t.style.top=(r.top+(window.pageYOffset||0))+'px';t.style.left=(r.left+(window.pageXOffset||0))+'px'}
+m();window.addEventListener('load',m);window.addEventListener('resize',m);window.addEventListener('orientationchange',m);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(m);setTimeout(m,400);setTimeout(m,1500);
+if(window.ResizeObserver){var ro=new ResizeObserver(m);ro.observe(t);ro.observe(document.querySelector('.hv'))}
+if(window.MutationObserver)new MutationObserver(m).observe(t,{childList:true,characterData:true,subtree:true})})();
+4) Esconder ao rolar (body.nav-hidden): no evento scroll, se desceu mais de 8px e scrollY>80 -> body.classList.add('nav-hidden'); se subiu mais de 8px -> remove.
+
+PASSO A PASSO PARA REAPLICAR EM OUTRO HTML
+------------------------------------------
+0. CUIDADO AO COLAR O CSS: o texto dentro de <style id="header-vidro-a"> NAO pode ter outra tag <style> (ja aconteceu no servicos.html: a tag duplicada derrubou a regra .hv e o header ficou colado e reto). Depois de aplicar, MEDIR: o .hv tem que ter position:sticky, margem 12px, raio 24px, 1316x116 a 1340px de largura.
+1. Abrir o HTML e ver o que ja existe (header antigo, botoes, tema). Remover/desativar o header antigo e o CSS que pinta botoes de ciano (as regras do padrao usam !important).
+2. Colar o HTML do header, o BLOCO CSS PADRAO e os JS acima. Ajustar a pagina atual (class="on") e o href do Voltar.
+3. Conferir que toggleTheme() poe dark-mode no <html> e no <body>.
+4. Hero + letreiro + primeira tela cheia (itens 4, 4B e 5): trocar o assunto (rotulo, titulo, subtitulo, 4 chips e assuntos do slider) e colar os blocos PRIMEIRA TELA (CSS + JS).
+5. Medir no Chromium a 1340px (claro e escuro) e a 390px: botoes 99/126/72 x 50 no desktop e 78/75/72 x 50 no celular; sem rolagem horizontal.
+6. Aplicar tambem o FUNDO e conferir cards/titulos/rodape (itens 7 a 11).
+7. Criar/atualizar o TXT da pagina, entregar HTML + TXT soltos + ZIP + print unico do mobile.
+
+REGISTRO 26/11/2026 - ferramentas-ia.html e utilidades.html no padrao
+---------------------------------------------------------------------
+- Padrao completo aplicado (header de vidro, hero, letreiro 69 px/s, primeira tela cheia, fundo, sem-rolagem-lateral, Voltar oculto no celular, cards-originais).
+- REGRA APRENDIDA: no bloco cards-originais so entram os containers RAIZ (sem ancestral translucido ou opaco); elementos internos ficam de fora, senao o solido original cobriria a cor do card pai. Botoes, selects, chips (span) e titulos tambem ficam de fora (hover/estado). Conferir por computed style antes x depois: so as raizes podem mudar.
+- Topics e Tradutor em Voz ficam escondidos junto com os botoes antigos (igual ao contato.html).
+
+REGISTRO 26/11/2026 - tutorial.html e vagas.html no padrao
+----------------------------------------------------------
+- Padrao completo aplicado (header de vidro, hero, letreiro 69 px/s, primeira tela cheia, fundo, sem-rolagem-lateral, Voltar oculto no celular, cards-originais, traducao do hero). Medidas iguais as das outras paginas em 1340, 1920, 1000, 768, 390, 360 e 330px.
+- REGRA APRENDIDA: o fundo ORIGINAL do body nao e igual em todas as paginas (tutorial.html escuro = rgb(7,9,15); as demais = #0a0a0a). O solido por baixo dos cards translucidos deve ser a cor ORIGINAL medida do body da pagina (getComputedStyle antes de aplicar o padrao), nao o valor fixo do TXT.
+- REGRA APRENDIDA: ao trocar o botao de tema, o clique-fora do menu e o observador de rolagem do menu precisam enxergar o botao novo ([data-menu-btn]); o script que posiciona VLibras/Acessibilidade precisa medir o .hv.
+- Texto do hero: nao repetir o texto de um card de introducao que ja exista mais abaixo na pagina.
