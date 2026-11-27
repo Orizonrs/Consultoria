@@ -219,6 +219,11 @@ html body div.hero.hero{display:flex;flex-direction:column;justify-content:cente
 @media(min-width:981px){html body div.hero.hero{padding-top:1.4rem !important}}
 @media(max-width:700px){html body .hero.hero .hero-actions{align-self:stretch;width:100%;align-items:center;justify-content:center}}
 </style>
+<style id="theme-reveal-css">
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal;}
+::view-transition-old(root){z-index:1;}::view-transition-new(root){z-index:2;}
+html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!important;}
+</style>
 </head>
 <body>
 <style id="cta-claro-azul">
@@ -1072,6 +1077,29 @@ html body .hero.hero .hero-sub{margin-left:auto!important;margin-right:auto!impo
 html body .hero.hero .hero-meta{justify-content:center!important;gap:9.6px!important}
 }
 </style>
+<script id="theme-reveal-js">
+/* Efeito circular ao trocar de tema (a partir do botao) */
+(function(){
+  var orig=window.toggleTheme;
+  if(typeof orig!=="function") return;
+  window.toggleTheme=function(){
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var btn=document.getElementById("themeToggleBtn")||document.querySelector(".theme-toggle");
+    if(!document.startViewTransition||reduce||!btn){return orig.apply(this,arguments);}
+    var args=arguments,ctx=this,r=btn.getBoundingClientRect(),
+        x=r.left+r.width/2,y=r.top+r.height/2,
+        fim=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),
+        root=document.documentElement;
+    root.classList.add("no-trans");
+    var t=document.startViewTransition(function(){orig.apply(ctx,args);});
+    t.ready.then(function(){
+      root.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+fim+"px at "+x+"px "+y+"px)"]},
+        {duration:650,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"});
+    }).catch(function(){});
+    t.finished.finally(function(){root.classList.remove("no-trans");});
+  };
+})();
+</script>
 </body>
 </html>
 <style id="mobile-center-chips">

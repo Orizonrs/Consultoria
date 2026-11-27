@@ -481,6 +481,11 @@ html.dark-mode .ft-tag{border-color:rgba(255,255,255,.48)}
 @media(max-width:700px){.form-titulo{flex-direction:column;align-items:center;text-align:center;margin:1.6rem 0 1.2rem}.ft-tag{display:none}.ft-title{font-size:1.7rem}.ft-sub{font-size:.88rem}}
 @media print{.mqw,.form-titulo{display:none !important}}
 </style>
+<style id="theme-reveal-css">
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal;}
+::view-transition-old(root){z-index:1;}::view-transition-new(root){z-index:2;}
+html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!important;}
+</style>
 </head>
 <body>
 <style id="bordas-form">
@@ -1281,6 +1286,29 @@ html body .mqi::after{content:""!important;display:inline-block!important;flex:n
   document.addEventListener('DOMContentLoaded',velocidade);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(velocidade);
   velocidade();
+})();
+</script>
+<script id="theme-reveal-js">
+/* Efeito circular ao trocar de tema (a partir do botao) */
+(function(){
+  var orig=window.toggleTheme;
+  if(typeof orig!=="function") return;
+  window.toggleTheme=function(){
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var btn=document.getElementById("themeToggleBtn")||document.querySelector(".theme-toggle");
+    if(!document.startViewTransition||reduce||!btn){return orig.apply(this,arguments);}
+    var args=arguments,ctx=this,r=btn.getBoundingClientRect(),
+        x=r.left+r.width/2,y=r.top+r.height/2,
+        fim=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),
+        root=document.documentElement;
+    root.classList.add("no-trans");
+    var t=document.startViewTransition(function(){orig.apply(ctx,args);});
+    t.ready.then(function(){
+      root.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+fim+"px at "+x+"px "+y+"px)"]},
+        {duration:650,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"});
+    }).catch(function(){});
+    t.finished.finally(function(){root.classList.remove("no-trans");});
+  };
 })();
 </script>
 </body>
