@@ -1021,6 +1021,18 @@ html.dark-mode body .dl-media.dl-media,body.dark-mode .dl-media.dl-media{border-
 @media (max-width:860px){.acc-split{grid-template-columns:1fr}.dl-media{grid-column:1;grid-row:1;width:100%;max-width:420px;margin:0 auto}.acc-split > .acc-wrap{grid-row:2}}
 @media (prefers-reduced-motion:reduce){.dl-slide{transition:none}}
 </style>
+<style id="fundo-ficha">
+/* [FUNDO-FICHA] Fundo claro/escuro da pagina toda, padrao Orizon: azul no canto de cima a esquerda, roxo no canto de baixo a direita, fixo na rolagem. Claro #f3f5fb / escuro #05060d. Para desativar, apague este bloco. */
+html:not(.dark-mode):not(#_o){background:transparent!important}
+html:not(.dark-mode):not(#_o) body:not(#_o){background-color:#f3f5fb!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(59,130,246,.50),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(168,85,247,.48),transparent 72%)!important;background-attachment:fixed!important;background-repeat:no-repeat!important}
+html.dark-mode:not(#_o) body:not(#_o){background-color:#05060d!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(40,90,170,.85),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(105,48,150,.85),transparent 72%)!important;background-attachment:fixed!important;background-repeat:no-repeat!important}
+html{overflow-x:clip}
+</style>
+<style id="theme-reveal-css">
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal;}
+::view-transition-old(root){z-index:1;}::view-transition-new(root){z-index:2;}
+html.no-trans *,html.no-trans *::before,html.no-trans *::after{transition:none!important;}
+</style>
 </head>
 <body>
 <style id="header-compacto">
@@ -4218,5 +4230,100 @@ html.dark-mode body .downloads-accordion .downloads-trigger-count{border:1.6px s
 })();
 </script>
 
+<script id="theme-reveal-js">
+/* Efeito circular ao trocar de tema (a partir do botao) */
+(function(){
+  var orig=window.toggleTheme;
+  if(typeof orig!=="function") return;
+  window.toggleTheme=function(){
+    var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var btn=document.querySelector(".theme-toggle");
+    if(!document.startViewTransition||reduce||!btn){return orig.apply(this,arguments);}
+    var args=arguments,ctx=this,r=btn.getBoundingClientRect(),
+        x=r.left+r.width/2,y=r.top+r.height/2,
+        fim=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y)),
+        root=document.documentElement;
+    root.classList.add("no-trans");
+    var t=document.startViewTransition(function(){orig.apply(ctx,args);});
+    t.ready.then(function(){
+      root.animate({clipPath:["circle(0px at "+x+"px "+y+"px)","circle("+fim+"px at "+x+"px "+y+"px)"]},
+        {duration:650,easing:"cubic-bezier(.22,1,.36,1)",pseudoElement:"::view-transition-new(root)"});
+    }).catch(function(){});
+    t.finished.finally(function(){root.classList.remove("no-trans");});
+  };
+})();
+</script>
+<script id="cards-originais-js">
+/* [CARDS-ORIGINAIS] O fundo claro/escuro (brilho azul/roxo) NAO pode mudar a cor de nenhum container, SVG ou imagem:
+   cada elemento translucido ganha por baixo o solido ORIGINAL da pagina (claro #eef0f4 / escuro #000), ficando igual ao antes.
+   Para desativar, apague este bloco. */
+(function(){
+  var K=['background-color','background-image','background-size','background-repeat','background-position','background-origin','background-clip','background-attachment','background-blend-mode'];
+  var DEF={'background-size':'auto','background-repeat':'repeat','background-position':'0% 0%','background-origin':'padding-box','background-clip':'border-box','background-attachment':'scroll','background-blend-mode':'normal'};
+  var flagged=new Set(),saved=new WeakMap(),timer=0,busy=false;
+  function parse(c){var m=c.match(/^rgba?\(([^)]+)\)$/);if(m){var p=m[1].split(/[ ,\/]+/).filter(Boolean).map(parseFloat);return [p[0],p[1],p[2],p.length>3?p[3]:1];}
+    m=c.match(/^color\(srgb ([^)]+)\)$/);if(m){var q=m[1].split(/[ \/]+/).filter(Boolean).map(parseFloat);return [q[0]*255,q[1]*255,q[2]*255,q.length>3?q[3]:1];}return null;}
+  function opImg(bi){if(bi==='none')return false;var cols=bi.match(/rgba?\([^)]*\)|color\([^)]*\)/g)||[];
+    return cols.length>0&&/gradient/.test(bi)&&!/url\(/.test(bi)&&!/transparent/.test(bi)&&cols.every(function(x){var p=parse(x);return p&&p[3]>=.999;});}
+  function scan(){
+    if(busy||!document.body)return;busy=true;
+    var dark=document.documentElement.classList.contains('dark-mode'),B=dark?[0,0,0]:[238,240,244],Bs='rgb('+B.join(',')+')';
+    // fase 0: tira nossos ajustes para ler o estado real (inclui hover/ativo)
+    flagged.forEach(function(el){var s=saved.get(el)||{};K.forEach(function(k){if(s[k])el.style.setProperty(k,s[k][0],s[k][1]);else el.style.removeProperty(k);});el.style.setProperty('transition','none','important');});
+    flagged.clear();
+    var all=document.body.querySelectorAll('*'),info=new Map(),todo=[],vw=innerWidth,vh=innerHeight,body=document.body;
+    for(var i=0;i<all.length;i++){
+      var el=all[i],tg=el.tagName;
+      if(tg==='SCRIPT'||tg==='STYLE'||tg==='NOSCRIPT'||tg==='LINK'||tg==='META')continue;
+      if(el instanceof SVGElement&&(tg!=='svg'||el.ownerSVGElement))continue;
+      var par=el.parentElement,pi=par&&info.get(par)||{},cs=getComputedStyle(el);
+      if(pi.hid||cs.display==='none'){info.set(el,{hid:true});continue;}
+      var col=parse(cs.backgroundColor)||[0,0,0,0],a=col[3],bi=cs.backgroundImage,clipT=cs.webkitBackgroundClip==='text'||cs.backgroundClip==='text';
+      var fill=!clipT&&(a>.001||bi!=='none'),opq=!clipT&&((a>=.999&&cs.backgroundClip==='border-box')||opImg(bi));
+      var above=!!(pi.above||pi.fill);
+      info.set(el,{fill:fill,above:above});
+      if(above)continue;
+      var repl=(tg==='svg'||tg==='IMG'||tg==='CANVAS')&&!fill;
+      if(!(repl||(fill&&!opq)))continue;
+      var r=el.getBoundingClientRect(),pos=cs.position;
+      if(r.width<1||r.height<1)continue;
+      if(repl&&(pos==='absolute'||pos==='fixed'||cs.pointerEvents==='none')){continue;} // SVG/imagem decorativa sobreposta: nao mexe
+      if(pos==='fixed'&&r.width>=vw*.9&&r.height>=vh*.9){info.set(el,{fill:true});continue;}
+      if(pos==='absolute'||pos==='fixed'){var op=el.offsetParent||body;if(op!==body){var pr=op.getBoundingClientRect();if(r.width>=pr.width*.9&&r.height>=pr.height*.9){info.set(el,{fill:true});continue;}}}
+      var L={};K.forEach(function(k){L[k]=cs.getPropertyValue(k);});
+      todo.push({el:el,col:col,a:a,bi:bi,repl:repl,L:L});
+    }
+    // fase 2: aplica o solido original por baixo
+    todo.forEach(function(t){
+      var el=t.el,s={};K.forEach(function(k){var v=el.style.getPropertyValue(k);if(v)s[k]=[v,el.style.getPropertyPriority(k)];});
+      if(!el.style.getPropertyValue('transition')||true){var tv=el.style.getPropertyValue('transition');if(tv)s.transition=[tv,el.style.getPropertyPriority('transition')];}
+      saved.set(el,s);flagged.add(el);
+      var P=function(k,v){el.style.setProperty(k,v,'important');};
+      if(t.repl){P('background-color',Bs);return;}
+      if(t.bi==='none'){var a=t.a,c=t.col;P('background-color','rgb('+[0,1,2].map(function(j){return Math.round(c[j]*a+B[j]*(1-a));}).join(',')+')');return;}
+      var hasC=t.a>.001,ex=hasC?2:1,cc='rgba('+Math.round(t.col[0])+','+Math.round(t.col[1])+','+Math.round(t.col[2])+','+t.a+')';
+      P('background-image',t.bi+(hasC?',linear-gradient('+cc+','+cc+')':'')+',linear-gradient('+Bs+','+Bs+')');
+      P('background-color','transparent');
+      Object.keys(DEF).forEach(function(k){var v=t.L[k];for(var n=0;n<ex;n++)v+=', '+DEF[k];P(k,v);});
+    });
+    void getComputedStyle(body).backgroundColor; // fecha o estilo com transition:none antes de devolver a transicao
+    flagged.forEach(function(el){var s=saved.get(el)||{};if(s.transition)el.style.setProperty('transition',s.transition[0],s.transition[1]);else el.style.removeProperty('transition');});
+    busy=false;
+  }
+  function sched(ms){clearTimeout(timer);timer=setTimeout(scan,ms||60);}
+  window.__orizonFlat=scan;
+  ['pointerover','pointerout','pointerdown','pointerup','focusin','focusout'].forEach(function(e){document.addEventListener(e,function(){sched(40);},true);});
+  new MutationObserver(function(){sched(120);}).observe(document.documentElement,{attributes:true,attributeFilter:['class','hidden'],childList:true,subtree:true});
+  // troca de tema: recalcula NA HORA (antes da tela ser capturada), senao fica a cor do tema anterior
+  var tm=new MutationObserver(function(){clearTimeout(timer);scan();});
+  tm.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  document.addEventListener('DOMContentLoaded',function(){tm.observe(document.body,{attributes:true,attributeFilter:['class']});});
+  if(document.body)tm.observe(document.body,{attributes:true,attributeFilter:['class']});
+  addEventListener('resize',function(){sched(200);});
+  document.addEventListener('DOMContentLoaded',function(){sched(50);});
+  addEventListener('load',function(){sched(100);setTimeout(scan,1200);});
+  if(document.readyState!=='loading')sched(50);
+})();
+</script>
 </body>
 </html>
