@@ -9,6 +9,9 @@
 <link href="../imagens/icone.png" rel="shortcut icon" type="image/png"/>
 <link href="../imagens/icone.png" rel="apple-touch-icon"/>
 <link href="../imagens/site.webmanifest" rel="manifest"/>
+<script>/* tema salvo aplicado antes de pintar (sem piscar) */
+(function(){var m='dark';try{m=localStorage.getItem('theme')||localStorage.getItem('orizon-theme')||'dark';}catch(e){}
+if(m==='dark')document.documentElement.classList.add('dark-mode');})();</script>
 <title>Gerador de Prompts de IA — ORIZON</title>
 <style>
   :root{
@@ -30,7 +33,7 @@
     --onaccent: #04101f;
     --shadow-soft: 0 20px 50px rgba(0,0,0,0.6);
   }
-  html.light{
+  html:not(.dark-mode){
     --bg: #eef1f8;
     --bg-card: #ffffff;
     --line: #000000;
@@ -272,7 +275,7 @@
 <style id="bordas-cinza">
 /* Todas as bordas cinza (escuro #4b5160 / claro #9ca3af); hover/selecionado um tom mais forte */
 :root{--line:#4b5160;--border-gray:#4b5160;--border-gray-strong:#6b7280}
-html.light{--line:#9ca3af;--border-gray:#9ca3af;--border-gray-strong:#6b7280}
+html:not(.dark-mode){--line:#9ca3af;--border-gray:#9ca3af;--border-gray-strong:#6b7280}
 html body .menu-btn,html body .menu-dropdown,html body .ai-card,html body .ai-detail,
 html body .field input,html body .field select,html body .field textarea,
 html body .dropdown-field select,html body .terminal,html body .btn-ghost,
@@ -284,14 +287,14 @@ html body .field input:focus,html body .field select:focus,html body .field text
 html body .btn-ghost:hover{border-color:var(--border-gray-strong)}
 html body .topline .top-brand .top-brand-name,
 html body .topline .top-brand .olh-img,
-html.light body .topline .top-brand .top-brand-name,
-html.light body .topline .top-brand .olh-img{border-color:var(--border-gray) !important}
+html:not(.dark-mode) body .topline .top-brand .top-brand-name,
+html:not(.dark-mode) body .topline .top-brand .olh-img{border-color:var(--border-gray) !important}
 html body .topline .top-brand .top-brand-name,
-html.light body .topline .top-brand .top-brand-name,
+html:not(.dark-mode) body .topline .top-brand .top-brand-name,
 html body .topline .top-brand .top-brand-name{border-width:1px !important}
 @media(max-width:360px){html body .topline .top-brand .top-brand-name{border-width:1px !important}}
 /* Estilo de título (estilo-header-rodape-unificado.txt) — modo escuro */
-html:not(.light) body .topline .top-brand .top-brand-name{
+html.dark-mode body .topline .top-brand .top-brand-name{
   color:#ffffff !important; background-image:none !important;
   -webkit-text-fill-color:#ffffff !important;
   text-shadow:0 0 1px #ffffff,0 0 3px rgba(255,255,255,0.6),0 0 8px rgba(255,255,255,0.3) !important;
@@ -329,8 +332,8 @@ html:not(.light) body .topline .top-brand .top-brand-name{
 html body .topline .top-brand .top-brand-name{flex:0 1 auto !important;min-width:0;display:inline-block;text-align:left !important;font-family:'Poppins','Montserrat','Segoe UI',system-ui,sans-serif !important;font-size:.8rem !important;font-weight:800 !important;letter-spacing:.14em !important;line-height:1 !important;text-transform:uppercase !important;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;-webkit-text-stroke:0 !important;text-shadow:none !important;background:rgba(255,255,255,0.14) !important;border:2.5px solid rgba(255,255,255,0.85) !important;border-radius:999px !important;padding:.5rem 1rem !important;white-space:nowrap;animation:none !important}
 html body .topline .top-brand .olh-img{box-sizing:border-box !important;border:2.5px solid rgba(255,255,255,0.85) !important;box-shadow:0 0 16px rgba(0,200,255,.3) !important}
 /* modo claro: fundo da página é claro, então pílula e borda do logo ficam escuras */
-html.light body .topline .top-brand .top-brand-name{color:#000000 !important;-webkit-text-fill-color:#000000 !important;background:rgba(15,23,42,0.06) !important;border-color:rgba(15,23,42,0.85) !important}
-html.light body .topline .top-brand .olh-img{border-color:rgba(15,23,42,0.85) !important;box-shadow:0 0 16px rgba(56,189,248,.35) !important}
+html:not(.dark-mode) body .topline .top-brand .top-brand-name{color:#000000 !important;-webkit-text-fill-color:#000000 !important;background:rgba(15,23,42,0.06) !important;border-color:rgba(15,23,42,0.85) !important}
+html:not(.dark-mode) body .topline .top-brand .olh-img{border-color:rgba(15,23,42,0.85) !important;box-shadow:0 0 16px rgba(56,189,248,.35) !important}
 @media(max-width:680px){html body .topline .top-brand .top-brand-name{font-size:.68rem !important;letter-spacing:.1em !important;padding:.42rem .8rem !important}}
 @media(max-width:360px){html body .topline .top-brand{gap:.5rem !important}html body .topline .top-brand .top-brand-name{font-size:.56rem !important;letter-spacing:.05em !important;padding:.38rem .55rem !important;border-width:2px !important}}
 </style>
@@ -1483,18 +1486,47 @@ Sugira entre 8 e 12 slides no total, incluindo capa e conclusão.` }
   });
   menuBackdrop.addEventListener('click', closeMenu);
 
-  function applyTheme(mode){
-    document.documentElement.classList.toggle('light', mode === 'light');
-    themeBtn.querySelector('.tb-ico').textContent = mode === 'light' ? '☀️' : '🌙';
-    themeBtn.querySelector('.tb-txt').textContent = mode === 'light' ? 'Modo claro' : 'Modo escuro';
-    try{ localStorage.setItem('orizon-theme', mode); }catch(e){}
+  /* ===== Modo claro/escuro (padrão Orizon): classe "dark-mode" no <html> E no <body>; sem classe = claro ===== */
+  const rootEl = document.documentElement;
+  function isDark(){ return rootEl.classList.contains('dark-mode'); }
+  function setThemeClasses(mode){
+    const dark = mode === 'dark';
+    rootEl.classList.toggle('dark-mode', dark);
+    document.body.classList.toggle('dark-mode', dark);
+    // ícone: 🌙 no claro, ☀️ no escuro (mostra para onde o clique leva)
+    themeBtn.querySelector('.tb-ico').textContent = dark ? '☀️' : '🌙';
+    themeBtn.querySelector('.tb-txt').textContent = dark ? 'Modo claro' : 'Modo escuro';
+  }
+  // ===== Transição: revelação circular a partir do botão (View Transitions) + fade como alternativa =====
+  function applyTheme(mode, animate){
+    try{ localStorage.setItem('theme', mode); }catch(e){}
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!animate || reduce){ setThemeClasses(mode); return; }
+    if(document.startViewTransition){
+      const r = themeBtn.getBoundingClientRect();
+      const x = r.left + r.width/2, y = r.top + r.height/2;
+      const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      rootEl.classList.add('theme-reveal');
+      const vt = document.startViewTransition(() => setThemeClasses(mode));
+      vt.ready.then(() => {
+        rootEl.animate(
+          { clipPath: ['circle(0px at '+x+'px '+y+'px)', 'circle('+radius+'px at '+x+'px '+y+'px)'] },
+          { duration: 650, easing: 'cubic-bezier(.4,0,.2,1)', pseudoElement: '::view-transition-new(root)' }
+        );
+      }).catch(() => {});
+      vt.finished.finally(() => rootEl.classList.remove('theme-reveal'));
+    } else {
+      rootEl.classList.add('theme-fade');
+      setThemeClasses(mode);
+      setTimeout(() => rootEl.classList.remove('theme-fade'), 550);
+    }
   }
   let savedTheme = 'dark';
-  try{ savedTheme = localStorage.getItem('orizon-theme') || 'dark'; }catch(e){}
-  applyTheme(savedTheme);
+  try{ savedTheme = localStorage.getItem('theme') || localStorage.getItem('orizon-theme') || 'dark'; }catch(e){}
+  applyTheme(savedTheme === 'light' ? 'light' : 'dark', false);
 
   themeBtn.addEventListener('click', () => {
-    applyTheme(document.documentElement.classList.contains('light') ? 'dark' : 'light');
+    applyTheme(isDark() ? 'light' : 'dark', true);
     closeMenu();
   });
   menuBack.addEventListener('click', () => {
@@ -1520,8 +1552,8 @@ html body .wrap .topline .top-brand .top-brand-name{
 html body .wrap .topline .top-brand .top-brand-name .t-full{display:inline !important}
 html body .wrap .topline .top-brand .top-brand-name .t-short{display:none !important}
 html body .wrap .topline .top-brand .top-brand-name .olh-tt{background:none !important;color:#7dd3fc !important;-webkit-text-fill-color:#7dd3fc !important}
-html.light body .wrap .topline .top-brand .top-brand-name{color:#0f1420 !important;-webkit-text-fill-color:#0f1420 !important}
-html.light body .wrap .topline .top-brand .top-brand-name .olh-tt{color:#1e40af !important;-webkit-text-fill-color:#1e40af !important}
+html:not(.dark-mode) body .wrap .topline .top-brand .top-brand-name{color:#0f1420 !important;-webkit-text-fill-color:#0f1420 !important}
+html:not(.dark-mode) body .wrap .topline .top-brand .top-brand-name .olh-tt{color:#1e40af !important;-webkit-text-fill-color:#1e40af !important}
 @media(max-width:520px){html body .wrap .topline .top-brand .top-brand-name{font-size:1.1rem !important}}
 </style>
 <style id="botao-tema-ao-lado">
@@ -1536,6 +1568,25 @@ html body .wrap .topline .top-brand{padding-right:calc(34px + 130px + 1rem) !imp
   html body .wrap .menu-wrap .theme-btn .tb-txt{display:none}
   html body .wrap .topline .top-brand{padding-right:calc(34px + 34px + .8rem) !important}
 }
+</style>
+<style id="tema-padrao-orizon">
+/* ===== PADRÃO ORIZON: modo claro/escuro (classe dark-mode no <html> e no <body>; sem classe = claro) ===== */
+/* Fundo da PÁGINA (só a página; containers mantêm a cor original) */
+html:not(.dark-mode){background-color:#f3f5fb!important}
+html.dark-mode{background-color:#05060d!important}
+html:not(.dark-mode) body{background-color:#f3f5fb!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(59,130,246,.50),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(168,85,247,.48),transparent 72%)!important;background-attachment:fixed!important}
+html.dark-mode body{background-color:#05060d!important;background-image:radial-gradient(circle 620px at 6% 18%,rgba(40,90,170,.85),transparent 72%),radial-gradient(circle 640px at 94% 78%,rgba(105,48,150,.85),transparent 72%)!important;background-attachment:fixed!important}
+html{overflow-x:clip}
+/* Container translúcido ganha por baixo o sólido ORIGINAL (escuro #000 / claro #eef1f8), para o fundo novo não vazar */
+html body .ai-card[aria-pressed="true"]{background-color:#000}
+html:not(.dark-mode) body .ai-card[aria-pressed="true"]{background-color:#eef1f8}
+/* ===== TRANSIÇÃO DA TROCA DE TEMA: revelação circular a partir do botão ===== */
+html.theme-reveal::view-transition-old(root),html.theme-reveal::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html.theme-reveal::view-transition-old(root){z-index:1}
+html.theme-reveal::view-transition-new(root){z-index:2}
+/* alternativa (navegador sem View Transitions): fade suave das cores */
+html.theme-fade,html.theme-fade *,html.theme-fade *::before,html.theme-fade *::after{transition:background-color .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease,fill .45s ease!important}
+@media(prefers-reduced-motion:reduce){html.theme-reveal::view-transition-group(*),html.theme-reveal::view-transition-old(*),html.theme-reveal::view-transition-new(*){animation:none!important}}
 </style>
 </body>
 </html>
