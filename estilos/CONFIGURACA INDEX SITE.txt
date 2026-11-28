@@ -1,0 +1,264 @@
+CONFIGURACAO DO index.html (ORIZON) - TUDO O QUE FOI FEITO
+==========================================================
+Ultima atualizacao: 28/11/2026 (modo claro com pontos pretos)
+Arquivo final: index.html (partiu do index_1fc1ae.html enviado por voce)
+
+REGRA DE TRABALHO
+  Sempre que algo abaixo for alterado no HTML, este TXT tem que ser
+  atualizado junto (descricao, historico e codigo).
+
+QUADRO RESUMO
+-------------
+ITEM                         | O QUE FICOU
+-----------------------------|-----------------------------------------------------------
+Botao Menu (esquerda)        | PILULA (cantos totalmente arredondados), icone 3 linhas + texto "Menu"
+Botoes Tema + Acesso (direita)| ENTRELACADOS (gancho), nessa ordem: Tema, Acesso
+Tamanho dos botoes           | desktop 50px / fonte 1rem | tablet 50px / .9rem | celular (ate 480px) 42px / .84rem | ate 340px 38px / .74rem
+Cores dos botoes - claro     | fundo rgba(0,0,0,.45), borda branca 85%, hover rgba(30,64,175,.75)
+Cores dos botoes - escuro    | fundo #0a0a0a, borda #00c8ff + brilho, hover #10242d
+Fundo escuro (canvas/hero)   | PRETO #000000 (antes #050d1a, azul-marinho/esverdeado)
+Brilhos grandes do canvas    | azul, quase apagados (alpha 0.015 / 0.012 / 0.015)
+Pontinhos (estrelas)         | BRANCOS (e o halo em volta tambem branco)
+Linhas finas de conexao      | azul discreto rgba(90,130,255,...) - nao foram removidas
+Linha de varredura do canvas | REMOVIDA (nao e mais desenhada)
+Linha ciano acima do titulo  | OCULTA no modo escuro (.content-section::before); no claro continua
+Tema claro/escuro (mecanismo)| NAO alterado (toggleTheme, classe dark-mode no html e body, localStorage 'theme')
+Fundo padrao Orizon (azul/roxo)| NAO aplicado (voce pediu para nao alterar o tema)
+MODO CLARO (hero)            | fundo claro #eef0f4 + PONTINHOS PRETOS (e halo/linhas pretas); titulo AZUL #1e40af, subtitulo #1f2937, seta de rolagem escura; botoes com fundo AZUL #1e40af, borda CINZA #8a919c, hover #2563eb (so no claro)
+Titulo e bordas ciano #00c8ff| mantidos (cor da marca)
+Circulo do logo (hero)       | MODO CLARO: borda AZUL #1e40af (mesmo azul dos botoes) | modo escuro: continua ciano rgba(0,229,255,.6)
+
+1. BOTOES (BLOCO botoes-entrelacados)
+-------------------------------------
+- Cada botao ganha a classe "hk-bt" via JS e um SVG proprio (classe "hk") desenhado atras do texto. Quem recebe o clique e o desenho (path), nao a caixa retangular.
+- Grupos: [Menu] sozinho; [Tema, Acesso] juntos (.acesso-wrap, ordem fixa do DOM: Tema order 0, Acesso order 1, em todos os tamanhos; o CSS antigo invertia no celular).
+- Menu sozinho = pilula: no JS, quando o grupo tem 1 botao (n===1) todos os raios = (altura - 2)/2.
+- Tema e Acesso: Tema tem gancho na direita (hasR), Acesso na esquerda (hasL). Margem negativa -(o-g) no segundo botao; folga entre pecas --hk-g.
+- Variaveis (:root): --hk-o gancho (26px / 20px celular / 18px ate 340) | --hk-g folga (4px / 3px celular) | --hk-pad padding (22px / 16px ate 768 / 14px ate 480 / 11px ate 340) | --hk-ext (10px / 8px / 6px).
+- Posicao no celular (ate 480px): Menu top .75rem left .75rem; Acesso/Tema top .75rem right .75rem.
+- hover e :active nao movem o botao (transform:none), para o gancho nao desencaixar.
+- Fonte: DM Sans 700 (fallback Segoe UI/system-ui).
+- Para desativar: apague o <style id="botoes-entrelacados"> e o <script id="botoes-entrelacados-js"> e volte o HTML do Menu para o original (3 linhas soltas, sem .mt-ico/.mt-lbl).
+
+HTML DO MENU (alterado)
+<div class="menu-toggle" onclick="toggleMenu()" role="button" tabindex="0" aria-label="Menu">
+      <span class="mt-ico"><span class="menu-line"></span><span class="menu-line"></span><span class="menu-line"></span></span>
+      <span class="mt-lbl">Menu</span>
+    </div>
+  (antes: .menu-toggle com 3 spans .menu-line direto, sem texto e sem role/tabindex/aria-label)
+
+2. FUNDO ESCURO PRETO + PONTINHOS BRANCOS (canvas do hero + body)
+-----------------------------------------------------------------
+Troca global de #050d1a por #000000 em 4 lugares: fundo do hero (position:absolute z-index -1), body.dark-mode (2 regras, uma com !important) e ctx.fillStyle do canvas.
+Linhas alteradas no JS do canvas (initStarfield / drawAurora / drawParticles / drawConnections):
+  { cx: 0.2 + 0.12 * Math.sin(t * 0.0007), cy: 0.4 + 0.08 * Math.cos(t * 0.0009), color: '40,110,230', alpha: 0.015 },
+  { cx: 0.75 + 0.1  * Math.cos(t * 0.0006), cy: 0.55 + 0.1  * Math.sin(t * 0.0008), color: '0,80,200',  alpha: 0.012 },
+  { cx: 0.5  + 0.08 * Math.sin(t * 0.0005 + 1), cy: 0.15, color: '60,120,255', alpha: 0.015 },
+  g.addColorStop(0.5, 'rgba(90,130,255,0.04)');
+  halo.addColorStop(0, `rgba(255,255,255,${alpha * 0.35})`);
+  ctx.fillStyle = `rgba(${p.bright ? '255,255,255' : '255,255,255'},${alpha})`;
+  ctx.strokeStyle = `rgba(90,130,255,${0.09 * (1 - d/maxDist)})`;
+  ctx.fillStyle = '#000000';
+  /* linha de varredura removida (pedido) */
+Historico dos tons (para voltar): base original #050d1a | brilhos originais 0,200,255 / 0,80,200 / 40,160,255 com alpha 0.06 / 0.05 / 0.07 | estrelas originais 0,200,255 (brilhantes 150,235,255) | halo 0,220,255 | conexoes 0,200,255 | varredura 0,200,255 alpha 0.04.
+
+3. LINHAS REMOVIDAS NO MODO ESCURO
+----------------------------------
+a) Linha de varredura do canvas: a chamada drawScanLine() foi comentada (a funcao continua no codigo; para voltar, recoloque "drawScanLine();" depois de drawAurora();).
+b) Linha ciano em degrade acima de "Como Podemos Ajudar": oculta so no escuro por este bloco (no fim do arquivo):
+<style id="sem-linha-escuro">
+/* Modo escuro: some a linha ciano em degrade acima do titulo da secao (.content-section::before). Para voltar, apague este bloco. */
+html.dark-mode body .content-section::before,body.dark-mode .content-section::before{display:none!important;content:none!important}
+</style>
+   Para voltar, apague o bloco.
+c) NAO removidas: linhas do rodape (degrade no topo e da barra de idioma).
+
+4. O QUE NAO FOI ALTERADO (por pedido)
+--------------------------------------
+Mecanismo claro/escuro, fundo e cores do modo claro, faixas de secao, cards, rodape, chatbot, hero (textos/estrutura), menu lateral, dropdown de Acesso.
+Observacao: o fundo padrao Orizon (claro #f3f5fb / escuro #05060d com brilho azul e roxo) chegou a ser aplicado numa versao anterior e foi DESCARTADO.
+
+5. AVISOS DO CONSOLE (nao sao dos botoes nem do fundo)
+------------------------------------------------------
+- "Cannot read properties of undefined (reading 'apps')": vem do Firebase (linha ~4352: window.firebase.apps) - o Firebase nao carrega (offline/bloqueado).
+- "[i18n] chave hero_subtitle diferente de...": aviso de traducao.
+
+6. HISTORICO (28/11/2026)
+-------------------------
+- Botoes Menu/Tema/Acesso no formato entrelacado (gancho), cores claro/escuro do padrao.
+- Ordem Tema/Acesso fixada no celular.
+- Tom esverdeado do fundo escuro: trocados brilhos, estrelas, halos, conexoes e varredura do canvas por azul.
+- Fundo escuro virou PRETO #000000; brilhos quase apagados.
+- Pontinhos e halo viraram BRANCOS.
+- Menu virou pilula.
+- Removida a linha de varredura e ocultada a linha ciano acima do titulo (escuro).
+
+7. CODIGO COMPLETO DOS BLOCOS NOVOS (copia do index.html atual)
+---------------------------------------------------------------
+<style id="botoes-entrelacados">
+/* [BOTOES-ENTRELACADOS] Menu (esquerda) e Tema + Acesso (direita) no formato "gancho" do padrao Orizon. Tema e Acesso ficam entrelacados; Menu fica sozinho (reto). O desenho vem de um SVG por botao (JS id="botoes-entrelacados-js"). Cores claro/escuro iguais ao padrao (html.dark-mode). Para desativar, apague este bloco e o script. */
+:root{--hk-o:26px;--hk-g:4px;--hk-pad:22px;--hk-ext:10px}
+@media(max-width:768px){:root{--hk-pad:16px}}
+@media(max-width:480px){:root{--hk-o:20px;--hk-g:3px;--hk-pad:14px;--hk-ext:8px}}
+@media(max-width:340px){:root{--hk-o:18px;--hk-pad:11px;--hk-ext:6px}}
+html body .acesso-wrap{gap:0!important;flex-direction:row!important;align-items:center!important}
+html body .acesso-wrap .theme-toggle.hk-bt.hk-bt.hk-bt{order:0!important}
+html body .acesso-wrap .acesso-btn.hk-bt.hk-bt.hk-bt{order:1!important}
+html body .menu-toggle .mt-ico{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:22px}
+html body .menu-toggle .mt-ico .menu-line{width:22px}
+html body .menu-toggle .mt-lbl{pointer-events:none}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt{position:relative;isolation:isolate;overflow:visible!important;display:inline-flex!important;flex-direction:row!important;align-items:center;justify-content:center;gap:.5rem;box-sizing:border-box;width:auto!important;min-width:0!important;height:50px!important;min-height:0!important;padding:0 var(--hk-pad)!important;margin-top:0;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;transform:none!important;pointer-events:none;color:#fff!important;-webkit-text-fill-color:#fff;font:700 1rem 'DM Sans','Segoe UI',system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:none!important}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt:hover,html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt.open{background:transparent!important;box-shadow:none!important;transform:none!important;color:#fff!important}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt.theme-toggle{font-size:1.25rem!important}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt.hasL{padding-left:calc(var(--hk-o) + var(--hk-ext))!important}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt.hasR{padding-right:calc(var(--hk-o) + var(--hk-ext))!important}
+html body .hk-bt > svg.hk{display:block!important;position:absolute!important;left:0;top:0;width:100%!important;height:100%!important;z-index:-1;overflow:visible;pointer-events:none;stroke:none;fill:none}
+html body .hk-bt > svg.hk path{pointer-events:auto;stroke-width:2;transition:fill .2s}
+html:not(.dark-mode) body .hk-bt > svg.hk path{fill:rgba(0,0,0,.45);stroke:rgba(255,255,255,.85)}
+html:not(.dark-mode) body .hk-bt:hover > svg.hk path,html:not(.dark-mode) body .hk-bt.open > svg.hk path{fill:rgba(30,64,175,.75)}
+html.dark-mode body .hk-bt > svg.hk{filter:drop-shadow(0 0 6px rgba(0,200,255,.35))}
+html.dark-mode body .hk-bt > svg.hk path{fill:#0a0a0a;stroke:#00c8ff}
+html.dark-mode body .hk-bt:hover > svg.hk path,html.dark-mode body .hk-bt.open > svg.hk path{fill:#10242d}
+html body .hk-bt:focus-visible > svg.hk path{stroke-width:3}
+html body .hk-bt:active{transform:translateY(1px)!important}
+@media(max-width:768px){html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt{font-size:.9rem!important}}
+@media(max-width:480px){
+html body .nav-menu{top:.75rem;left:.75rem}
+html body .acesso-wrap{top:.75rem;right:.75rem}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt{height:42px!important;font-size:.84rem!important;gap:.3rem}
+html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt.theme-toggle{font-size:1.05rem!important}
+html body .menu-toggle .mt-ico{width:20px;gap:4px}
+html body .menu-toggle .mt-ico .menu-line{width:20px}
+}
+@media(max-width:340px){html body .hk-bt.hk-bt.hk-bt.hk-bt.hk-bt{height:38px!important;font-size:.74rem!important}}
+</style>
+
+<script id="botoes-entrelacados-js">
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  var menu=document.querySelector('.menu-toggle');
+  var wrap=document.querySelector('.acesso-wrap');
+  var groups=[];
+  if(menu)groups.push([menu]);
+  if(wrap)groups.push([].slice.call(wrap.querySelectorAll('.theme-toggle,.acesso-btn')));
+  if(!groups.length)return;
+  groups.forEach(function(g){g.forEach(function(b){b.classList.add('hk-bt')})});
+  function px(v){return parseFloat(v)||0}
+  function vis(b){return getComputedStyle(b).display!=='none'}
+  function build(btn,i,n,o,g){
+    var w=btn.offsetWidth,h=btn.offsetHeight,s=1;if(!w||!h)return;
+    var hasL=btn.classList.contains('hasL'),hasR=btn.classList.contains('hasR');
+    var ymt=h/2-g/2,ymb=h/2+g/2,rl=(ymt-s)/2,ri=6;
+    var xlt=hasL?s+o:s,xrt=w-s,xrb=hasR?w-s-o:w-s;
+    var rTL=hasL?10:(i===0?24:14),rBL=hasL?rl:(i===0?6:14),rTR=hasR?rl:(i===n-1?24:14),rBR=hasR?10:(i===n-1?6:14);
+    if(n===1){rTL=rBL=rTR=rBR=(h-2*s)/2}
+    var d='M'+(xlt+rTL)+' '+s+' H'+(xrt-rTR)+' A'+rTR+' '+rTR+' 0 0 1 '+xrt+' '+(s+rTR);
+    if(hasR){d+=' V'+(ymt-rl)+' A'+rl+' '+rl+' 0 0 1 '+(xrt-rl)+' '+ymt+' H'+(xrb+ri)+' A'+ri+' '+ri+' 0 0 0 '+xrb+' '+(ymt+ri)+' V'+(h-s-rBR)+' A'+rBR+' '+rBR+' 0 0 1 '+(xrb-rBR)+' '+(h-s)}
+    else{d+=' V'+(h-s-rBR)+' A'+rBR+' '+rBR+' 0 0 1 '+(xrt-rBR)+' '+(h-s)}
+    d+=' H'+(s+rBL)+' A'+rBL+' '+rBL+' 0 0 1 '+s+' '+(h-s-rBL);
+    if(hasL){d+=' V'+(ymb+rl)+' A'+rl+' '+rl+' 0 0 1 '+(s+rl)+' '+ymb+' H'+(xlt-ri)+' A'+ri+' '+ri+' 0 0 0 '+xlt+' '+(ymb-ri)+' V'+(s+rTL)+' A'+rTL+' '+rTL+' 0 0 1 '+(xlt+rTL)+' '+s+' Z'}
+    else{d+=' V'+(s+rTL)+' A'+rTL+' '+rTL+' 0 0 1 '+(xlt+rTL)+' '+s+' Z'}
+    var svg=null,k=btn.children;for(var j=0;j<k.length;j++){if(k[j].classList&&k[j].classList.contains('hk')){svg=k[j];break}}
+    if(!svg){svg=document.createElementNS(NS,'svg');svg.setAttribute('class','hk');svg.setAttribute('aria-hidden','true');svg.appendChild(document.createElementNS(NS,'path'));btn.insertBefore(svg,btn.firstChild)}
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);svg.setAttribute('preserveAspectRatio','none');
+    svg.firstChild.setAttribute('d',d);
+  }
+  var busy=false;
+  function all(){
+    if(busy)return;busy=true;
+    var cs=getComputedStyle(document.documentElement),o=px(cs.getPropertyValue('--hk-o')),g=px(cs.getPropertyValue('--hk-g'));
+    groups.forEach(function(grp){
+      var v=grp.filter(vis),n=v.length;
+      v.forEach(function(b,i){
+        var hasL=i>0,hasR=i<n-1;
+        b.classList.toggle('hasL',hasL);b.classList.toggle('hasR',hasR);
+        b.style.marginLeft=i===0?'0':(-(o-g))+'px';
+      });
+      v.forEach(function(b,i){build(b,i,n,o,g)});
+    });
+    busy=false;
+  }
+  all();
+  window.addEventListener('load',all);window.addEventListener('resize',all);window.addEventListener('orientationchange',all);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(all);
+  setTimeout(all,400);setTimeout(all,1500);
+  if(window.ResizeObserver)groups.forEach(function(grp){grp.forEach(function(b){new ResizeObserver(all).observe(b)})});
+  if(menu)menu.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleMenu()}});
+})();
+</script>
+
+8. MODO CLARO COM PONTOS PRETOS (28/11/2026)
+--------------------------------------------
+- O canvas do hero e o MESMO nos dois temas. Foi criada no JS do canvas a funcao: const isLight = () => !document.body.classList.contains('dark-mode');
+- Ela e lida a cada frame (por isso a troca pelo botao de tema atualiza na hora). Linhas do JS que usam isLight():
+  base do canvas:  isLight() ? '#eef0f4' : '#000000'
+  estrelas:        rgba(isLight() ? '0,0,0' : '255,255,255', alpha)
+  halo:            rgba(isLight() ? '0,0,0' : '255,255,255', alpha*0.35)
+  conexoes:        claro rgba(0,0,0,0.09...) | escuro rgba(90,130,255,0.09...)
+- Bloco CSS no fim do arquivo (textos escuros, overlay preto de 15% escondido no claro, seta de rolagem escura, botoes no claro seguem o servicos.html - ver acima):
+<style id="hero-claro-pontos-pretos">
+/* [HERO-CLARO] Modo claro: fundo claro (#eef0f4) com pontinhos PRETOS (o canvas le o tema no JS) e textos do hero escuros. O modo escuro nao muda (fundo preto, pontos brancos). Para desativar, apague este bloco e as 5 linhas com isLight() no JS do canvas. */
+html:not(.dark-mode) body .hero-overlay{display:none!important}
+html:not(.dark-mode) body:not(.dark-mode) .hero-title{color:#0b1020!important;text-shadow:none!important}
+html:not(.dark-mode) body:not(.dark-mode) .hero-subtitle{color:#1f2937!important}
+html:not(.dark-mode) body .scroll-arrow{border-color:#0b1020}
+html:not(.dark-mode) body .scroll-arrow::before{background:#0b1020}
+</style>
+- Para desativar: apague o bloco acima e troque as linhas com isLight() pelos valores do modo escuro (ou deixe, que o escuro nao muda).
+- Modo escuro continua: fundo preto #000000, pontinhos brancos.
+
+9. COR DOS BOTOES NO MODO CLARO = servicos.html (28/11/2026)
+-----------------------------------------------------------
+Fundo rgba(0,0,0,.45) | borda rgba(255,255,255,.85) 2px | hover rgba(30,64,175,.75) | texto branco. Mesmos valores do servicos.html (linhas html:not(.dark-mode) body .hv .hv-bt). O escurecimento extra feito antes foi removido.
+
+10. BOTOES AZUIS NO MODO CLARO (28/11/2026)
+------------------------------------------
+Substitui o item 9. Claro: fundo #1e40af, borda rgba(255,255,255,.85), hover/aberto #2563eb, texto branco. Escuro: nao mudou (#0a0a0a, borda #00c8ff). Bloco 'botoes: fundo AZUL' dentro do <style id="hero-claro-pontos-pretos">.
+
+
+ATUALIZACAO 28/11/2026 - CIRCULO DO LOGO NO MODO CLARO
+  Regra adicionada no <style id="hero-claro-pontos-pretos">:
+  html:not(.dark-mode) body .logo-placeholder .logo-face{border-color:#1e40af!important}
+  Para desfazer, apague essa linha.
+
+ATUALIZACAO 28/11/2026 - TITULO DO HERO NO MODO CLARO
+  .hero-title ("Orizon Consultoria") passou de #0b1020 para AZUL #1e40af no modo claro (regra no bloco hero-claro-pontos-pretos). Modo escuro nao mudou.
+
+ATUALIZACAO 28/11/2026 - BORDA DOS BOTOES NO MODO CLARO
+  Borda dos botoes (Menu, Tema, Acesso) passou de branca para CINZA #8a919c so no modo claro (stroke na regra '.hk-bt > svg.hk path' do bloco hero-claro-pontos-pretos).
+
+ATUALIZACAO 28/11/2026 - CORRECAO: BOTAO ACESSO VIRAVA AO CLICAR
+  Causa: regra antiga '.acesso-btn.open svg{transform:rotate(180deg)}' girava tambem o svg.hk (desenho de fundo). Correcao no <style id="botoes-entrelacados">: 'html body .hk-bt.hk-bt > svg.hk{transform:none!important}'. A setinha (.cv) continua girando normalmente.
+
+ATUALIZACAO 28/11/2026 - EFEITO DE PONTINHOS NA PAGINA INTEIRA (MODO CLARO)
+  Antes: no claro o canvas ficava so no hero. Agora #hero-canvas e position:fixed 100vw x 100vh (igual ao escuro) e .content-section fica transparente, entao os pontinhos pretos aparecem do topo ao rodape. Regras no bloco hero-claro-pontos-pretos. Para voltar ao antigo, apague as 2 linhas 'PAGINA INTEIRA'.
+
+ATUALIZACAO 28/11/2026 - CONTADOR (.ovc-card) LARGURA MAXIMA
+  Antes: .ovc-wrap tinha padding 0 1rem e o card max-width 620px (mais estreito que a grade de cards). Agora .ovc-wrap e .ovc-card ocupam 100% da largura da .content-section, alinhados com a borda esquerda/direita dos cards, em desktop e mobile, nos dois modos. Regras no bloco hero-claro-pontos-pretos ('CONTADOR ... LARGURA MAXIMA').
+
+ATUALIZACAO 28/11/2026 - CONTADOR DE VISITAS REDESENHADO (.ovx-card)
+  - HTML novo no lugar do antigo .ovc-wrap (mesma posicao, dentro da .content-section). O id #orizon-visit-number foi MANTIDO (Firebase continua alimentando).
+  - Arte: borda de luz giratoria, brilhos (blobs) flutuantes, grade sutil, constelacao de pessoas (SVG com linhas animadas e nos pulsando), globo com orbita e satelite, ondas, selo vermelho 'AO VIVO' piscando, numero gigante com brilho e efeito pop + faixa de luz quando a contagem termina, luz que segue o mouse.
+  - Cores: modo claro = azul/indigo (#1e40af -> #0a2540, igual ao rodape); modo escuro = preto com ciano #00c8ff.
+  - Largura maxima (100% da area dos cards) em desktop e mobile; no celular vira coluna centralizada.
+  - Script: a contagem so comeca quando o card aparece na tela (IntersectionObserver). Respeita prefers-reduced-motion.
+  - CSS no <style id="contador-ovx"> e JS no <script id="contador-ovx-js"> (fim do arquivo). O CSS antigo .ovc-* ficou no arquivo, sem uso.
+
+ATUALIZACAO 28/11/2026 - MENOS CLARIDADE NO GLOBO DO CONTADOR
+  No <style id="contador-ovx">, bloco 'menos claridade na area do globo': brilho (blob) do canto esquerdo de .55 para .18, grade mais fraca, fundo/brilho do globo, orbita e ondas mais escuros. Para clarear de novo, apague esse bloco.
+
+ATUALIZACAO 28/11/2026 - FRASE DO CONTADOR
+  Texto do .ovx-label trocado para "Pessoas que já passaram por aqui" (antes: "Pessoas de todo o RS já passaram por aqui").
+
+ATUALIZACAO 28/11/2026 - SUBTEXTO DO CONTADOR
+  .ovx-sub reescrito: "e a cada dia mais gente descobre a Orizon" (antes: "e continuam chegando agora mesmo").
+
+ATUALIZACAO 28/11/2026 - SUBTEXTO DO CONTADOR REMOVIDO
+  A frase abaixo do numero (.ovx-sub) foi RETIRADA do HTML. O contador mostra so: selo AO VIVO + 'Pessoas que ja passaram por aqui' + numero.
+
+ATUALIZACAO 28/11/2026 - BORDA DO CONTADOR NO MODO CLARO COM OUTRAS CORES
+  So no modo claro: a borda de luz giratoria do .ovx-card agora vai de laranja #f97316 > rosa #f43f5e > violeta #a855f7 > azul #2563eb (antes ciano/branco/lilas). Modo escuro INALTERADO. Regra no <style id="contador-ovx">, bloco 'MODO CLARO: borda de luz giratoria'.
+
+ATUALIZACAO 28/11/2026 - BOTAO "VER MAIS SERVICOS" COM NOVO LAYOUT
+  Mesmo estilo do contador: fundo em degrade (claro: azul #1e40af -> #0a2540 | escuro: preto/azul-marinho), borda de luz giratoria (claro: laranja > rosa > violeta > azul | escuro: ciano), texto branco em negrito, setinha dentro de um circulo que balanca (para cima quando expandido). Hover sobe 3px.
+  O botao continua aparecendo so no mobile (ate 768px). CSS no <style id="botao-ver-mais"> no fim do arquivo; para voltar ao antigo, apague esse bloco.
